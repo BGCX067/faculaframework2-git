@@ -1,0 +1,1 @@
+<?php /* Facula Object Cache */ exit(); ?>O:12:"handlerIndex":0:{}
