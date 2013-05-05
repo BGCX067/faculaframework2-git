@@ -10,6 +10,13 @@ define('FACULA_ROOT', dirname(__FILE__));
 define('PROJECT_ROOT', realpath('.'));
 
 class facula {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
 	
 	static private $instance = null;
 	
@@ -39,6 +46,8 @@ class facula {
 				
 				self::saveObjectToCache($cfg['core']['SystemCacheRoot']);
 			}
+			
+			self::$instance->_inited();
 		}
 		
 		return self::$instance;
@@ -120,10 +129,6 @@ class facula {
 		Start Warm up routine
 	********************************************************/
 	
-	private function __wakeup() {
-		$this->postCoreInited();
-	}
-	
 	private function _init(&$cfg) {
 		if ($this->importSetting($cfg)) {
 			// Scan all component file and add them to $this->setting['core']['Components']
@@ -161,8 +166,6 @@ class facula {
 					$this->getCore($component['Name']);
 				}
 			}
-			
-			$this->postCoreInited();
 			
 			return true;
 		}
@@ -216,7 +219,7 @@ class facula {
 		}
 	}
 	
-	private function postCoreInited() {
+	private function _inited() {
 		foreach($this->coreInstances AS $core) {
 			if (method_exists($core, '_inited')) {
 				$core->_inited();

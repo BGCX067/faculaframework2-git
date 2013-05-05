@@ -18,7 +18,6 @@ include('../facula/facula.php');
 include('config.php');
 
 $newobj = facula::init($cfg);
-
 $newobj2 = facula::run('Index');
 
 endCount();

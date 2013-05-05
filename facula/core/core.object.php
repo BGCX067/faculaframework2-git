@@ -39,9 +39,9 @@ class faculaObject extends coreTemplate implements Core {
 		if (!isset($this->autoIncludedFiles[$classfile])) {
 			$this->autoIncludedFiles[$classfile] = true; // Suppose we already successed include the target file. Because, even we failed, i don't want to waste io to retry.
 			if (isset($this->configs['Paths']['alt.'.$classfile])) {
-				return include($this->configs['Paths']['alt.'.$classfile]['Path']);
+				return require($this->configs['Paths']['alt.'.$classfile]['Path']);
 			} elseif (isset($this->configs['Paths']['base.'.$classfile])) {
-				return include($this->configs['Paths']['base.'.$classfile]['Path']);
+				return require($this->configs['Paths']['base.'.$classfile]['Path']);
 			}
 		} else {
 			return true;
@@ -52,7 +52,7 @@ class faculaObject extends coreTemplate implements Core {
 	
 	private function &getObjectSetting($objName) {
 		if (!isset($this->configs['Components'][$objName])) {
-			$this->configs['Components'][$objName] = array(); // You'll got a array anyway
+			$this->configs['Components'][$objName] = array(); // You'll get a array anyway
 		}
 		
 		return $this->configs['Components'][$objName];
@@ -120,9 +120,14 @@ class faculaObject extends coreTemplate implements Core {
 			}
 		}
 		
-		// After saving cache, call the _init function
+		// After saving cache, call the _inited function, tell others we done unserializing / init
 		if (method_exists($handler, '_inited')) {
 			$handler->_inited();
+		}
+		
+		// When inited has been ran, call run to get module a chance to select operate method.
+		if (method_exists($handler, '_run')) {
+			$handler->_run();
 		}
 		
 		return $handler;
