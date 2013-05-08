@@ -1,6 +1,13 @@
 <?php
 
-class faculaDebug extends coreTemplate implements Core {
+interface faculaDebugInterface {
+	public function _inited();
+	public function registerHandler($handler);
+	public function error($errno, $errstr, $errfile, $errline, $errcontext);
+	public function exception($info, $type = '', $exit = false);
+}
+
+class faculaDebug extends faculaCores implements Core, faculaDebugInterface {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',
@@ -15,7 +22,7 @@ class faculaDebug extends coreTemplate implements Core {
 	
 	private $errorHandler = null;
 	
-	protected function __construct($cfg, $facula) {
+	protected function __construct($cfg, &$common, $facula) {
 		self::$facula = $facula;
 		
 		$this->configs = array(

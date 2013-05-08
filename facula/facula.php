@@ -50,6 +50,10 @@ class facula {
 			self::$instance->_inited();
 		}
 		
+		$cfg = null; // Clear config, because we already save them inside the core
+		
+		unset($cfg);
+		
 		return self::$instance;
 	}
 	
@@ -114,6 +118,10 @@ class facula {
 	}
 	
 	private function __construct(&$cfg) {
+		if (version_compare(PHP_VERSION, '5.3.0', '<')) {
+			throw new Exception('Facula Framework desired to be running with PHP 5.4+');
+		}
+		
 		return $this->_init($cfg);
 	}
 	
@@ -124,10 +132,6 @@ class facula {
 		
 		return false;
 	}
-	
-	/*******************************************************
-		Start Warm up routine
-	********************************************************/
 	
 	private function _init(&$cfg) {
 		if ($this->importSetting($cfg)) {
@@ -142,14 +146,14 @@ class facula {
 			foreach(self::$config['ComponentInfo'] AS $keyn => $component) {
 				switch($component['Type']) {
 					case 'core':
-						include($component['Path']);
+						require($component['Path']);
 						
 						self::$config['AutoCores'][] = $component;
 						self::$config['AutoIncludes'][] = $component['Path']; // Add path to auto include, so facula will auto include those file in every load circle
 						break;
 						
 					case 'routine':
-						include($component['Path']);
+						require($component['Path']);
 						
 						self::$config['AutoIncludes'][] = $component['Path'];
 						break;
@@ -239,16 +243,16 @@ class facula {
 		if (isset(self::$config['ComponentInfo'][$objectKey])) {
 			if (class_exists($objectName)) {
 				if (method_exists($objectName, 'getInstance')) {
-					if ($componentObj = $objectName::getInstance($this->getSetting($coreName), $this)) {
+					if ($componentObj = $objectName::getInstance($this->getSetting($coreName), $this->getSetting('Common'), $this)) {
 						$this->coreInstances[$coreName] = $componentObj;
 						
 						return $componentObj;
 					}
 				} else {
-					throw new Exception('static method getInstance not found in component ' . $objectName);
+					throw new Exception('Static method getInstance not found in component ' . $objectName);
 				}
 			} else {
-				throw new Exception('component '.$coreName.' cannot be load. Object file may not load.');
+				throw new Exception('Component '.$coreName.' cannot be load. Please make sure object file already included.');
 			}
 		} else {
 			throw new Exception('Object ' . $objectName . ' not defined. Clear cache before retry.'); 
@@ -266,10 +270,6 @@ class facula {
 		
 		return false;
 	}
-	
-	/*******************************************************
-		End Warm up routine
-	********************************************************/
 	
 	private function getModulesFromPath($directory) {
 		$modules = array();

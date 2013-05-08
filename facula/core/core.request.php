@@ -1,6 +1,12 @@
 <?php
 
-class faculaRequest extends coreTemplate implements Core {
+interface faculaRequestInterface {
+	public function _inited();
+	public function get($type, $key, &$errored = false);
+	public function gets($type, $keys, &$errors = array(), $failfalse = false);
+}
+
+class faculaRequest extends faculaCores implements Core, faculaRequestInterface {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',
@@ -8,8 +14,6 @@ class faculaRequest extends coreTemplate implements Core {
 		'Contact' => 'raincious@gmail.com',
 		'Version' => __FACULAVERSION__,
 	);
-	
-	static private $facula = null;
 	
 	private $configs = array(
 		'MaxRequestSize' => 0,
@@ -21,7 +25,7 @@ class faculaRequest extends coreTemplate implements Core {
 	
 	public $method = 'GET';
 	
-	protected function __construct(&$cfg, $facula) {
+	protected function __construct(&$cfg, &$common, $facula) {
 		if (function_exists('get_magic_quotes_gpc')) {
 			$this->configs['AutoMagicQuotes'] = get_magic_quotes_gpc();
 		}
@@ -55,21 +59,23 @@ class faculaRequest extends coreTemplate implements Core {
 			return (int)$str;
 		} else {
 			$strLen = strlen($str);
-			$lastChar = $str[$strLen - 1];
-			$strSelected = substr($str, 0, $strLen - 1);
 			
-			switch(strtolower($lastChar)) {
-				case 'k':
-					return (int)$strSelected * 1024;
-					break;
-					
-				case 'm':
-					return (int)$strSelected * 1048576;
-					break;
-					
-				case 'g':
-					return (int)$strSelected * 1073741824;
-					break;
+			if ($lastChar = $str[$strLen - 1]) {
+				$strSelected = substr($str, 0, $strLen - 1);
+				
+				switch(strtolower($lastChar)) {
+					case 'k':
+						return (int)$strSelected * 1024;
+						break;
+						
+					case 'm':
+						return (int)$strSelected * 1048576;
+						break;
+						
+					case 'g':
+						return (int)$strSelected * 1073741824;
+						break;
+				}
 			}
 		}
 		
@@ -104,25 +110,30 @@ class faculaRequest extends coreTemplate implements Core {
 		return true;
 	}
 	
-	public function get($type, $key) {
+	public function get($type, $key, &$errored = false) {
 		$type = strtoupper($type);
 		
 		if (isset($this->pool[$type][$key])) {
 			return $this->pool[$type][$key];
+		} else {
+			$errored = true;
 		}
 		
 		return false;
 	}
 	
-	public function gets($type, $keys, $failfalse = false) {
+	public function gets($type, $keys, &$errors = array(), $failfalse = false) {
 		$result = array();
+		$type = strtoupper($type);
 		
 		if (is_array($keys)) {
-			foreach($keys AS $key => $val) {
+			foreach($keys AS $key) {
 				if (isset($this->pool[$type][$key])) {
-					$result[$key] = $this->pool[$type][$key];
+					$result[$key] = $this->pool[$type][$key] ? $this->pool[$type][$key] : null;
 				} elseif ($failfalse) {
 					return false;
+				} else {
+					$errors[] = $key;
 				}
 			}
 		}
@@ -130,9 +141,5 @@ class faculaRequest extends coreTemplate implements Core {
 		return isset($result[0]) ? $result : false;
 	}
 }
-
-
-
-
 
 ?>

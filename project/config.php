@@ -1,9 +1,11 @@
 <?php 
 
-
 $cfg = array(
 	'AppName' => 'Facula Demo', 
 	'AppVersion' => '1.0', 
+	'Common' => array(
+		'CookiePrefix' => '_demo',
+	),
 	'core' => array(
 		'Paths' => array(
 			'PackageRoot' => '..' . DIRECTORY_SEPARATOR . 'libraries' . DIRECTORY_SEPARATOR . 'packages', 
@@ -14,6 +16,7 @@ $cfg = array(
 		'SystemCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'sys', 
 	),
 	'debug' => array(
+		// 'Custom' => 'Debugger', // Set up your own new custom core
 		'Debug' => true, 
 		'LogRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'logs', 
 	),
@@ -21,7 +24,5 @@ $cfg = array(
 		'ObjectCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'objects', 
 	)
 );
-
-
 
 ?>

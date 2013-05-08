@@ -1,21 +1,21 @@
 <?php
 
-class faculaObject extends coreTemplate implements Core {
-	static private $facula = null;
-	
+interface faculaObjectInterface {
+	public function _inited();
+	public function get($type, $name, $new = false, $justinclude = false);
+	public function runHandler(&$app);
+}
+
+class faculaObject extends faculaCores implements Core, faculaObjectInterface {
 	static private $config = array(
 		'CacheSafeCode' => '<?php /* Facula Object Cache */ exit(); ?>',
 	);
-	
-	private $autoIncludedFiles = array();
 	
 	private $configs = array();
 	
 	private $loadedObjects = array();
 	
-	protected function __construct(&$cfg, $facula) {
-		self::$facula = $facula;
-		
+	protected function __construct(&$cfg, &$common, $facula) {
 		$this->configs = array(
 			'Paths' => $cfg['Paths'],
 			'ObjectCacheRoot' => isset($cfg['ObjectCacheRoot']) ? $cfg['ObjectCacheRoot'] : '',
@@ -36,15 +36,10 @@ class faculaObject extends coreTemplate implements Core {
 	private function getAutoClassFile($classfile) {
 		$classfile = strtolower($classfile);
 		
-		if (!isset($this->autoIncludedFiles[$classfile])) {
-			$this->autoIncludedFiles[$classfile] = true; // Suppose we already successed include the target file. Because, even we failed, i don't want to waste io to retry.
-			if (isset($this->configs['Paths']['alt.'.$classfile])) {
-				return require($this->configs['Paths']['alt.'.$classfile]['Path']);
-			} elseif (isset($this->configs['Paths']['base.'.$classfile])) {
-				return require($this->configs['Paths']['base.'.$classfile]['Path']);
-			}
-		} else {
-			return true;
+		if (isset($this->configs['Paths']['alt.'.$classfile])) {
+			return require_once($this->configs['Paths']['alt.'.$classfile]['Path']);
+		} elseif (isset($this->configs['Paths']['base.'.$classfile])) {
+			return require_once($this->configs['Paths']['base.'.$classfile]['Path']);
 		}
 		
 		return false;
@@ -108,8 +103,8 @@ class faculaObject extends coreTemplate implements Core {
 			init so it can be cached.
 			
 			But if data related to dynamic request like $_REQUEST or user session data, must not be deal in init.
-			For solve above problem, after handler has been success loaded, we will attempt call _inited(); method 
-			of the handler instance.
+			For give a chance to load dynamic request, after handler has been success loaded, we will attempt call _inited(); 
+			method in handler's instance.
 		*/
 		
 		if (!$handler = $this->loadHandlerFromCache($app)) {
