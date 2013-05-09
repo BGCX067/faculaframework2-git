@@ -6,7 +6,35 @@ interface faculaObjectInterface {
 	public function runHandler(&$app);
 }
 
-class faculaObject extends faculaCores implements Core, faculaObjectInterface {
+class faculaObject extends faculaCoreFactory {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
+	
+	static public function checkInstance($instance) {
+		if ($instance instanceof faculaObjectInterface) {
+			return true;
+		} else {
+			throw new Exception('Facula core ' . get_class($instance) . ' needs to implements interface \'faculaObjectInterface\'');
+		}
+		
+		return  false;
+	}
+}
+
+class faculaObjectDefault implements faculaObjectInterface {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
+
 	static private $config = array(
 		'CacheSafeCode' => '<?php /* Facula Object Cache */ exit(); ?>',
 	);
@@ -15,7 +43,7 @@ class faculaObject extends faculaCores implements Core, faculaObjectInterface {
 	
 	private $loadedObjects = array();
 	
-	protected function __construct(&$cfg, &$common, $facula) {
+	public function __construct(&$cfg, &$common, $facula) {
 		$this->configs = array(
 			'Paths' => $cfg['Paths'],
 			'ObjectCacheRoot' => isset($cfg['ObjectCacheRoot']) ? $cfg['ObjectCacheRoot'] : '',

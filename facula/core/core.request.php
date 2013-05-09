@@ -6,7 +6,27 @@ interface faculaRequestInterface {
 	public function gets($type, $keys, &$errors = array(), $failfalse = false);
 }
 
-class faculaRequest extends faculaCores implements Core, faculaRequestInterface {
+class faculaRequest extends faculaCoreFactory {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
+	
+	static public function checkInstance($instance) {
+		if ($instance instanceof faculaRequestInterface) {
+			return true;
+		} else {
+			throw new Exception('Facula core ' . get_class($instance) . ' needs to implements interface \'faculaRequestInterface\'');
+		}
+		
+		return  false;
+	}
+}
+
+class faculaRequestDefault implements faculaRequestInterface {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',
@@ -25,7 +45,7 @@ class faculaRequest extends faculaCores implements Core, faculaRequestInterface 
 	
 	public $method = 'GET';
 	
-	protected function __construct(&$cfg, &$common, $facula) {
+	public function __construct(&$cfg, &$common, $facula) {
 		if (function_exists('get_magic_quotes_gpc')) {
 			$this->configs['AutoMagicQuotes'] = get_magic_quotes_gpc();
 		}

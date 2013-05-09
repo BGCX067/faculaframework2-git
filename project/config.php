@@ -16,7 +16,7 @@ $cfg = array(
 		'SystemCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'sys', 
 	),
 	'debug' => array(
-		// 'Custom' => 'Debugger', // Set up your own new custom core
+		// 'Core' => 'Debugger', // Set up your own new custom core
 		'Debug' => true, 
 		'LogRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'logs', 
 	),

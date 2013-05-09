@@ -7,7 +7,27 @@ interface faculaResponseInterface {
 	public function setCookie($key, $val = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false);
 }
 
-class faculaResponse extends faculaCores implements Core, faculaResponseInterface {
+class faculaResponse extends faculaCoreFactory {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
+	
+	static public function checkInstance($instance) {
+		if ($instance instanceof faculaResponseInterface) {
+			return true;
+		} else {
+			throw new Exception('Facula core ' . get_class($instance) . ' needs to implements interface \'faculaResponseInterface\'');
+		}
+		
+		return  false;
+	}
+}
+
+class faculaResponseDefault implements faculaResponseInterface {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',

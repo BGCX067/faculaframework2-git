@@ -7,7 +7,7 @@ interface faculaDebugInterface {
 	public function exception($info, $type = '', $exit = false);
 }
 
-class faculaDebug extends faculaCores implements Core, faculaDebugInterface {
+class faculaDebug extends faculaCoreFactory {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',
@@ -16,15 +16,31 @@ class faculaDebug extends faculaCores implements Core, faculaDebugInterface {
 		'Version' => __FACULAVERSION__,
 	);
 	
-	static private $facula = null;
-	
+	static public function checkInstance($instance) {
+		if ($instance instanceof faculaDebugInterface) {
+			return true;
+		} else {
+			throw new Exception('Facula core ' . get_class($instance) . ' needs to implements interface \'faculaDebugInterface\'');
+		}
+		
+		return  false;
+	}
+}
+
+class faculaDebugDefault implements faculaDebugInterface {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
+
 	private $configs = array();
 	
 	private $errorHandler = null;
 	
-	protected function __construct($cfg, &$common, $facula) {
-		self::$facula = $facula;
-		
+	public function __construct($cfg, &$common) {
 		$this->configs = array(
 			'ExitOnAnyError' => isset($cfg['ExitOnAnyError']) ? $cfg['ExitOnAnyError'] : false,
 			'LogRoot' => isset($cfg['LogRoot']) && is_dir($cfg['LogRoot']) ? $cfg['LogRoot'] : '',

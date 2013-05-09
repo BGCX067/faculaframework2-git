@@ -1,6 +1,6 @@
 <?php 
 
-class handlerIndex extends Controller implements Handler {
+class handlerIndex extends Controller {
 	private $settings = array();
 	
 	// Read setting and essentials
@@ -10,14 +10,14 @@ class handlerIndex extends Controller implements Handler {
 	
 	// do some wakeup init
 	public function _inited() {
-		
+	
 	}
 	
-	public function get(faculaRequest &$request) {
+	public function get(&$request) {
 		echo "sadsad";
 	}
 	
-	public function post(faculaRequest &$request) {
+	public function post(&$request) {
 		echo "post";
 	}
 }
