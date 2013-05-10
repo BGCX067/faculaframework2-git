@@ -152,7 +152,7 @@ class facula {
 						self::$config['AutoIncludes'][] = $component['Path']; // Add path to auto include, so facula will auto include those file in every load circle
 						break;
 						
-					case 'routine':
+					case 'include':
 						require($component['Path']);
 						
 						self::$config['AutoIncludes'][] = $component['Path'];
@@ -193,7 +193,7 @@ class facula {
 		$files = $tempFiles = array();
 		
 		$directories = array(
-			'routine' => FACULA_ROOT . DIRECTORY_SEPARATOR . 'routine',
+			'includes' => FACULA_ROOT . DIRECTORY_SEPARATOR . 'includes',
 			'core' => FACULA_ROOT . DIRECTORY_SEPARATOR . 'core',
 			'base' => FACULA_ROOT . DIRECTORY_SEPARATOR . 'base',
 		);

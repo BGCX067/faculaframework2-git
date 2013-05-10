@@ -4,6 +4,9 @@ interface faculaRequestInterface {
 	public function _inited();
 	public function get($type, $key, &$errored = false);
 	public function gets($type, $keys, &$errors = array(), $failfalse = false);
+	public function getCookie($key, $val);
+	public function getPost($key, $val);
+	public function getGet($key, $val);
 }
 
 class faculaRequest extends faculaCoreFactory {
@@ -35,15 +38,27 @@ class faculaRequestDefault implements faculaRequestInterface {
 		'Version' => __FACULAVERSION__,
 	);
 	
+	static private $requestMethods = array(
+		'' => 'GET', // empty as default huh
+		'GET' => 'GET',
+		'POST' => 'POST',
+		'PUT' => 'PUT',
+		'HEAD' => 'HEAD'
+	);
+	
 	private $configs = array(
 		'MaxRequestSize' => 0,
 		'MaxRequestBlocks' => 0,
-		'AutoMagicQuotes' => false
+		'AutoMagicQuotes' => false,
+		'CookiePrefix' => 'facula_',
 	);
 	
 	private $pool = array();
 	
 	public $method = 'GET';
+	public $gzip = false;
+	public $language = 'en';
+	public $languages = array();
 	
 	public function __construct(&$cfg, &$common, $facula) {
 		if (function_exists('get_magic_quotes_gpc')) {
@@ -53,53 +68,24 @@ class faculaRequestDefault implements faculaRequestInterface {
 		if (isset($cfg['MaxRequestSize'])) { // give memory_limit * 0.8 because our app needs memory to run, so memory cannot be 100%ly use for save request data;
 			$this->configs['MaxRequestSize'] = min(
 													(int)$cfg['MaxRequestSize'],
-													$this->convertIniUnit(ini_get('post_max_size')), 
-													$this->convertIniUnit(ini_get('memory_limit')) * 0.8
+													tools::convertIniUnit(ini_get('post_max_size')), 
+													tools::convertIniUnit(ini_get('memory_limit')) * 0.8
 													);
 		} else {
 			$this->configs['MaxRequestSize'] = min(
-													$this->convertIniUnit(ini_get('post_max_size')), 
-													$this->convertIniUnit(ini_get('memory_limit')) * 0.8
+													tools::convertIniUnit(ini_get('post_max_size')), 
+													tools::convertIniUnit(ini_get('memory_limit')) * 0.8
 													);
 		}
 		
 		$this->configs['MaxRequestBlocks'] = isset($cfg['MaxRequestBlocks']) ? (int)$cfg['MaxRequestBlocks'] : 512; // We can handler up to 512 elements in _REQUEST array
 		
+		$this->configs['CookiePrefix'] = isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : '';
+		
 		$cfg = null;
 		unset($cfg);
 		
 		return true;
-	}
-	
-	private function convertIniUnit($str) {
-		$strLen = 0;
-		$lastChar = '';
-		
-		if (is_numeric($lastChar)) {
-			return (int)$str;
-		} else {
-			$strLen = strlen($str);
-			
-			if ($lastChar = $str[$strLen - 1]) {
-				$strSelected = substr($str, 0, $strLen - 1);
-				
-				switch(strtolower($lastChar)) {
-					case 'k':
-						return (int)$strSelected * 1024;
-						break;
-						
-					case 'm':
-						return (int)$strSelected * 1048576;
-						break;
-						
-					case 'g':
-						return (int)$strSelected * 1073741824;
-						break;
-				}
-			}
-		}
-		
-		return 0;
 	}
 	
 	public function _inited() {
@@ -118,16 +104,43 @@ class faculaRequestDefault implements faculaRequestInterface {
 			facula::core('debug')->exception('ERROR_REQUEST_SIZE_OVERLIMIT', 'limit', true);
 		}
 		
-		$this->method = $_SERVER['REQUEST_METHOD'];
+		$this->method = self::$requestMethods[$_SERVER['REQUEST_METHOD']]; // Determine the type of request method.
+		
+		if (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') != -1) { // Try to found out if our dear client support gzip
+			$this->gzip = true;
+		}
+		
+		if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+			$lang = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE'], 3); // No need to read all language that client has
+			
+			foreach($lang AS $language) {
+				$this->languages[] = trim(strtolower(explode(';', $language, 2)[0]));
+			}
+			
+			if (isset($this->languages[0])) {
+				$this->language = $this->languages[0];
+			}
+		}
 		
 		$this->pool = array(
-			'REQUEST' => &$_REQUEST,
 			'GET' => &$_GET,
 			'POST' => &$_POST,
 			'COOKIE' => &$_COOKIE,
 		);
 		
 		return true;
+	}
+	
+	public function getCookie($key, $val) {
+		return $this->get('COOKIE', $this->configs['CookiePrefix'] . $key, $val);
+	}
+	
+	public function getPost($key, $val) {
+		return $this->get('POST', $key, $val);
+	}
+	
+	public function getGet($key, $val) {
+		return $this->get('GET', $key, $val);
 	}
 	
 	public function get($type, $key, &$errored = false) {

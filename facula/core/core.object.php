@@ -3,6 +3,7 @@
 interface faculaObjectInterface {
 	public function _inited();
 	public function get($type, $name, $new = false, $justinclude = false);
+	public function getFile($type, $name);
 	public function runHandler(&$app);
 }
 
@@ -41,7 +42,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 	
 	private $configs = array();
 	
-	private $loadedObjects = array();
+	private $instances = array();
 	
 	public function __construct(&$cfg, &$common, $facula) {
 		$this->configs = array(
@@ -56,17 +57,15 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	public function _inited() {
-		spl_autoload_register(array(&$this, 'getAutoClassFile'));
+		spl_autoload_register(array(&$this, 'getAutoInclude'));
 		
 		return true;
 	}
 	
-	private function getAutoClassFile($classfile) {
+	private function getAutoInclude($classfile) {
 		$classfile = strtolower($classfile);
 		
-		if (isset($this->configs['Paths']['alt.'.$classfile])) {
-			return require_once($this->configs['Paths']['alt.'.$classfile]['Path']);
-		} elseif (isset($this->configs['Paths']['base.'.$classfile])) {
+		if (isset($this->configs['Paths']['base.'.$classfile])) {
 			return require_once($this->configs['Paths']['base.'.$classfile]['Path']);
 		}
 		
@@ -86,12 +85,12 @@ class faculaObjectDefault implements faculaObjectInterface {
 		$className = $type.$name;
 		$newobject = null;
 		
-		if (isset($this->configs['Paths'][$keyName])) {
-			if (!isset($this->loadedObjects[$keyName]['Loaded'])) { // If this is the first time we load this module
+		if (isset($this->configs['Paths'][$keyName])) { // isset obviously faster than $this->getFile call.
+			if (!isset($this->instances[$keyName]['Loaded'])) { // If this is the first time we load this module
 				// First of all, include file, If not success, return false
 				
 				if (include($this->configs['Paths'][$keyName]['Path'])) {
-					$this->loadedObjects[$keyName]['Loaded'] = true;
+					$this->instances[$keyName]['Loaded'] = true;
 					
 					if ($justinclude) {
 						return true;
@@ -101,19 +100,29 @@ class faculaObjectDefault implements faculaObjectInterface {
 				$new = true;
 			}
 			
-			if ($new && !isset($this->loadedObjects[$keyName][0])) {
+			if ($new || !isset($this->instances[$keyName][0])) { // If need to create a new instance OR this is the first time this one been create
 				if (class_exists($className)) {
 					$newobject = new $className($this->getObjectSetting($keyName));
 					
-					$this->loadedObjects[$keyName][] = $newobject;
+					$this->instances[$keyName][] = $newobject;
 					
 					return $newobject;
 				} else {
 					throw new Exception('Object ' . $className . ' cannot be found in file' . $this->configs['Paths'][$keyName]['Path']);
 				}
 			} else {
-				return $this->loadedObjects[$keyName][count($this->loadedObjects[$keyName]) - 1];
+				return $this->instances[$keyName][count($this->instances[$keyName]) - 1];
 			}
+		}
+		
+		return false;
+	}
+	
+	public function getFile($type, $name) {
+		$keyName = $type.'.'.strtolower($name);
+		
+		if (isset($this->configs['Paths'][$keyName])) {
+			return $this->configs['Paths'][$keyName];
 		}
 		
 		return false;
@@ -154,7 +163,6 @@ class faculaObjectDefault implements faculaObjectInterface {
 		}
 		
 		return $handler;
-		
 	}
 	
 	private function loadHandlerFromCache($handlerName) {
