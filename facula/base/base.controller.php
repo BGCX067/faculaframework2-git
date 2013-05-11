@@ -17,10 +17,17 @@ abstract class Controller implements handlerInterface {
 	public function _run() {
 		$request = facula::core('request');
 		
-		if ($request->method == 'POST') {
-			return $this->post($request);
-		} else {
-			return $this->get($request);
+		switch($request->getClientInfo('method')) {
+			case 'POST':
+				return $this->post($request);
+				
+			case 'GET':
+				return $this->get($request);
+				
+			default:
+				facula::core('response')->setHeader('HTTP/1.0 405 Method Not Allowed');
+				facula::core('response')->send();
+				return false;
 		}
 		
 		return false;

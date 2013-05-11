@@ -52,6 +52,9 @@ class faculaResponseDefault implements faculaResponseInterface {
 			'GZIPEnabled' => isset($cfg['UseGZIP']) && $cfg['UseGZIP'] && function_exists('gzcompress') ? true : false,
 		);
 		
+		$cfg = null;
+		unset($cfg);
+		
 		return true;
 	}
 	
@@ -60,9 +63,27 @@ class faculaResponseDefault implements faculaResponseInterface {
 		self::$headers[] = 'X-Powered-By: Facula Framework ' . __FACULAVERSION__;
 		self::$headers[] = 'Content-Type: text/html; charset=utf-8';
 		
-		if (facula::core('request')->gzip) {
+		if (facula::core('request')->getClientInfo('method')) {
 			$this->configs['UseGZIP'] = true;
 		}
+		
+		return true;
+	}
+	
+	public function send() {
+		ob_start();
+		
+		foreach(self::$headers AS $header) {
+			header($header);
+		}
+		
+		echo self::$content;
+		
+		ob_end_flush();
+		
+		// Belowing flush both needed.
+		ob_flush();
+		flush();
 		
 		return true;
 	}
@@ -82,22 +103,6 @@ class faculaResponseDefault implements faculaResponseInterface {
 		}
 		
 		self::$headers[] = 'Content-Length: '.strlen(self::$content);
-		
-		return true;
-	}
-	
-	public function send() {
-		ob_start();
-		
-		foreach(self::$headers AS $header) {
-			header($header);
-		}
-		
-		echo self::$content;
-		
-		ob_end_flush();
-		ob_flush();
-		flush();
 		
 		return true;
 	}

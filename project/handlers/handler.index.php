@@ -15,10 +15,11 @@ class handlerIndex extends Controller {
 	
 	public function get(&$request) {
 		$message = 'hello word';
+		echo $message;
 		
-		facula::core('response')->setContent($message);
+		//facula::core('response')->setContent($message);
 		
-		facula::core('response')->send();
+		//facula::core('response')->send();
 	}
 	
 	public function post(&$request) {

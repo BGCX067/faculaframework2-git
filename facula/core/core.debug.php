@@ -47,6 +47,9 @@ class faculaDebugDefault implements faculaDebugInterface {
 			'Debug' => isset($cfg['Debug']) && $cfg['Debug'] ? true : false,
 		);
 		
+		$cfg = null;
+		unset($cfg);
+		
 		return true;
 	}
 	

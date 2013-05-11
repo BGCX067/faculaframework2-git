@@ -24,7 +24,7 @@ $cfg = array(
 		'ObjectCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'objects', 
 	),	
 	'response' => array(
-		'UseGZIP' => true, 
+		'UseGZIP' => true,
 	)
 );
 

@@ -7,6 +7,7 @@ interface faculaRequestInterface {
 	public function getCookie($key, $val);
 	public function getPost($key, $val);
 	public function getGet($key, $val);
+	public function getClientInfo($key);
 }
 
 class faculaRequest extends faculaCoreFactory {
@@ -39,7 +40,6 @@ class faculaRequestDefault implements faculaRequestInterface {
 	);
 	
 	static private $requestMethods = array(
-		'' => 'GET', // empty as default huh
 		'GET' => 'GET',
 		'POST' => 'POST',
 		'PUT' => 'PUT',
@@ -55,10 +55,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 	
 	private $pool = array();
 	
-	public $method = 'GET';
-	public $gzip = false;
-	public $language = 'en';
-	public $languages = array();
+	public $requestInfo = array();
 	
 	public function __construct(&$cfg, &$common, $facula) {
 		if (function_exists('get_magic_quotes_gpc')) {
@@ -92,34 +89,40 @@ class faculaRequestDefault implements faculaRequestInterface {
 		global $_REQUEST, $_SERVER;
 		$totalRequestSize = 0;
 		
-		if ($this->configs['AutoMagicQuotes']) { // Impossible by now
+		if ($this->configs['AutoMagicQuotes']) { // Impossible by now, remove all slash code back
 			foreach($_REQUEST AS $key => $val) {
 				$_REQUEST[$key] = is_array($val) ? array_map('stripslashes', $val) : stripslashes($val);
 			}
 		}
 		
-		if (count($_REQUEST) > $this->configs['MaxRequestBlocks']) {
+		if (count($_REQUEST) + count($_COOKIE) > $this->configs['MaxRequestBlocks']) { // Sec check: Request and cookie array element cannot exceed this
 			facula::core('debug')->exception('ERROR_REQUEST_BLOCKS_OVERLIMIT', 'limit', true);
-		} elseif (isset($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > $this->configs['MaxRequestSize']) {
+		} elseif (isset($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > $this->configs['MaxRequestSize']) { // Sec check: Request size cannot large than this
 			facula::core('debug')->exception('ERROR_REQUEST_SIZE_OVERLIMIT', 'limit', true);
 		}
 		
-		$this->method = self::$requestMethods[$_SERVER['REQUEST_METHOD']]; // Determine the type of request method.
+		$this->requestInfo['method'] = isset(self::$requestMethods[$_SERVER['REQUEST_METHOD']]) ? self::$requestMethods[$_SERVER['REQUEST_METHOD']] : 'GET'; // Determine the type of request method.
 		
 		if (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') != -1) { // Try to found out if our dear client support gzip
-			$this->gzip = true;
+			$this->requestInfo['gzip'] = true;
+		} else {
+			$this->requestInfo['gzip'] = false;
 		}
 		
-		if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-			$lang = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE'], 3); // No need to read all language that client has
+		if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) { // Found out which language that client using
+			$lang = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE'], 3); // No need to read all languages that client has
 			
 			foreach($lang AS $language) {
-				$this->languages[] = trim(strtolower(explode(';', $language, 2)[0]));
+				$this->requestInfo['languages'][] = trim(strtolower(explode(';', $language, 2)[0]));
 			}
 			
-			if (isset($this->languages[0])) {
-				$this->language = $this->languages[0];
+			if (isset($this->requestInfo['languages'][0])) {
+				$this->requestInfo['language'] = $this->requestInfo['languages'][0];
 			}
+		}
+		
+		if ($this->requestInfo['ip'] = tools::getUserIP(null, true)) { // Get client IP
+			$this->requestInfo['ipArray'] = tools::splitIP($this->requestInfo['ip']);
 		}
 		
 		$this->pool = array(
@@ -129,6 +132,14 @@ class faculaRequestDefault implements faculaRequestInterface {
 		);
 		
 		return true;
+	}
+	
+	public function getClientInfo($key) {
+		if (isset($this->requestInfo[$key])) {
+			return $this->requestInfo[$key];
+		}
+		
+		return false;
 	}
 	
 	public function getCookie($key, $val) {
