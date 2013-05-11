@@ -63,7 +63,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 		self::$headers[] = 'X-Powered-By: Facula Framework ' . __FACULAVERSION__;
 		self::$headers[] = 'Content-Type: text/html; charset=utf-8';
 		
-		if (facula::core('request')->getClientInfo('method')) {
+		if (facula::core('request')->getClientInfo('gzip')) {
 			$this->configs['UseGZIP'] = true;
 		}
 		
