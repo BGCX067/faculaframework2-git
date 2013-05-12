@@ -274,25 +274,26 @@ class facula {
 	private function getModulesFromPath($directory) {
 		$modules = array();
 		$moduleFilenames = $tempModuleFilenames = array();
-		$moduleFilenamesLen = 0;
 		
 		$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(realpath($directory), FilesystemIterator::SKIP_DOTS));
 		
 		foreach($iterator AS $file) {
 			if ($file->isFile()) {
 				$moduleFilenames = explode('.', $file->getFilename());
-				$moduleFilenamesLen = count($moduleFilenames);
 				
-				switch($moduleFilenamesLen) {
+				switch(count($moduleFilenames)) {
 					case 1:
 						$modules[] = array(
+							'Prefix' => null,
 							'Name' => $moduleFilenames[0],
+							'Ext' => null,
 							'Path' => $file->getPathname()
 						);
 						break;
 						
 					case 2:
 						$modules[] = array(
+							'Prefix' => null,
 							'Name' => $moduleFilenames[0],
 							'Ext' => $moduleFilenames[1],
 							'Path' => $file->getPathname()

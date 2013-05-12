@@ -21,6 +21,7 @@ $cfg = array(
 		'LogRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'logs', 
 	),
 	'object' => array(
+		'LibRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'libraries', 
 		'ObjectCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'objects', 
 	),	
 	'response' => array(

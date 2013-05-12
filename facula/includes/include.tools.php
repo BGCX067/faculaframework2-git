@@ -58,19 +58,7 @@ abstract class tools {
 	}
 	
 	static public function splitIP($ip) {
-		$ipv4 = array(); $ipv6 = array();
-		
-		$ipv4 = explode('.', $ip, 10);
-		if (!isset($ipv4[1])) {
-			$ipv6 = explode(':', $ip, 10);
-			if (isset($ipv6[1]) && !isset($ipv6[8])) {
-				return $ipv6;
-			}
-		} elseif (!isset($ipv4[4])) {
-			return $ipv4;
-		}
-		
-		return array(0, 0, 0, 0);
+		return explode(':', str_replace('.', ':', $ip), 7); // Max is 7 for a IP addr
 	}
 	
 	static public function joinIP($ip, $mask = false) {

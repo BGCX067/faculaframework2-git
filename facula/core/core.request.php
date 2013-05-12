@@ -40,10 +40,15 @@ class faculaRequestDefault implements faculaRequestInterface {
 	);
 	
 	static private $requestMethods = array(
-		'GET' => 'GET',
-		'POST' => 'POST',
-		'PUT' => 'PUT',
-		'HEAD' => 'HEAD'
+		'GET' => 'get',
+		'POST' => 'post',
+		'PUT' => 'put',
+		'HEAD' => 'head',
+		'DELETE' => 'delete',
+		'TRACE' => 'trace',
+		'OPTIONS' => 'options',
+		'CONNECT' => 'connect',
+		'PATCH' => 'patch'
 	);
 	
 	private $configs = array(
@@ -101,7 +106,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 			facula::core('debug')->exception('ERROR_REQUEST_SIZE_OVERLIMIT', 'limit', true);
 		}
 		
-		$this->requestInfo['method'] = isset(self::$requestMethods[$_SERVER['REQUEST_METHOD']]) ? self::$requestMethods[$_SERVER['REQUEST_METHOD']] : 'GET'; // Determine the type of request method.
+		$this->requestInfo['method'] = isset(self::$requestMethods[$_SERVER['REQUEST_METHOD']]) ? self::$requestMethods[$_SERVER['REQUEST_METHOD']] : 'get'; // Determine the type of request method.
 		
 		if (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') != -1) { // Try to found out if our dear client support gzip
 			$this->requestInfo['gzip'] = true;

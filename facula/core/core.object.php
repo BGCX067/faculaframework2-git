@@ -48,6 +48,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		$this->configs = array(
 			'Paths' => $cfg['Paths'],
 			'ObjectCacheRoot' => isset($cfg['ObjectCacheRoot']) ? $cfg['ObjectCacheRoot'] : '',
+			'LibRoot' => isset($cfg['LibRoot']) && is_dir($cfg['LibRoot']) ? $cfg['LibRoot'] : '',
 		);
 		
 		$cfg = null;
@@ -63,10 +64,12 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	private function getAutoInclude($classfile) {
-		$classfile = strtolower($classfile);
+		$classfileLower = strtolower($classfile);
 		
-		if (isset($this->configs['Paths']['base.'.$classfile])) {
-			return require_once($this->configs['Paths']['base.'.$classfile]['Path']);
+		if (isset($this->configs['Paths']['base.'.$classfileLower])) { // Use path scope to locate file first
+			return require_once($this->configs['Paths']['base.'.$classfileLower]['Path']);
+		} elseif ($this->configs['LibRoot'] && strpos('\\', $classfile) != -1) { // If above not work, use namespace to locate file
+			return require_once($this->configs['LibRoot'] . DIRECTORY_SEPARATOR . str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, ltrim($classfile, '\\')) . '.php');
 		}
 		
 		return false;

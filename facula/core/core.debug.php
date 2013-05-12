@@ -97,7 +97,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 		if ($this->errorHandler) {
 			$this->errorHandler($info, $this->configs['Debug'], $this->backtrace(), $exit);
 		} else {
-			$this->displayErrorBanner(new Exception($info), false, 2);
+			$this->displayErrorBanner(new Exception($info), false, 0);
 		}
 		
 		$this->addLog($type ? $type : 'Exception', $info);
@@ -159,9 +159,9 @@ class faculaDebugDefault implements faculaDebugInterface {
 		return false;
 	}
 	
-	private function backtrace() {
+	private function backtrace($e = null) {
 		$result = array();
-		$trace = debug_backtrace();
+		$trace = $e ? $e->getTrace() : debug_backtrace();
 		
 		array_shift($trace);
 		
@@ -193,7 +193,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 		$code = '';
 		
 		if ($this->configs['Debug']) {
-			$backtraces = array_reverse($this->backtrace());
+			$backtraces = array_reverse($this->backtrace($e));
 			$traceSize = count($backtraces);
 			$traceCallerOffset = $traceSize - ($callerOffset < $traceSize ? $callerOffset : 0);
 			$tracesLoop = 0;

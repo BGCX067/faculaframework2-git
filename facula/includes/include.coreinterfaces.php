@@ -13,7 +13,7 @@ abstract class faculaCoreFactory implements coreInterface {
 	
 	static public final function getInstance(&$cfg, $commonCfg, facula $parent) {
 		$caller = get_called_class();
-		// If $cfg['Custom'] has beed set, means user wants to use their own core instead of default
+		// If $cfg['Core'] has beed set, means user wants to use their own core instead of default one
 		$class = $caller . (isset($cfg['Core'][0]) ? $cfg['Core'] : 'Default');
 		
 		if (!isset(self::$instances[$class])) {
@@ -24,6 +24,8 @@ abstract class faculaCoreFactory implements coreInterface {
 			// Create and check new instance
 			if ($caller::checkInstance(self::$instances[$class] = new $class($cfg, $commonCfg, $parent))) {
 				return self::$instances[$class];
+			} else {
+				throw new Exception('An error happened when facula creating core ' . $class . '.');
 			}
 		}
 		
