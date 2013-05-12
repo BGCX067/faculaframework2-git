@@ -66,8 +66,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 	private function getAutoInclude($classfile) {
 		$classfileLower = strtolower($classfile);
 		
-		if (isset($this->configs['Paths']['base.'.$classfileLower])) { // Use path scope to locate file first
-			return require_once($this->configs['Paths']['base.'.$classfileLower]['Path']);
+		if (isset($this->configs['Paths']['base.' . $classfileLower])) { // Use path scope to locate file first
+			return require_once($this->configs['Paths']['base.' . $classfileLower]['Path']);
 		} elseif ($this->configs['LibRoot'] && strpos('\\', $classfile) != -1) { // If above not work, use namespace to locate file
 			return require_once($this->configs['LibRoot'] . DIRECTORY_SEPARATOR . str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, ltrim($classfile, '\\')) . '.php');
 		}
@@ -84,8 +84,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	public function get($type, $name, $new = false, $justinclude = false) {
-		$keyName = $type.'.'.strtolower($name);
-		$className = $type.$name;
+		$keyName = $type . '.' . strtolower($name);
+		$className = $type . $name;
 		$newobject = null;
 		
 		if (isset($this->configs['Paths'][$keyName])) { // isset obviously faster than $this->getFile call.

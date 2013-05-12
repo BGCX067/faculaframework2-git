@@ -9,6 +9,8 @@ define('__FACULAVERSION__', '2 Prototype 0.0');
 define('FACULA_ROOT', dirname(__FILE__));
 define('PROJECT_ROOT', realpath('.'));
 
+define('FACULA_TIME', isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time()); // Unified and unchanged timestamp for this thread. Use this is recommended.
+
 class facula {
 	static public $plate = array(
 		'Author' => 'Rain Lee',

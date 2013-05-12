@@ -4,7 +4,7 @@ $cfg = array(
 	'AppName' => 'Facula Demo', 
 	'AppVersion' => '1.0', 
 	'Common' => array(
-		'CookiePrefix' => '_demo',
+		'CookiePrefix' => '_demo_',
 	),
 	'core' => array(
 		'Paths' => array(
@@ -26,6 +26,7 @@ $cfg = array(
 	),	
 	'response' => array(
 		'UseGZIP' => true,
+		'CookieExpireDefault' => 3600,
 	)
 );
 

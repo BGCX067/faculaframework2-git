@@ -17,9 +17,17 @@ class handlerIndex extends Controller {
 		$message = 'hello word';
 		echo $message;
 		
-		//facula::core('response')->setContent($message);
 		
-		//facula::core('response')->send();
+		
+		// facula::core('response')->setCookie('COOKIENEW2', 'asdasdsadsad');
+		
+		// echo facula::core('request')->getCookie('COOKIENEW2');
+		
+		// facula::core('response')->send();
+		
+		// facula::core('response')->setContent($message);
+		
+		// facula::core('response')->send();
 	}
 	
 	public function post(&$request) {

@@ -4,9 +4,9 @@ interface faculaRequestInterface {
 	public function _inited();
 	public function get($type, $key, &$errored = false);
 	public function gets($type, $keys, &$errors = array(), $failfalse = false);
-	public function getCookie($key, $val);
-	public function getPost($key, $val);
-	public function getGet($key, $val);
+	public function getCookie($key);
+	public function getPost($key);
+	public function getGet($key);
 	public function getClientInfo($key);
 }
 
@@ -130,6 +130,12 @@ class faculaRequestDefault implements faculaRequestInterface {
 			$this->requestInfo['ipArray'] = tools::splitIP($this->requestInfo['ip']);
 		}
 		
+		if ($_SERVER['SERVER_PORT'] == 443) {
+			$this->requestInfo['https'] = true; 
+		} else {
+			$this->requestInfo['https'] = false; 
+		}
+		
 		$this->pool = array(
 			'GET' => &$_GET,
 			'POST' => &$_POST,
@@ -147,21 +153,20 @@ class faculaRequestDefault implements faculaRequestInterface {
 		return false;
 	}
 	
-	public function getCookie($key, $val) {
-		return $this->get('COOKIE', $this->configs['CookiePrefix'] . $key, $val);
+	public function getCookie($key) {
+		return $this->get('COOKIE', $this->configs['CookiePrefix'] . $key);
 	}
 	
-	public function getPost($key, $val) {
-		return $this->get('POST', $key, $val);
+	public function getPost($key) {
+		return $this->get('POST', $key);
 	}
 	
-	public function getGet($key, $val) {
-		return $this->get('GET', $key, $val);
+	public function getGet($key) {
+		return $this->get('GET', $key);
 	}
 	
 	public function get($type, $key, &$errored = false) {
-		$type = strtoupper($type);
-		
+		// Yeah, originally there we have a strtoupper here, But consider i'm not doing nurse, why i do that waste that function call for lazyer?
 		if (isset($this->pool[$type][$key])) {
 			return $this->pool[$type][$key];
 		} else {
@@ -173,7 +178,6 @@ class faculaRequestDefault implements faculaRequestInterface {
 	
 	public function gets($type, $keys, &$errors = array(), $failfalse = false) {
 		$result = array();
-		$type = strtoupper($type);
 		
 		if (is_array($keys)) {
 			foreach($keys AS $key) {
