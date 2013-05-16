@@ -7,6 +7,13 @@ $cfg = array(
 		'CookiePrefix' => '_demo_',
 	),
 	'core' => array(
+		'Enables' => array(
+						'debug', 
+						'object', 
+						'request', 
+						'response',
+						'pdo'
+						),
 		'Paths' => array(
 			'PackageRoot' => '..' . DIRECTORY_SEPARATOR . 'libraries' . DIRECTORY_SEPARATOR . 'packages', 
 			'AlternativeRoot' => '..' . DIRECTORY_SEPARATOR . 'libraries' . DIRECTORY_SEPARATOR . 'alternatives', 
@@ -27,7 +34,60 @@ $cfg = array(
 	'response' => array(
 		'UseGZIP' => true,
 		'CookieExpireDefault' => 3600,
-	)
+	),
+	'pdo' => array(
+		'DefaultTimeout' => 3,
+		'SelectMethod' => 'Normal', 
+		/* SelectMethod: 
+			Normal: All database is connectable
+			Table: Connect to one of database which contains specified table
+			Operation: Connect to one of database which allow specified operation
+			TableOperation: Connect to one of database which not just allow specified operation but also contains specified table
+		*/
+		'PriorMethod' => 'Balance', 
+		/* PriorMethod: 
+			Balance: App will randomly connect any server in databases array for traffic dividing. 
+			Redundance: App will connect servers one by one from the top of the array until one server is connected.
+		*/
+		'DatabaseGroup' => array(
+			array(
+				'Driver' => 'mysql',
+				'Connection' => 'host',
+				'Host' => 'database-host',
+				'Prefix' => 'demo_',
+				'Database' => 'databasenotfound',
+				'Tables' => array('settings'),
+				'Username' => 'databasenotfound',
+				'Password' => 'databasenotfound',
+				'Operates' => array('Read', 'Write'), // Read: read, Write: write
+				'Timeout' => 1
+			),
+			array(
+				'Driver' => 'mysql',
+				'Connection' => 'host',
+				'Host' => '127.0.0.1',
+				'Prefix' => 'demo_',
+				'Database' => 'facula2demo1',
+				'Tables' => array('settings'),
+				'Username' => 'facula2demo1',
+				'Password' => 'facula2demo1',
+				'Operates' => array('Read', 'Write'),
+				'Timeout' => 1
+			),
+			array(
+				'Driver' => 'mysql',
+				'Connection' => 'host',
+				'Host' => '127.0.0.1',
+				'Prefix' => 'demo_',
+				'Database' => 'facula2demo2',
+				'Tables' => array('settings'),
+				'Username' => 'facula2demo2',
+				'Password' => 'facula2demo2',
+				'Operates' => array('Read', 'Write'),
+				'Timeout' => 1
+			),
+		),
+	),
 );
 
 ?>

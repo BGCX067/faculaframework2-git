@@ -1,8 +1,7 @@
 <?php 
 
 interface handlerInterface {
-	public function get(&$request);
-	public function post(&$request);
+
 }
 
 abstract class Controller implements handlerInterface {

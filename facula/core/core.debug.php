@@ -5,6 +5,7 @@ interface faculaDebugInterface {
 	public function registerHandler($handler);
 	public function error($errno, $errstr, $errfile, $errline, $errcontext);
 	public function exception($info, $type = '', $exit = false);
+	public function criticalSection($enter);
 }
 
 class faculaDebug extends faculaCoreFactory {
@@ -35,12 +36,14 @@ class faculaDebugDefault implements faculaDebugInterface {
 		'Contact' => 'raincious@gmail.com',
 		'Version' => __FACULAVERSION__,
 	);
-
+	
+	private $tempDisabled = false;
+	
 	private $configs = array();
 	
 	private $errorHandler = null;
 	
-	public function __construct($cfg, &$common) {
+	public function __construct(&$cfg, &$common) {
 		$this->configs = array(
 			'ExitOnAnyError' => isset($cfg['ExitOnAnyError']) ? $cfg['ExitOnAnyError'] : false,
 			'LogRoot' => isset($cfg['LogRoot']) && is_dir($cfg['LogRoot']) ? $cfg['LogRoot'] : '',
@@ -89,21 +92,33 @@ class faculaDebugDefault implements faculaDebugInterface {
 		}
 	}
 	
+	public function criticalSection($enter) {
+		if ($enter) {
+			$this->tempDisabled = true;
+		} else {
+			$this->tempDisabled = false;
+		}
+		
+		return true;
+	}
+	
 	public function error($errno, $errstr, $errfile, $errline, $errcontext) {
 		$this->exception(sprintf('Error code %s (%s) in file %s line %s', 'PHP('.$errno.')', $errstr, $errfile, $errline), 'PHP', $this->configs['ExitOnAnyError']);
 	}
 	
 	public function exception($info, $type = '', $exit = false) {
-		if ($this->errorHandler) {
-			$this->errorHandler($info, $this->configs['Debug'], $this->backtrace(), $exit);
-		} else {
-			$this->displayErrorBanner(new Exception($info), false, 0);
-		}
-		
 		$this->addLog($type ? $type : 'Exception', $info);
 		
-		if ($exit) {
-			exit();
+		if (!$this->tempDisabled) {
+			if ($this->errorHandler) {
+				$this->errorHandler($info, $this->configs['Debug'], $this->backtrace(), $exit);
+			} else {
+				$this->displayErrorBanner(new Exception($info), false, 0);
+			}
+			
+			if ($exit) {
+				exit();
+			}
 		}
 		
 		return true;

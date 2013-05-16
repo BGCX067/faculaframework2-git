@@ -77,7 +77,7 @@ class facula {
 		if (isset(self::$instance->coreInstances[$coreName])) {
 			return self::$instance->coreInstances[$coreName];
 		} else {
-			throw new Exception('Cannot found core ' . $coreName);
+			throw new Exception('Cannot obtain core ' . $coreName . '. The core may not exists or loadable.');
 		}
 		
 		return false;
@@ -148,10 +148,13 @@ class facula {
 			foreach(self::$config['ComponentInfo'] AS $keyn => $component) {
 				switch($component['Type']) {
 					case 'core':
-						require($component['Path']);
+						if (!isset($cfg['core']['Enables']) || in_array($component['Name'], $cfg['core']['Enables'])) {
+							require($component['Path']);
+							
+							self::$config['AutoCores'][] = $component;
+							self::$config['AutoIncludes'][] = $component['Path']; // Add path to auto include, so facula will auto include those file in every load circle
+						}
 						
-						self::$config['AutoCores'][] = $component;
-						self::$config['AutoIncludes'][] = $component['Path']; // Add path to auto include, so facula will auto include those file in every load circle
 						break;
 						
 					case 'include':
