@@ -50,24 +50,34 @@ $cfg = array(
 				'Driver' => 'mysql',
 				'Connection' => 'host',
 				'Host' => '127.0.0.1',
+				'Port' => '3306',
 				'Prefix' => 'demo_',
 				'Database' => 'facula2demo1',
 				'Tables' => array('settings'),
 				'Username' => 'facula2demo1',
 				'Password' => 'facula2demo1',
 				'Operates' => array('Write'),
+				'Options' => array(
+					PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8'
+				),
+				'Persistent' => false,
 				'Timeout' => 1
 			),
 			array(
 				'Driver' => 'mysql',
 				'Connection' => 'host',
 				'Host' => '127.0.0.1',
+				'Port' => '3306',
 				'Prefix' => 'demo_',
 				'Database' => 'facula2demo2',
 				'Tables' => array('settings'),
 				'Username' => 'facula2demo2',
 				'Password' => 'facula2demo2',
 				'Operates' => array('Read'),
+				'Options' => array(
+					PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8'
+				),
+				'Persistent' => false,
 				'Timeout' => 1
 			),
 		),
