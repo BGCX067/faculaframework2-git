@@ -323,8 +323,8 @@ class faculaPdoDefault implements faculaPdoInterface {
 	
 	public function doPDOReconnect(&$dbh, &$error) {
 		if (isset($dbh->_connection)) {
-			if (isset($this->map['DBConn'][$dbIndex]['Connection'])) {
-				unset($this->map['DBConn'][$dbIndex]['Connection']);
+			if (isset($this->map['DBConn'][$dbh->_connection['Database']['ID']]['Connection'])) {
+				unset($this->map['DBConn'][$dbh->_connection['Database']['ID']]['Connection']);
 			}
 			
 			if ($dbh = $this->doPDOConnect($dbh->_connection['Database']['ID'], $error)) {
