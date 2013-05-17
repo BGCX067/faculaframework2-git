@@ -66,8 +66,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 	private function getAutoInclude($classfile) {
 		$classfileLower = strtolower($classfile);
 		
-		if (isset($this->configs['Paths']['base.' . $classfileLower])) { // Use path scope to locate file first
-			return require_once($this->configs['Paths']['base.' . $classfileLower]['Path']);
+		if (isset($this->configs['Paths']['class.' . $classfileLower])) { // Use path scope to locate file first
+			return require_once($this->configs['Paths']['class.' . $classfileLower]['Path']);
 		} elseif ($this->configs['LibRoot'] && strpos('\\', $classfile) != -1) { // If above not work, use namespace to locate file
 			return require_once($this->configs['LibRoot'] . DIRECTORY_SEPARATOR . str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, ltrim($classfile, '\\')) . '.php');
 		}

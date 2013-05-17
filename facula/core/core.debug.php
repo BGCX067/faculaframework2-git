@@ -6,6 +6,7 @@ interface faculaDebugInterface {
 	public function error($errno, $errstr, $errfile, $errline, $errcontext);
 	public function exception($info, $type = '', $exit = false);
 	public function criticalSection($enter);
+	public function addLog($type, $content);
 }
 
 class faculaDebug extends faculaCoreFactory {
@@ -58,12 +59,12 @@ class faculaDebugDefault implements faculaDebugInterface {
 	
 	public function _inited() {
 		error_reporting(E_ALL ^ E_NOTICE); // Mute php error reporter, yes, E_ALL ^ E_NOTICE is good enough.
-		set_error_handler(array(&$this, 'error')); // Use our own error reporter
+		set_error_handler(array(&$this, 'error'), E_ALL); // Use our own error reporter, just like PHP's E_ALL
 		
 		return true;
 	}
 	
-	private function addLog($type, $content) {
+	public function addLog($type, $content) {
 		global $_SERVER;
 		
 		if ($this->configs['LogRoot']) {
@@ -115,10 +116,10 @@ class faculaDebugDefault implements faculaDebugInterface {
 			} else {
 				$this->displayErrorBanner(new Exception($info), false, 0);
 			}
-			
-			if ($exit) {
-				exit();
-			}
+		}
+		
+		if ($exit) { // You can exit anyway no matter status of $this->tempDisabled
+			exit();
 		}
 		
 		return true;

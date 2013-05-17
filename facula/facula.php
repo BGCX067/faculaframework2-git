@@ -145,6 +145,12 @@ class facula {
 			// First, save Autoloads pool to object setting for future use
 			
 			// include core (with init) and routine files
+			if (isset($cfg['core']['Enables'])) {
+				$cfg['core']['Enables'] = array_merge(array('debug', 'object', 'request', 'response'), $cfg['core']['Enables']);
+			} else {
+				$cfg['core']['Enables'] = array('debug', 'object', 'request', 'response');
+			}
+			
 			foreach(self::$config['ComponentInfo'] AS $keyn => $component) {
 				switch($component['Type']) {
 					case 'core':
@@ -200,7 +206,7 @@ class facula {
 		$directories = array(
 			'includes' => FACULA_ROOT . DIRECTORY_SEPARATOR . 'includes',
 			'core' => FACULA_ROOT . DIRECTORY_SEPARATOR . 'core',
-			'base' => FACULA_ROOT . DIRECTORY_SEPARATOR . 'base',
+			'libraries' => FACULA_ROOT . DIRECTORY_SEPARATOR . 'libraries',
 		);
 		
 		if (isset($this->setting['core']['Paths']) && is_array($this->setting['core']['Paths'])) {

@@ -6,6 +6,7 @@ interface faculaResponseInterface {
 	public function setContent(&$content);
 	public function send();
 	public function setCookie($key, $val = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false);
+	public function unsetCookie($key);
 }
 
 class faculaResponse extends faculaCoreFactory {

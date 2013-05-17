@@ -8,11 +8,7 @@ $cfg = array(
 	),
 	'core' => array(
 		'Enables' => array(
-						'debug', 
-						'object', 
-						'request', 
-						'response',
-						'pdo'
+						'pdo',
 						),
 		'Paths' => array(
 			'PackageRoot' => '..' . DIRECTORY_SEPARATOR . 'libraries' . DIRECTORY_SEPARATOR . 'packages', 
@@ -37,12 +33,12 @@ $cfg = array(
 	),
 	'pdo' => array(
 		'DefaultTimeout' => 3,
-		'SelectMethod' => 'Normal', 
+		'SelectMethod' => 'Table+Operation', 
 		/* SelectMethod: 
 			Normal: All database is connectable
 			Table: Connect to one of database which contains specified table
 			Operation: Connect to one of database which allow specified operation
-			TableOperation: Connect to one of database which not just allow specified operation but also contains specified table
+			Table+Operation: Connect to one of database which not just allow specified operation but also contains specified table
 		*/
 		'PriorMethod' => 'Balance', 
 		/* PriorMethod: 
@@ -53,25 +49,13 @@ $cfg = array(
 			array(
 				'Driver' => 'mysql',
 				'Connection' => 'host',
-				'Host' => 'database-host',
-				'Prefix' => 'demo_',
-				'Database' => 'databasenotfound',
-				'Tables' => array('settings'),
-				'Username' => 'databasenotfound',
-				'Password' => 'databasenotfound',
-				'Operates' => array('Read', 'Write'), // Read: read, Write: write
-				'Timeout' => 1
-			),
-			array(
-				'Driver' => 'mysql',
-				'Connection' => 'host',
 				'Host' => '127.0.0.1',
 				'Prefix' => 'demo_',
 				'Database' => 'facula2demo1',
 				'Tables' => array('settings'),
 				'Username' => 'facula2demo1',
 				'Password' => 'facula2demo1',
-				'Operates' => array('Read', 'Write'),
+				'Operates' => array('Write'),
 				'Timeout' => 1
 			),
 			array(
@@ -83,7 +67,7 @@ $cfg = array(
 				'Tables' => array('settings'),
 				'Username' => 'facula2demo2',
 				'Password' => 'facula2demo2',
-				'Operates' => array('Read', 'Write'),
+				'Operates' => array('Read'),
 				'Timeout' => 1
 			),
 		),
