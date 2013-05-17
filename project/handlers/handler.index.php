@@ -19,11 +19,11 @@ class handlerIndex extends Controller {
 		
 		$pdoInfo = facula::core('pdo')->getConnection(array('Table' => 'settings', 'Operation' => 'Read'));
 		$pdoInfo2 = facula::core('pdo')->getConnection(array('Table' => 'settings', 'Operation' => 'Write'));
-		
+		/*
 		if ($result = $pdoInfo->query("SELECT * FROM `settings`")) {
 			print_r($result->fetchAll(PDO::FETCH_ASSOC));
 		}
-		
+		*/
 		// facula::core('response')->setCookie('COOKIENEW2', 'asdasdsadsad');
 		
 		// echo facula::core('request')->getCookie('COOKIENEW2');
