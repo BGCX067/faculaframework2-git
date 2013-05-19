@@ -3,8 +3,7 @@
 interface faculaDebugInterface {
 	public function _inited();
 	public function registerHandler($handler);
-	public function error($errno, $errstr, $errfile, $errline, $errcontext);
-	public function exception($info, $type = '', $exit = false);
+	public function exception($info, $type = '', $exit = false, Exception $e = null);
 	public function criticalSection($enter);
 	public function addLog($type, $content);
 }
@@ -58,8 +57,9 @@ class faculaDebugDefault implements faculaDebugInterface {
 	}
 	
 	public function _inited() {
-		error_reporting(E_ALL ^ E_NOTICE); // Mute php error reporter, yes, E_ALL ^ E_NOTICE is good enough.
-		set_error_handler(array(&$this, 'error'), E_ALL); // Use our own error reporter, just like PHP's E_ALL
+		set_error_handler(array(&$this, 'error_handler'), E_ALL); // Use our own error reporter, just like PHP's E_ALL
+		set_exception_handler(array(&$this, 'exception_handler')); // Use our own error reporter, just like PHP's E_ALL
+		error_reporting(E_ERROR | E_PARSE); // Mute php error reporter, except E_ERROR and E_PARSE
 		
 		return true;
 	}
@@ -103,18 +103,27 @@ class faculaDebugDefault implements faculaDebugInterface {
 		return true;
 	}
 	
-	public function error($errno, $errstr, $errfile, $errline, $errcontext) {
+	public function error_handler($errno, $errstr, $errfile, $errline, $errcontext) {
 		$this->exception(sprintf('Error code %s (%s) in file %s line %s', 'PHP('.$errno.')', $errstr, $errfile, $errline), 'PHP', $this->configs['ExitOnAnyError']);
+	}	
+	
+	public function exception_handler($exception) {
+		$this->exception('Exception: ' . $exception->getMessage(), 'Exception', true, $exception);
 	}
 	
-	public function exception($info, $type = '', $exit = false) {
+	public function exception($info, $type = '', $exit = false, Exception $e = null) {
 		$this->addLog($type ? $type : 'Exception', $info);
 		
 		if (!$this->tempDisabled) {
 			if ($this->errorHandler) {
 				$this->errorHandler($info, $this->configs['Debug'], $this->backtrace(), $exit);
 			} else {
-				$this->displayErrorBanner(new Exception($info), false, 0);
+				if ($e) {
+					$this->displayErrorBanner($e, false, 0);
+				} else {
+					$this->displayErrorBanner(new Exception($info), false, 2);
+				}
+				
 			}
 		}
 		
@@ -177,15 +186,19 @@ class faculaDebugDefault implements faculaDebugInterface {
 	
 	private function backtrace($e = null) {
 		$result = array();
-		$trace = $e ? $e->getTrace() : debug_backtrace();
 		
-		array_shift($trace);
+		if ($e) {
+			$trace = $e->getTrace();
+		} else {
+			$trace = debug_backtrace();
+			array_shift($trace);
+		}
 		
 		foreach ($trace as $key => $val) {
 			$result[] = array(
 				'caller' => (isset($val['class']) ? $val['class'] . (isset($val['type']) ? $val['type'] : '::') : '') . (isset($val['function']) ? $val['function'] . '(' : 'main (') . (isset($val['args']) ? $this->getArgsType(', ', $val['args']) : '') . ')',
-				'file' => $val['file'],
-				'line' => $val['line'],
+				'file' => isset($val['file']) ? $val['file'] : null,
+				'line' => isset($val['line']) ? $val['line'] : null,
 				'nameplate' => isset($val['class']) && isset($val['class']::$plate) ? array(
 					'author' => isset($val['class']::$plate['Author'][0]) ? $val['class']::$plate['Author'] : 'Undeclared',
 					'reviser' => isset($val['class']::$plate['Reviser'][0]) ? $val['class']::$plate['Reviser'] : 'Undeclared',

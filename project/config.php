@@ -11,9 +11,7 @@ $cfg = array(
 						'pdo',
 						),
 		'Paths' => array(
-			'PackageRoot' => '..' . DIRECTORY_SEPARATOR . 'libraries' . DIRECTORY_SEPARATOR . 'packages',  
-			'Libraries' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'libraries', 
-			'HandlerRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'handlers',
+			'Components' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components',
 		),
 		'SystemCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'sys', 
 	),
@@ -23,7 +21,7 @@ $cfg = array(
 		'LogRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'logs', 
 	),
 	'object' => array(
-		'LibrariesRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'libraries', 
+		'LibrariesRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'project' . DIRECTORY_SEPARATOR . 'components', 
 		'ObjectCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'objects', 
 	),	
 	'response' => array(

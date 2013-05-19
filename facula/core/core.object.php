@@ -115,6 +115,10 @@ class faculaObjectDefault implements faculaObjectInterface {
 		
 		if (class_exists($object)) {
 			if ($cache && ($newinstance = $this->loadObjectFromCache($object))) {
+				if (method_exists($newinstance, '_inited')) {
+					$newinstance->_inited();
+				}
+				
 				return $newinstance;
 			} else {
 				switch(count($ags)) {
@@ -163,8 +167,14 @@ class faculaObjectDefault implements faculaObjectInterface {
 						break;
 				}
 				
+				// Save first
 				if ($cache) {
 					$this->saveObjectToCache($object, $newinstance);
+				}
+				
+				// Then call inited to notify object we already done init
+				if (method_exists($newinstance, '_inited')) {
+					$newinstance->_inited();
 				}
 				
 				return $newinstance;
@@ -198,10 +208,6 @@ class faculaObjectDefault implements faculaObjectInterface {
 			
 			if ($new) { // If need to create a new instance
 				if ($newobject = $this->getInstance($className, array($this->getObjectSetting($className)), $cache)) {
-					if (method_exists($newobject, '_inited')) {
-						$newobject->_inited();
-					}
-					
 					$this->instances[$keyName][] = $newobject;
 					
 					return $newobject;
