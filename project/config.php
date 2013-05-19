@@ -11,10 +11,9 @@ $cfg = array(
 						'pdo',
 						),
 		'Paths' => array(
-			'PackageRoot' => '..' . DIRECTORY_SEPARATOR . 'libraries' . DIRECTORY_SEPARATOR . 'packages', 
-			'AlternativeRoot' => '..' . DIRECTORY_SEPARATOR . 'libraries' . DIRECTORY_SEPARATOR . 'alternatives', 
+			'PackageRoot' => '..' . DIRECTORY_SEPARATOR . 'libraries' . DIRECTORY_SEPARATOR . 'packages',  
 			'Libraries' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'libraries', 
-			'HandlerRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'handlers'
+			'HandlerRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'handlers',
 		),
 		'SystemCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'sys', 
 	),
@@ -24,7 +23,7 @@ $cfg = array(
 		'LogRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'logs', 
 	),
 	'object' => array(
-		'LibRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'libraries', 
+		'LibrariesRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'libraries', 
 		'ObjectCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'objects', 
 	),	
 	'response' => array(
@@ -35,7 +34,7 @@ $cfg = array(
 		'DefaultTimeout' => 3,
 		'SelectMethod' => 'Table+Operation', 
 		/* SelectMethod: 
-			Normal: All database is connectable
+			Normal: All database in database group contains all tables and capable for all operations
 			Table: Connect to one of database which contains specified table
 			Operation: Connect to one of database which allow specified operation
 			Table+Operation: Connect to one of database which not just allow specified operation but also contains specified table

@@ -14,11 +14,11 @@ if(!defined('IN_FACULA')) {
 	define('IN_FACULA', true);
 }
 
-include('../facula/facula.php');
-include('config.php');
+require('../facula/facula.php');
+require('config.php');
 
 $newobj = facula::init($cfg);
-$newobj2 = facula::run('Index');
+$newobj2 = facula::run('Index', true);
 
 endCount();
 

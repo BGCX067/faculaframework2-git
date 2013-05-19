@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 class handlerIndex extends Controller {
 	private $settings = array();
@@ -10,50 +10,25 @@ class handlerIndex extends Controller {
 	
 	// do some wakeup init
 	public function _inited() {
-	
+		echo 'inited';
 	}
 	
 	public function get(&$request) {
 		$message = 'hello word';
 		echo $message;
 		
-		
 		/*
 		
 		$q = new query();
 		
-		$q->get('table');
-		
-		$q->fetch('table', array(
-			'field1' => 'value1',
-			'field2' => 'value2',
-		));
-		
-		$q->update('table', 
-					
-					array(
-						'field1' => 'value1',
-						'field2' => 'value2',
-					), 
-					
-					array(
-						array(
-							'and',
-							'field1',
-							'=',
-							'b',
-						)
-					)
-					
-					);
-		
+		$q->select(array('field1', 'field2', 'field3', 'field4', 'field5'), 'tables');
 		
 		*/
 		
-		
+		/*
 		$pdoInfo = facula::core('pdo')->getConnection(array('Table' => 'settings', 'Operation' => 'Read'));
 		$pdoInfo2 = facula::core('pdo')->getConnection(array('Table' => 'settings', 'Operation' => 'Write'));
-		/*
+		
 		if ($result = $pdoInfo->query("SELECT * FROM `settings`")) {
 			print_r($result->fetchAll(PDO::FETCH_ASSOC));
 		}
