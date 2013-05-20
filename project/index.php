@@ -18,7 +18,7 @@ require('../facula/facula.php');
 require('config.php');
 
 $newobj = facula::init($cfg);
-$newobj2 = facula::run('Index', true);
+$newobj2 = facula::run('\controllers\IndexController', true);
 
 endCount();
 

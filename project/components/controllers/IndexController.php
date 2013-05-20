@@ -1,6 +1,8 @@
 <?php
 
-class handlerIndex extends Controller {
+namespace controllers;
+
+class IndexController extends \Controller {
 	private $settings = array();
 	
 	// Read setting and essentials

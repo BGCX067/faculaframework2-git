@@ -88,7 +88,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		$instance = null;
 		
 		if ($this->configs['ObjectCacheRoot']) {
-			$file = $this->configs['ObjectCacheRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . $objectName . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
+			$file = $this->configs['ObjectCacheRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
 			
 			if (is_readable($file)) {
 				if ($instance = unserialize(str_replace(self::$config['CacheSafeCode'], '', file_get_contents($file)))) {				
@@ -102,7 +102,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 	
 	private function saveObjectToCache($objectName, $instance, $type = '', $uniqueid = '') {
 		if ($this->configs['ObjectCacheRoot']) {
-			$file = $this->configs['ObjectCacheRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . $objectName . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
+			$file = $this->configs['ObjectCacheRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
 			
 			return file_put_contents($file, self::$config['CacheSafeCode'] . serialize($instance));
 		}
@@ -122,6 +122,10 @@ class faculaObjectDefault implements faculaObjectInterface {
 				return $newinstance;
 			} else {
 				switch(count($ags)) {
+					case 0:
+						$newinstance = new $object();
+						break;
+				
 					case 1:
 						$newinstance = new $object($ags[0]);
 						break;
@@ -234,7 +238,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 	public function runHandler(&$app, $cache = false) {
 		$handler = null;
 		
-		if ($handler = $this->get('handler', $app, true, false, $cache)) {
+		if ($handler = $this->getInstance($app, array(), $cache)) {
 			// When inited has been ran, call run to get module a chance to select operate method.
 			if (method_exists($handler, '_run')) {
 				$handler->_run();

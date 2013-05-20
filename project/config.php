@@ -11,7 +11,9 @@ $cfg = array(
 						'pdo',
 						),
 		'Paths' => array(
-			'Components' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components',
+			'UserClass' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'classes',
+			'UserCores' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'cores',
+			'UserIncludes' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'includes',
 		),
 		'SystemCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'sys', 
 	),
@@ -21,7 +23,7 @@ $cfg = array(
 		'LogRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'logs', 
 	),
 	'object' => array(
-		'LibrariesRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'project' . DIRECTORY_SEPARATOR . 'components', 
+		'LibrariesRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components', 
 		'ObjectCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'objects', 
 	),	
 	'response' => array(

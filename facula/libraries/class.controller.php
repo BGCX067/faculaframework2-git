@@ -1,10 +1,10 @@
 <?php 
 
-interface handlerInterface {
+interface controllerInterface {
 
 }
 
-abstract class Controller implements handlerInterface {
+abstract class Controller implements controllerInterface {
 	protected function core($name) {
 		return facula::core($name);
 	}
