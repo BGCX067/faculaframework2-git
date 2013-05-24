@@ -47,11 +47,8 @@ $cfg = array(
 		'DatabaseGroup' => array(
 			array(
 				'Driver' => 'mysql',
-				'Connection' => 'host',
-				'Host' => '127.0.0.1',
-				'Port' => '3306',
+				'Connection' => 'host=127.0.0.1;port=3306;dbname=facula2demo1',
 				'Prefix' => 'demo_',
-				'Database' => 'facula2demo1',
 				'Tables' => array('settings'),
 				'Username' => 'facula2demo1',
 				'Password' => 'facula2demo1',
@@ -64,11 +61,10 @@ $cfg = array(
 			),
 			array(
 				'Driver' => 'mysql',
-				'Connection' => 'host',
+				'Connection' => 'host=127.0.0.1;port=3306;dbname=facula2demo2',
 				'Host' => '127.0.0.1',
 				'Port' => '3306',
 				'Prefix' => 'demo_',
-				'Database' => 'facula2demo2',
 				'Tables' => array('settings'),
 				'Username' => 'facula2demo2',
 				'Password' => 'facula2demo2',

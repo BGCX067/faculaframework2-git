@@ -294,21 +294,9 @@ class facula {
 				
 				switch(count($moduleFilenames)) {
 					case 1:
-						$modules[] = array(
-							'Prefix' => null,
-							'Name' => $moduleFilenames[0],
-							'Ext' => null,
-							'Path' => $file->getPathname()
-						);
 						break;
 						
 					case 2:
-						$modules[] = array(
-							'Prefix' => null,
-							'Name' => $moduleFilenames[0],
-							'Ext' => $moduleFilenames[1],
-							'Path' => $file->getPathname()
-						);
 						break;
 						
 					case 3:

@@ -62,10 +62,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 								'ID' => $index,
 								'Driver' => $database['Driver'],
 								'Connection' => isset($database['Connection'][0]) ? $database['Connection'] : 'host',
-								'Host' => isset($database['Host'][0]) ? $database['Host'] : null,
-								'Port' => isset($database['Port'][0]) ? $database['Port'] : 0,
 								'Prefix' => isset($database['Prefix'][0]) ? $database['Prefix'] : null,
-								'Database' => isset($database['Database'][0]) ? $database['Database'] : null,
 								'Username' => isset($database['Username'][0]) ? $database['Username'] : null,
 								'Password' => isset($database['Password'][0]) ? $database['Password'] : null,
 								'Timeout' => isset($database['Timeout']) ? $database['Timeout'] : $this->configs['DefaultTimeout'],
@@ -298,9 +295,9 @@ class faculaPdoDefault implements faculaPdoInterface {
 			facula::core('debug')->criticalSection(true);
 			
 			try {
-				$dbh = new PDO($this->pool['DBs'][$dbIndex]['Driver'] . ':' . $this->pool['DBs'][$dbIndex]['Connection'] . '=' . $this->pool['DBs'][$dbIndex]['Host'] . ';' . ($this->pool['DBs'][$dbIndex]['Port'] ? 'port=' . $this->pool['DBs'][$dbIndex]['Port'] . ';' : null) . 'dbname=' . $this->pool['DBs'][$dbIndex]['Database'], $this->pool['DBs'][$dbIndex]['Username'], $this->pool['DBs'][$dbIndex]['Password'], array( PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING, 
-																																																																																																										PDO::ATTR_TIMEOUT => $this->pool['DBs'][$dbIndex]['Timeout'],
-																																																																																																										PDO::ATTR_PERSISTENT => $this->pool['DBs'][$dbIndex]['Persistent'] ) + $this->pool['DBs'][$dbIndex]['Options']);
+				$dbh = new PDO($this->pool['DBs'][$dbIndex]['Driver'] . ':' . $this->pool['DBs'][$dbIndex]['Connection'], $this->pool['DBs'][$dbIndex]['Username'], $this->pool['DBs'][$dbIndex]['Password'], array( PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING, 
+																																																					PDO::ATTR_TIMEOUT => $this->pool['DBs'][$dbIndex]['Timeout'],
+																																																					PDO::ATTR_PERSISTENT => $this->pool['DBs'][$dbIndex]['Persistent'] ) + $this->pool['DBs'][$dbIndex]['Options']);
 				
 				$dbh->_connection = &$this->pool['DBs'][$dbIndex];
 				

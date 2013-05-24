@@ -12,12 +12,16 @@ class IndexController extends \Controller {
 	
 	// do some wakeup init
 	public function _inited() {
-		echo 'inited';
+		//echo 'inited';
 	}
 	
 	public function get(&$request) {
 		$message = 'hello word';
 		echo $message;
+		
+		$q = \query::from('settings')->select(array('setting', 'value'))->get();
+		
+		print_r($q);
 		
 		/*
 		

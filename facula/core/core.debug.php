@@ -6,6 +6,9 @@ interface faculaDebugInterface {
 	public function exception($info, $type = '', $exit = false, Exception $e = null);
 	public function criticalSection($enter);
 	public function addLog($type, $content);
+	
+	public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext);
+	public function exceptionHandler($exception);
 }
 
 class faculaDebug extends faculaCoreFactory {
@@ -57,9 +60,9 @@ class faculaDebugDefault implements faculaDebugInterface {
 	}
 	
 	public function _inited() {
-		set_error_handler(array(&$this, 'error_handler'), E_ALL); // Use our own error reporter, just like PHP's E_ALL
-		set_exception_handler(array(&$this, 'exception_handler')); // Use our own error reporter, just like PHP's E_ALL
-		error_reporting(E_ERROR | E_PARSE); // Mute php error reporter, except E_ERROR and E_PARSE
+		set_error_handler(array(&$this, 'errorHandler'), E_ALL); // Use our own error reporter, just like PHP's E_ALL
+		set_exception_handler(array(&$this, 'exceptionHandler')); // Use our own error reporter, just like PHP's E_ALL
+		error_reporting(E_ALL &~ (E_NOTICE | E_WARNING | E_USER_ERROR | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED)); // Mute php error reporter from most errors
 		
 		return true;
 	}
@@ -103,11 +106,11 @@ class faculaDebugDefault implements faculaDebugInterface {
 		return true;
 	}
 	
-	public function error_handler($errno, $errstr, $errfile, $errline, $errcontext) {
+	public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
 		$this->exception(sprintf('Error code %s (%s) in file %s line %s', 'PHP('.$errno.')', $errstr, $errfile, $errline), 'PHP', $this->configs['ExitOnAnyError']);
 	}	
 	
-	public function exception_handler($exception) {
+	public function exceptionHandler($exception) {
 		$this->exception('Exception: ' . $exception->getMessage(), 'Exception', true, $exception);
 	}
 	
@@ -231,7 +234,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 			
 			foreach($backtraces as $key => $val) {
 				$tracesLoop++;
-				$code .= '<li' . ($tracesLoop == $traceCallerOffset ? ' class="current" style="padding:10px;background-color:#fcc;border-radius:5px;color:#a33;"' : ' style="padding:10px;"') . '><span style="line-height:1.5;"><span class="trace" style="display:block;font-size:120%;">' . str_replace(array(FACULA_ROOT, PROJECT_ROOT), array('[Facula Dir]', '[Project Dir]'), $val['caller']) . '</span><span class="notice" style="display:block;margin-bottom:3px;font-size:60%;">Author: <u>' . $val['nameplate']['author'] . '</u> Reviser: <u>' . $val['nameplate']['reviser'] . '</u> ' . ' Version: <u>' . $val['nameplate']['version'] . '</u> Updated in: <u>' . $val['nameplate']['updated'] . '</u> Contact: <u>' . ($val['nameplate']['contact'] ? $val['nameplate']['contact'] : 'Nobody') . '</u></span><span class="notice" style="display:block;font-size:60%;font-weight:bold;">Triggered in file: ' . str_replace(array(FACULA_ROOT, PROJECT_ROOT), array('[Facula Dir]', '[Project Dir]'), $val['file']) . ' (line ' . $val['line'] . ')' . '</span></span></li>'; 
+				$code .= '<li' . ($tracesLoop >= $traceCallerOffset ? ' class="current" style="margin:10px;padding:10px;background-color:#fcc;border-radius:5px;color:#a33;"' : ' style="padding:10px;"') . '><span style="line-height:1.5;"><span class="trace" style="display:block;font-size:120%;">' . str_replace(array(FACULA_ROOT, PROJECT_ROOT), array('[Facula Dir]', '[Project Dir]'), $val['caller']) . '</span><span class="notice" style="display:block;margin-bottom:3px;font-size:60%;">Author: <u>' . $val['nameplate']['author'] . '</u> Reviser: <u>' . $val['nameplate']['reviser'] . '</u> ' . ' Version: <u>' . $val['nameplate']['version'] . '</u> Updated in: <u>' . $val['nameplate']['updated'] . '</u> Contact: <u>' . ($val['nameplate']['contact'] ? $val['nameplate']['contact'] : 'Nobody') . '</u></span><span class="notice" style="display:block;font-size:60%;font-weight:bold;">Triggered in file: ' . str_replace(array(FACULA_ROOT, PROJECT_ROOT), array('[Facula Dir]', '[Project Dir]'), $val['file']) . ' (line ' . $val['line'] . ')' . '</span></span></li>'; 
 			}
 			
 			$code .= '</ul></div>';

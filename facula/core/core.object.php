@@ -69,7 +69,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		
 		if (isset($this->configs['Paths']['class.' . $classfileLower])) { // Use path scope to locate file first
 			return require_once($this->configs['Paths']['class.' . $classfileLower]['Path']);
-		} elseif ($this->configs['LibRoot'] && strpos('\\', $classfile) != -1) { // If above not work, use namespace to locate file
+		} elseif ($this->configs['LibRoot'] && strpos($classfile, '\\') !== false) { // If above not work, use namespace to locate file
 			return require_once($this->configs['LibRoot'] . DIRECTORY_SEPARATOR . str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, ltrim($classfile, '\\')) . '.php');
 		}
 		
