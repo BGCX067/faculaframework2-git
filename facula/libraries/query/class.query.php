@@ -1,7 +1,10 @@
 <?php 
 
 interface queryInterface {
-	
+	public function select(&$settings);
+	public function insert(&$settings);
+	public function update(&$settings);
+	public function delete(&$settings);
 }
 
 class query {
@@ -39,7 +42,6 @@ class query {
 						'VALUES' => array(),
 						), 
 		'UPDATE' => array(
-						'FIELDS' => array(),
 						'VALUES' => array(),
 						'WHERE' => array(),
 						), 
@@ -53,7 +55,7 @@ class query {
 		return new self($table);
 	}
 	
-	public function __construct($table) {
+	private function __construct($table) {
 		$this->table = $table;
 	}
 	
@@ -67,24 +69,22 @@ class query {
 		return true;
 	}
 	
-	private function setValueGetKey($value) {
+	private function setValueGetKey(array $value) {
 		$index = $this->valueIndex++;
 		
 		if (!isset($value[0])) {
-			$this->activeValues[$index] = array(
+			$this->activeValues[':' . $index] = array(
 				'Value' => null,
 				'Type' => $this->validParamTypes['NULL'],
-				'Length' => 0,
 			);
 		} else {
-			$this->activeValues[$index] = array(
+			$this->activeValues[':' . $index] = array(
 				'Value' => isset($value[0]) ? $value[0] : null,
 				'Type' => isset($value[1]) && isset($this->validParamTypes[$value[1]]) ? $this->validParamTypes[$value[1]] : $this->validParamTypes['STR'],
-				'Length' => isset($value[2]) ? intval($value[2]) : null,
 			);
 		}
 		
-		return $index;
+		return ':' . $index;
 	}
 	
 	private function getOperator($operation) {
@@ -121,8 +121,14 @@ class query {
 		if (is_array($data[0])) {
 			$this->activeParams['INSERT']['FIELDS'] = array_keys($data[0]);
 			
-			foreach($data AS $key => $val) {
-				$this->activeParams['INSERT']['VALUES'][] = $val;
+			foreach($data AS $key => $vals) {
+				$result = array();
+				
+				foreach($this->activeParams['INSERT']['FIELDS'] AS $fieldkey) {
+					$result[] = isset($vals[$fieldkey]) ? $this->setValueGetKey($vals[$fieldkey]) : $this->setValueGetKey(array(null, 'NULL'));
+				}
+				
+				$this->activeParams['INSERT']['VALUEKEYS'][] = $result;
 			}
 		}
 		
@@ -132,17 +138,10 @@ class query {
 	public function update($data) {
 		$this->reset();
 		
-		$this->activeMethod = 'INSERT';
-		$this->activeParams['INSERT']['FIELDS'] = $data;
+		$this->activeMethod = 'UPDATE';
 		
-		if (is_array($data[0])) {
-			$this->activeParams['INSERT']['FIELDS'] = array_keys($data[0]);
-			
-			foreach($data AS $key => $val) {
-				$this->activeParams['INSERT']['VALUES'][] = $val;
-			}
-		} else {
-			facula::core('debug')->exception('ERROR_QUERY_OPERATOR_UPDATE_PARAMS|' . $operatorName, 'query', true);
+		foreach($data AS $key => $val) {
+			$this->activeParams['UPDATE']['VALUEKEYS'][$key] = $this->setValueGetKey($val);
 		}
 		
 		return $this;
@@ -150,6 +149,8 @@ class query {
 	
 	public function delete() {
 		$this->reset();
+		
+		$this->activeMethod = 'DELETE';
 		
 		return $this;
 	}
@@ -173,7 +174,7 @@ class query {
 	}
 	
 	private function condition($type, $table, $sign, array $value, $relation = '') {
-		if ($type != 'WHERE' || $type != 'HAVING') {
+		if ($type == 'WHERE' || $type == 'HAVING') {
 			if ($this->activeMethod) {
 				if (!isset($this->activeParams[$this->activeMethod][$type][0])) {
 					$this->activeParams[$this->activeMethod][$type][] = array(
@@ -186,13 +187,13 @@ class query {
 						'FIELD' => $table,
 						'SIGN' => $sign,
 						'VALUEKEY' => $this->setValueGetKey($value),
-						'RELATION' => $relation, // Relation to the previous condition
+						'RELATION' => $relation == 'OR' || $relation == 'AND' ? $relation : 'AND', // Relation to the previous condition
 					);
 				}
 				
 				return $this;
 			} else {
-				facula::core('debug')->exception('ERROR_QUERY_OPERATOR_UNSPECIFIED_METHOD_FOR_WHERE', 'query', true);
+				facula::core('debug')->exception('ERROR_QUERY_OPERATOR_UNSPECIFIED_METHOD_FOR_CONDITION', 'query', true);
 			}
 		} else {
 			facula::core('debug')->exception('ERROR_QUERY_OPERATOR_UNSUPPORTED_CONDITION_TYPE|' . $type, 'query', true);
@@ -215,7 +216,75 @@ class query {
 	}
 	
 	public function save() {
+		$sql = '';
+		$operator = $statement = null;
 		
+		if ($operator = $this->getOperator('Write')) {
+			switch($this->activeMethod) {
+				case 'UPDATE':
+					if ($sql = $operator->update($this->activeParams[$this->activeMethod])) {
+						try {
+							if ($statement = $this->dbh->prepare($sql)) {
+								foreach($this->activeValues AS $key => $value) {
+									$statement->bindValue($key, $value['Value'], $value['Type']);
+								}
+								
+								$statement->execute();
+								
+								return $statement->rowCount();
+							}
+						} catch(PDOException $e) {
+							facula::core('debug')->exception('ERROR_QUERY_UPDATE_FAILED|' . $e->getMessage(), 'query', true);
+						}
+					}
+					
+					break;
+					
+				case 'INSERT':
+					if ($sql = $operator->insert($this->activeParams[$this->activeMethod])) {
+						try {
+							if ($statement = $this->dbh->prepare($sql)) {
+								foreach($this->activeValues AS $key => $value) {
+									$statement->bindValue($key, $value['Value'], $value['Type']);
+								}
+								
+								$statement->execute();
+								
+								return $this->dbh->lastInsertId();
+							}
+						} catch(PDOException $e) {
+							facula::core('debug')->exception('ERROR_QUERY_INSERT_FAILED|' . $e->getMessage(), 'query', true);
+						}
+					}
+					
+					break;
+					
+				case 'DELETE':
+					if ($sql = $operator->delete($this->activeParams[$this->activeMethod])) {
+						try {
+							if ($statement = $this->dbh->prepare($sql)) {
+								foreach($this->activeValues AS $key => $value) {
+									$statement->bindValue($key, $value['Value'], $value['Type']);
+								}
+								
+								$statement->execute();
+								
+								return $statement->rowCount();
+							}
+						} catch(PDOException $e) {
+							facula::core('debug')->exception('ERROR_QUERY_DELETE_FAILED|' . $e->getMessage(), 'query', true);
+						}
+					}
+					break;
+					
+				default:
+					facula::core('debug')->exception('ERROR_QUERY_OPERATOR_UNSUPPORTED_FETCH_TYPE|' . $this->activeMethod, 'query', true);
+					return false;
+					break;
+			}
+		}
+		
+		return false;
 	}
 	
 	public function get() {
@@ -236,7 +305,7 @@ class query {
 					try {
 						if ($statement = $this->dbh->prepare($sql)) {
 							foreach($this->activeValues AS $key => $value) {
-								$statement->bindParam(':' . $key, $value['Value'], $value['Type'], $value['Length']);
+								$statement->bindValue($key, $value['Value'], $value['Type']);
 							}
 							
 							$statement->execute();

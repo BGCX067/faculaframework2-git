@@ -1,7 +1,7 @@
 <?php 
 
 interface controllerInterface {
-
+	public function _run();
 }
 
 abstract class Controller implements controllerInterface {

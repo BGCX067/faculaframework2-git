@@ -37,19 +37,70 @@ class query_mysql implements queryInterface {
 			$sql .= ' LIMIT ' . $this->parseLimit($settings['LIMIT']);
 		}
 		
-		return $sql;
+		return $sql . ';';
 	}
 	
 	public function insert(&$settings) {
-	
+		$values = array();
+		$sql = "INSERT INTO `{$this->table}`";
+		
+		if (isset($settings['FIELDS'])) {
+			$sql .= ' (`' . implode('`, `', $settings['FIELDS']) . '`)';
+			
+			if (isset($settings['VALUEKEYS'])) {
+				$sql .= ' VALUES';
+				
+				foreach($settings['VALUEKEYS'] AS $val) {
+					$values[] = '(' . implode(', ', $val) . ')';
+				}
+				
+				$sql .= ' ' . implode(', ', $values);
+			}
+			
+			return $sql . ';';
+		}
+		
+		return false;
 	}
 	
 	public function update(&$settings) {
-	
+		$values = array();
+		$sql = "UPDATE `{$this->table}`";
+		
+		// Add Sets
+		if (isset($settings['VALUEKEYS'])) {
+			$sql .= ' SET';
+			
+			foreach($settings['VALUEKEYS'] AS $key => $val) {
+				$values[] = '`' . $key . '` = ' . $val;
+			}
+			
+			$sql .= ' ' . implode(', ', $values);
+			
+			// Add Where
+			if (isset($settings['WHERE'])) {
+				$sql .= ' WHERE ' . $this->parseCondition($settings['WHERE']);
+			} else {
+				$sql .= ' WHERE 1';
+			}
+			
+			return $sql . ';';
+		}
+		
+		return false;
 	}
 	
 	public function delete(&$settings) {
-	
+		$sql = "DELETE FROM `{$this->table}`";
+		
+		// Add Where
+		if (isset($settings['WHERE'])) {
+			$sql .= ' WHERE ' . $this->parseCondition($settings['WHERE']);
+		} else {
+			$sql .= ' WHERE 1';
+		}
+		
+		return $sql;
 	}
 	
 	private function parseCondition(&$wheres) {
@@ -58,12 +109,12 @@ class query_mysql implements queryInterface {
 		foreach($wheres AS $key => $where) {
 			if ($sql) {
 				if (isset($where['RELATION'])) {
-					$sql .= strtoupper($where['RELATION']) . " (`{$where['FIELD']}` {$where['SIGN']} :{$where['VALUEKEY']}) ";
+					$sql .= strtoupper($where['RELATION']) . " (`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']}) ";
 				} else {
-					$sql .= "AND (`{$where['FIELD']}` {$where['SIGN']} :{$where['VALUEKEY']}) ";
+					$sql .= "AND (`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']}) ";
 				}
 			} else {
-				$sql .= "(`{$where['FIELD']}` {$where['SIGN']} :{$where['VALUEKEY']}) ";
+				$sql .= "(`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']}) ";
 			}
 		}
 		

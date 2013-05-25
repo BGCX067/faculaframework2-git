@@ -60,8 +60,8 @@ class facula {
 	}
 	
 	static public function run($appname, $cache = false) {
-		if (self::$instance) {
-			return self::$instance->_run($appname, $cache);
+		if (self::$instance && isset(self::$instance->coreInstances['object'])) {
+			return self::$instance->coreInstances['object']->run($appname, $cache);
 		} else {
 			throw new Exception('Facula must be initialized before running any application.');
 		}
@@ -125,14 +125,6 @@ class facula {
 		}
 		
 		return $this->_init($cfg);
-	}
-	
-	private function _run(&$appname, $cache = false) {
-		if (isset($this->coreInstances['object'])) {
-			return $this->coreInstances['object']->runHandler($appname, $cache);
-		}
-		
-		return false;
 	}
 	
 	private function _init(&$cfg) {

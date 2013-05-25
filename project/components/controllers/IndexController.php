@@ -18,12 +18,37 @@ class IndexController extends \Controller {
 	public function get(&$request) {
 		$message = 'hello word';
 		echo $message;
-		
+		/*
 		$q = \query::from('settings')->select(array('setting', 'value'))->get();
 		
+		print_r('1:');
 		print_r($q);
 		
-		/*
+		$datatoinsert = array(
+			array('setting' => ['keyname', 'STR'], 'value' => ['this\'s a valu :1 e', 'STR']),
+		);
+		
+		$q2 = \query::from('settings')->insert($datatoinsert)->save();
+		
+		print_r('2:');
+		print_r($q2);
+		
+		
+		$datatoupdate = array(
+			'value' => ['for keyname2', 'STR'],
+		);
+		
+		$q3 = \query::from('settings')->update($datatoupdate)->where('setting', '=', ['keyname', 'STR'])->save();
+		
+		print_r('3:');
+		print_r($q3);
+		
+		$q4 = \query::from('settings')->delete()->where('value', '=', ['value1', 'STR'])->save();
+		
+		print_r('4:');
+		print_r($q4);
+		
+		
 		
 		$q = new query();
 		

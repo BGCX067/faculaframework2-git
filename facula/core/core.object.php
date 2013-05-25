@@ -5,7 +5,7 @@ interface faculaObjectInterface {
 	public function get($type, $name, $new = false, $justinclude = false, $cache = false);
 	public function getFile($type, $name);
 	public function getInstance($object, $ags, $cache = false);
-	public function runHandler(&$app, $cache = false);
+	public function run(&$app, $cache = false);
 }
 
 class faculaObject extends faculaCoreFactory {
@@ -234,8 +234,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return false;
 	}
 	
-	// Start a handler
-	public function runHandler(&$app, $cache = false) {
+	// Start a handler or other type of class
+	public function run(&$app, $cache = false) {
 		$handler = null;
 		
 		if ($handler = $this->getInstance($app, array(), $cache)) {
