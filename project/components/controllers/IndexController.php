@@ -16,8 +16,14 @@ class IndexController extends \Controller {
 	}
 	
 	public function get(&$request) {
+		
 		$message = 'hello word';
-		echo $message;
+		
+		$this->assign('message', $message);
+		
+		$this->display('index');
+		
+		
 		/*
 		$q = \query::from('settings')->select(array('setting', 'value'))->get();
 		
@@ -43,7 +49,7 @@ class IndexController extends \Controller {
 		print_r('3:');
 		print_r($q3);
 		
-		$q4 = \query::from('settings')->delete()->where('value', '=', ['value1', 'STR'])->save();
+		$q4 = \query::from('settings')->delete()->where('setting', '=', ['keyname', 'STR'])->save();
 		
 		print_r('4:');
 		print_r($q4);

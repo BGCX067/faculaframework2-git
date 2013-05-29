@@ -3,7 +3,7 @@
 interface faculaResponseInterface {
 	public function _inited();
 	public function setHeader($header);
-	public function setContent(&$content);
+	public function setContent($content);
 	public function send();
 	public function setCookie($key, $val = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false);
 	public function unsetCookie($key);
@@ -41,16 +41,11 @@ class faculaResponseDefault implements faculaResponseInterface {
 	static private $headers = array();
 	static private $content = '';
 	
-	public $configs = array(
-		'CookiePrefix' => 'facula_',
-		'CookieExpire' => 3600,
-		'GZIPEnabled' => false,
-		'UseGZIP' => false,
-	);
+	public $configs = array();
 	
 	public function __construct(&$cfg, &$common, facula $facula) {
 		$this->configs = array(
-			'CookiePrefix' => isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : '',
+			'CookiePrefix' => isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : 'facula_',
 			'CookieExpire' => isset($cfg['CookieExpireDefault'][0]) ? $cfg['CookieExpireDefault'] : 3600,
 			'GZIPEnabled' => isset($cfg['UseGZIP']) && $cfg['UseGZIP'] && function_exists('gzcompress') ? true : false,
 		);
@@ -68,6 +63,8 @@ class faculaResponseDefault implements faculaResponseInterface {
 		
 		if (facula::core('request')->getClientInfo('gzip')) {
 			$this->configs['UseGZIP'] = true;
+		} else {
+			$this->configs['UseGZIP'] = false;
 		}
 		
 		return true;
@@ -97,7 +94,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 		return true;
 	}
 	
-	public function setContent(&$content) {
+	public function setContent($content) {
 		if ($this->configs['UseGZIP'] && $this->configs['GZIPEnabled']) {
 			self::$content = "\x1f\x8b\x08\x00\x00\x00\x00\x00".substr(gzcompress($content, 2), 0, -4);
 			self::$headers[] = 'Content-Encoding: gzip';

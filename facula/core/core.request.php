@@ -63,6 +63,8 @@ class faculaRequestDefault implements faculaRequestInterface {
 	public $requestInfo = array();
 	
 	public function __construct(&$cfg, &$common, $facula) {
+		global $_SERVER;
+		
 		if (function_exists('get_magic_quotes_gpc')) {
 			$this->configs['AutoMagicQuotes'] = get_magic_quotes_gpc();
 		}
@@ -84,6 +86,20 @@ class faculaRequestDefault implements faculaRequestInterface {
 		
 		$this->configs['CookiePrefix'] = isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : '';
 		
+		// Get environment variables
+		
+		// Get current root
+		if (isset($common['SiteRootURL'][0])) {
+			$this->requestInfo['rootURL'] = $common['SiteRootURL'];
+		} else {
+			$this->requestInfo['rootURL'] = substr($_SERVER['SCRIPT_NAME'], 0, strrpos($_SERVER['SCRIPT_NAME'], '/'));
+		}
+		
+		// Get current absolute root
+		if (isset($_SERVER['SERVER_NAME']) && isset($_SERVER['SERVER_ADDR']) && isset($_SERVER['SERVER_PORT'])) {
+			$this->requestInfo['absRootURL'] = ($_SERVER['SERVER_PORT'] == 443 ? 'https://' : 'http://') . $_SERVER['SERVER_ADDR'] . ($_SERVER['SERVER_PORT'] == 80 ? '' : ':' . $_SERVER['SERVER_PORT'] ) . $this->requestInfo['rootURL'];
+		}
+		
 		$cfg = null;
 		unset($cfg);
 		
@@ -92,7 +108,6 @@ class faculaRequestDefault implements faculaRequestInterface {
 	
 	public function _inited() {
 		global $_REQUEST, $_SERVER;
-		$totalRequestSize = 0;
 		
 		if ($this->configs['AutoMagicQuotes']) { // Impossible by now, remove all slash code back
 			foreach($_REQUEST AS $key => $val) {
@@ -146,7 +161,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 	}
 	
 	public function getClientInfo($key) {
-		if (isset($this->requestInfo[$key])) {
+		if (isset($this->requestInfo[$key])) { 
 			return $this->requestInfo[$key];
 		}
 		

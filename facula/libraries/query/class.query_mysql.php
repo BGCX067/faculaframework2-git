@@ -16,7 +16,7 @@ class query_mysql implements queryInterface {
 		if (isset($settings['FIELDS'])) {
 			$sql .= ' `' . implode('`, `', $settings['FIELDS']) . '`';
 		} else {
-			$sql .= ' * ';
+			$sql .= ' *';
 		}
 		
 		// Adding Table

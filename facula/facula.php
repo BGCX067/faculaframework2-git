@@ -26,6 +26,7 @@ class facula {
 		'CacheSafeCode' => '<?php /* Facula System Cache File */ exit(); ?>',
 		'CacheSectionBreaks' => '"""""""" + Break + """"""""',
 		'SystemCacheFileName' => 'coreCache.php',
+		'CoreComponents' => array('debug', 'object', 'request', 'response'),
 	);
 	
 	static private $profile = array(
@@ -39,14 +40,16 @@ class facula {
 	
 	private $coreInstances = array();
 	
-	private $components = array();
-	
 	static public function init(&$cfg) {
 		if (!self::$instance) {
-			if (isset($cfg['core']['SystemCacheRoot'][1]) && (!self::$instance = self::loadObjectFromCache($cfg['core']['SystemCacheRoot']))) {
+			if (isset($cfg['core']['SystemCacheRoot'][1])) {
+				if (!self::$instance = self::loadObjectFromCache($cfg['core']['SystemCacheRoot'])) {
+					self::$instance = new self($cfg);
+					
+					self::saveObjectToCache($cfg['core']['SystemCacheRoot']);
+				}
+			} else {
 				self::$instance = new self($cfg);
-				
-				self::saveObjectToCache($cfg['core']['SystemCacheRoot']);
 			}
 			
 			self::$instance->_inited();
@@ -78,6 +81,22 @@ class facula {
 			return self::$instance->coreInstances[$coreName];
 		} else {
 			throw new Exception('Cannot obtain core ' . $coreName . '. The core may not exists or loadable.');
+		}
+		
+		return false;
+	}
+	
+	static public function isCoreSet($coreName) {
+		if (isset(self::$instance->coreInstances[$coreName])) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	static public function getAllCores() {
+		if (isset(self::$instance) && !empty(self::$instance->coreInstances)) {
+			return self::$instance->coreInstances;
 		}
 		
 		return false;
@@ -138,9 +157,9 @@ class facula {
 			
 			// include core (with init) and routine files
 			if (isset($cfg['core']['Enables'])) {
-				$cfg['core']['Enables'] = array_merge(array('debug', 'object', 'request', 'response'), $cfg['core']['Enables']);
+				$cfg['core']['Enables'] = array_merge(self::$config['CoreComponents'], $cfg['core']['Enables']);
 			} else {
-				$cfg['core']['Enables'] = array('debug', 'object', 'request', 'response');
+				$cfg['core']['Enables'] = self::$config['CoreComponents'];
 			}
 			
 			foreach(self::$config['ComponentInfo'] AS $keyn => $component) {
@@ -149,7 +168,13 @@ class facula {
 						if (!isset($cfg['core']['Enables']) || in_array($component['Name'], $cfg['core']['Enables'])) {
 							require($component['Path']);
 							
-							self::$config['AutoCores'][] = $component;
+							// If this is an essential core, we must load it before alternatives
+							if (in_array($component['Name'], self::$config['CoreComponents'])) {
+								array_unshift(self::$config['AutoCores'], $component); // Add essential core to beginning of loading queue
+							} else {
+								self::$config['AutoCores'][] = $component; // Rest, add to the end
+							}
+							
 							self::$config['AutoIncludes'][] = $component['Path']; // Add path to auto include, so facula will auto include those file in every load circle
 						}
 						
@@ -206,7 +231,7 @@ class facula {
 		}
 		
 		foreach($directories AS $type => $dir) {
-			if ($dir && ($tempFiles = $this->getModulesFromPath($dir))) {
+			if ($dir && ($tempFiles = $this->scanModuleFiles($dir))) {
 			
 				foreach($tempFiles AS $file) {
 					if ($file['Ext'] == 'php') {
@@ -264,17 +289,7 @@ class facula {
 		return false;
 	}
 	
-	public function callCore($coreName) {
-		if (isset($this->coreInstances[$coreName])) {
-			return $this->coreInstances[$coreName];
-		} else {
-			throw new Exception('Core module not found: ' . $coreName); 
-		}
-		
-		return false;
-	}
-	
-	private function getModulesFromPath($directory) {
+	public function scanModuleFiles($directory) {
 		$modules = array();
 		$moduleFilenames = $tempModuleFilenames = array();
 		

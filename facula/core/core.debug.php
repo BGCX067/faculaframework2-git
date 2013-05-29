@@ -107,7 +107,39 @@ class faculaDebugDefault implements faculaDebugInterface {
 	}
 	
 	public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext) {
-		$this->exception(sprintf('Error code %s (%s) in file %s line %s', 'PHP('.$errno.')', $errstr, $errfile, $errline), 'PHP', $this->configs['ExitOnAnyError']);
+		$exit = false;
+		
+		switch($errno) {
+			case E_ERROR:
+				$exit = true;
+				break;
+				
+			case E_PARSE:
+				$exit = true;
+				break;
+				
+			case E_CORE_ERROR:
+				$exit = true;
+				break;
+				
+			case E_CORE_WARNING:
+				$exit = true;
+				break;
+				
+			case E_COMPILE_ERROR:
+				$exit = true;
+				break;
+				
+			case E_COMPILE_WARNING:
+				$exit = true;
+				break;
+				
+			case E_USER_ERROR:
+				$exit = true;
+				break;
+		}
+	
+		$this->exception(sprintf('Error code %s (%s) in file %s line %s', 'PHP('.$errno.')', $errstr, $errfile, $errline), 'PHP', !$exit ? $this->configs['ExitOnAnyError'] : true);
 	}	
 	
 	public function exceptionHandler($exception) {
@@ -152,11 +184,11 @@ class faculaDebugDefault implements faculaDebugInterface {
 						break;
 						
 					case 'integer':
-						$tmpstr .= $val;
+						$tmpstr .= 'integer ' . $val;
 						break;
 						
 					case 'double':
-						$tmpstr .= $val;
+						$tmpstr .= 'double ' . $val;
 						break;
 						
 					case 'string':
@@ -176,7 +208,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 						break;
 					
 					default:
-						$tmpstr .= 'Unknown';
+						$tmpstr .= 'Unknown / Null';
 						break;
 				}
 			}

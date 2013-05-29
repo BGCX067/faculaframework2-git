@@ -1,6 +1,7 @@
 <?php
 
 interface faculaPdoInterface {
+	public function _inited();
 	public function getConnection($setting = array());
 	public function doPDOConnect($dbIndex, &$error);
 	public function doPDOReconnect(&$dbh, &$error);

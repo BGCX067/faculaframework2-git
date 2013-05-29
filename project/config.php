@@ -1,21 +1,26 @@
 <?php 
+if (!defined('IN_FACULA')) {
+	exit('Access Denied');
+}
 
 $cfg = array(
 	'AppName' => 'Facula Demo', 
 	'AppVersion' => '1.0', 
 	'Common' => array(
 		'CookiePrefix' => '_demo_',
+		// 'SiteRootURL' => '',
 	),
 	'core' => array(
 		'Enables' => array(
 						'pdo',
+						'template',
 						),
 		'Paths' => array(
 			'UserClass' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'classes',
 			'UserCores' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'cores',
 			'UserIncludes' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'includes',
 		),
-		'SystemCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'sys', 
+		// 'SystemCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'sys', 
 	),
 	'debug' => array(
 		// 'Core' => 'Debugger', // Set up your own new custom core
@@ -30,6 +35,8 @@ $cfg = array(
 		'UseGZIP' => true,
 		'CookieExpireDefault' => 3600,
 	),
+	
+	/* Belowing configure for alternative cores */
 	'pdo' => array(
 		'DefaultTimeout' => 3,
 		'SelectMethod' => 'Table+Operation', 
@@ -76,6 +83,14 @@ $cfg = array(
 				'Timeout' => 1
 			),
 		),
+	),
+	'template' => array(
+		'TemplatePool' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'pool' . DIRECTORY_SEPARATOR . 'template',
+		'CompiledTemplate' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'template',
+		'CachedTemplate' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'template',
+		'CompressOutput' => true,
+		'ForceRenew' => true,
+		'DisplayDebug' => true,
 	),
 );
 

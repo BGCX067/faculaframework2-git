@@ -69,40 +69,48 @@ class query {
 		return true;
 	}
 	
-	private function setValueGetKey(array $value) {
+	private function setValueGetKey($value) {
 		$index = $this->valueIndex++;
 		
-		if (!isset($value[0])) {
+		if (!is_array($value)) {
 			$this->activeValues[':' . $index] = array(
-				'Value' => null,
-				'Type' => $this->validParamTypes['NULL'],
+				'Value' => $value,
+				'Type' => $this->validParamTypes['STR'],
 			);
 		} else {
-			$this->activeValues[':' . $index] = array(
-				'Value' => isset($value[0]) ? $value[0] : null,
-				'Type' => isset($value[1]) && isset($this->validParamTypes[$value[1]]) ? $this->validParamTypes[$value[1]] : $this->validParamTypes['STR'],
-			);
+			if (isset($value[0])) {
+				$this->activeValues[':' . $index]['Value'] = $value[0];
+			} else {
+				$this->activeValues[':' . $index]['Value'] = null;
+			}
+			
+			if (isset($value[1]) && isset($this->validParamTypes[$value[1]])) {
+				$this->activeValues[':' . $index]['Type'] = $this->validParamTypes[$value[1]];
+			} else {
+				$this->activeValues[':' . $index]['Type'] = $this->activeValues[':' . $index]['Value'] ? $this->validParamTypes['STR'] : null;
+			}
 		}
 		
 		return ':' . $index;
 	}
 	
-	private function getOperator($operation) {
-		$operatorName = $fullTableName = '';
+	private function getSQLBuilder($operation) {
+		$builderName = $fullTableName = '';
 		
 		if ($this->dbh = facula::core('pdo')->getConnection(array('Table' => $this->table, 'Operation' => $operation))) {
-			$operatorName = __CLASS__ . '_' . $this->dbh->_connection['Driver'];
+			$builderName = __CLASS__ . '_' . $this->dbh->_connection['Driver'];
 			
 			$fullTableName = $this->dbh->_connection['Prefix'] . $this->table;
 			
-			if (class_exists($operatorName)) {
-				return new $operatorName($fullTableName);
+			if (class_exists($builderName)) {
+				return new $builderName($fullTableName);
 			} else {
-				facula::core('debug')->exception('ERROR_QUERY_OPERATOR_NOTFOUND|' . $operatorName, 'query', true);
+				facula::core('debug')->exception('ERROR_QUERY_SQLBUILDER_NOTFOUND|' . $builderName, 'query', true);
 			}
 		}
 	}
 	
+	/* Primary CURD operates (Operation Typer) */
 	public function select($fields) {
 		$this->reset();
 		
@@ -155,27 +163,14 @@ class query {
 		return $this;
 	}
 	
+	/* WHERE */
 	public function where($table, $sign, $value, $relation = '') {
 		return $this->condition('WHERE', $table, $sign, $value, $relation);
 	}
 	
-	public function limit($start, $duration) {
-		if ($this->activeMethod) {
-
-			$this->activeParams[$this->activeMethod]['LIMIT'] = array(
-				'START' => intval($start),
-				'DURATION' => intval($duration),
-			);
-			
-			return $this;
-		} else {
-			facula::core('debug')->exception('ERROR_QUERY_OPERATOR_UNSPECIFIED_METHOD_FOR_LIMIT', 'query', true);
-		}
-	}
-	
-	private function condition($type, $table, $sign, array $value, $relation = '') {
-		if ($type == 'WHERE' || $type == 'HAVING') {
-			if ($this->activeMethod) {
+	private function condition($type, $table, $sign, $value, $relation = '') {
+		if ($this->activeMethod == 'SELECT' || $this->activeMethod == 'UPDATE' || $this->activeMethod == 'DELETE') {
+			if ($type == 'WHERE' || $type == 'HAVING') {
 				if (!isset($this->activeParams[$this->activeMethod][$type][0])) {
 					$this->activeParams[$this->activeMethod][$type][] = array(
 						'FIELD' => $table,
@@ -193,36 +188,89 @@ class query {
 				
 				return $this;
 			} else {
-				facula::core('debug')->exception('ERROR_QUERY_OPERATOR_UNSPECIFIED_METHOD_FOR_CONDITION', 'query', true);
+				facula::core('debug')->exception('ERROR_QUERY_SQLBuilder_UNSUPPORTED_CONDITION_TYPE|' . $type, 'query', true);
 			}
 		} else {
-			facula::core('debug')->exception('ERROR_QUERY_OPERATOR_UNSUPPORTED_CONDITION_TYPE|' . $type, 'query', true);
+			facula::core('debug')->exception('ERROR_QUERY_SQLBuilder_NOT_SUPPORT_CONDITION|' . $this->activeMethod, 'query', true);
 		}
-		
+			
 		return false;
 	}
 	
+	/* ORDER */
 	public function order($field, $method) {
-		if ($this->activeMethod) {
+		if ($this->activeMethod == 'SELECT' || $this->activeMethod == 'UPDATE' || $this->activeMethod == 'DELETE') {
 			$this->activeParams[$this->activeMethod]['ORDERBY'][] = array(
 				'FIELD' => $field,
 				'METHOD' => $method,
 			);
 		} else {
-			facula::core('debug')->exception('ERROR_QUERY_OPERATOR_UNSPECIFIED_METHOD_FOR_ORDER', 'query', true);
+			facula::core('debug')->exception('ERROR_QUERY_SQLBuilder_NOT_SUPPORT_ORDER|' . $this->activeMethod, 'query', true);
 		}
 		
 		return $this;
 	}
 	
+	/* LIMIT */
+	public function limit($start, $duration) {
+		if ($this->activeMethod == 'SELECT' || $this->activeMethod == 'UPDATE' || $this->activeMethod == 'DELETE') {
+			$this->activeParams[$this->activeMethod]['LIMIT'] = array(
+				'START' => intval($start),
+				'DURATION' => intval($duration),
+			);
+			
+			return $this;
+		} else {
+			facula::core('debug')->exception('ERROR_QUERY_SQLBuilder_NOT_SUPPORT_LIMIT|' . $this->activeMethod, 'query', true);
+		}
+	}
+	
+	/* Action Performer */
+	public function get() {
+		if ($result = $this->fetch(0, 1)) {
+			return $result[0];
+		}
+		
+		return false;
+	}
+	
+	public function fetch($start = 0, $duration = 0) {
+		$builder = $statement = null;
+		$sql = '';
+		
+		if ($this->activeMethod == 'SELECT') {
+			if ($builder = $this->getSQLBuilder('Read')) {
+				if ($sql = $builder->select($this->activeParams[$this->activeMethod])) {
+					try {
+						if ($statement = $this->dbh->prepare($sql)) {
+							foreach($this->activeValues AS $key => $value) {
+								$statement->bindValue($key, $value['Value'], $value['Type']);
+							}
+							
+							$statement->execute();
+							
+							return $statement->fetchAll(PDO::FETCH_ASSOC);
+						}
+					} catch(PDOException $e) {
+						facula::core('debug')->exception('ERROR_QUERY_FEATCH_FAILED|' . $e->getMessage(), 'query', true);
+					}
+				}
+			}
+		} else {
+			facula::core('debug')->exception('ERROR_QUERY_SQLBuilder_UNSUPPORTED_FETCH_TYPE|' . $this->activeMethod, 'query', true);
+		}
+		
+		return false;
+	}
+	
 	public function save() {
 		$sql = '';
-		$operator = $statement = null;
+		$builder = $statement = null;
 		
-		if ($operator = $this->getOperator('Write')) {
+		if ($builder = $this->getSQLBuilder('Write')) {
 			switch($this->activeMethod) {
 				case 'UPDATE':
-					if ($sql = $operator->update($this->activeParams[$this->activeMethod])) {
+					if ($sql = $builder->update($this->activeParams[$this->activeMethod])) {
 						try {
 							if ($statement = $this->dbh->prepare($sql)) {
 								foreach($this->activeValues AS $key => $value) {
@@ -241,7 +289,7 @@ class query {
 					break;
 					
 				case 'INSERT':
-					if ($sql = $operator->insert($this->activeParams[$this->activeMethod])) {
+					if ($sql = $builder->insert($this->activeParams[$this->activeMethod])) {
 						try {
 							if ($statement = $this->dbh->prepare($sql)) {
 								foreach($this->activeValues AS $key => $value) {
@@ -260,7 +308,7 @@ class query {
 					break;
 					
 				case 'DELETE':
-					if ($sql = $operator->delete($this->activeParams[$this->activeMethod])) {
+					if ($sql = $builder->delete($this->activeParams[$this->activeMethod])) {
 						try {
 							if ($statement = $this->dbh->prepare($sql)) {
 								foreach($this->activeValues AS $key => $value) {
@@ -278,47 +326,10 @@ class query {
 					break;
 					
 				default:
-					facula::core('debug')->exception('ERROR_QUERY_OPERATOR_UNSUPPORTED_FETCH_TYPE|' . $this->activeMethod, 'query', true);
+					facula::core('debug')->exception('ERROR_QUERY_SQLBuilder_UNSUPPORTED_FETCH_TYPE|' . $this->activeMethod, 'query', true);
 					return false;
 					break;
 			}
-		}
-		
-		return false;
-	}
-	
-	public function get() {
-		if ($result = $this->fetch(0, 1)) {
-			return $result[0];
-		}
-		
-		return false;
-	}
-	
-	public function fetch($start = 0, $duration = 0) {
-		$operator = $statement = null;
-		$sql = '';
-		
-		if ($this->activeMethod == 'SELECT') {
-			if ($operator = $this->getOperator('Read')) {
-				if ($sql = $operator->select($this->activeParams[$this->activeMethod])) {
-					try {
-						if ($statement = $this->dbh->prepare($sql)) {
-							foreach($this->activeValues AS $key => $value) {
-								$statement->bindValue($key, $value['Value'], $value['Type']);
-							}
-							
-							$statement->execute();
-							
-							return $statement->fetchAll(PDO::FETCH_ASSOC);
-						}
-					} catch(PDOException $e) {
-						facula::core('debug')->exception('ERROR_QUERY_FEATCH_FAILED|' . $e->getMessage(), 'query', true);
-					}
-				}
-			}
-		} else {
-			facula::core('debug')->exception('ERROR_QUERY_OPERATOR_UNSUPPORTED_FETCH_TYPE|' . $this->activeMethod, 'query', true);
 		}
 		
 		return false;
