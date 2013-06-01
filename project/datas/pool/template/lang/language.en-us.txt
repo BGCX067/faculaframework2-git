@@ -1,0 +1,2 @@
+TEXT_LANG_TEST = en-usLanguage Test
+TEXT_LANG_TEST1 = en-usLanguage Test1

@@ -20,7 +20,7 @@ $cfg = array(
 			'UserCores' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'cores',
 			'UserIncludes' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'includes',
 		),
-		// 'SystemCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'sys', 
+		'SystemCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'sys', 
 	),
 	'debug' => array(
 		// 'Core' => 'Debugger', // Set up your own new custom core
@@ -87,9 +87,9 @@ $cfg = array(
 	'template' => array(
 		'TemplatePool' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'pool' . DIRECTORY_SEPARATOR . 'template',
 		'CompiledTemplate' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'template',
-		'CachedTemplate' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'template',
-		'CompressOutput' => true,
-		'ForceRenew' => true,
+		'CacheTemplate' => true,
+		'CompressOutput' => false,
+		'ForceRenew' => false,
 		'DisplayDebug' => true,
 	),
 );

@@ -9,6 +9,7 @@ interface faculaDebugInterface {
 	
 	public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext);
 	public function exceptionHandler($exception);
+	public function fatalHandler();
 }
 
 class faculaDebug extends faculaCoreFactory {
@@ -61,8 +62,11 @@ class faculaDebugDefault implements faculaDebugInterface {
 	
 	public function _inited() {
 		set_error_handler(array(&$this, 'errorHandler'), E_ALL); // Use our own error reporter, just like PHP's E_ALL
-		set_exception_handler(array(&$this, 'exceptionHandler')); // Use our own error reporter, just like PHP's E_ALL
-		error_reporting(E_ALL &~ (E_NOTICE | E_WARNING | E_USER_ERROR | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED)); // Mute php error reporter from most errors
+		set_exception_handler(array(&$this, 'exceptionHandler')); // Use our own exception reporter
+		register_shutdown_function(array(&$this, 'fatalHandler')); // Experimentally use our own fatal reporter
+		
+		// error_reporting(E_ALL &~ (E_NOTICE | E_WARNING | E_USER_ERROR | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED)); // Mute php error reporter from most errors
+		error_reporting(E_ALL &~ (E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_PARSE | E_ERROR | E_WARNING | E_DEPRECATED | E_NOTICE | E_USER_ERROR | E_USER_WARNING | E_USER_DEPRECATED | E_USER_NOTICE));
 		
 		return true;
 	}
@@ -144,6 +148,24 @@ class faculaDebugDefault implements faculaDebugInterface {
 	
 	public function exceptionHandler($exception) {
 		$this->exception('Exception: ' . $exception->getMessage(), 'Exception', true, $exception);
+	}
+	
+	public function fatalHandler() { // http://stackoverflow.com/questions/277224/how-do-i-catch-a-php-fatal-error/277230#277230
+		$errfile = 'Unknown file';
+		$errstr  = '';
+		$errno   = E_CORE_ERROR;
+		$errline = 0;
+		
+		if($error = error_get_last()) {
+			$errno   = $error['type'];
+			$errfile = $error['file'];
+			$errline = $error['line'];
+			$errstr  = $error['message'];
+			
+			return $this->errorHandler($errno, $errstr, $errfile, $errline, null);
+		}
+		
+		return false;
 	}
 	
 	public function exception($info, $type = '', $exit = false, Exception $e = null) {
@@ -256,7 +278,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 	private function displayErrorBanner(Exception $e, $returncode = false, $callerOffset = 0) {
 		$code = '';
 		
-		if ($this->configs['Debug']) {
+		if ($this->configs['Debug'] || true) {
 			$backtraces = array_reverse($this->backtrace($e));
 			$traceSize = count($backtraces);
 			$traceCallerOffset = $traceSize - ($callerOffset < $traceSize ? $callerOffset : 0);

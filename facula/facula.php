@@ -23,8 +23,10 @@ class facula {
 	static private $instance = null;
 	
 	static private $config = array(
-		'CacheSafeCode' => '<?php /* Facula System Cache File */ exit(); ?>',
-		'CacheSectionBreaks' => '"""""""" + Break + """"""""',
+		'CacheSafeCode' => array(
+			'<?php if (!defined(\'IN_FACULA\')) {exit(\'Access Denied\');} ',
+			' ?>',
+		),
 		'SystemCacheFileName' => 'coreCache.php',
 		'CoreComponents' => array('debug', 'object', 'request', 'response'),
 	);
@@ -103,8 +105,12 @@ class facula {
 	}
 	
 	static private function saveObjectToCache($cacheDir) {
-		// Format: Safecode + serialized $this + middlecode + serialize file dirs
-		$content = self::$config['CacheSafeCode'] . serialize(self::$instance) . self::$config['CacheSectionBreaks'] . serialize(self::$config['AutoIncludes']);
+		$cache = array(
+			'Facula' => serialize(self::$instance),
+			'Includes' => self::$config['AutoIncludes'],
+		);
+		
+		$content = self::$config['CacheSafeCode'][0] . '$cache = ' . var_export($cache, true) . ';'. self::$config['CacheSafeCode'][1];
 		
 		if (is_dir($cacheDir)) {
 			return file_put_contents($cacheDir . DIRECTORY_SEPARATOR . self::$config['SystemCacheFileName'], $content);
@@ -114,25 +120,23 @@ class facula {
 	}
 	
 	static private function loadObjectFromCache($cacheDir) {
+		$facula = null;
 		$file = $cacheDir . DIRECTORY_SEPARATOR . self::$config['SystemCacheFileName'];
-		$cacheContents = $tempContents = array();
+		$cache = array();
 		$cacheContent = '';
 		
 		if (is_readable($file)) {
-			$cacheContent = str_replace(self::$config['CacheSafeCode'], '', file_get_contents($file));
+			require($file);
 			
-			$cacheContents = explode(self::$config['CacheSectionBreaks'], $cacheContent, 2);
-			
-			// If we got serialized file dirs
-			if (isset($cacheContents[1])) {
-				$tempContents = unserialize($cacheContents[1]);
-				
-				foreach($tempContents AS $path) {
-					require($path);
+			if (!empty($cache)) {
+				if (isset($cache['Includes'][0])) {
+					foreach($cache['Includes'] AS $path) {
+						require($path);
+					}
 				}
+				
+				return unserialize($cache['Facula']); // unserialize the object
 			}
-			
-			return unserialize($cacheContents[0]); // unserialize the object
 		}
 		
 		return false;
@@ -162,6 +166,7 @@ class facula {
 				$cfg['core']['Enables'] = self::$config['CoreComponents'];
 			}
 			
+			// Init the AutoCores array
 			foreach(self::$config['ComponentInfo'] AS $keyn => $component) {
 				switch($component['Type']) {
 					case 'core':
@@ -193,7 +198,7 @@ class facula {
 				}
 			}
 			
-			if (isset(self::$config['AutoCores'])) {
+			if (isset(self::$config['AutoCores'][0])) {
 				foreach(self::$config['AutoCores'] AS $component) {
 					$this->getCore($component['Name']);
 				}

@@ -38,7 +38,10 @@ class faculaObjectDefault implements faculaObjectInterface {
 	);
 
 	static private $config = array(
-		'CacheSafeCode' => '<?php /* Facula Object Cache */ exit(); ?>',
+		'CacheSafeCode' => array(
+			'<?php if (!defined(\'IN_FACULA\')) {exit(\'Access Denied\');} ',
+			' ?>',
+		),
 	);
 	
 	private $configs = array();
@@ -86,12 +89,15 @@ class faculaObjectDefault implements faculaObjectInterface {
 	
 	private function loadObjectFromCache($objectName, $type = '', $uniqueid = '') {
 		$instance = null;
+		$cache = '';
 		
 		if ($this->configs['ObjectCacheRoot']) {
 			$file = $this->configs['ObjectCacheRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
 			
 			if (is_readable($file)) {
-				if ($instance = unserialize(str_replace(self::$config['CacheSafeCode'], '', file_get_contents($file)))) {				
+				require($file);
+				
+				if ($instance = unserialize($cache)) {				
 					return $instance;
 				}
 			}
@@ -104,7 +110,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		if ($this->configs['ObjectCacheRoot']) {
 			$file = $this->configs['ObjectCacheRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
 			
-			return file_put_contents($file, self::$config['CacheSafeCode'] . serialize($instance));
+			return file_put_contents($file, self::$config['CacheSafeCode'][0] . '$cache = \'' . serialize($instance) . '\'' . self::$config['CacheSafeCode'][1]);
 		}
 		
 		return false;

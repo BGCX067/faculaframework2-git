@@ -18,14 +18,19 @@ class IndexController extends \Controller {
 	public function get(&$request) {
 		
 		$message = 'hello word';
-		
 		$this->assign('message', $message);
 		
-		$this->display('index');
-		
+		$this->display('index', 500, function() {
+			$this->assign('dbdata', \query::from('settings')->select(array('setting', 'value'))->fetch());
+		});
 		
 		/*
-		$q = \query::from('settings')->select(array('setting', 'value'))->get();
+		$this->template->inject('IndexNavs', '<li>{! TEXT_LANG_TEST !}</li>');
+		$this->template->inject('IndexNavs', '<li>{! TEXT_LANG_TEST2 !}</li>');
+		
+		
+		$this->template->importTemplateFile('common_test_template', PROJECT_ROOT . '/test/testtemplate.html');
+		$this->template->importLanguageFile('default', PROJECT_ROOT . '/test/testlanguage.txt');
 		
 		print_r('1:');
 		print_r($q);

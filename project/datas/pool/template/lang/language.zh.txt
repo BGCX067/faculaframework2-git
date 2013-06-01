@@ -1,0 +1,2 @@
+TEXT_LANG_TEST = zh语言测试
+TEXT_LANG_TEST1 = zh语言测试1

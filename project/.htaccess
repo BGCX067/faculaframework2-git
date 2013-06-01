@@ -1,0 +1,7 @@
+php_flag xdebug.profiler_enable Off
+
+Options -Indexes -MultiViews
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php/$1 [L]
