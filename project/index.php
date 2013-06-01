@@ -12,12 +12,17 @@ if(!defined('IN_FACULA')) {
 	define('IN_FACULA', true);
 }
 
+date_default_timezone_set('UTC');
+
 require('../facula/facula.php');
 require('config.php');
 
 $newobj = facula::init($cfg);
 
 $newobj2 = facula::run('\controllers\IndexController', true);
+
+// facula::clearCoreCache();
+
 
 
 

@@ -1,5 +1,3 @@
-php_flag xdebug.profiler_enable Off
-
 Options -Indexes -MultiViews
 
 RewriteEngine On

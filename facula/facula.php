@@ -45,10 +45,10 @@ class facula {
 	static public function init(&$cfg) {
 		if (!self::$instance) {
 			if (isset($cfg['core']['SystemCacheRoot'][1])) {
-				if (!self::$instance = self::loadObjectFromCache($cfg['core']['SystemCacheRoot'])) {
+				if (!self::$instance = self::loadCoreFromCache($cfg['core']['SystemCacheRoot'])) {
 					self::$instance = new self($cfg);
 					
-					self::saveObjectToCache($cfg['core']['SystemCacheRoot']);
+					self::saveCoreToCache($cfg['core']['SystemCacheRoot']);
 				}
 			} else {
 				self::$instance = new self($cfg);
@@ -104,7 +104,7 @@ class facula {
 		return false;
 	}
 	
-	static private function saveObjectToCache($cacheDir) {
+	static private function saveCoreToCache($cacheDir) {
 		$cache = array(
 			'Facula' => serialize(self::$instance),
 			'Includes' => self::$config['AutoIncludes'],
@@ -119,7 +119,7 @@ class facula {
 		return false;
 	}
 	
-	static private function loadObjectFromCache($cacheDir) {
+	static private function loadCoreFromCache($cacheDir) {
 		$facula = null;
 		$file = $cacheDir . DIRECTORY_SEPARATOR . self::$config['SystemCacheFileName'];
 		$cache = array();
@@ -137,6 +137,22 @@ class facula {
 				
 				return unserialize($cache['Facula']); // unserialize the object
 			}
+		}
+		
+		return false;
+	}
+	
+	static public function clearCoreCache() {
+		if (isset(self::$instance) && isset(self::$instance->setting['core']['SystemCacheRoot'])) {
+			$file = self::$instance->setting['core']['SystemCacheRoot'] . DIRECTORY_SEPARATOR . self::$config['SystemCacheFileName'];
+			
+			if (is_readable($file)) {
+				return unlink($file);
+			} else {
+				throw new Exception('Facula core cache file ' . $file . ' cannot be operated.');
+			}
+		} else {
+			throw new Exception('Facula must be inited to remove core cache.');
 		}
 		
 		return false;
