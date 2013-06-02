@@ -2,6 +2,12 @@
 
 interface faculaTemplateInterface {
 	public function _inited();
+	public function assign($key, $val);
+	public function inject($key, $templatecontent);
+	public function render($templateName, $expire = 0, $expiredCallback = null);
+	public function importTemplateFile($name, $path);
+	public function importLanguageFile($languageCode, $path);
+	public function getLanguageString($key);
 }
 
 class faculaTemplate extends faculaCoreFactory {
@@ -103,6 +109,8 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	}
 	
 	public function _inited() {
+		$error = '';
+		
 		// Determine what language can be used for this client
 		$siteLanguage = facula::core('request')->getClientInfo('languages');
 		
@@ -120,6 +128,8 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		$this->assigned['Time'] = FACULA_TIME;
 		$this->assigned['RootURL'] = facula::core('request')->getClientInfo('rootURL');
 		$this->assigned['AbsRootURL'] = facula::core('request')->getClientInfo('absRootURL');
+		
+		facula::core('object')->runHook('template_inited', array(), $error);
 		
 		return true;
 	}
@@ -191,11 +201,15 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	}
 	
 	private function getPageContent($templateName, $expire, $expiredCallback = null) {
-		$content = '';
+		$content = $error = '';
 		$compiledTpl = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledTemplate.' . $templateName . '.' . $this->pool['Language'] . '.php';
 		
 		if (isset($this->pool['File']['Tpl'][$templateName])) {
 			if (!$this->configs['Renew'] && is_readable($compiledTpl) && (!$expire || filemtime($compiledTpl) > FACULA_TIME - $expire)) {
+				
+				facula::core('object')->runHook('template_render_*', array(), $error);
+				facula::core('object')->runHook('template_render_' . $templateName, array(), $error);
+				
 				if ($content = $this->doRender($compiledTpl)) {
 					return $content;
 				}
@@ -203,6 +217,9 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 				if ($expiredCallback && is_callable($expiredCallback)) {
 					$expiredCallback();
 				}
+				
+				facula::core('object')->runHook('template_compile_*', array(), $error);
+				facula::core('object')->runHook('template_compile_' . $templateName, array(), $error);
 				
 				if ($this->doCompile($this->pool['File']['Tpl'][$templateName], $compiledTpl)) {
 					if ($content = $this->doRender($compiledTpl)) {
@@ -237,7 +254,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 			
 			if ($compiledContent = $compiler->compile()) {
 				if ($this->configs['Compress']) {
-					$content = str_replace(array('  ', "\r", "\n", "\t"), '', $content);
+					$compiledContent = str_replace(array('  ', "\r", "\n", "\t"), '', $compiledContent);
 				}
 			
 				if ($this->configs['Cache']) {
@@ -248,7 +265,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 					// Deal with area which need to be cached
 					foreach($splitedCompiledContent AS $key => $val) {
 						if ($key > 0 && $key < $splitedCompiledContentIndexLen && $key%2) {
-							$splitedCompiledContent[$key] = '<?php echo(\'' . addslashes($val) . '\'); ?>';
+							$splitedCompiledContent[$key] = '<?php echo(stripslashes(\'' . addslashes($val) . '\')); ?>';
 						}
 					}
 					

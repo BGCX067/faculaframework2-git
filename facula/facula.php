@@ -74,6 +74,27 @@ class facula {
 		return false;
 	}
 	
+	static public function getAppInfo() {
+		if (isset(self::$instance)) {
+			$cores = array();
+			
+			foreach(self::$instance->coreInstances AS $core) {
+				$cores[get_class($core)] = array(
+					'Plate' => isset($core::$plate) ? $core::$plate : null,
+					'Info' => method_exists($core, 'getCoreInfo') ? $core::$plate() : false,
+				);
+			}
+			
+			return array(
+				'App' => isset(self::$instance->setting['AppName']) ? self::$instance->setting['AppName'] : 'Facula App',
+				'Ver' => (isset(self::$instance->setting['AppVersion']) ? self::$instance->setting['AppVersion'] : '0.0'),
+				'Cores' => $cores,
+			);
+		}
+		
+		return array();
+	}
+	
 	static public function getInstance() {
 		return self::$instance;
 	}
@@ -181,6 +202,9 @@ class facula {
 			} else {
 				$cfg['core']['Enables'] = self::$config['CoreComponents'];
 			}
+			
+			// Init AutoCores
+			self::$config['AutoCores'] = array();
 			
 			// Init the AutoCores array
 			foreach(self::$config['ComponentInfo'] AS $keyn => $component) {

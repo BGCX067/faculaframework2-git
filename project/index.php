@@ -21,10 +21,10 @@ $newobj = facula::init($cfg);
 
 $newobj2 = facula::run('\controllers\IndexController', true);
 
+// $thing = facula::core('object')->getPlugin('example');
+// $thing::register();
+
 // facula::clearCoreCache();
-
-
-
 
 endCount();
 

@@ -46,14 +46,58 @@ class faculaObjectDefault implements faculaObjectInterface {
 	
 	private $configs = array();
 	
+	private $plugins = array();
+	
 	private $instances = array();
 	
 	public function __construct(&$cfg, &$common, $facula) {
+		$paths = array();
+		
 		$this->configs = array(
-			'Paths' => $cfg['Paths'],
 			'ObjectCacheRoot' => isset($cfg['ObjectCacheRoot']) && is_dir($cfg['ObjectCacheRoot']) ? $cfg['ObjectCacheRoot'] : '',
 			'LibRoot' => isset($cfg['LibrariesRoot']) && is_dir($cfg['LibrariesRoot']) ? $cfg['LibrariesRoot'] : '',
 		);
+		
+		// Convert plugin type file to misc type file to it will be able to use autoload
+		foreach($cfg['Paths'] AS $key => $path) {
+			switch($path['Type']) {
+				case 'plugin':
+					$paths['Paths']['misc.' . $path['Name'] . 'Plugin'] = $path;
+					$paths['Plugins'][$key] = $path;
+					break;
+					
+				default:
+					$paths['Paths'][$key] = $path;
+					break;
+			}
+		}
+		
+		// Save path to paths
+		$this->configs['Paths'] = $paths['Paths'];
+		
+		// Now, init all plugins
+		$tempPluginName = '';
+		foreach($paths['Plugins'] AS $plugin) {
+			$tempPluginName = $plugin['Name'] . 'Plugin';
+			
+			// Load plugin file manually
+			require($plugin['Path']);
+			
+			// Is that plugin file contains we wanted plugin?
+			if (class_exists($tempPluginName)) {
+				if (method_exists($tempPluginName, 'register')) {
+					foreach($tempPluginName::register() AS $hook => $action) {
+						if (is_callable(array($tempPluginName, $action))) {
+							$this->hooks[$hook][] = array($tempPluginName, $action);
+						}
+					}
+				} else {
+					throw new Exception('Static method ' . $tempPluginName . '::register() must be declared.');
+				}
+			} else {
+				throw new Exception('File ' . $plugin['Path'] . ' must contain class ' . $tempPluginName . '.');
+			}
+		}
 		
 		$cfg = null;
 		unset($cfg);
@@ -72,6 +116,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 		
 		if (isset($this->configs['Paths']['class.' . $classfileLower])) { // Use path scope to locate file first
 			return require_once($this->configs['Paths']['class.' . $classfileLower]['Path']);
+		} elseif (isset($this->configs['Paths']['misc.' . $classfile])) { // Maybe its 
+			return require_once($this->configs['Paths']['misc.' . $classfile]['Path']);
 		} elseif ($this->configs['LibRoot'] && strpos($classfile, '\\') !== false) { // If above not work, use namespace to locate file
 			return require_once($this->configs['LibRoot'] . DIRECTORY_SEPARATOR . str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, ltrim($classfile, '\\')) . '.php');
 		}
@@ -197,7 +243,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	public function get($type, $name, $new = false, $justinclude = false, $cache = false) {
-		$keyName = $type . '.' . strtolower($name);
+		$keyName = $type . '.' . $name;
 		$className = $type . $name;
 		$newobject = null;
 		
@@ -231,7 +277,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	public function getFile($type, $name) {
-		$keyName = $type.'.'.strtolower($name);
+		$keyName = $type . '.' . $name;
 		
 		if (isset($this->configs['Paths'][$keyName])) {
 			return $this->configs['Paths'][$keyName];
@@ -252,6 +298,35 @@ class faculaObjectDefault implements faculaObjectInterface {
 		}
 		
 		return $handler;
+	}
+	
+	// Hooks
+	public function runHook($hookName, $hookArgs, &$error) {
+		$returns = array();
+		
+		if (isset($this->hooks[$hookName])) {
+			foreach($this->hooks[$hookName] AS $hook) {
+				if (!$returns[] = $hook($hookArgs, $error)) {
+					return false;
+					
+					break;
+				}
+			}
+			
+			return $returns;
+		}
+		
+		return true; // If there is no plugin to run, return true to assume successed
+	}
+	
+	public function addHook($hookName, $processor) {
+		if (is_callable($processor)) {
+			$this->hooks[] = $processor;
+			
+			return true;
+		}
+		
+		return false;
 	}
 }
 

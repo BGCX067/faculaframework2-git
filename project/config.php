@@ -19,6 +19,7 @@ $cfg = array(
 			'UserClass' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'classes',
 			'UserCores' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'cores',
 			'UserIncludes' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'includes',
+			'UserPlugins' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'plugins',
 		),
 		'SystemCacheRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'sys', 
 	),
@@ -26,6 +27,8 @@ $cfg = array(
 		// 'Core' => 'Debugger', // Set up your own new custom core
 		'Debug' => true, 
 		'LogRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'logs', 
+		'LogServerInterface' => 'http://reports.app.r1cs.com/interface', 
+		'LogServerKey' => '3f8871562ed0f1e8d1a69cbf4d20c664', 
 	),
 	'object' => array(
 		'LibrariesRoot' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'components', 
@@ -88,7 +91,7 @@ $cfg = array(
 		'TemplatePool' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'pool' . DIRECTORY_SEPARATOR . 'template',
 		'CompiledTemplate' => PROJECT_ROOT . DIRECTORY_SEPARATOR . 'datas' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'template',
 		'CacheTemplate' => true,
-		'CompressOutput' => false,
+		'CompressOutput' => true,
 		'ForceRenew' => false,
 		'DisplayDebug' => true,
 	),
