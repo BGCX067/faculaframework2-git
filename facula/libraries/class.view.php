@@ -1,7 +1,7 @@
 <?php
 
 /*****************************************************************************
-	Facula Framework Model Base Unit
+	Facula Framework View Base Unit
 
 	FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
 	
@@ -25,11 +25,11 @@
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-interface modelInterface {
+interface viewInterface {
 
 }
 
-abstract class Model implements modelInterface {
+abstract class View implements viewInterface {
 
 }
 

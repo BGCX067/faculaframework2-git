@@ -1,9 +1,0 @@
-Files:
-
-facula.php // Core file
-
-+ core
-\ core.object.php // Object manage
-\ core.response.php // Http manage
-\ core.request.php // Http manage
-\ core.debug.php // Http manage

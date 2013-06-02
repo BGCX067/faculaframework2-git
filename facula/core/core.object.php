@@ -1,11 +1,38 @@
 <?php
 
+/*****************************************************************************
+	Facula Framework Object Manager
+
+	FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
+	
+	@Copyright 2013 Rain Lee <raincious@gmail.com>
+	@Author Rain Lee <raincious@gmail.com>
+	@Package FaculaFramework
+	@Version 2.0 prototype
+	
+	This file is part of Facula Framework.
+	
+	Facula Framework is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Lesser General Public License as published 
+	by the Free Software Foundation, version 3.
+	
+	Facula Framework is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Lesser General Public License for more details.
+	
+	You should have received a copy of the GNU Lesser General Public License
+	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
+*******************************************************************************/
+
 interface faculaObjectInterface {
 	public function _inited();
 	public function get($type, $name, $new = false, $justinclude = false, $cache = false);
 	public function getFile($type, $name);
 	public function getInstance($object, $ags, $cache = false);
 	public function run(&$app, $cache = false);
+	public function runHook($hookName, $hookArgs, &$error);
+	public function addHook($hookName, $processor);
 }
 
 class faculaObject extends faculaCoreFactory {
