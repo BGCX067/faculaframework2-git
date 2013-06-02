@@ -56,13 +56,6 @@ class facula {
 		'CoreComponents' => array('debug', 'object', 'request', 'response'),
 	);
 	
-	static private $profile = array(
-		'TimeStart' => 0,
-		'TimeEnd' => 0,
-		'MemoryUsage' => 0,
-		'MemoryPeak' => 0,
-	);
-	
 	private $setting = array();
 	
 	private $coreInstances = array();
@@ -99,14 +92,14 @@ class facula {
 		return false;
 	}
 	
-	static public function getAppInfo() {
+	static public function getCoreInfo() {
 		if (isset(self::$instance)) {
 			$cores = array();
 			
 			foreach(self::$instance->coreInstances AS $core) {
 				$cores[get_class($core)] = array(
 					'Plate' => isset($core::$plate) ? $core::$plate : null,
-					'Info' => method_exists($core, 'getCoreInfo') ? $core::$plate() : false,
+					'Info' => method_exists($core, '_getInfo') ? $core->_getInfo() : null,
 				);
 			}
 			
@@ -359,6 +352,14 @@ class facula {
 		return false;
 	}
 	
+	private function &getSetting($key) {
+		if (!isset($this->setting[$key])) {
+			$this->setting[$key] = array();  // If this array not set yet, make a new one and return it
+		}
+		
+		return $this->setting[$key];
+	}
+	
 	public function scanModuleFiles($directory) {
 		$modules = array();
 		$moduleFilenames = $tempModuleFilenames = array();
@@ -407,14 +408,6 @@ class facula {
 		}
 		
 		return false;
-	}
-	
-	private function &getSetting($key) {
-		if (!isset($this->setting[$key])) {
-			$this->setting[$key] = array();  // If this array not set yet, make a new one and return it
-		}
-		
-		return $this->setting[$key];
 	}
 }
 

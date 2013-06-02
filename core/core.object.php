@@ -27,9 +27,9 @@
 
 interface faculaObjectInterface {
 	public function _inited();
-	public function get($type, $name, $new = false, $justinclude = false, $cache = false);
 	public function getFile($type, $name);
 	public function getInstance($object, $ags, $cache = false);
+	public function getModuleByNamespace($namespace);
 	public function run(&$app, $cache = false);
 	public function runHook($hookName, $hookArgs, &$error);
 	public function addHook($hookName, $processor);
@@ -88,13 +88,17 @@ class faculaObjectDefault implements faculaObjectInterface {
 		// Convert plugin type file to misc type file to it will be able to use autoload
 		foreach($cfg['Paths'] AS $key => $path) {
 			switch($path['Type']) {
+				case 'class':
+					$paths['Paths'][$key] = $path;
+					break;
+					
 				case 'plugin':
 					$paths['Paths']['misc.' . $path['Name'] . 'Plugin'] = $path;
 					$paths['Plugins'][$key] = $path;
 					break;
 					
 				default:
-					$paths['Paths'][$key] = $path;
+					$paths['Paths']['misc.' . $path['Name'] . ucfirst($path['Type'])] = $path;
 					break;
 			}
 		}
@@ -130,6 +134,13 @@ class faculaObjectDefault implements faculaObjectInterface {
 		unset($cfg);
 		
 		return true;
+	}
+	
+	public function _getInfo() {
+		return array(
+			'Files' => $this->configs['Paths'],
+			'Hooks' => $this->hooks,
+		);
 	}
 	
 	public function _inited() {
@@ -182,6 +193,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 	private function saveObjectToCache($objectName, $instance, $type = '', $uniqueid = '') {
 		if ($this->configs['ObjectCacheRoot']) {
 			$instance->cachedObjectFilePath = $file = $this->configs['ObjectCacheRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
+			$instance->cachedObjectSaveTime = FACULA_TIME;
 			
 			return file_put_contents($file, self::$config['CacheSafeCode'][0] . '$cache = \'' . serialize($instance) . '\'' . self::$config['CacheSafeCode'][1]);
 		}
@@ -269,45 +281,19 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return false;
 	}
 	
-	public function get($type, $name, $new = false, $justinclude = false, $cache = false) {
-		$keyName = $type . '.' . $name;
-		$className = $type . $name;
-		$newobject = null;
-		
-		if (isset($this->configs['Paths'][$keyName])) { // isset obviously faster than $this->getFile call.
-			if (!isset($this->instances[$keyName]['Loaded'])) { // If this is the first time we load this module
-				// First of all, include file, If not success, return false
-				
-				if (require($this->configs['Paths'][$keyName]['Path'])) {
-					$this->instances[$keyName]['Loaded'] = true;
-					
-					if ($justinclude) {
-						return true;
-					}
-				}
-				
-				$new = true;
-			}
-			
-			if ($new) { // If need to create a new instance
-				if ($newobject = $this->getInstance($className, array($this->getObjectSetting($className)), $cache)) {
-					$this->instances[$keyName][] = $newobject;
-					
-					return $newobject;
-				}
-			} else {
-				return $this->instances[$keyName][count($this->instances[$keyName]) - 1];
-			}
-		}
-		
-		return false;
-	}
-	
 	public function getFile($type, $name) {
 		$keyName = $type . '.' . $name;
 		
 		if (isset($this->configs['Paths'][$keyName])) {
 			return $this->configs['Paths'][$keyName];
+		}
+		
+		return false;
+	}
+	
+	public function getModuleByNamespace($namespace) {
+		if ($this->configs['LibRoot'] && strpos($namespace, '\\') !== false) {
+			return $this->configs['LibRoot'] . DIRECTORY_SEPARATOR . str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, ltrim($namespace, '\\')) . '.php';
 		}
 		
 		return false;

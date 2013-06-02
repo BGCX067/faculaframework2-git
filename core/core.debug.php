@@ -139,7 +139,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 	
 	public function reportError() {
 		if (!empty($this->errorRecords) && $this->configs['LogServer']['Enabled']) {
-			$app = facula::getAppInfo();
+			$app = facula::getCoreInfo();
 			
 			$data = array(
 				'KEY' => $this->configs['LogServer']['Key'],
