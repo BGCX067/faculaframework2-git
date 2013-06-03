@@ -630,12 +630,6 @@ class faculaTemplateDefaultCompiler {
 					$tplContent = str_replace($replaces['Search'], $replaces['Replace'], $tplContent);
 				}
 				
-				$this->tagPositionMaps[] = array(
-					'Start' => $pos,
-					'Name' => $format,
-					'End' => $pos + strlen($tplContent),
-				);
-				
 				return $tplContent;
 			} else {
 				facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_EMPTY|' . $param[0], 'template', true);
@@ -655,12 +649,6 @@ class faculaTemplateDefaultCompiler {
 				$phpcode .= $code;
 			}
 			
-			$this->tagPositionMaps[] = array(
-				'Start' => $pos,
-				'Name' => $format,
-				'End' => $pos + strlen($phpcode),
-			);
-			
 			return $phpcode;
 		}
 		
@@ -669,12 +657,6 @@ class faculaTemplateDefaultCompiler {
 	
 	private function doLanguage($format, $pos) {
 		if (isset($this->pool['LanguageMap'][$format])) {
-		
-			$this->tagPositionMaps[] = array(
-				'Start' => $pos,
-				'Name' => $format,
-				'End' => $pos + strlen($this->pool['LanguageMap'][$format]),
-			);
 			
 			return $this->pool['LanguageMap'][$format];
 		} else {
@@ -764,12 +746,6 @@ class faculaTemplateDefaultCompiler {
 			
 			$phpcode .= ' } ?>';
 			
-			$this->tagPositionMaps[] = array(
-				'Start' => $pos,
-				'Name' => $format,
-				'End' => $pos + strlen($phpcode),
-			);
-			
 			return $phpcode;
 		} else {
 			facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_MUST_DEFINED', 'template', true);
@@ -831,12 +807,6 @@ class faculaTemplateDefaultCompiler {
 			?>';
 			
 			$phpcode = str_replace(array("\r", "\n", "\t",'  '), '', $phpcode);
-			
-			$this->tagPositionMaps[] = array(
-				'Start' => $pos,
-				'Name' => $format,
-				'End' => $pos,
-			);
 			
 			return $phpcode;
 		} else {
