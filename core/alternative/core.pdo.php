@@ -141,7 +141,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 					}
 				}
 			} else {
-				throw new Exception('Sorry, no database setting has missing. So we can\'t set up for the PDO connection.');
+				throw new Exception('Sorry, no database setting. So we can\'t set up for the PDO connection.');
 			}
 		} else {
 			throw new Exception('PHP Data Object (PDO) interface not found. This server may not support it.');

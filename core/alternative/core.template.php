@@ -421,7 +421,7 @@ class faculaTemplateDefaultCompiler {
 		<!--HTML CONTENTS-->
 		{? EOF LogicName ?} // Simple logic
 		
-		{^ SwitcherName $Variable ^$}
+		{^ SwitcherName $Variable ^}
 		<!--HTML CONTENTS: DEFAULT-->
 		{^ CASE SwitcherName 1 ^}
 		<!--HTML CONTENTS: WHEN $Variable == 1-->
@@ -450,7 +450,7 @@ class faculaTemplateDefaultCompiler {
 	
 	private $sourceContent = '';
 	
-	private $tagMaps = array();
+	private $tagPositionMaps = array();
 	
 	public function __construct(&$pool, &$sourceTpl) {
 		$this->pool = $pool;
@@ -490,9 +490,10 @@ class faculaTemplateDefaultCompiler {
 		$unclosedTag = '';
 		
 		if ($this->sourceContent) { // If file has been successfully readed
-			$content = $this->sourceContent;
+			$content = trim($this->sourceContent);
+			
 			foreach(self::$setting['Formats'] AS $format) {
-				$format['Preg'] = '/\\' .  self::$setting['Delimiter'][0] . '\\' . $format['Tag'] . ' (.*) \\' . $format['Tag'] . '\\' . self::$setting['Delimiter'][1] . '/sU';
+				$format['Preg'] = '/' . preg_quote(self::$setting['Delimiter'][0] . $format['Tag'], '/') . '\s(.*)\s' . preg_quote($format['Tag'] .self::$setting['Delimiter'][1], '/') . '/sU';
 				
 				if ($format['IsExternal']) {
 					$format['Function'] = $format['Command'];
@@ -500,37 +501,65 @@ class faculaTemplateDefaultCompiler {
 					$format['Function'] = array(&$this, $format['Command']);
 				}
 				
+				$i = 0;
+				
 				while(preg_match($format['Preg'], $content, $matchedTags, PREG_OFFSET_CAPTURE)) {
+					if ($i++ > 10) {
+						break;
+					}
+					
 					// Get Original content info
 					$tempResult['OriginalLen']		= strlen($matchedTags[0][0]);
 					$tempResult['StartPos']			= $matchedTags[0][1];
-					$tempResult['EndPos']			= $matchedTags[0][1] + $tempResult['OriginalLen'];
+					$tempResult['EndPos']			= $tempResult['StartPos'] + $tempResult['OriginalLen'];
 					
 					// Generate replacement
-					$tempResult['Result'] = $format['Function']($matchedTags[1][0], $tempResult['StartPos'], $this->tagMaps);
+					if (!$tempResult['Result'] = $format['Function']($matchedTags[1][0], $tempResult['StartPos'], $this->tagPositionMaps)) {
+						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_UNKNOWNERROR', 'template', true);
+						return false;
+						
+						break;
+						break;
+					}
+					
 					$tempResult['ResultLen'] = strlen($tempResult['Result']);
+					$tempResult['ResultEndPos'] = $tempResult['StartPos'] + $tempResult['ResultLen'];
 					
 					// Cuting out the original content
+					$contentBefore = $contentAfter = '';
+					
 					$contentBefore = substr($content, 0, $tempResult['StartPos']);
 					$contentAfter = substr($content, $tempResult['EndPos'], strlen($content));
 					
 					// Reassembling content with new result
 					$content = $contentBefore . $tempResult['Result'] . $contentAfter;
 					
-					// Renew the position indexs
-					foreach($this->tagMaps AS $key => $val) {
-						if (isset($this->tagMaps[$key]['Start']) && $tempResult['StartPos'] < $this->tagMaps[$key]['Start']) {
-							$this->tagMaps[$key]['Start'] += $tempResult['ResultLen'] - $tempResult['OriginalLen'];;
+					$tempResult['LenDifference'] = $tempResult['ResultLen'] - $tempResult['OriginalLen'];
+					
+					foreach($this->tagPositionMaps AS $tagKey => $tagPos) {
+						// If target tag's start position after current tag's start position. increase the target tag's start position as move it back.
+						if (isset($tagPos['Start']) && $tagPos['Start'] > $tempResult['StartPos']) {
+							$this->tagPositionMaps[$tagKey]['Start'] += $tempResult['LenDifference'];
 						}
 						
-						if (isset($this->tagMaps[$key]['End']) && $tempResult['EndPos'] < $this->tagMaps[$key]['End']) {
-							$this->tagMaps[$key]['End'] += $tempResult['ResultLen'] - $tempResult['OriginalLen'];
+						// If target tag's start position after current tag's start position. increase the target tag's end also
+						// And if target tag's start position small than current tag and end position larget than current tag. The current tag must with in the target tag. So we need to move target tag's end position back.
+						if (isset($tagPos['End']) && ($tagPos['Start'] > $tempResult['StartPos'] || ($tagPos['Start'] < $tempResult['StartPos'] && $tagPos['End'] > $tempResult['EndPos']))) {
+							$this->tagPositionMaps[$tagKey]['End'] += $tempResult['LenDifference'];
+						}
+						
+						if (isset($tagPos['Middle'])) {
+							foreach($tagPos['Middle'] AS $tagMidKey => $tagMidVal) {
+								if ($tagMidVal > $tempResult['StartPos']) {
+									$this->tagPositionMaps[$tagKey]['Middle'][$tagMidKey] += $tempResult['LenDifference'];
+								}
+							}
 						}
 					}
 				}
 			}
 			
-			if (!$unclosedTag = $this->doCheckUnclosedBetweenPositions(0, strlen($content))) {
+			if ((!$unclosedTag = $this->doCheckUnclosedTags())) {
 				return $content;
 			} else {
 				facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_TAG_UNCLOSE|' . $unclosedTag, 'template', true);
@@ -541,17 +570,27 @@ class faculaTemplateDefaultCompiler {
 	}
 	
 	/* Compile Tools */
-	public function doCheckUnclosedBetweenPositions($posFrom, $posTo) {
-		if ($posFrom >= $posTo) {
-			facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_UNCLOSECHECK_FROM_MUST_SMALLER', 'template', true);
-			return false;
-		}
-		
-		foreach($this->tagMaps AS $tagKey => $tagRecord) {
-			if ((isset($tagRecord['Start']) && $tagRecord['Start'] > $posFrom)) {
-				if (!isset($tagRecord['End'])) {
-					return isset($tagRecord['Name'][0]) ? $tagRecord['Name'] : true;
-					break;
+	public function doCheckUnclosedTags() {
+		foreach($this->tagPositionMaps AS $refKey => $refRecord) {
+			foreach($this->tagPositionMaps AS $tagKey => $tagRecord) {
+				if ($refKey != $tagKey) {
+					if ($refRecord['Start'] < $tagRecord['Start'] && $refRecord['End'] > $tagRecord['Start'] && $refRecord['End'] < $tagRecord['End']) {
+						return $refRecord['Name'] . ':' . $tagRecord['Name'];
+					} elseif ($refRecord['Start'] < $tagRecord['End'] && $refRecord['End'] > $tagRecord['End'] && $refRecord['Start'] > $tagRecord['Start']) {
+						return $refRecord['Name'] . ':' . $tagRecord['Name'];
+					} elseif (isset($tagRecord['Middle'])) {
+						array_unshift($tagRecord['Middle'], $tagRecord['Start']);
+						
+						$tagRecord['Middles'] = count($tagRecord['Middle']);
+						
+						for($i = 1; $i < $tagRecord['Middles']; $i++) {
+							if ( $refRecord['Start'] < $tagRecord['Middle'][$i - 1] && $refRecord['End'] > $tagRecord['Middle'][$i - 1] && $refRecord['End'] < $tagRecord['Middle'][$i]) {
+								return $refRecord['Name'] . ':' . $tagRecord['Name'];
+							} elseif ($refRecord['Start'] < $tagRecord['Middle'][$i] && $refRecord['End'] > $tagRecord['Middle'][$i] && $refRecord['Start'] > $tagRecord['Middle'][$i - 1]) {
+								return $refRecord['Name'] . ':' . $tagRecord['Name'];
+							}
+						}
+					}
 				}
 			}
 		}
@@ -568,29 +607,39 @@ class faculaTemplateDefaultCompiler {
 	}
 	
 	/* Compile functions */
-	private function doInclude($format) {
+	private function doInclude($format, $pos) {
 		$param = explode(' ', $format);
 		$replaces = $temprepleaces = array();
 		
 		if (isset($this->pool['File']['Tpl'][$param[0]])) {
-			$tplContent = file_get_contents($this->pool['File']['Tpl'][$param[0]]);
+			$tplFileContent = file_get_contents($this->pool['File']['Tpl'][$param[0]]);
+			$newCompiler = new self($this->pool, $tplFileContent);
 			
-			if (isset($param[1])) {
-				$temprepleaces[0] = explode(';', $param[1]);
-				
-				foreach($temprepleaces[0] AS $replace) {
-					$temprepleaces[1] = explode('=', $replace);
+			if ($tplContent = $newCompiler->compile()) {
+				if (isset($param[1])) {
+					$temprepleaces[0] = explode(';', $param[1]);
 					
-					if (isset($temprepleaces[1][0][0]) && isset($temprepleaces[1][1][0])) {
-						$replaces['Search'][] = $temprepleaces[1][0];
-						$replaces['Replace'][] = $temprepleaces[1][1];
+					foreach($temprepleaces[0] AS $replace) {
+						$temprepleaces[1] = explode('=', $replace);
+						
+						if (isset($temprepleaces[1][0][0]) && isset($temprepleaces[1][1][0])) {
+							$replaces['Search'][] = $temprepleaces[1][0];
+							$replaces['Replace'][] = $temprepleaces[1][1];
+						}
 					}
+					$tplContent = str_replace($replaces['Search'], $replaces['Replace'], $tplContent);
 				}
 				
-				$tplContent = str_replace($replaces['Search'], $replaces['Replace'], $tplContent);
+				$this->tagPositionMaps[] = array(
+					'Start' => $pos,
+					'Name' => $format,
+					'End' => $pos + strlen($tplContent),
+				);
+				
+				return $tplContent;
+			} else {
+				facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_EMPTY|' . $param[0], 'template', true);
 			}
-			
-			return $tplContent;
 		} else {
 			facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_NOTFOUND|' . $param[0], 'template', true);
 		}
@@ -598,7 +647,7 @@ class faculaTemplateDefaultCompiler {
 		return false;
 	}
 	
-	private function doInjectArea($format) {
+	private function doInjectArea($format, $pos) {
 		$phpcode = '';
 		
 		if (isset($this->pool['Injected'][$format])) {
@@ -606,14 +655,27 @@ class faculaTemplateDefaultCompiler {
 				$phpcode .= $code;
 			}
 			
+			$this->tagPositionMaps[] = array(
+				'Start' => $pos,
+				'Name' => $format,
+				'End' => $pos + strlen($phpcode),
+			);
+			
 			return $phpcode;
 		}
 		
 		return false;
 	}
 	
-	private function doLanguage($format) {
+	private function doLanguage($format, $pos) {
 		if (isset($this->pool['LanguageMap'][$format])) {
+		
+			$this->tagPositionMaps[] = array(
+				'Start' => $pos,
+				'Name' => $format,
+				'End' => $pos + strlen($this->pool['LanguageMap'][$format]),
+			);
+			
 			return $this->pool['LanguageMap'][$format];
 		} else {
 			facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LANGUAGE_NOTFOUND|' . $format, 'template', true);
@@ -632,7 +694,7 @@ class faculaTemplateDefaultCompiler {
 				return false;
 			}
 			
-			$phpcode = '<?php if (isset(' . $param[0] . ')) { ';
+			$phpcode .= '<?php if (isset(' . $param[0] . ')) { ';
 			
 			if (!isset($param[1])) {
 				$phpcode .= 'echo(' . $param[0] . ');';
@@ -643,9 +705,10 @@ class faculaTemplateDefaultCompiler {
 							$phpcode .= 'echo(date(\'' . $this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]] . '\', intval(' . $param[0] . ')));';
 						} else {
 							facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_DATE_LANG_MISSED', 'template', true);
+							return false;
 						}
 						break;
-				
+					
 					case 'friendlytime':
 						if (isset($this->pool['LanguageMap']['FORMAT_TIME_SNDBEFORE']) && 
 							isset($this->pool['LanguageMap']['FORMAT_TIME_MINBEFORE']) && 
@@ -655,6 +718,7 @@ class faculaTemplateDefaultCompiler {
 							$phpcode .= '$temptime = $Time - (' . $param[0] . '); if ($temptime < 60) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_SNDBEFORE'] . '\', $temptime); } elseif ($temptime < 3600) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_MINBEFORE'] . '\', intval($temptime / 60)); } elseif ($temptime < 86400) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_HRBEFORE'] . '\', intval($temptime / 3600)); } elseif ($temptime < 604800) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_DAYBEFORE'] . '\', intval($temptime / 86400)); } elseif ($temptime) { echo(date(\'' . $this->pool['LanguageMap']['FORMAT_TIME_MOREBEFORE'] . '\', intval(' . $param[0] . '))); } $temptime = 0;';
 						} else {
 							facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_BYTE_LANG_MISSED', 'template', true);
+							return false;
 						}
 						break;
 					
@@ -667,6 +731,7 @@ class faculaTemplateDefaultCompiler {
 							$phpcode .= '$tempsize = ' . $param[0] . '; if ($tempsize < 1024) { echo (($tempsize).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_BYTES'] . '\'); } elseif ($tempsize < 1048576) { echo (intval($tempsize / 1024).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_KILOBYTES'] . '\'); } elseif ($tempsize < 1073741824) { echo (round($tempsize / 1048576, 1).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_MEGABYTES'] . '\'); } elseif ($tempsize < 1099511627776) { echo (round($tempsize / 1073741824, 2).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_GIGABYTES'] . '\'); } elseif ($tempsize < 1125899906842624) { echo (round($tempsize / 1099511627776, 3).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_TRILLIONBYTES'] . '\'); } $tempsize = 0;';
 						} else {
 							facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_BYTE_LANG_MISSED', 'template', true);
+							return false;
 						}
 						break;
 						
@@ -698,6 +763,12 @@ class faculaTemplateDefaultCompiler {
 			}
 			
 			$phpcode .= ' } ?>';
+			
+			$this->tagPositionMaps[] = array(
+				'Start' => $pos,
+				'Name' => $format,
+				'End' => $pos + strlen($phpcode),
+			);
 			
 			return $phpcode;
 		} else {
@@ -759,7 +830,15 @@ class faculaTemplateDefaultCompiler {
 				} 
 			?>';
 			
-			return str_replace(array("\r", "\n", "\t",'  '), '', $phpcode);
+			$phpcode = str_replace(array("\r", "\n", "\t",'  '), '', $phpcode);
+			
+			$this->tagPositionMaps[] = array(
+				'Start' => $pos,
+				'Name' => $format,
+				'End' => $pos,
+			);
+			
+			return $phpcode;
 		} else {
 			facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_PAGER_FORMAT_INVALID|' . $format, 'template', true);
 		}
@@ -777,19 +856,19 @@ class faculaTemplateDefaultCompiler {
 				if (isset($params[1]) && preg_match('/^([A-Za-z]+)$/', $params[1], $matched)) {
 				
 					// Check if we already opened the tag
-					if (!isset($this->tagMaps['Loop:' . $params[1]]['Start'])) {
+					if (!isset($this->tagPositionMaps['Loop:' . $params[1]]['Start'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_NOT_OPEN|' . $params[1], 'template', true);
 						return false;
 					}
 					
 					// Check if we already closed this loop
-					if (isset($this->tagMaps['Loop:' . $params[1]]['End'])) {
+					if (isset($this->tagPositionMaps['Loop:' . $params[1]]['End'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_CLOSED|' . $params[1], 'template', true);
 						return false;
 					}
 					
 					// Check if we already emptied this foreach
-					if (isset($this->tagMaps['Loop:' . $params[1]]['Emptied']) && $this->tagMaps['Loop:' . $params[1]]['Emptied']) {
+					if (isset($this->tagPositionMaps['Loop:' . $params[1]]['Emptied']) && $this->tagPositionMaps['Loop:' . $params[1]]['Emptied']) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_EMPTY|' . $params[1], 'template', true);
 						return false;
 					}
@@ -798,7 +877,10 @@ class faculaTemplateDefaultCompiler {
 					$phpcode .= '<?php } } else { ?>'; // Close foreach and Open else case
 					
 					// Tag this loop to emptied
-					$this->tagMaps['Loop:' . $params[1]]['Emptied'] = true;
+					$this->tagPositionMaps['Loop:' . $params[1]]['Emptied'] = true;
+					
+					// Save current pos to Previous for futher use
+					$this->tagPositionMaps['Loop:' . $params[1]]['Middle'][] = $pos + strlen($phpcode);
 					
 					return $phpcode;
 				} else {
@@ -808,22 +890,17 @@ class faculaTemplateDefaultCompiler {
 				
 			case 'EOF':
 				if (isset($params[1]) && preg_match('/^([A-Za-z]+)$/', $params[1], $matched)) {
-					if (!isset($this->tagMaps['Loop:' . $params[1]]['Start'])) {
+					if (!isset($this->tagPositionMaps['Loop:' . $params[1]]['Start'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_NOT_OPEN|' . $params[1], 'template', true);
 						return false;
 					}
 					
-					if ($unclosed = $this->doCheckUnclosedBetweenPositions($this->tagMaps['Loop:' . $params[1]]['Start'], $pos)) {
-						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_TAG_UNCLOSE|' . $unclosed, 'template', true);
-						return false;
-					}
-					
-					if (isset($this->tagMaps['Loop:' . $params[1]]['End'])) {
+					if (isset($this->tagPositionMaps['Loop:' . $params[1]]['End'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_CLOSED|' . $params[1], 'template', true);
 						return false;
 					}
 					
-					if (isset($this->tagMaps['Loop:' . $params[1]]['Emptied']) && $this->tagMaps['Loop:' . $params[1]]['Emptied']) {
+					if (isset($this->tagPositionMaps['Loop:' . $params[1]]['Emptied']) && $this->tagPositionMaps['Loop:' . $params[1]]['Emptied']) {
 						// If we have empty section in this loop
 						
 						$phpcode .= '<?php } ?>'; // We just need to close empty one (The first if)
@@ -832,7 +909,7 @@ class faculaTemplateDefaultCompiler {
 					}
 					
 					// Tag this loop to emptied
-					$this->tagMaps['Loop:' . $params[1]]['End'] = $pos;
+					$this->tagPositionMaps['Loop:' . $params[1]]['End'] = $pos + strlen($phpcode);
 					
 					return $phpcode;
 				} else {
@@ -844,11 +921,11 @@ class faculaTemplateDefaultCompiler {
 				if (preg_match('/^([A-Za-z]+) (\$[A-Za-z0-9\_\'\"\[\]]+)$/', $format, $matched)) {
 					list($org, $name, $valuename) = $matched;
 					
-					if (!isset($this->tagMaps['Loop:' . $name])) {
+					if (!isset($this->tagPositionMaps['Loop:' . $name])) {
 						$phpcode .= '<?php if (isset(' . $valuename . ') && is_array(' . $valuename . ') && !empty(' . $valuename . ')) { ';
 						$phpcode .= 'foreach (' . $valuename . ' AS $no => $' . $name . ') { ?>';
 						
-						$this->tagMaps['Loop:' . $name] = array(
+						$this->tagPositionMaps['Loop:' . $name] = array(
 							'Start' => $pos,
 							'Name' => $name,
 						);
@@ -877,22 +954,24 @@ class faculaTemplateDefaultCompiler {
 				if (isset($params[1]) && preg_match('/^([A-Za-z]+) (.*)$/', $params[1], $matched)) {
 					list($org, $name, $condition) = $matched;
 					
-					if (!isset($this->tagMaps['Logic:' . $name]['Start'])) {
+					if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name, 'template', true);
 						return false;
 					}
 					
-					if (isset($this->tagMaps['Logic:' . $name]['Elsed']) && $this->tagMaps['Logic:' . $name]['Elsed']) {
+					if (isset($this->tagPositionMaps['Logic:' . $name]['Elsed']) && $this->tagPositionMaps['Logic:' . $name]['Elsed']) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_ELSED|' . $name, 'template', true);
 						return false;
 					}
 					
-					if (isset($this->tagMaps['Logic:' . $name]['End'])) {
+					if (isset($this->tagPositionMaps['Logic:' . $name]['End'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name, 'template', true);
 						return false;
 					}
 					
 					$phpcode .= '<?php } elseif (' . $condition . ') { ?>';
+					
+					$this->tagPositionMaps['Logic:' . $name]['Middle'][] = $pos + strlen($phpcode);
 					
 					return $phpcode;
 				} else {
@@ -904,24 +983,25 @@ class faculaTemplateDefaultCompiler {
 				if (isset($params[1]) && preg_match('/^([A-Za-z]+)$/', $params[1], $matched)) {
 					list($org, $name) = $matched;
 					
-					if (!isset($this->tagMaps['Logic:' . $name]['Start'])) {
+					if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name, 'template', true);
 						return false;
 					}
 					
-					if (isset($this->tagMaps['Logic:' . $name]['Elsed']) && $this->tagMaps['Logic:' . $name]['Elsed']) {
+					if (isset($this->tagPositionMaps['Logic:' . $name]['Elsed']) && $this->tagPositionMaps['Logic:' . $name]['Elsed']) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_ELSED|' . $name, 'template', true);
 						return false;
 					}
 					
-					if (isset($this->tagMaps['Logic:' . $name]['End'])) {
+					if (isset($this->tagPositionMaps['Logic:' . $name]['End'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name, 'template', true);
 						return false;
 					}
 					
-					$this->tagMaps['Logic:' . $name]['Elsed'] = true;
-					
 					$phpcode .= '<?php } else { ?>';
+					
+					$this->tagPositionMaps['Logic:' . $name]['Elsed'] = true;
+					$this->tagPositionMaps['Logic:' . $name]['Middle'][] = $pos + strlen($phpcode);
 					
 					return $phpcode;
 				} else {
@@ -933,24 +1013,19 @@ class faculaTemplateDefaultCompiler {
 				if (isset($params[1]) && preg_match('/^([A-Za-z]+)$/', $params[1], $matched)) {
 					list($org, $name) = $matched;
 					
-					if (!isset($this->tagMaps['Logic:' . $name]['Start'])) {
+					if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name, 'template', true);
 						return false;
 					}
 					
-					if ($unclosed = $this->doCheckUnclosedBetweenPositions($this->tagMaps['Logic:' . $name]['Start'], $pos)) {
-						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_TAG_UNCLOSE|' . $unclosed, 'template', true);
-						return false;
-					}
-					
-					if (isset($this->tagMaps['Logic:' . $name]['End'])) {
+					if (isset($this->tagPositionMaps['Logic:' . $name]['End'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name, 'template', true);
 						return false;
 					}
 					
 					$phpcode .= '<?php } ?>';
 					
-					$this->tagMaps['Logic:' . $name]['End'] = $pos;
+					$this->tagPositionMaps['Logic:' . $name]['End'] = $pos + strlen($phpcode);
 					
 					return $phpcode;
 				} else {
@@ -962,10 +1037,10 @@ class faculaTemplateDefaultCompiler {
 				if (preg_match('/^([A-Za-z]+) (.*)$/', $format, $matched)) {
 					list($org, $name, $condition) = $matched;
 					
-					if (!isset($this->tagMaps['Logic:' . $name])) {
+					if (!isset($this->tagPositionMaps['Logic:' . $name])) {
 						$phpcode .= '<?php if (' . $condition . ') { ?>';
 						
-						$this->tagMaps['Logic:' . $name] = array(
+						$this->tagPositionMaps['Logic:' . $name] = array(
 							'Start' => $pos,
 							'Name' => $name,
 						);
@@ -994,17 +1069,19 @@ class faculaTemplateDefaultCompiler {
 				if (isset($params[1]) && preg_match('/^([A-Za-z]+) (.*)$/', $params[1], $matched)) {
 					list($org, $name, $value) = $matched;
 					
-					if (!isset($this->tagMaps['Case:' . $name]['Start'])) {
+					if (!isset($this->tagPositionMaps['Case:' . $name]['Start'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_NOT_OPEN|' . $name, 'template', true);
 						return false;
 					}
 					
-					if (isset($this->tagMaps['Case:' . $name]['End'])) {
+					if (isset($this->tagPositionMaps['Case:' . $name]['End'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_ALREADY_CLOSED|' . $name, 'template', true);
 						return false;
 					}
 					
 					$phpcode .= '<?php break; case \'' . addslashes($value) . '\': ?>';
+					
+					$this->tagPositionMaps['Case:' . $name]['Middle'][] = $pos + strlen($phpcode);
 					
 					return $phpcode;
 				} else {
@@ -1016,24 +1093,19 @@ class faculaTemplateDefaultCompiler {
 				if (isset($params[1]) && preg_match('/^([A-Za-z]+)$/', $params[1], $matched)) {
 					list($org, $name) = $matched;
 					
-					if (!isset($this->tagMaps['Case:' . $name]['Start'])) {
+					if (!isset($this->tagPositionMaps['Case:' . $name]['Start'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_NOT_OPEN|' . $name, 'template', true);
 						return false;
 					}
 					
-					if ($unclosed = $this->doCheckUnclosedBetweenPositions($this->tagMaps['Case:' . $name]['Start'], $pos)) {
-						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_TAG_UNCLOSE|' . $unclosed, 'template', true);
-						return false;
-					}
-					
-					if (isset($this->tagMaps['Case:' . $name]['End'])) {
+					if (isset($this->tagPositionMaps['Case:' . $name]['End'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_ALREADY_CLOSED|' . $name, 'template', true);
 						return false;
 					}
 					
 					$phpcode .= '<?php break; }} ?>';
 					
-					$this->tagMaps['Case:' . $name]['End'] = $pos;
+					$this->tagPositionMaps['Case:' . $name]['End'] = $pos + strlen($phpcode);
 					
 					return $phpcode;
 				} else {
@@ -1045,10 +1117,10 @@ class faculaTemplateDefaultCompiler {
 				if (preg_match('/^([A-Za-z]+) (\$[A-Za-z0-9\_\'\"\[\]]+)$/', $format, $matched)) {
 					list($org, $name, $variable) = $matched;
 					
-					if (!isset($this->tagMaps['Case:' . $name])) {
+					if (!isset($this->tagPositionMaps['Case:' . $name])) {
 						$phpcode .= '<?php if (isset(' . $variable . ')) { switch(' . $variable . ') { default: ?>';
 						
-						$this->tagMaps['Case:' . $name] = array(
+						$this->tagPositionMaps['Case:' . $name] = array(
 							'Start' => $pos,
 							'Name' => $name,
 						);
