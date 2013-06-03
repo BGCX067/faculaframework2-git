@@ -610,28 +610,32 @@ class faculaTemplateDefaultCompiler {
 	
 	/* Compile functions */
 	private function doInclude($format, $pos) {
-		$param = explode(' ', $format);
+		$param = explode(' ', $format, 2);
 		$replaces = $temprepleaces = array();
 		
 		if (isset($this->pool['File']['Tpl'][$param[0]])) {
 			$tplFileContent = file_get_contents($this->pool['File']['Tpl'][$param[0]]);
+			
+			if (isset($param[1])) {
+				$param[1][strlen($param[1]) - 1] = $param[1][0] = null;
+			
+				$temprepleaces['Items'] = explode(';', $param[1]);
+				
+				foreach($temprepleaces['Items'] AS $replace) {
+					$temprepleaces['Thing'] = explode('=', $replace);
+					
+					if (isset($temprepleaces['Thing'][0][0]) && isset($temprepleaces['Thing'][1][0])) {
+						$replaces['Search'][] = trim($temprepleaces['Thing'][0]);
+						$replaces['Replace'][] = trim($temprepleaces['Thing'][1]);
+					}
+				}
+				
+				$tplFileContent = str_replace($replaces['Search'], $replaces['Replace'], $tplFileContent);
+			}
+			
 			$newCompiler = new self($this->pool, $tplFileContent);
 			
 			if ($tplContent = $newCompiler->compile()) {
-				if (isset($param[1])) {
-					$temprepleaces[0] = explode(';', $param[1]);
-					
-					foreach($temprepleaces[0] AS $replace) {
-						$temprepleaces[1] = explode('=', $replace);
-						
-						if (isset($temprepleaces[1][0][0]) && isset($temprepleaces[1][1][0])) {
-							$replaces['Search'][] = $temprepleaces[1][0];
-							$replaces['Replace'][] = $temprepleaces[1][1];
-						}
-					}
-					$tplContent = str_replace($replaces['Search'], $replaces['Replace'], $tplContent);
-				}
-				
 				return $tplContent;
 			} else {
 				facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_EMPTY|' . $param[0], 'template', true);
