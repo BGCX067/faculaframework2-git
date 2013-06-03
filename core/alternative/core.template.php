@@ -338,6 +338,8 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 				return true;
 			}
 		} else { // load default lang file then client lang file
+			facula::core('object')->runHook('template_load_language', array(), $error);
+		
 			// Must load default lang first
 			foreach($this->pool['File']['Lang']['default'] AS $file) {
 				$langContent .= file_get_contents($file) . "\r\n";
