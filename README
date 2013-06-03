@@ -1,4 +1,42 @@
 
+                       FACULA PHP FRAMEWORK
+                             Version 2
+                            By Rain Lee
 
-                           FACULA PHP FRAMEWORK
-						         Version 2
+  0. Thank you
+  
+  Thank you for download and try this framework.
+  
+  This framework designed for medium sized website which has minor traffic
+to process and need an all-in-one solution for load balancing and multi 
+databse support.
+
+  For personal developer, this framework not a restriction to force you to
+use MVC pattern (You can use it when you want to of course). It provides a 
+lot of freedom and expandability in to your web develop and allows you to
+detailly controll the behavior of your appliction.
+
+  1. Requirement
+  
+  This version of Facula Framework needs PHP 5.3 at minimum. Besides that,
+consider of the customizability of the framework, no any other component 
+will be require by force :)
+
+  2. Installation
+  
+  What's a long story, if this is the first time use it. Please check wiki.
+  
+  3. Copyright
+  
+  Yeah, if you read this file, the copy must right. If you looking for docu-
+ment for redistribution, please check a file name COPYRIGHT.
+
+  4. Please notice
+  
+  Don't be too serious to the section 0, third paragraph.
+  
+  
+                                             Written by Rain Lee, 06/03/2013
+                                                         raincious@gmail.com
+  
+  

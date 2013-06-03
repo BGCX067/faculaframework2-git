@@ -60,8 +60,8 @@ class facula {
 	
 	private $coreInstances = array();
 	
-	static public function init(&$cfg) {
-		if (!self::$instance) {
+	static public function init(&$cfg = array()) {
+		if (!self::$instance && $cfg) {
 			if (isset($cfg['core']['SystemCacheRoot'][1])) {
 				if (!self::$instance = self::loadCoreFromCache($cfg['core']['SystemCacheRoot'])) {
 					self::$instance = new self($cfg);

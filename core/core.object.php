@@ -107,26 +107,29 @@ class faculaObjectDefault implements faculaObjectInterface {
 		$this->configs['Paths'] = $paths['Paths'];
 		
 		// Now, init all plugins
-		$tempPluginName = '';
-		foreach($paths['Plugins'] AS $plugin) {
-			$tempPluginName = $plugin['Name'] . 'Plugin';
+		if (isset($paths['Plugins'])) {
+			$tempPluginName = '';
 			
-			// Load plugin file manually
-			require($plugin['Path']);
-			
-			// Is that plugin file contains we wanted plugin?
-			if (class_exists($tempPluginName)) {
-				if (method_exists($tempPluginName, 'register')) {
-					foreach($tempPluginName::register() AS $hook => $action) {
-						if (is_callable(array($tempPluginName, $action))) {
-							$this->hooks[$hook][] = array($tempPluginName, $action);
+			foreach($paths['Plugins'] AS $plugin) {
+				$tempPluginName = $plugin['Name'] . 'Plugin';
+				
+				// Load plugin file manually
+				require($plugin['Path']);
+				
+				// Is that plugin file contains we wanted plugin?
+				if (class_exists($tempPluginName)) {
+					if (method_exists($tempPluginName, 'register')) {
+						foreach($tempPluginName::register() AS $hook => $action) {
+							if (is_callable(array($tempPluginName, $action))) {
+								$this->hooks[$hook][] = array($tempPluginName, $action);
+							}
 						}
+					} else {
+						throw new Exception('Static method ' . $tempPluginName . '::register() must be declared.');
 					}
 				} else {
-					throw new Exception('Static method ' . $tempPluginName . '::register() must be declared.');
+					throw new Exception('File ' . $plugin['Path'] . ' must contain class ' . $tempPluginName . '.');
 				}
-			} else {
-				throw new Exception('File ' . $plugin['Path'] . ' must contain class ' . $tempPluginName . '.');
 			}
 		}
 		
