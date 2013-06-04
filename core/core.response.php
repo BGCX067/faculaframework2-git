@@ -96,21 +96,29 @@ class faculaResponseDefault implements faculaResponseInterface {
 	}
 	
 	public function send() {
-		ob_start();
+		$file = $line = '';
 		
-		foreach(self::$headers AS $header) {
-			header($header);
+		if (!headers_sent($file, $line)) {
+			ob_start();
+			
+			foreach(self::$headers AS $header) {
+				header($header);
+			}
+			
+			echo self::$content;
+			
+			ob_end_flush();
+			
+			// Belowing flush both needed.
+			ob_flush();
+			flush();
+			
+			return true;
+		} else {
+			facula::core('debug')->exception('ERROR_RESPONSE_ALREADY_RESPONSED| File: ' . $file . ' Line: ' . $line, 'data');
 		}
 		
-		echo self::$content;
-		
-		ob_end_flush();
-		
-		// Belowing flush both needed.
-		ob_flush();
-		flush();
-		
-		return true;
+		return false;
 	}
 	
 	public function setHeader($header) {

@@ -109,7 +109,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 		return true;
 	}
 	
-	public function addLog($type, $errorcode, $content, &$backtraces = array()) {
+	public function addLog($type, $errorcode, $content = '', &$backtraces = array()) {
 		global $_SERVER;
 		
 		list($time, $micro) = explode('.', microtime(true) . '.' . 0, 3); // Anit error when int returns instead of float

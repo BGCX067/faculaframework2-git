@@ -329,7 +329,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 				
 				$successed = true;
 			} catch (PDOException $e) {
-				$error = 'PDO Connection failed: Host: ' . $this->pool['DBs'][$dbIndex]['Host'] . ' Error: ' . $e->getMessage();
+				$error = 'PDO Connection failed: Database No.' . $dbIndex . ' Error: ' . $e->getMessage();
 			}
 			
 			// Exit Critical Section, restore error caught

@@ -239,8 +239,9 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 					return $content;
 				}
 			} else {
-				if ($expiredCallback && is_callable($expiredCallback)) {
-					$expiredCallback();
+				if ($expiredCallback && is_callable($expiredCallback) && !$expiredCallback()) {
+					facula::core('debug')->exception('ERROR_TEMPLATE_TPLCALLBACK_FAILED', 'template');
+					return false;
 				}
 				
 				facula::core('object')->runHook('template_compile_*', array(), $error);
@@ -376,6 +377,8 @@ class faculaTemplateDefaultRender {
 	private $content = '';
 	
 	public function __construct(&$targetTpl, &$assigned = array()) {
+		facula::core('debug')->criticalSection(true);
+		
 		ob_start();
 		
 		extract($assigned);
@@ -385,6 +388,8 @@ class faculaTemplateDefaultRender {
 		$this->content = ob_get_contents();
 		
 		ob_end_clean();
+		
+		facula::core('debug')->criticalSection(false);
 		
 		return true;
 	}
