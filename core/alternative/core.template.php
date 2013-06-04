@@ -377,6 +377,10 @@ class faculaTemplateDefaultRender {
 	private $content = '';
 	
 	public function __construct(&$targetTpl, &$assigned = array()) {
+		if (ob_get_contents()) { // If buffer already has content, return and don't render this template for error diplaying
+			return false;
+		}
+		
 		facula::core('debug')->criticalSection(true);
 		
 		ob_start();
