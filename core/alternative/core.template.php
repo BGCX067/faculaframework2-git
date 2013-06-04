@@ -314,7 +314,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 						}
 					}
 				} else {
-					return file_put_contents($resultTpl, $compiledContent);
+					return file_put_contents($resultTpl, self::$setting['TemplateFileSafeCode'][0] . self::$setting['TemplateFileSafeCode'][1] . $compiledContent);
 				}
 			} else {
 				facula::core('debug')->exception('ERROR_TEMPLATE_COMPILE_FAILED|' . $sourceTpl, 'template', true);
