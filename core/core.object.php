@@ -29,7 +29,7 @@ interface faculaObjectInterface {
 	public function _inited();
 	public function getFile($type, $name);
 	public function getInstance($object, $ags, $cache = false);
-	public function getModuleByNamespace($namespace);
+	public function getFileByNamespace($namespace);
 	public function run(&$app, $cache = false);
 	public function runHook($hookName, $hookArgs, &$error);
 	public function addHook($hookName, $processor);
@@ -93,12 +93,12 @@ class faculaObjectDefault implements faculaObjectInterface {
 					break;
 					
 				case 'plugin':
-					$paths['Paths']['misc.' . $path['Name'] . 'Plugin'] = $path;
+					$paths['Paths'][$path['Name'] . 'Plugin'] = $path;
 					$paths['Plugins'][$key] = $path;
 					break;
 					
 				default:
-					$paths['Paths']['misc.' . $path['Name'] . ucfirst($path['Type'])] = $path;
+					$paths['Paths'][$path['Name'] . ucfirst($path['Type'])] = $path;
 					break;
 			}
 		}
@@ -157,8 +157,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 		
 		if (isset($this->configs['Paths']['class.' . $classfileLower])) { // Use path scope to locate file first
 			return require_once($this->configs['Paths']['class.' . $classfileLower]['Path']);
-		} elseif (isset($this->configs['Paths']['misc.' . $classfile])) { // Maybe its 
-			return require_once($this->configs['Paths']['misc.' . $classfile]['Path']);
+		} elseif (isset($this->configs['Paths'][$classfile])) { // If this is not a class file, but other module we dont know
+			return require_once($this->configs['Paths'][$classfile]['Path']);
 		} elseif ($this->configs['LibRoot'] && strpos($classfile, '\\') !== false) { // If above not work, use namespace to locate file
 			return require_once($this->configs['LibRoot'] . DIRECTORY_SEPARATOR . str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, ltrim($classfile, '\\')) . '.php');
 		}
@@ -294,7 +294,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return false;
 	}
 	
-	public function getModuleByNamespace($namespace) {
+	public function getFileByNamespace($namespace) {
 		if ($this->configs['LibRoot'] && strpos($namespace, '\\') !== false) {
 			return $this->configs['LibRoot'] . DIRECTORY_SEPARATOR . str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, ltrim($namespace, '\\')) . '.php';
 		}

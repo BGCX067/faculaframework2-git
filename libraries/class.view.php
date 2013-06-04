@@ -29,8 +29,8 @@ interface viewInterface {
 
 }
 
-abstract class View implements viewInterface {
-
+abstract class View extends Setting implements viewInterface {
+	
 }
 
 ?>

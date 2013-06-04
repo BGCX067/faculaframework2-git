@@ -105,7 +105,7 @@ class facula {
 			
 			return array(
 				'App' => isset(self::$instance->setting['AppName']) ? self::$instance->setting['AppName'] : 'Facula App',
-				'Ver' => (isset(self::$instance->setting['AppVersion']) ? self::$instance->setting['AppVersion'] : '0.0'),
+				'Ver' => isset(self::$instance->setting['AppVersion']) ? self::$instance->setting['AppVersion'] : '0.0',
 				'Cores' => $cores,
 			);
 		}
@@ -146,7 +146,8 @@ class facula {
 	static private function saveCoreToCache($cacheDir) {
 		$cache = array(
 			'Facula' => serialize(self::$instance),
-			'Includes' => self::$config['AutoIncludes'],
+			'Inc' => self::$config['AutoIncludes'],
+			'Rot' => isset(self::$config['AutoRoutines']) ? self::$config['AutoRoutines'] : array(),
 		);
 		
 		$content = self::$config['CacheSafeCode'][0] . '$cache = ' . var_export($cache, true) . ';'. self::$config['CacheSafeCode'][1];
@@ -162,14 +163,17 @@ class facula {
 		$facula = null;
 		$file = $cacheDir . DIRECTORY_SEPARATOR . self::$config['SystemCacheFileName'];
 		$cache = array();
-		$cacheContent = '';
 		
 		if (is_readable($file)) {
 			require($file);
 			
 			if (!empty($cache)) {
-				if (isset($cache['Includes'][0])) {
-					foreach($cache['Includes'] AS $path) {
+				if (isset($cache['Rot'][0])) {
+					self::$config['AutoRoutines'] = $cache['Rot'];
+				}
+				
+				if (isset($cache['Inc'][0])) {
+					foreach($cache['Inc'] AS $path) {
 						require($path);
 					}
 				}
@@ -198,8 +202,8 @@ class facula {
 	}
 	
 	private function __construct(&$cfg) {
-		if (version_compare(PHP_VERSION, '5.3.0', '<')) {
-			throw new Exception('Facula Framework desired to be running with PHP 5.4+');
+		if (version_compare(PHP_VERSION, '5.3.0', '<=')) {
+			throw new Exception('Facula Framework desired to be running with PHP 5.3+');
 		}
 		
 		return $this->_init($cfg);
@@ -215,31 +219,21 @@ class facula {
 			// First, save Autoloads pool to object setting for future use
 			
 			// include core (with init) and routine files
-			if (isset($cfg['core']['Enables'])) {
+			if (isset($cfg['core']['Enables']) && is_array($cfg['core']['Enables'])) {
 				$cfg['core']['Enables'] = array_merge(self::$config['CoreComponents'], $cfg['core']['Enables']);
 			} else {
 				$cfg['core']['Enables'] = self::$config['CoreComponents'];
 			}
 			
-			// Init AutoCores
+			// Init the AutoCores array
 			self::$config['AutoCores'] = array();
 			
-			// Init the AutoCores array
 			foreach(self::$config['ComponentInfo'] AS $keyn => $component) {
 				switch($component['Type']) {
 					case 'core':
-						if (!isset($cfg['core']['Enables']) || in_array($component['Name'], $cfg['core']['Enables'])) {
-							require($component['Path']);
-							
-							// If this is an essential core, we must load it before alternatives
-							if (in_array($component['Name'], self::$config['CoreComponents'])) {
-								array_unshift(self::$config['AutoCores'], $component); // Add essential core to beginning of loading queue
-							} else {
-								self::$config['AutoCores'][] = $component; // Rest, add to the end
-							}
-							
-							self::$config['AutoIncludes'][] = $component['Path']; // Add path to auto include, so facula will auto include those file in every load circle
-						}
+						require($component['Path']);
+						self::$config['AutoCores'][$component['Name']] = $component; // Rest, add to the end
+						self::$config['AutoIncludes'][] = $component['Path']; // Add path to auto include, so facula will auto include those file in every load circle
 						
 						break;
 						
@@ -249,16 +243,23 @@ class facula {
 						self::$config['AutoIncludes'][] = $component['Path'];
 						break;
 						
+					case 'routine':
+						self::$config['AutoRoutines'][] = $component['Path'];
+						break;
+						
 					default:
-						// If not two core type, save it to object manager's patch so it will deal with this later
+						// If not two core type, save it to object manager's path and let them deal with this later
 						$this->setting['object']['Paths'][$keyn] = $component;
 						break;
 				}
 			}
 			
-			if (isset(self::$config['AutoCores'][0])) {
-				foreach(self::$config['AutoCores'] AS $component) {
-					$this->getCore($component['Name']);
+			// Init all cores
+			foreach($cfg['core']['Enables'] AS $componentKey) {
+				if (isset(self::$config['AutoCores'][$componentKey])) {
+					$this->getCore(self::$config['AutoCores'][$componentKey]['Name']);
+				} else {
+					throw new Exception('Cannot found the specified facula core: ' . $componentKey . '.');
 				}
 			}
 			
@@ -320,6 +321,14 @@ class facula {
 				$core->_inited();
 			}
 		}
+		
+		if (isset(self::$config['AutoRoutines'])) {
+			foreach(self::$config['AutoRoutines'] AS $path) {
+				require($path);
+			}
+		}
+		
+		return true;
 	}
 	
 	private function getCore($coreName) {

@@ -29,7 +29,7 @@ interface controllerInterface {
 	public function _run();
 }
 
-abstract class Controller implements controllerInterface {
+abstract class Controller extends Setting implements controllerInterface {
 	public function _run() {
 		foreach(facula::getAllCores() AS $coreName => $coreReference) {
 			$this->$coreName = $coreReference;

@@ -57,33 +57,6 @@ abstract class tools {
 		return 0;
 	}
 	
-	static public function getUserIP($ipstr = '', $outasstring = false) {
-		global $_SERVER;
-		$ip = '';
-		$ips = array();
-		
-		if (!$ipstr) {
-			if(isset($_SERVER['HTTP_CLIENT_IP'][0])){
-				$ip = $_SERVER['HTTP_CLIENT_IP'];
-			} elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR'][0])) {
-				$ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'], 16);
-				$ip = trim($ips[count($ips) - 1]);
-			} elseif (isset($_SERVER['REMOTE_ADDR'][0])) {
-				$ip = $_SERVER['REMOTE_ADDR'];
-			}
-			
-			return $outasstring ? $ip : self::splitIP($ip);
-		} else {
-			return $outasstring ? $ipstr : self::splitIP($ipstr);
-		}
-		
-		return false;
-	}
-	
-	static public function splitIP($ip) {
-		return explode(':', str_replace('.', ':', $ip), 7); // Max is 7 for a IP addr
-	}
-	
 	static public function joinIP($ip, $mask = false) {
 		$input = array();
 		$ips = '';

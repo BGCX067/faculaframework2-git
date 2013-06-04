@@ -29,7 +29,7 @@ interface modelInterface {
 
 }
 
-abstract class Model implements modelInterface {
+abstract class Model extends Setting implements modelInterface {
 
 }
 

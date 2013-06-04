@@ -97,13 +97,13 @@ class faculaRequestDefault implements faculaRequestInterface {
 		if (isset($cfg['MaxRequestSize'])) { // give memory_limit * 0.8 because our app needs memory to run, so memory cannot be 100%ly use for save request data;
 			$this->configs['MaxRequestSize'] = min(
 													(int)$cfg['MaxRequestSize'],
-													tools::convertIniUnit(ini_get('post_max_size')), 
-													tools::convertIniUnit(ini_get('memory_limit')) * 0.8
+													self::convertIniUnit(ini_get('post_max_size')), 
+													self::convertIniUnit(ini_get('memory_limit')) * 0.8
 													);
 		} else {
 			$this->configs['MaxRequestSize'] = min(
-													tools::convertIniUnit(ini_get('post_max_size')), 
-													tools::convertIniUnit(ini_get('memory_limit')) * 0.8
+													self::convertIniUnit(ini_get('post_max_size')), 
+													self::convertIniUnit(ini_get('memory_limit')) * 0.8
 													);
 		}
 		
@@ -166,8 +166,8 @@ class faculaRequestDefault implements faculaRequestInterface {
 			}
 		}
 		
-		if ($this->requestInfo['ip'] = tools::getUserIP(null, true)) { // Get client IP
-			$this->requestInfo['ipArray'] = tools::splitIP($this->requestInfo['ip']);
+		if ($this->requestInfo['ip'] = self::getUserIP(null, true)) { // Get client IP
+			$this->requestInfo['ipArray'] = self::splitIP($this->requestInfo['ip']);
 		}
 		
 		if ($_SERVER['SERVER_PORT'] == 443) {
@@ -232,6 +232,64 @@ class faculaRequestDefault implements faculaRequestInterface {
 		}
 		
 		return isset($result[0]) ? $result : false;
+	}
+	
+	static private function getUserIP($ipstr = '', $outasstring = false) {
+		global $_SERVER;
+		$ip = '';
+		$ips = array();
+		
+		if (!$ipstr) {
+			if(isset($_SERVER['HTTP_CLIENT_IP'][0])){
+				$ip = $_SERVER['HTTP_CLIENT_IP'];
+			} elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR'][0])) {
+				$ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'], 16);
+				$ip = trim($ips[count($ips) - 1]);
+			} elseif (isset($_SERVER['REMOTE_ADDR'][0])) {
+				$ip = $_SERVER['REMOTE_ADDR'];
+			}
+			
+			return $outasstring ? $ip : self::splitIP($ip);
+		} else {
+			return $outasstring ? $ipstr : self::splitIP($ipstr);
+		}
+		
+		return false;
+	}
+	
+	static private function splitIP($ip) {
+		return explode(':', str_replace('.', ':', $ip), 7); // Max is 7 for a IP addr
+	}
+	
+	static private function convertIniUnit($str) {
+		$strLen = 0;
+		$lastChar = '';
+		
+		if (is_numeric($lastChar)) {
+			return (int)$str;
+		} else {
+			$strLen = strlen($str);
+			
+			if ($lastChar = $str[$strLen - 1]) {
+				$strSelected = substr($str, 0, $strLen - 1);
+				
+				switch(strtolower($lastChar)) {
+					case 'k':
+						return (int)$strSelected * 1024;
+						break;
+						
+					case 'm':
+						return (int)$strSelected * 1048576;
+						break;
+						
+					case 'g':
+						return (int)$strSelected * 1073741824;
+						break;
+				}
+			}
+		}
+		
+		return 0;
 	}
 }
 
