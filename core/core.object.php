@@ -30,7 +30,7 @@ interface faculaObjectInterface {
 	public function getFile($type, $name);
 	public function getInstance($object, $ags, $cache = false);
 	public function getFileByNamespace($namespace);
-	public function run(&$app, $cache = false);
+	public function run($app, $args = array(), $cache = false);
 	public function runHook($hookName, $hookArgs, &$error);
 	public function addHook($hookName, $processor);
 }
@@ -303,13 +303,16 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	// Start a handler or other type of class
-	public function run(&$app, $cache = false) {
+	public function run($app, $args = array(), $cache = false) {
 		$handler = null;
 		
-		if ($handler = $this->getInstance($app, array(), $cache)) {
-			// When inited has been ran, call run to get module a chance to select operate method.
-			if (method_exists($handler, '_run')) {
-				$handler->_run();
+		$appParam = explode('::', str_replace(array('::', '->'), '::', $app), 2);
+		
+		if ($handler = $this->getInstance($appParam[0], $args, $cache)) {
+			if (isset($appParam[1]) && method_exists($handler, $appParam[1])) {
+				$handler->$appParam[1]($args);
+			} elseif (method_exists($handler, '_run')) {
+				$handler->_run($args);
 			}
 		}
 		

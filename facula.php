@@ -82,9 +82,9 @@ class facula {
 		return self::$instance;
 	}
 	
-	static public function run($appname, $cache = false) {
+	static public function run($appname, $args = array(), $cache = false) {
 		if (self::$instance && isset(self::$instance->coreInstances['object'])) {
-			return self::$instance->coreInstances['object']->run($appname, $cache);
+			return self::$instance->coreInstances['object']->run($appname, $args, $cache);
 		} else {
 			throw new Exception('Facula must be initialized before running any application.');
 		}
