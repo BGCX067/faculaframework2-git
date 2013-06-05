@@ -32,7 +32,7 @@ interface faculaObjectInterface {
 	public function getFileByNamespace($namespace);
 	public function run($app, $args = array(), $cache = false);
 	public function runHook($hookName, $hookArgs, &$error);
-	public function addHook($hookName, $processor);
+	public function addHook($hookName, $processorName, $processor);
 }
 
 class faculaObject extends faculaCoreFactory {
@@ -120,8 +120,12 @@ class faculaObjectDefault implements faculaObjectInterface {
 				if (class_exists($tempPluginName)) {
 					if (method_exists($tempPluginName, 'register')) {
 						foreach($tempPluginName::register() AS $hook => $action) {
-							if (is_callable(array($tempPluginName, $action))) {
-								$this->hooks[$hook][] = array($tempPluginName, $action);
+							if (!isset($this->hooks[$hook][$tempPluginName])) {
+								if (is_callable(array($tempPluginName, $action))) {
+									$this->hooks[$hook][$tempPluginName] = array($tempPluginName, $action);
+								}
+							} else {
+								throw new Exception('Hook ' . $hook . ' already have a processor ' . $tempPluginName . '.');
 							}
 						}
 					} else {
@@ -324,8 +328,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 		$returns = array();
 		
 		if (isset($this->hooks[$hookName])) {
-			foreach($this->hooks[$hookName] AS $hook) {
-				if (!$returns[] = $hook($hookArgs, $error)) {
+			foreach($this->hooks[$hookName] AS $processorName => $hook) {
+				if (!$returns[$processorName] = $hook($hookArgs, $error)) {
 					return false;
 					
 					break;
@@ -338,11 +342,15 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return true; // If there is no plugin to run, return true to assume successed
 	}
 	
-	public function addHook($hookName, $processor) {
-		if (is_callable($processor)) {
-			$this->hooks[] = $processor;
-			
-			return true;
+	public function addHook($hookName, $processorName, $processor) {
+		if (!isset($this->hooks[$hookName][$processorName])) {
+			if (is_callable($processor)) {
+				$this->hooks[$hookName][$processorName] = $processor;
+				
+				return true;
+			}
+		} else {
+			facula::core('debug')->exception('ERROR_OBJECT_HOOK_PROCESSOR_ALREADY_EXISTED|' . $processorName, 'object', true);
 		}
 		
 		return false;

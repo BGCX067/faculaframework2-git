@@ -176,6 +176,13 @@ class faculaRequestDefault implements faculaRequestInterface {
 			$this->requestInfo['https'] = false; 
 		}
 		
+		if (isset($_SERVER['PHP_AUTH_USER'])) {
+			$this->requestInfo['auth'] = array(
+				'Username' => $_SERVER['PHP_AUTH_USER'],
+				'Password' => isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '',
+			); 
+		}
+		
 		$this->pool = array(
 			'GET' => &$_GET,
 			'POST' => &$_POST,

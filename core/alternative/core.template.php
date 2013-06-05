@@ -277,7 +277,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 			$this->loadLangMap();
 		}
 		
-		if ($sourceContent = file_get_contents($sourceTpl)) {
+		if ($sourceContent = trim(file_get_contents($sourceTpl))) {
 			$compiler = new faculaTemplateDefaultCompiler($this->pool, $sourceContent);
 			
 			if ($compiledContent = $compiler->compile()) {
@@ -503,7 +503,7 @@ class faculaTemplateDefaultCompiler {
 		$unclosedTag = '';
 		
 		if ($this->sourceContent) { // If file has been successfully readed
-			$content = trim($this->sourceContent);
+			$content = $this->sourceContent;
 			
 			foreach(self::$setting['Formats'] AS $format) {
 				$format['Preg'] = '/' . preg_quote(self::$setting['Delimiter'][0] . $format['Tag'], '/') . '\s(.*)\s' . preg_quote($format['Tag'] .self::$setting['Delimiter'][1], '/') . '/sU';
