@@ -37,6 +37,8 @@ abstract class Setting {
 			self::$registered[$settingName]['Accesser'] = $accesser;
 			
 			return true;
+		} else {
+			facula::core('debug')->exception('ERROR_SETTING_NAME_ALREADY_EXISTED|' . $settingName, 'setting', true);
 		}
 		
 		return false;
@@ -47,6 +49,8 @@ abstract class Setting {
 		
 		if (isset(self::$registered[$settingName]) && (self::$registered[$settingName]['Accesser'] == '//public//' || self::$registered[$settingName]['Accesser'] == $accesser)) {
 			return self::getOperatorResult($settingName);
+		} else {
+			facula::core('debug')->exception('ERROR_SETTING_NAME_NOTFOUND|' . $settingName, 'setting', true);
 		}
 		
 		return array();

@@ -25,7 +25,7 @@
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-abstract class validator {
+abstract class Validator {
 	static private $regulars = array(
 									'email' => '/^[a-zA-Z0-9\_\-\.]+\@[a-zA-Z0-9\_\-\.]+\.[a-zA-Z0-9\_\-\.]+$/u',
 									'password' => '/^[a-fA-F0-9]+$/i',
@@ -57,6 +57,8 @@ abstract class validator {
 			self::$regulars[$name] = $regular;
 			
 			return true;
+		} else {
+			facula::core('debug')->exception('ERROR_VALIDATOR_REGULAR_ALREADY_EXISTED|' . $name, 'validator', true);
 		}
 		
 		return false;

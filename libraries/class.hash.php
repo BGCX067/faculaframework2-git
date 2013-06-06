@@ -58,9 +58,7 @@ abstract class Hash {
 			}
 			
 			for ($i = 0; $i < $strlen; $i++) {
-				if (($factor + $i) % $strlenHalf) {
-					$str[$i] = $str[$i];
-				} else {
+				if (!(($factor + $i) % $strlenHalf)) {
 					$str[$i] = $salt[($i % $saltlen)];
 				}
 			}
@@ -69,10 +67,6 @@ abstract class Hash {
 		}
 		
 		return false;
-	}
-	
-	static public function md5() {
-		return md5();
 	}
 	
 	static public function obscuredMD5($str) {
