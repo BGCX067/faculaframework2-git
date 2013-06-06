@@ -17,7 +17,7 @@
 	by the Free Software Foundation, version 3.
 	
 	Facula Framework is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	but WITHOUT ANY WARRANTY; without even the implied warranty ofapp:ds:parameter
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Lesser General Public License for more details.
 	
@@ -25,8 +25,59 @@
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-abstract class hash {
-	// TODO tomorrow finish this ha
+abstract class Hash {
+	static private $salt = '';
+	static private $saltLen = 0;
+	
+	static public function setSalt($salt) {
+		if (!self::$salt) {
+			self::$salt = $salt;
+			self::$saltLen = strlen($salt);
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	static private function obscure($str) {
+		$strlen = strlen($str);
+		$strlenHalf = intval($strlen / 2);
+		$saltlen = $factor = 0;
+		$salt = '';
+		
+		if ($strlen > 1) {
+			$factor = ord($str[0]) + ord($str[intval($strlenHalf)]) + ord($str[$strlen - 1]);
+			
+			if (self::$saltLen) {
+				$salt = self::$salt;
+				$saltlen = self::$saltLen;
+			} else {
+				$salt = $str;
+				$saltlen = $strlen;
+			}
+			
+			for ($i = 0; $i < $strlen; $i++) {
+				if (($factor + $i) % $strlenHalf) {
+					$str[$i] = $str[$i];
+				} else {
+					$str[$i] = $salt[($i % $saltlen)];
+				}
+			}
+			
+			return $str;
+		}
+		
+		return false;
+	}
+	
+	static public function md5() {
+		return md5();
+	}
+	
+	static public function obscuredMD5($str) {
+		return md5(self::obscure(md5($str)));
+	}
 }
 
 ?>

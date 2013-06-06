@@ -29,7 +29,7 @@
 abstract class Setting {
 	static private $registered = array();
 	
-	static public function registerSetting($settingName, Closure $operator, $public = false) {
+	static public function registerSetting($settingName, $operator, $public = false) {
 		$accesser = $public ? '//public//' : get_called_class();
 		
 		if (!isset(self::$registered[$settingName]) && is_callable($operator)) {

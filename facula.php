@@ -210,6 +210,11 @@ class facula {
 	}
 	
 	private function _init(&$cfg) {
+		// Check environment
+		if (!function_exists('mb_internal_encoding')) {
+			throw new Exception('Facula needs mb_string extension to be enabled.');
+		}
+		
 		if ($this->importSetting($cfg)) {
 			// Scan all component file and add them to $this->setting['core']['Components']
 			$this->scanComponents();
@@ -316,12 +321,17 @@ class facula {
 	}
 	
 	private function _inited() {
+		// Set mb internal to utf 8 as we forcely used in whole facula apps
+		mb_internal_encoding('UTF-8');
+		
+		// Call sub core to wake up
 		foreach($this->coreInstances AS $core) {
 			if (method_exists($core, '_inited')) {
 				$core->_inited();
 			}
 		}
 		
+		// Include routines to wake up user's sutff
 		if (isset(self::$config['AutoRoutines'])) {
 			foreach(self::$config['AutoRoutines'] AS $path) {
 				require($path);
