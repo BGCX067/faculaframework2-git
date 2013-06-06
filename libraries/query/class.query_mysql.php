@@ -38,7 +38,7 @@ class query_mysql implements queryInterface {
 		$sql = 'SELECT';
 		
 		// Adding fields
-		if (isset($settings['FIELDS'])) {
+		if (isset($settings['FIELDS'][0])) {
 			$sql .= ' `' . implode('`, `', $settings['FIELDS']) . '`';
 		} else {
 			$sql .= ' *';
@@ -93,7 +93,7 @@ class query_mysql implements queryInterface {
 		$sql = "UPDATE `{$this->table}`";
 		
 		// Add Sets
-		if (isset($settings['VALUEKEYS'])) {
+		if (isset($settings['VALUEKEYS']) && !empty($settings['VALUEKEYS'])) {
 			$sql .= ' SET';
 			
 			foreach($settings['VALUEKEYS'] AS $key => $val) {
@@ -119,7 +119,7 @@ class query_mysql implements queryInterface {
 		$sql = "DELETE FROM `{$this->table}`";
 		
 		// Add Where
-		if (isset($settings['WHERE'])) {
+		if (isset($settings['WHERE'][0])) {
 			$sql .= ' WHERE ' . $this->parseCondition($settings['WHERE']);
 		} else {
 			$sql .= ' WHERE 1';
@@ -134,12 +134,12 @@ class query_mysql implements queryInterface {
 		foreach($wheres AS $key => $where) {
 			if ($sql) {
 				if (isset($where['RELATION'])) {
-					$sql .= strtoupper($where['RELATION']) . " (`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']}) ";
+					$sql .= strtoupper($where['RELATION']) . " (`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']})";
 				} else {
-					$sql .= "AND (`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']}) ";
+					$sql .= " AND (`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']})";
 				}
 			} else {
-				$sql .= "(`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']}) ";
+				$sql .= "(`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']})";
 			}
 		}
 		

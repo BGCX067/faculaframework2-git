@@ -32,8 +32,15 @@ abstract class Setting {
 	static public function registerSetting($settingName, $operator, $public = false) {
 		$accesser = $public ? '//public//' : get_called_class();
 		
-		if (!isset(self::$registered[$settingName]) && is_callable($operator)) {
-			self::$registered[$settingName]['Operator'] = $operator;
+		if (!isset(self::$registered[$settingName])) {
+			if (is_callable($operator)) {
+				self::$registered[$settingName]['Operator'] = $operator;
+				self::$registered[$settingName]['Type'] = 'Function';
+			} else {
+				self::$registered[$settingName]['Result'] = $operator;
+				self::$registered[$settingName]['Type'] = 'Data';
+			}
+			
 			self::$registered[$settingName]['Accesser'] = $accesser;
 			
 			return true;
@@ -48,28 +55,31 @@ abstract class Setting {
 		$accesser = get_called_class();
 		
 		if (isset(self::$registered[$settingName]) && (self::$registered[$settingName]['Accesser'] == '//public//' || self::$registered[$settingName]['Accesser'] == $accesser)) {
-			return self::getOperatorResult($settingName);
+			
+			switch(self::$registered[$settingName]['Type']) {
+				case 'Function':
+					if (!isset(self::$registered[$settingName]['Result'])) {
+						$operator = self::$registered[$settingName]['Operator'];
+						
+						self::$registered[$settingName]['Result'] = $operator();
+					}
+					
+					return self::$registered[$settingName]['Result'];
+					break;
+					
+				case 'Data':
+					return self::$registered[$settingName]['Result'];
+					break;
+					
+				default:
+					break;
+			}
+			
 		} else {
 			facula::core('debug')->exception('ERROR_SETTING_NAME_NOTFOUND|' . $settingName, 'setting', true);
 		}
 		
 		return array();
-	}
-	
-	static private function getOperatorResult($settingName) {
-		$func = null;
-		
-		if (isset(self::$registered[$settingName]['Operator'])) {
-			if (!isset(self::$registered[$settingName]['Result'])) {
-				$func = self::$registered[$settingName]['Operator'];
-				
-				self::$registered[$settingName]['Result'] = $func();
-			}
-			
-			return self::$registered[$settingName]['Result'];
-		}
-		
-		return false;
 	}
 }
 

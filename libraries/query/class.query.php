@@ -133,10 +133,12 @@ class query {
 				facula::core('debug')->exception('ERROR_QUERY_SQLBUILDER_NOTFOUND|' . $builderName, 'query', true);
 			}
 		}
+		
+		return false;
 	}
 	
 	/* Primary CURD operates (Operation Typer) */
-	public function select($fields) {
+	public function select($fields = array()) {
 		$this->reset();
 		
 		$this->activeMethod = 'SELECT';
@@ -145,15 +147,13 @@ class query {
 		return $this;
 	}
 	
-	public function insert($data) {
+	public function insert($fields, $data) {
 		$this->reset();
 		
 		$this->activeMethod = 'INSERT';
-		$this->activeParams['INSERT']['FIELDS'] = $data;
+		$this->activeParams['INSERT']['FIELDS'] = $fields;
 		
 		if (is_array($data[0])) {
-			$this->activeParams['INSERT']['FIELDS'] = array_keys($data[0]);
-			
 			foreach($data AS $key => $vals) {
 				$result = array();
 				
