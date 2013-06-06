@@ -43,11 +43,13 @@ abstract class Hash {
 	static private function obscure($str) {
 		$strlen = strlen($str);
 		$strlenHalf = intval($strlen / 2);
+		$strlenLast = $strlen - 1;
+		
 		$saltlen = $factor = 0;
 		$salt = '';
 		
 		if ($strlen > 1) {
-			$factor = ord($str[0]) + ord($str[intval($strlenHalf)]) + ord($str[$strlen - 1]);
+			$factor = ord($str[0]) + ord($str[intval($strlenHalf)]) + ord($str[$strlenLast]);
 			
 			if (self::$saltLen) {
 				$salt = self::$salt;
@@ -62,6 +64,11 @@ abstract class Hash {
 					$str[$i] = $salt[($i % $saltlen)];
 				}
 			}
+			
+			// Hiding clue to prevent reverse the factor
+			$str[0]				= $salt[$saltlen - 1];
+			$str[$strlenHalf]	= $salt[$saltlen % $strlenHalf];
+			$str[$strlenLast]	= $salt[0];
 			
 			return $str;
 		}
