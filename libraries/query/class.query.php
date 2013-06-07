@@ -60,7 +60,6 @@ class query implements queryInterface {
 		'INT' => PDO::PARAM_INT,
 		'STR' => PDO::PARAM_STR,
 		'LOB' => PDO::PARAM_LOB,
-		'STMT' => PDO::PARAM_STMT,
 	);
 	
 	static private $queryOperators = array(
