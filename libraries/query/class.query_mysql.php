@@ -1,7 +1,7 @@
 <?php 
 
 /*****************************************************************************
-	Facula Framework MySQL Syntax Builder for Query Unit
+	Facula Framework Query: MySQL Syntax Builder
 
 	FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
 	
@@ -25,149 +25,307 @@
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-class query_mysql implements queryInterface {
-	private $dbh = null;
-	
+class query_mysql implements queryBuilderInterface {
 	private $table = '';
+	private $query = array();
 	
-	public function __construct($table) {
-		$this->table = $table;
+	public function __construct($tableName, &$querySet) {
+		$this->table = $tableName;
+		$this->query = $querySet;
+		
+		return true;
 	}
 	
-	public function select(&$settings) {
+	public function build() {
+		switch($this->query['Action']) {
+			case 'select':
+				return $this->buildSelect();
+				break;
+				
+			case 'insert':
+				return $this->buildInsert();
+				break;
+				
+			case 'update':
+				return $this->buildUpdate();
+				break;
+				
+			case 'delete':
+				return $this->buildDelete();
+				break;
+				
+			default:
+				facula::core('debug')->exception('ERROR_QUERY_MYSQL_UNKONWN_ACTION_TYPE|' . $this->query['Action'], 'query', true);
+				break;
+		}
+		
+		return false;
+	}
+	
+	private function buildSelect() {
 		$sql = 'SELECT';
 		
-		// Adding fields
-		if (isset($settings['FIELDS'][0])) {
-			$sql .= ' `' . implode('`, `', $settings['FIELDS']) . '`';
-		} else {
-			$sql .= ' *';
+		// Select
+		if (!empty($this->query['Fields'])) {
+			$sql .= ' ' . $this->doFields();
 		}
 		
-		// Adding Table
-		$sql .= " FROM `{$this->table}`";
+		// From
+		$sql .= ' FROM `' . $this->table . '`';
 		
-		// Add Where
-		if (isset($settings['WHERE'])) {
-			$sql .= ' WHERE ' . $this->parseCondition($settings['WHERE']);
-		} else {
-			$sql .= ' WHERE 1';
+		// Where
+		if (!empty($this->query['Where'])) {
+			$sql .= ' WHERE ' . $this->doCondition('Where');
 		}
 		
-		if (isset($settings['ORDERBY'])) {
-			$sql .= ' ORDER BY ' . $this->parseOrder($settings['ORDERBY']);
+		// Group by
+		if (!empty($this->query['Group'])) {
+			$sql .= ' GROUP BY ' . $this->doGroup();
 		}
 		
-		if (isset($settings['LIMIT'])) {
-			$sql .= ' LIMIT ' . $this->parseLimit($settings['LIMIT']);
+		// Having
+		if (!empty($this->query['Having'])) {
+			$sql .= ' HAVING ' . $this->doCondition('Having');
 		}
 		
-		return $sql . ';';
-	}
-	
-	public function insert(&$settings) {
-		$values = array();
-		$sql = "INSERT INTO `{$this->table}`";
-		
-		if (isset($settings['FIELDS'])) {
-			$sql .= ' (`' . implode('`, `', $settings['FIELDS']) . '`)';
-			
-			if (isset($settings['VALUEKEYS'])) {
-				$sql .= ' VALUES';
-				
-				foreach($settings['VALUEKEYS'] AS $val) {
-					$values[] = '(' . implode(', ', $val) . ')';
-				}
-				
-				$sql .= ' ' . implode(', ', $values);
-			}
-			
-			return $sql . ';';
+		// Order by
+		if (!empty($this->query['Order'])) {
+			$sql .= ' ORDER BY ' . $this->doOrder();
 		}
 		
-		return false;
-	}
-	
-	public function update(&$settings) {
-		$values = array();
-		$sql = "UPDATE `{$this->table}`";
-		
-		// Add Sets
-		if (isset($settings['VALUEKEYS']) && !empty($settings['VALUEKEYS'])) {
-			$sql .= ' SET';
-			
-			foreach($settings['VALUEKEYS'] AS $key => $val) {
-				$values[] = '`' . $key . '` = ' . $val;
-			}
-			
-			$sql .= ' ' . implode(', ', $values);
-			
-			// Add Where
-			if (isset($settings['WHERE'])) {
-				$sql .= ' WHERE ' . $this->parseCondition($settings['WHERE']);
-			} else {
-				$sql .= ' WHERE 1';
-			}
-			
-			return $sql . ';';
-		}
-		
-		return false;
-	}
-	
-	public function delete(&$settings) {
-		$sql = "DELETE FROM `{$this->table}`";
-		
-		// Add Where
-		if (isset($settings['WHERE'][0])) {
-			$sql .= ' WHERE ' . $this->parseCondition($settings['WHERE']);
-		} else {
-			$sql .= ' WHERE 1';
+		// Limit
+		if (!empty($this->query['Limit'])) {
+			$sql .= ' LIMIT ' . $this->doLimit();
 		}
 		
 		return $sql;
 	}
 	
-	private function parseCondition(&$wheres) {
+	private function buildInsert() {
+		$sql = 'INSERT';
+		
+		// Into
+		$sql .= ' INTO `' . $this->table . '`';
+		
+		// Field
+		if (!empty($this->query['Fields'])) {
+			 $sql .= ' (' . $this->doFields() . ')';
+		}
+		
+		if (!empty($this->query['Values'])) {
+			 $sql .= ' VALUES ' . $this->doValues();
+		}
+		
+		return $sql;
+	}
+	
+	private function buildUpdate() {
+		$sql = 'UPDATE `' . $this->table . '`';
+		
+		// Sets
+		if (!empty($this->query['Sets'])) {
+			 $sql .= ' SET ' . $this->doSets();
+		}
+		
+		// Where
+		if (!empty($this->query['Where'])) {
+			 $sql .= ' WHERE ' . $this->doCondition('Where');
+		}
+		
+		// Order
+		if (!empty($this->query['Order'])) {
+			 $sql .= ' ORDER BY ' . $this->doOrder();
+		}
+		
+		// Limit
+		if (!empty($this->query['Limit'])) {
+			 $sql .= ' LIMIT ' . $this->doLimit(true);
+		}
+		
+		return $sql;
+	}
+	
+	private function buildDelete() {
+		$sql = 'DELETE FROM `' . $this->table . '`';
+		
+		// Where
+		if (!empty($this->query['Where'])) {
+			 $sql .= ' WHERE ' . $this->doCondition('Where');
+		}
+		
+		// Order
+		if (!empty($this->query['Order'])) {
+			 $sql .= ' ORDER BY ' . $this->doOrder();
+		}
+		
+		// Limit
+		if (!empty($this->query['Limit'])) {
+			 $sql .= ' LIMIT ' . $this->doLimit(true);
+		}
+		
+		return $sql;
+	}
+	
+	// Builder Functions
+	public function doFields() {
+		return '`' . implode('`, `', $this->query['Fields']) . '`';
+	}
+	
+	public function doCondition($name) {
 		$sql = '';
 		
-		foreach($wheres AS $key => $where) {
-			if ($sql) {
-				if (isset($where['RELATION'])) {
-					$sql .= strtoupper($where['RELATION']) . " (`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']})";
-				} else {
-					$sql .= " AND (`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']})";
-				}
-			} else {
-				$sql .= "(`{$where['FIELD']}` {$where['SIGN']} {$where['VALUEKEY']})";
-			}
+		// Unset the logic setting for the very first item in where
+		if (isset($this->query[$name][0])) {
+			$this->query[$name][0]['Logic'] = '';
 		}
 		
-		return $sql;
-	}
-	
-	private function parseOrder(&$orders) {
-		$sql = $method = '';
-		
-		foreach($orders AS $order) {
-			if ($order['METHOD'] == 'DESC' || $order['METHOD'] == 'ASC') {
-				$method = $order['METHOD'];
-			} else {
-				$method = 'DESC';
+		foreach($this->query[$name] AS $key => $where) {
+			$sql .= ($sql ? ' ' : '');
+			
+			switch($where['Logic']) {
+				case 'AND':
+					$sql .= 'AND ';
+					break;
+					
+				case 'OR':
+					$sql .= 'OR ';
+					break;
 			}
 			
-			if ($sql) {
-				$sql .= ", `{$order['FIELD']}` {$order['METHOD']}";
-			} else {
-				$sql .= "`{$order['FIELD']}` {$order['METHOD']}";
+			switch($where['Operator']) {
+				case '=':
+					$sql .= '(`' . $where['Field'] . '` = ' . $where['Value'] . ')';
+					break;
+					
+				case '>':
+					$sql .= '(`' . $where['Field'] . '` > ' . $where['Value'] . ')';
+					break;
+					
+				case '<':
+					$sql .= '(`' . $where['Field'] . '` < ' . $where['Value'] . ')';
+					break;
+					
+				case '<>':
+					$sql .= '(`' . $where['Field'] . '` <> ' . $where['Value'] . ')';
+					break;
+					
+				case '<=>':
+					$sql .= '(`' . $where['Field'] . '` <=> ' . $where['Value'] . ')';
+					break;
+					
+				case '<=':
+					$sql .= '(`' . $where['Field'] . '` <= ' . $where['Value'] . ')';
+					break;
+					
+				case '>=':
+					$sql .= '(`' . $where['Field'] . '` >= ' . $where['Value'] . ')';
+					break;
+					
+				case 'IS':
+					$sql .= '(`' . $where['Field'] . '` IS ' . $where['Value'] . ')';
+					break;
+					
+				case 'IS NOT':
+					$sql .= '(`' . $where['Field'] . '` IS ' . $where['Value'] . ')';
+					break;
+					
+				case 'LIKE':
+					$sql .= '(`' . $where['Field'] . '` LIKE ' . $where['Value'] . ')';
+					break;
+					
+				case 'NOT LIKE':
+					$sql .= '(`' . $where['Field'] . '` LIKE ' . $where['Value'] . ')';
+					break;
+					
+				case 'BETWEEN':
+					$sql .= '(`' . $where['Field'] . '` BETWEEN ' . $where['Value'][0] . ' AND ' . $where['Value'][1] . ')';
+					break;
+					
+				case 'NOT BETWEEN':
+					$sql .= '(`' . $where['Field'] . '` NOT BETWEEN ' . $where['Value'][0] . ' AND ' . $where['Value'][1] . ')';
+					break;
+					
+				case 'IN':
+					$sql .= '(`' . $where['Field'] . '` IN (' . implode(', ', $where['Value']) . '))';
+					break;
+					
+				case 'NOT IN':
+					$sql .= '(`' . $where['Field'] . '` NOT IN (' . implode(', ', $where['Value']) . '))';
+					break;
+					
+				case 'IS NULL':
+					$sql .= '(`' . $where['Field'] . '` IS NULL)';
+					break;
+					
+				case 'IS NOT NULL':
+					$sql .= '(`' . $where['Field'] . '` IS NOT NULL)';
+					break;
 			}
 		}
 		
 		return $sql;
 	}
 	
-	private function parseLimit(&$limit) {
-		return "{$limit['START']}, {$limit['DURATION']}";
+	private function doOrder() {
+		$sql = '';
+		
+		foreach($this->query['Order'] AS $order) {
+			$sql .= $sql ? ', ' : '';
+			
+			$sql .= '`' . $order['Field'] . '`';
+			
+			switch($order['Sort']) {
+				case 'DESC':
+					$sql .= ' ' . $order['Sort'];
+					break;
+					
+				case 'ASC':
+					$sql .= ' ' . $order['Sort'];
+					break;
+			}
+		}
+		
+		return $sql;
+	}
+	
+	private function doGroup() {
+		$sql = '';
+		print_r($this->query['Group']);
+		foreach($this->query['Group'] AS $group) {
+			$sql .= $sql ? ', ' : '';
+			
+			$sql .= '`' . $group['Field'] . '`';
+		}
+		
+		return $sql;
+	}
+	
+	private function doLimit($disOnly = false) {
+		return (!$disOnly ? $this->query['Limit']['Offset'] . ', ' : '') . $this->query['Limit']['Distance'];
+	}
+	
+	private function doValues() {
+		$sql = '';
+		
+		foreach($this->query['Values'] AS $value) {
+			$sql .= $sql ? ', ' : '';
+			
+			$sql .= '(' . implode(', ', $value) . ')';
+		}
+		
+		return $sql;
+	}
+	
+	private function doSets() {
+		$sql = '';
+		
+		foreach($this->query['Sets'] AS $set) {
+			$sql .= $sql ? ', ' : '';
+			
+			$sql .= '`' . $set['Field'] . '` = ' . $set['Value'];
+		}
+		
+		return $sql;
 	}
 }
 
