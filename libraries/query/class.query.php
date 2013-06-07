@@ -312,16 +312,10 @@ class query implements queryInterface {
 					break;
 					
 				case '<=>':
-					if ($value === null) {
-						$params = array(
-							'Operator' => '<=>',
-							'Value' => $this->saveValue('NULL', fieldName),
-						);
-					} else {
-						facula::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_VALUE_MUST_NULL|' . $operator, 'query', true);
-						
-						return false;
-					}
+					$params = array(
+						'Operator' => '<=>',
+						'Value' => $this->saveValue($value, $fieldName),
+					);
 					break;
 					
 				case '<=':
@@ -444,19 +438,7 @@ class query implements queryInterface {
 			}
 			
 			if (isset(self::$logicOperators[$logic])) {
-				switch(self::$logicOperators[$logic]) {
-					case 'AND':
-						$params['Logic'] = 'AND';
-						break;
-						
-					case 'OR':
-						$params['Logic'] = 'OR';
-						break;
-						
-					default:
-						$params['Logic'] = 'AND';
-						break;
-				}
+				$params['Logic'] = self::$logicOperators[$logic];
 			} else {
 				facula::core('debug')->exception('ERROR_QUERY_CONDITION_UNKNOWN_LOGIC|' . $logic, 'query', true);
 				return false;
