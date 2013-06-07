@@ -587,14 +587,6 @@ class query implements queryInterface {
 		return false;
 	}
 	
-	// Get data output
-	public function getCurrentInput() {
-		return array(
-			'Query' => $this->query,
-			'Data' => $this->dataMap,
-		);
-	}
-	
 	// Task Preparers
 	private function getPDOConnection() {
 		if ($this->connection = facula::core('pdo')->getConnection(array('Table' => $this->query['From'], 'Permission' => $this->query['Type']))) {
@@ -635,6 +627,7 @@ class query implements queryInterface {
 	private function prepare($requiredQueryParams = array()) {
 		$sql = '';
 		$statement = null;
+		$matchedParams = array();
 		
 		if (isset($this->query['Action'])) {
 			// A little check before we actually do query. We need to know if our required data in $this->query has been filled or we may make big mistake.
@@ -653,8 +646,17 @@ class query implements queryInterface {
 					try {
 						// Prepare statement
 						if ($statement = $this->connection->prepare($sql)) {
-							foreach($this->dataMap AS $mapKey => $mapVal) {
-								$statement->bindValue($mapKey, $mapVal['Value'], $mapVal['Type']);
+							// Search string and set key
+							if (preg_match_all('/(:[0-9]+)/', $sql, $matchedParams)) {
+								
+								// Use key to search in datamap, and bind the value and types
+								foreach($matchedParams[0] AS $paramKey) {
+									if (isset($this->dataMap[$paramKey])) {
+										$statement->bindValue($paramKey, $this->dataMap[$paramKey]['Value'], $this->dataMap[$paramKey]['Type']);
+									} else {
+										facula::core('debug')->exception('ERROR_QUERY_PREPARE_PARAM_NOTSET|' . $paramKey, 'query', true);
+									}
+								}
 							}
 							
 							// We got need this
