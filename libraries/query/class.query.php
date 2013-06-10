@@ -2,7 +2,7 @@
 
 /*****************************************************************************
 	Facula Framework Query Unit
-
+	
 	FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
 	
 	@Copyright 2013 Rain Lee <raincious@gmail.com>
@@ -95,7 +95,7 @@ class query implements queryInterface {
 	private $connection = null;
 	private $builder = null;
 	
-	private $query = array();
+	protected $query = array();
 	
 	/*
 	private $query = array(
@@ -117,8 +117,8 @@ class query implements queryInterface {
 	);
 	*/
 	
-	private $dataIndex = 0;
-	private $dataMap = array();
+	protected $dataIndex = 0;
+	protected $dataMap = array();
 	
 	static public function from($tableName) {
 		return new self($tableName);
@@ -389,7 +389,7 @@ class query implements queryInterface {
 					break;
 					
 				case 'IN':
-					if (is_array($value)) {
+					if (is_array($value) && isset($value[0])) {
 						$params['Operator'] = 'IN';
 						
 						foreach($value AS $val) {
@@ -404,7 +404,7 @@ class query implements queryInterface {
 					break;
 					
 				case 'NOT IN':
-					if (is_array($value)) {
+					if (is_array($value) && isset($value[0])) {
 						$params['Operator'] = 'NOT IN';
 						
 						foreach($value AS $val) {
@@ -622,7 +622,7 @@ class query implements queryInterface {
 		return false;
 	}
 	
-	private function prepare($requiredQueryParams = array()) {
+	protected function prepare($requiredQueryParams = array()) {
 		$sql = '';
 		$statement = null;
 		$matchedParams = array();

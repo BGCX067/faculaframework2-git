@@ -2,7 +2,7 @@
 
 /*****************************************************************************
 	Facula Framework Debug Manager
-
+	
 	FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
 	
 	@Copyright 2013 Rain Lee <raincious@gmail.com>
@@ -225,9 +225,9 @@ class faculaDebugDefault implements faculaDebugInterface {
 				$exit = true;
 				break;
 		}
-	
+		
 		$this->exception(sprintf('Error code %s (%s) in file %s line %s', 'PHP('.$errno.')', $errstr, $errfile, $errline), 'PHP|PHP:' . $errno, !$exit ? $this->configs['ExitOnAnyError'] : true);
-	}	
+	}
 	
 	public function exceptionHandler($exception) {
 		$this->exception('Exception: ' . $exception->getMessage(), 'Exception', true, $exception);

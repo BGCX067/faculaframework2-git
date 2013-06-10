@@ -1,8 +1,8 @@
 <?php 
 
 /*****************************************************************************
-	Facula Framework Simple Object Relation Mapping
-
+	Facula Framework Simple Object Relation Mapping (!Experimental!)
+	
 	FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
 	
 	@Copyright 2013 Rain Lee <raincious@gmail.com>
@@ -26,8 +26,24 @@
 *******************************************************************************/
 
 interface ormInterface {
+	public function __construct($table = '', $fields = array(), $primary = '', $default = array()); // Actually, you better not set your own __construct if you using this orm
 	public function __set($key, $val);
 	public function __get($key);
+	public function __isset($key);
+	
+	public function getPrimaryValue();
+	public function getFields();
+	
+	public function get($param);
+	public function fetch($param, $offset = 0, $dist = 0);
+	
+	public function getByPK($id);
+	public function fetchByPKs($pks);
+	
+	public function fetchWith($ormObjectName, $keyName, $paramsForCurrent, $offset = 0, $dist = 0);
+	
+	public function save();
+	public function insert();
 }
 
 class SimpleORM implements ormInterface {
@@ -37,13 +53,17 @@ class SimpleORM implements ormInterface {
 	
 	protected $data = array();
 	
-	public function __construct($table, $fields, $default = array()) {
-		if (empty($this->table)) {
-			$this->table = $table;
+	public function __construct($table = '', $fields = array(), $primary = '', $default = array()) {
+		if (empty($this->table) && !($this->table = $table)) {
+			facula::core('debug')->exception('ERROR_ORM_TABLENAME_MUST_SET', 'orm', true);
 		}
 		
-		if (empty($this->fields)) {
-			$this->fields = $fields;
+		if (empty($this->fields) && !($this->fields = $fields)) {
+			facula::core('debug')->exception('ERROR_ORM_FIELDS_MUST_SET', 'orm', true);
+		}
+		
+		if (empty($this->primary) && !($this->primary = $primary)) {
+			facula::core('debug')->exception('ERROR_ORM_PRIMARYKEY_MUST_SET', 'orm', true);
 		}
 		
 		if (empty($this->data)) {
@@ -57,7 +77,7 @@ class SimpleORM implements ormInterface {
 		if (isset($this->fields[$key])) {
 			$this->data[$key] = $val;
 		} else {
-			facula::core('debug')->exception('ERROR_ORM_SET_FIELDS_NOT_EXISTED|' . $key, 'query', true);
+			facula::core('debug')->exception('ERROR_ORM_SET_FIELDS_NOT_EXISTED|' . $key, 'orm', true);
 		}
 		
 		return false;
@@ -65,6 +85,10 @@ class SimpleORM implements ormInterface {
 	
 	public function __get($key) {
 		return isset($this->data[$key]) ? $this->data[$key] : null;
+	}
+	
+	public function __isset($key) {
+		return isset($this->data[$key]);
 	}
 	
 	public function get($param) { // array('FieldName' => 'Value');
@@ -77,28 +101,92 @@ class SimpleORM implements ormInterface {
 		return false;
 	}
 	
+	public function getPrimaryValue() {
+		return isset($this->data[$this->primary]) ? $this->data[$this->primary] : null;
+	}
+	
+	public function getFields() {
+		return $this->fields;
+	}
+	
+	public function getData() {
+		return $this->data;
+	}
+	
 	public function fetch($param, $offset = 0, $dist = 0) {
 		$query = null;
-		$data = array();
 		
-		if ($this->table) {
-			$query = query::from($this->table);
-			$query->select($this->fields);
-			
-			foreach($param AS $field => $value) {
-				$query->where('AND', $field, '=', $value);
-			}
-			
-			if ($offset || $dist) {
-				$query->limit($offset, $dist);
-			}
-			
-			return $query->fetch('CLASSLATE', get_class($this));
-		} else {
-			facula::core('debug')->exception('ERROR_ORM_FETCH_TABLENAME_NOTSET', 'query', true);
+		$query = query::from($this->table);
+		$query->select($this->fields);
+		
+		foreach($param AS $field => $value) {
+			$query->where('AND', $field, '=', $value);
 		}
 		
-		return $data;
+		if ($offset || $dist) {
+			$query->limit($offset, $dist);
+		}
+		
+		return $query->fetch('CLASSLATE', get_class($this));
+	}
+	
+	public function getByPK($id) {
+		$data = array();
+		
+		if (($data = $this->fetchByPKs($id)) && isset($data)) {
+			return $data[0];
+		}
+		
+		return false;
+	}
+	
+	public function fetchByPKs($pks) {
+		$fetched = $result = array();
+		
+		if ($fetched = query::from($this->table)->select($this->fields)->where('AND', $this->primary, 'IN', $pks)->fetch('CLASSLATE', get_class($this))) {
+			// Convert primary key as array index key
+			foreach($fetched AS $object) {
+				$result[$object->getPrimaryValue()] = $object;
+			}
+			
+			return $result;
+		}
+		
+		return array();
+	}
+	
+	public function fetchWith($ormObjectName, $keyName, $paramsForCurrent, $offset = 0, $dist = 0) {
+		$fetchedObjects = $targetFetched = $keys = $keyToObjMap = array();
+		$targetORMObject = null;
+		
+		if ($fetchedObjects = $this->fetch($paramsForCurrent, $offset, $dist)) {
+			foreach($fetchedObjects AS $object) {
+				if (isset($object->$keyName)) { // Key must set
+					if ($object->$keyName) { // Key must not empty
+						$keys[] = $object->$keyName;
+						
+						$keyToObjMap[$object->$keyName] = $object; // Object should auto referenced
+					}
+				} else {
+					facula::core('debug')->exception('ERROR_ORM_FETCHWITH_KEY_NOT_EXIST|' . $keyName, 'orm', true);
+					return false;
+				}
+			}
+			
+			$targetORMObject = new $ormObjectName();
+			
+			if ($targetFetched = $targetORMObject->fetchByPKs(array_unique($keys))) {
+				foreach($targetFetched AS $key => $targetObject) {
+					if (isset($keyToObjMap[$key])) {
+						$keyToObjMap[$key]->$keyName = $targetObject;
+					}
+				}
+			}
+			
+			return $fetchedObjects;
+		}
+		
+		return array();
 	}
 	
 	public function save() {
@@ -113,10 +201,10 @@ class SimpleORM implements ormInterface {
 				
 				return query::from($this->table)->update($this->fields)->set($this->data)->where('AND', $this->primary, '=', $this->data[$this->primary])->save();
 			} else {
-				facula::core('debug')->exception('ERROR_ORM_FETCH_TABLENAME_NOTSET', 'query', true);
+				facula::core('debug')->exception('ERROR_ORM_FETCH_TABLENAME_NOTSET', 'orm', true);
 			}
 		} else {
-			facula::core('debug')->exception('ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET', 'query', true);
+			facula::core('debug')->exception('ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET', 'orm', true);
 		}
 		
 		return false;
