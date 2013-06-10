@@ -267,6 +267,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 			'CookiePrefix' => isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : 'facula_',
 			'CookieExpire' => isset($cfg['CookieExpireDefault'][0]) ? $cfg['CookieExpireDefault'] : 3600,
 			'GZIPEnabled' => isset($cfg['UseGZIP']) && $cfg['UseGZIP'] && function_exists('gzcompress') ? true : false,
+			'ProfileSignal' => isset($cfg['PostProfileSignal']) && $cfg['PostProfileSignal'] ? true : false,
 		);
 		
 		$cfg = null;
@@ -292,12 +293,25 @@ class faculaResponseDefault implements faculaResponseInterface {
 		$file = $line = '';
 		
 		if (!headers_sent($file, $line)) {
+			// Assume we will finish this application after output, calc belowing profile data
+			facula::$profile['MemoryUsage'] = memory_get_usage(true);
+			facula::$profile['MemoryPeak'] = memory_get_peak_usage(true);
+			
+			facula::$profile['OutputTime'] = microtime(true);
+			facula::$profile['ProducionTime'] = facula::$profile['OutputTime'] - facula::$profile['StartTime'];
+			
+			// Start buffer to output
 			ob_start();
 			
 			if (isset(self::$http_content_type[$type])) {
 				header('Content-Type: ' . self::$http_content_type[$type] . '; charset=utf-8');
 			} else {
 				header('Content-Type: ' . self::$http_content_type['html'] . '; charset=utf-8');
+			}
+			
+			if ($this->configs['ProfileSignal']) {
+				header('X-Runtime: ' . facula::$profile['ProducionTime']  * 1000);
+				header('X-Memory: ' . (facula::$profile['MemoryUsage'] / 1024) . 'kb / ' . (facula::$profile['MemoryPeak'] / 1024) . 'kb');
 			}
 			
 			foreach(self::$headers AS $header) {

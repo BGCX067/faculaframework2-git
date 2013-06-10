@@ -2,7 +2,7 @@
 
 /*****************************************************************************
 	Facula Framework Core Unit
-
+	
 	FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
 	
 	@Copyright 2013 Rain Lee <raincious@gmail.com>
@@ -47,6 +47,14 @@ class facula {
 	
 	static private $instance = null;
 	
+	static public $profile = array(
+		'StartTime' => 0,
+		'OutputTime' => 0,
+		'ProducionTime' => 0,
+		'MemoryUsage' => 0,
+		'MemoryPeak' => 0,
+	);
+	
 	static private $config = array(
 		'CacheSafeCode' => array(
 			'<?php if (!defined(\'IN_FACULA\')) {exit(\'Access Denied\');} ',
@@ -61,6 +69,8 @@ class facula {
 	private $coreInstances = array();
 	
 	static public function init(&$cfg = array()) {
+		self::$profile['StartTime'] = microtime(true);
+		
 		if (!self::$instance && $cfg) {
 			if (isset($cfg['core']['SystemCacheRoot'][1])) {
 				if (!self::$instance = self::loadCoreFromCache($cfg['core']['SystemCacheRoot'])) {
