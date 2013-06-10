@@ -38,7 +38,7 @@ interface queryInterface {
 	public function order($fieldName, $sort);
 	
 	public function value($value);
-	public function set($field, $value);
+	public function set($values);
 	
 	public function limit($offset, $distance);
 	
@@ -137,7 +137,7 @@ class query implements queryInterface {
 			$this->query['Type'] = 'Read';
 			$this->query['Required'] = array();
 			
-			if ($this->saveFields($fields, true)) {
+			if ($this->saveFields($fields)) {
 				// Enable where
 				$this->query['Where'] = array();
 				
@@ -166,7 +166,7 @@ class query implements queryInterface {
 			$this->query['Type'] = 'Write';
 			$this->query['Required'] = array('Fields', 'Values');
 			
-			if ($this->saveFields($fields, false)) {
+			if ($this->saveFields($fields)) {
 				// Enable values
 				$this->query['Values'] = array();
 				
@@ -187,7 +187,7 @@ class query implements queryInterface {
 			$this->query['Required'] = array('Sets');
 			
 			// Save fields
-			if ($this->saveFields($fields, false)) {
+			if ($this->saveFields($fields)) {
 				// Enable sets
 				$this->query['Sets'] = array();
 				
@@ -217,7 +217,7 @@ class query implements queryInterface {
 			$this->query['Required'] = array('Where');
 			
 			// Save fields
-			if ($this->saveFields($fields, false)) {
+			if ($this->saveFields($fields)) {
 				// Enable Where
 				$this->query['Where'] = array();
 				
@@ -237,13 +237,10 @@ class query implements queryInterface {
 	}
 	
 	// Save data and data type to data map for bindValue
-	private function saveFields($fields, $addfield = true) {
+	private function saveFields($fields) {
 		if (is_array($fields)) {
 			foreach($fields AS $fieldName => $fieldType) {
-				if ($addfield) {
-					$this->query['Fields'][] = $fieldName;
-				}
-				
+				$this->query['Fields'][] = $fieldName;
 				$this->query['FieldTypes'][$fieldName] = $fieldType;
 			}
 			
@@ -530,9 +527,9 @@ class query implements queryInterface {
 		$tempValueData = array();
 		
 		if (isset($this->query['Values'])) {
-			foreach($value AS $key => $val) {
-				if (in_array($key, $this->query['Fields'])) {
-					$tempValueData[] = $this->saveValue($val, $key);
+			foreach($this->query['Fields'] AS $field) {
+				if (isset($value[$field])) {
+					$tempValueData[] = $this->saveValue($value[$field], $field);
 				} else {
 					facula::core('debug')->exception('ERROR_QUERY_VALUES_FIELD_NOTSET|' . $field, 'query', true);
 				}
@@ -549,13 +546,15 @@ class query implements queryInterface {
 	}
 	
 	// Sets
-	public function set($field, $value) {
+	public function set($values) {
 		if (isset($this->query['Sets'])) {
 			
-			$this->query['Sets'][] = array(
-				'Field' => $field,
-				'Value' => $this->saveValue($value, $field),
-			);
+			foreach($values AS $field => $value) {
+				$this->query['Sets'][] = array(
+					'Field' => $field,
+					'Value' => $this->saveValue($value, $field),
+				);
+			}
 			
 			return $this;
 		} else {
@@ -689,14 +688,32 @@ class query implements queryInterface {
 		return false;
 	}
 	
-	public function fetch() {
+	public function fetch($mode = 'ASSOC', $argument = null, $callback = null) {
 		$sql = '';
 		$statement = null;
+		
+		$pdoFetchStyle = array(
+			'ASSOC' => PDO::FETCH_ASSOC,
+			'BOUND' => PDO::FETCH_BOUND,
+			'INTO' => PDO::FETCH_INTO,
+			'NUM' => PDO::FETCH_NUM,
+			'LAZY' => PDO::FETCH_LAZY,
+			'OBJ' => PDO::FETCH_OBJ,
+			'BOTH' => PDO::FETCH_BOTH,
+			'COLUMN' => PDO::FETCH_COLUMN,
+			'CLASS' => PDO::FETCH_CLASS,
+			'CLASSLATE' => PDO::FETCH_CLASS | PDO::FETCH_PROPS_LATE,
+			'FUNC' => PDO::FETCH_FUNC,
+		);
 		
 		if (isset($this->query['Action']) && $this->query['Type'] == 'Read') {
 			if ($statement = $this->prepare($this->query['Required'])) {
 				try {
-					return $statement->fetchAll(PDO::FETCH_ASSOC);
+					if (isset($pdoFetchStyle[$mode])) {
+						return $statement->fetchAll($pdoFetchStyle[$mode], $argument);
+					} else {
+						facula::core('debug')->exception('ERROR_QUERY_FETCH_UNKNOWN_METHOD|' . $mode, 'query', true);
+					}
 				} catch(PDOException $e) {
 					facula::core('debug')->exception('ERROR_QUERY_FETCH_FAILED|' . $e->getMessage(), 'query', true);
 				}

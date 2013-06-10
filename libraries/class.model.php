@@ -29,7 +29,7 @@ interface modelInterface {
 
 }
 
-abstract class Model extends ORM implements modelInterface {
+abstract class Model extends SimpleORM implements modelInterface {
 	
 }
 
