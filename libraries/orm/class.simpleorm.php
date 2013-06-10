@@ -44,6 +44,7 @@ interface ormInterface {
 	
 	public function save();
 	public function insert();
+	public function delete();
 }
 
 class SimpleORM implements ormInterface {
