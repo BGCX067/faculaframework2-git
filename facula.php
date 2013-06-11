@@ -50,7 +50,7 @@ class facula {
 	static public $profile = array(
 		'StartTime' => 0,
 		'OutputTime' => 0,
-		'ProducionTime' => 0,
+		'ProductionTime' => 0,
 		'MemoryUsage' => 0,
 		'MemoryPeak' => 0,
 	);

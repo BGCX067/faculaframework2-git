@@ -37,10 +37,13 @@ interface ormInterface {
 	public function get($param);
 	public function fetch($param, $offset = 0, $dist = 0);
 	
-	public function getByPK($id);
-	public function fetchByPKs($pks);
+	public function getInKey($keyField, $value);
+	public function fetchInKeys($keyField, $values);
 	
-	public function fetchWith($ormObjectName, $keyName, $paramsForCurrent, $offset = 0, $dist = 0);
+	public function getByPK($key);
+	public function fetchByPKs($keys);
+	
+	public function fetchWith($models, $currentParams, $offset = 0, $dist = 0);
 	
 	public function save();
 	public function insert();
@@ -92,18 +95,14 @@ class SimpleORM implements ormInterface {
 		return isset($this->data[$key]);
 	}
 	
-	public function get($param) { // array('FieldName' => 'Value');
-		$data = array();
-		
-		if (($data = $this->fetch($param, 0, 1)) && isset($data[0])) {
-			return $data[0];
+	public function getPrimaryValue() {
+		if (isset($this->data[$this->primary])) {
+			return $this->data[$this->primary];
+		} else {
+			facula::core('debug')->exception('ERROR_ORM_GETPRIMARY_PRIMARYDATA_EMPTY', 'orm', true);
 		}
 		
-		return false;
-	}
-	
-	public function getPrimaryValue() {
-		return isset($this->data[$this->primary]) ? $this->data[$this->primary] : null;
+		return null;
 	}
 	
 	public function getFields() {
@@ -114,7 +113,17 @@ class SimpleORM implements ormInterface {
 		return $this->data;
 	}
 	
-	public function fetch($param, $offset = 0, $dist = 0) {
+	public function get($param) { // array('FieldName' => 'Value');
+		$data = array();
+		
+		if (($data = $this->fetch($param, 0, 1)) && isset($data[0])) {
+			return $data[0];
+		}
+		
+		return false;
+	}
+	
+	public function fetch($param, $offset = 0, $dist = 0, $returnType = 'CLASS') {
 		$query = null;
 		
 		$query = query::from($this->table);
@@ -128,28 +137,46 @@ class SimpleORM implements ormInterface {
 			$query->limit($offset, $dist);
 		}
 		
-		return $query->fetch('CLASSLATE', get_class($this));
+		switch($returnType) {
+			case 'CLASS':
+				return $query->fetch('CLASSLATE', get_class($this));
+				break;
+				
+			default:
+				return $query->fetch();
+				break;
+		}
+		
+		return array();
 	}
 	
-	public function getByPK($id) {
-		$data = $ids = array();
+	public function getByPK($key) {
+		return $this->getInKey($this->primary, $key);
+	}
+	
+	public function fetchByPKs($keys) {
+		return $this->fetchInKeys($this->primary, $keys);
+	}
+	
+	public function getInKey($keyField, $value) {
+		$data = $values = array();
 		
-		$ids[] = $id;
+		$values[] = $value;
 		
-		if (($data = array_values($this->fetchByPKs($ids))) && isset($data[0])) {
+		if (($data = array_values($this->fetchByPKs($keyField, $values))) && isset($data[0])) {
 			return $data[0];
 		}
 		
 		return false;
 	}
 	
-	public function fetchByPKs($pks) {
+	public function fetchInKeys($keyField, $values) {
 		$fetched = $result = array();
 		
-		if ($fetched = query::from($this->table)->select($this->fields)->where('AND', $this->primary, 'IN', $pks)->fetch('CLASSLATE', get_class($this))) {
+		if ($fetched = query::from($this->table)->select($this->fields)->where('AND', $keyField, 'IN', $values)->fetch('CLASSLATE', get_class($this))) {
 			// Convert primary key as array index key
 			foreach($fetched AS $object) {
-				$result[$object->getPrimaryValue()] = $object;
+				$result[$object->$keyField] = $object; // It will just return one result if key value is the same.
 			}
 			
 			return $result;
@@ -158,35 +185,60 @@ class SimpleORM implements ormInterface {
 		return array();
 	}
 	
-	public function fetchWith($ormObjectName, $keyName, $paramsForCurrent, $offset = 0, $dist = 0) {
-		$fetchedObjects = $targetFetched = $keys = $keyToObjMap = array();
-		$targetORMObject = null;
+	public function fetchWith($joinModels, $currentParams, $offset = 0, $dist = 0) {
+		$principals = $joined = array();
 		
-		if ($fetchedObjects = $this->fetch($paramsForCurrent, $offset, $dist)) {
-			foreach($fetchedObjects AS $object) {
-				if (isset($object->$keyName)) { // Key must set
-					if ($object->$keyName) { // Key must not empty
-						$keys[] = $object->$keyName;
+		$lastJoinedModel = null;
+		
+		/*************
+			$joinModels = array(
+				'Naming this joined model' => array(
+					'Model' => 'ModelName',
+					'Key' => 'Key you want to search and use',
+				),
+				'Model2' => array(
+					'Model' => 'ModelName2',
+					'Key' => 'Key you want to search and use',
+				),
+			);
+		*************/
+		
+		if ($principals = $this->fetch($currentParams, $offset, $dist)) {
+			// Scan all the needed key from principal results
+			foreach($principals AS $principalKey => $principal) {
+				foreach($joinModels AS $modelKey => $model) {
+					if (isset($principal->$model['Key'])) {
+						$joinModels[$modelKey]['InKeys'][] = $principal->$model['Key'];
+						$joinModels[$modelKey]['InKeyMap'][$principal->$model['Key']][] = &$principals[$principalKey]; // Should by auto referenced actually.
+					} else {
+						facula::core('debug')->exception('ERROR_ORM_FETCHWITH_KEY_NOT_EXIST|' . $model['Key'], 'orm', true);
+						return false;
+						break; break;
+					}
+				}
+			}
+			
+			// Get joined model one by one, get data out from it
+			foreach($joinModels AS $modelKey => $modelSetting) {
+				$lastJoinedModel = new $modelSetting['Model'](); // Create model instance
+				
+				if ($joined = $lastJoinedModel->fetchInKeys($modelSetting['Key'], $modelSetting['InKeys'])) { // Create model instance for each result
+					foreach($joined AS $joinedKey => $joinedObj) {
+						// If found the property we needed
+						if (isset($modelSetting['InKeyMap'][$joinedKey])) {
+							foreach($modelSetting['InKeyMap'][$joinedKey] AS $inMap) {
+								$inMap->$modelSetting['Key'] = $joinedObj->getData(); // Replace the principal with it.
+							}
+						}
 						
-						$keyToObjMap[$object->$keyName] = $object; // Object should auto referenced
-					}
-				} else {
-					facula::core('debug')->exception('ERROR_ORM_FETCHWITH_KEY_NOT_EXIST|' . $keyName, 'orm', true);
-					return false;
-				}
-			}
-			
-			$targetORMObject = new $ormObjectName();
-			
-			if ($targetFetched = $targetORMObject->fetchByPKs(array_unique($keys))) {
-				foreach($targetFetched AS $key => $targetObject) {
-					if (isset($keyToObjMap[$key])) {
-						$keyToObjMap[$key]->$keyName = $targetObject;
+						$joinedObj = null; // Try release it.
 					}
 				}
+				
+				$lastJoinedModel = null; // Unset this and hopefully, release memory.
 			}
 			
-			return $fetchedObjects;
+			return $principals;
 		}
 		
 		return array();

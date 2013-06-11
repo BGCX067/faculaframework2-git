@@ -298,7 +298,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 			facula::$profile['MemoryPeak'] = memory_get_peak_usage(true);
 			
 			facula::$profile['OutputTime'] = microtime(true);
-			facula::$profile['ProducionTime'] = facula::$profile['OutputTime'] - facula::$profile['StartTime'];
+			facula::$profile['ProductionTime'] = facula::$profile['OutputTime'] - facula::$profile['StartTime'];
 			
 			// Start buffer to output
 			ob_start();
@@ -310,7 +310,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 			}
 			
 			if ($this->configs['ProfileSignal']) {
-				header('X-Runtime: ' . facula::$profile['ProducionTime']  * 1000);
+				header('X-Runtime: ' . (facula::$profile['ProductionTime']  * 1000) . 'ms');
 				header('X-Memory: ' . (facula::$profile['MemoryUsage'] / 1024) . 'kb / ' . (facula::$profile['MemoryPeak'] / 1024) . 'kb');
 			}
 			
