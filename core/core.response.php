@@ -372,12 +372,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 	}
 	
 	public function unsetCookie($key) {
-		global $_COOKIE;
-		
-		$cKey = $this->configs['CookiePrefix'] . urlencode($key);
-		$cExpire = gmstrftime('%A, %d-%b-%Y %H:%M:%S GMT', FACULA_TIME - 3600);
-	
-		self::$headers[] = "Set-Cookie: {$cKey}=NULL; Expires={$cExpire};";
+		$this->setCookie($key, null, -FACULA_TIME);
 		
 		unset($_COOKIE[$this->configs['CookiePrefix'] . $key]); // Assume we already unset it
 		
