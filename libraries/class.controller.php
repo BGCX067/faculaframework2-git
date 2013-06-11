@@ -74,9 +74,7 @@ abstract class Controller extends Setting implements controllerInterface {
 				break;
 		}
 		
-		return $this->response->setHeader('Location: ' . $rootUrl . $addr);
-		
-		return $this->response->send();
+		return $this->response->setHeader('Location: ' . $rootUrl . $addr) && $this->response->send() ? true : false;
 	}
 	
 	protected function assign($key, $val) {

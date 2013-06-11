@@ -45,6 +45,8 @@ class facula {
 		'Version' => __FACULAVERSION__,
 	);
 	
+	static public $time = 0;
+	
 	static private $instance = null;
 	
 	static public $profile = array(
@@ -70,6 +72,7 @@ class facula {
 	
 	static public function init(&$cfg = array()) {
 		self::$profile['StartTime'] = microtime(true);
+		self::$time = time();
 		
 		if (!self::$instance && $cfg) {
 			if (isset($cfg['core']['SystemCacheRoot'][1])) {
