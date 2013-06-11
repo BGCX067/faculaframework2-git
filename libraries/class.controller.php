@@ -63,15 +63,18 @@ abstract class Controller extends Setting implements controllerInterface {
 		
 		switch($httpcode) {
 			case 301:
-				$this->response->setHeader('HTTP/1.1 302 Moved Permanently');
+				$this->response->setHeader('HTTP/1.1 301 Moved Permanently');
+				break;
 				
 			case 302:
 				$this->response->setHeader('HTTP/1.1 302 Moved Temporarily');
+				break;
 				
 			default:
-				$this->response->setHeader('Location: ' . $rootUrl . $addr);
 				break;
 		}
+		
+		return $this->response->setHeader('Location: ' . $rootUrl . $addr);
 		
 		return $this->response->send();
 	}
