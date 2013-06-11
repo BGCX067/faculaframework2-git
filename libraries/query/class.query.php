@@ -587,7 +587,7 @@ class query implements queryInterface {
 	
 	// Task Preparers
 	private function getPDOConnection() {
-		if ($this->connection = facula::core('pdo')->getConnection(array('Table' => $this->query['From'], 'Permission' => $this->query['Type']))) {
+		if ($this->connection = facula::core('pdo')->getConnection(array('Table' => $this->query['From'], 'Operation' => $this->query['Type']))) {
 			return $this->connection;
 		} else {
 			facula::core('debug')->exception('ERROR_QUERY_PDO_CONNECTION_FAILED', 'query', true);

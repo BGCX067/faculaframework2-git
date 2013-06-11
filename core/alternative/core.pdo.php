@@ -298,7 +298,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 						}
 					}
 				} else {
-					facula::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSION_TABLEOPERATION', 'data', true);
+					facula::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSED_TABLEOPERATION', 'data', true);
 				}
 				break;
 				
