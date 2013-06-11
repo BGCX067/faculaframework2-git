@@ -58,7 +58,7 @@ abstract class Controller extends Setting implements controllerInterface {
 		return $this->request->getCookie($key);
 	}
 	
-	protected function redirect($addr, $httpcode, $interior = true) {
+	protected function redirect($addr, $httpcode = 302, $interior = true) {
 		$rootUrl = $interior ? $this->request->getClientInfo('rootURL') . '/' : '';
 		
 		switch($httpcode) {

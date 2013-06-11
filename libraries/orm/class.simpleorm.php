@@ -163,8 +163,11 @@ class SimpleORM implements ormInterface {
 		
 		$values[] = $value;
 		
-		if (($data = array_values($this->fetchByPKs($keyField, $values))) && isset($data[0])) {
-			return $data[0];
+		if ($data = array_values($this->fetchInKeys($keyField, $values))) {
+			foreach($data AS $d) {
+				return $d; // Return the first element
+				break;
+			}
 		}
 		
 		return false;
