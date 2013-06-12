@@ -246,7 +246,7 @@ class query implements queryInterface {
 			
 			return true;
 		} else {
-			facula::core('debug')->exception('ERROR_QUERY_SAVEFIELD_FIELDS_INVALID|' . $type, 'query', true);
+			facula::core('debug')->exception('ERROR_QUERY_SAVEFIELD_FIELDS_INVALID', 'query', true);
 		}
 
 		return false;
@@ -264,7 +264,7 @@ class query implements queryInterface {
 				
 				return $dataKey;
 			} else {
-				facula::core('debug')->exception('ERROR_QUERY_SAVEVALUE_TYPE_UNKNOWN|' . $type, 'query', true);
+				facula::core('debug')->exception('ERROR_QUERY_SAVEVALUE_TYPE_UNKNOWN|' . $this->query['FieldTypes'][$forField], 'query', true);
 			}
 		} else {
 			facula::core('debug')->exception('ERROR_QUERY_SAVEVALUE_FIELD_UNKNOWN|' . $forField, 'query', true);

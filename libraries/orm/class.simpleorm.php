@@ -253,7 +253,7 @@ class SimpleORM implements ormInterface {
 		if (isset($this->data[$this->primary])) {
 			$data = $this->data;
 			
-			unset($data[$this->primary]);
+			unset($data[$this->primary]); // No need to update primary key
 			
 			return query::from($this->table)->update($this->fields)->set($this->data)->where('AND', $this->primary, '=', $this->data[$this->primary])->save();
 		} else {
@@ -268,10 +268,15 @@ class SimpleORM implements ormInterface {
 		$data = array();
 		
 		if (!isset($this->data[$this->primary])) {
-			$keys = $this->fields;
 			$data = $this->data;
 			
-			unset($data[$this->primary], $keys[$this->primary]);
+			foreach($data AS $key => $val) {
+				if (isset($data[$key]) && isset($this->fields[$key])) {
+					$keys[$key] = $this->fields[$key];
+				} else {
+					facula::core('debug')->exception('ERROR_ORM_INSERT_FIELD_NOTSET|' . $key, 'query', true);
+				}
+			}
 			
 			return query::from($this->table)->insert($keys)->value($data)->save();
 		} else {
