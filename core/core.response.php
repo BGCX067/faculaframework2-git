@@ -265,7 +265,6 @@ class faculaResponseDefault implements faculaResponseInterface {
 	public function __construct(&$cfg, &$common, facula $facula) {
 		$this->configs = array(
 			'CookiePrefix' => isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : 'facula_',
-			'CookieExpire' => isset($cfg['CookieExpireDefault'][0]) ? $cfg['CookieExpireDefault'] : 3600,
 			'GZIPEnabled' => isset($cfg['UseGZIP']) && $cfg['UseGZIP'] && function_exists('gzcompress') ? true : false,
 			'ProfileSignal' => isset($cfg['PostProfileSignal']) && $cfg['PostProfileSignal'] ? true : false,
 		);
@@ -358,7 +357,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 		
 		$cKey		= $this->configs['CookiePrefix'] . urlencode($key);
 		$cVal		= $val ? urlencode($val) : '';
-		$cExpire	= gmstrftime('%A, %d-%b-%Y %H:%M:%S GMT', $expire ? FACULA_TIME + intval($expire) : FACULA_TIME + $this->configs['CookieExpire']);
+		$cExpire	= $expire ? gmstrftime('%A, %d-%b-%Y %H:%M:%S GMT', FACULA_TIME + intval($expire)) : '0';
 		$cPath		= $path;
 		$cDomain	= $domain ? $domain : (strpos($_SERVER['HTTP_HOST'], '.') != -1 ? $_SERVER['HTTP_HOST'] : ''); // The little dot check for IEs
 		$cSecure	= $secure ? ' Secure;' : '';
