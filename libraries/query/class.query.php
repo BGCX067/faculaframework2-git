@@ -691,6 +691,7 @@ class query implements queryInterface {
 	public function fetch($mode = 'ASSOC', $argument = null) {
 		$sql = '';
 		$statement = null;
+		$result = array();
 		
 		$pdoFetchStyle = array(
 			'ASSOC' => PDO::FETCH_ASSOC,
@@ -710,7 +711,17 @@ class query implements queryInterface {
 			if ($statement = $this->prepare($this->query['Required'])) {
 				try {
 					if (isset($pdoFetchStyle[$mode])) {
-						return $argument !== null ? $statement->fetchAll($pdoFetchStyle[$mode], $argument) : $statement->fetchAll($pdoFetchStyle[$mode]);
+						if ($argument !== null) {
+							$statement->setFetchMode($pdoFetchStyle[$mode], $argument);
+						} else {
+							$statement->setFetchMode($pdoFetchStyle[$mode]);
+						}
+						
+						while($row = $statement->fetch()) {
+							$result[] = $row;
+						}
+						
+						return $result;
 					} else {
 						facula::core('debug')->exception('ERROR_QUERY_FETCH_UNKNOWN_METHOD|' . $mode, 'query', true);
 					}
