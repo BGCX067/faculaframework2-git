@@ -237,7 +237,7 @@ class query implements queryInterface {
 	}
 	
 	// Save data and data type to data map for bindValue
-	private function saveFields($fields) {
+	protected function saveFields($fields) {
 		if (is_array($fields)) {
 			foreach($fields AS $fieldName => $fieldType) {
 				$this->query['Fields'][] = $fieldName;
@@ -252,7 +252,7 @@ class query implements queryInterface {
 		return false;
 	}
 	
-	private function saveValue($value, $forField) {
+	protected function saveValue($value, $forField) {
 		$dataKey = ':' . $this->dataIndex++;
 		
 		if (isset($this->query['FieldTypes'][$forField])) {

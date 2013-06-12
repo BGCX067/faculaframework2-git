@@ -37,6 +37,8 @@ interface ormInterface {
 	public function get($param);
 	public function fetch($param, $offset = 0, $dist = 0);
 	
+	public function finds($param, $offset = 0, $dist = 0, $returnType = 'CLASS');
+	
 	public function getInKey($keyField, $value);
 	public function fetchInKeys($keyField, $values);
 	
@@ -123,14 +125,14 @@ class SimpleORM implements ormInterface {
 		return false;
 	}
 	
-	public function fetch($param, $offset = 0, $dist = 0, $returnType = 'CLASS') {
+	public function fetch($param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=') {
 		$query = null;
 		
 		$query = query::from($this->table);
 		$query->select($this->fields);
 		
 		foreach($param AS $field => $value) {
-			$query->where('AND', $field, '=', $value);
+			$query->where('AND', $field, $whereOperator, $value);
 		}
 		
 		if ($offset || $dist) {
@@ -148,6 +150,10 @@ class SimpleORM implements ormInterface {
 		}
 		
 		return array();
+	}
+	
+	public function finds($param, $offset = 0, $dist = 0, $returnType = 'CLASS') {
+		return $this->fetch($param, $offset, $dist, $returnType, $whereOperator = 'LIKE');
 	}
 	
 	public function getByPK($key) {
