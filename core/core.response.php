@@ -356,8 +356,8 @@ class faculaResponseDefault implements faculaResponseInterface {
 		global $_COOKIE;
 		
 		$cKey		= $this->configs['CookiePrefix'] . urlencode($key);
-		$cVal		= $val ? urlencode($val) : '';
-		$cExpire	= $expire ? gmstrftime('%A, %d-%b-%Y %H:%M:%S GMT', FACULA_TIME + intval($expire)) : '0';
+		$cVal		= $val ? urlencode($val) : 'false';
+		$cExpire	= $expire ? gmstrftime('%A, %d-%b-%Y %H:%M:%S GMT', FACULA_TIME + intval($expire)) : 'false';
 		$cPath		= $path;
 		$cDomain	= $domain ? $domain : (strpos($_SERVER['HTTP_HOST'], '.') != -1 ? $_SERVER['HTTP_HOST'] : ''); // The little dot check for IEs
 		$cSecure	= $secure ? ' Secure;' : '';
