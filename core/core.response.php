@@ -363,7 +363,8 @@ class faculaResponseDefault implements faculaResponseInterface {
 		$cSecure	= $secure ? ' Secure;' : '';
 		$cHttponly	= $httponly ? ' HttpOnly;' : '';
 		
-		self::$headers[] = "Set-Cookie: {$cKey}={$cVal}; Domain={$cDomain}; Path={$cPath}; Expires={$cExpire};{$cSecure}{$cHttponly}";
+		// Add cookie to the top of http header
+		array_unshift(self::$headers, "Set-Cookie: {$cKey}={$cVal}; Domain={$cDomain}; Path={$cPath}; Expires={$cExpire};{$cSecure}{$cHttponly}");
 		
 		$_COOKIE[$this->configs['CookiePrefix'] . $key] = $val; // Assume we already successed. The value can be read immediately, no need to reload page.
 		
