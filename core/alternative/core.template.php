@@ -774,6 +774,7 @@ class faculaTemplateDefaultCompiler {
 	private function doPageSwitcher($format) {
 		$maxpage = 20;
 		$matched = $formatMatched = array();
+		$formatVariables = array('Search' => array(), 'Replace' => array());
 		
 		$phpcode = '<?php ';
 		
@@ -782,10 +783,21 @@ class faculaTemplateDefaultCompiler {
 			
 			$name = htmlspecialchars($name, ENT_QUOTES);
 			$classname = htmlspecialchars($classname, ENT_QUOTES);
+			
+			// Find all variables in the format string
+			if (preg_match_all('/\{(\$[A-Za-z0-9\_\'\"\[\]]+)\}/sU', $format, $formatMatched)) {
+				// Prepare for the replacement
+				foreach($formatMatched[0] AS $key => $value) {
+					$formatVariables['Search'][] = urlencode($value);
+					$formatVariables['Replace'][] = '\' . ' . $formatMatched[1][$key] . ' . \'';
+				}
+			}
+			
+			// Urlencode the format but replace some string back for url params 
 			$format = str_replace(array('%3A', '%2F', '%3F', '%3D', '%25PAGE%25'), array(':', '/', '?', '=', '%PAGE%'), urlencode($format));
 			
-			// Select variable string and replace it to variable for phpcode assembling
-			$format = preg_replace('/\{(\$[A-Za-z0-9\_\'\"\[\]]+)\}/sU', '\' . \1 . \'', str_replace(array('%7B', '%24', '%7D', '%5B', '%5D', '%27'), array('{', '$', '}', '[', ']', '\''), $format));
+			// Replace variables string to variables
+			$format = str_replace($formatVariables['Search'], $formatVariables['Replace'], $format);
 			
 			$phpcode = '
 			<?php 
