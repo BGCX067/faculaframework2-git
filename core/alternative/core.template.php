@@ -418,7 +418,7 @@ class faculaTemplateDefaultCompiler {
 		{% $Variable %} // Simplely display the value of that variable
 		{% $Variable|format %} // Display the value of that variable with specified format
 		
-		{~ IDName (ClassName) CurrentPage TotalPages (URLFORMAT/%PAGE%/) ~} // Display page switcher
+		{~ IDName (ClassName) CurrentPage TotalPages MaxPagesToDisplay (URLFORMAT/%PAGE%/) ~} // Display page switcher
 		
 		{* LoopName $Variable *} 
 			<!--HTML CONTENTS--> 
@@ -773,7 +773,7 @@ class faculaTemplateDefaultCompiler {
 	
 	private function doPageSwitcher($format) {
 		$maxpage = 20;
-		$matched = array();
+		$matched = $formatMatched = array();
 		
 		$phpcode = '<?php ';
 		
@@ -783,6 +783,9 @@ class faculaTemplateDefaultCompiler {
 			$name = htmlspecialchars($name, ENT_QUOTES);
 			$classname = htmlspecialchars($classname, ENT_QUOTES);
 			$format = str_replace(array('%3A', '%2F', '%3F', '%3D', '%25PAGE%25'), array(':', '/', '?', '=', '%PAGE%'), urlencode($format));
+			
+			// Select variable string and replace it to variable for phpcode assembling
+			$format = preg_replace('/\{(\$[A-Za-z0-9\_\'\"\[\]]+)\}/sU', '\' . \1 . \'', str_replace(array('%7B', '%24', '%7D', '%5B', '%5D', '%27'), array('{', '$', '}', '[', ']', '\''), $format));
 			
 			$phpcode = '
 			<?php 
