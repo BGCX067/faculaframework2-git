@@ -118,7 +118,7 @@ class SimpleORM implements ormInterface {
 	public function get($param) { // array('FieldName' => 'Value');
 		$data = array();
 		
-		if (($data = $this->fetch($param, 0, 1)) && isset($data[0])) {
+		if (($data = $this->fetch(array('Where' => $param), 0, 1)) && isset($data[0])) {
 			return $data[0];
 		}
 		
@@ -131,8 +131,16 @@ class SimpleORM implements ormInterface {
 		$query = query::from($this->table);
 		$query->select($this->fields);
 		
-		foreach($param AS $field => $value) {
-			$query->where('AND', $field, $whereOperator, $value);
+		if (isset($param['Where'])) {
+			foreach($param['Where'] AS $field => $value) {
+				$query->where('AND', $field, $whereOperator, $value);
+			}
+		}
+		
+		if (isset($param['Order'])) {
+			foreach($param['Order'] AS $field => $value) {
+				$query->order($field, $value);
+			}
 		}
 		
 		if ($offset || $dist) {
