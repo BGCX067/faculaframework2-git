@@ -34,19 +34,29 @@ abstract class Validator {
 									'filename' => '/^[A-Za-z0-9\s\(\)\.\-\,\_\x{007f}-\x{ffe5}]+$/u',
 									'url' => '/^[a-zA-Z0-9]+\:\/\/[a-zA-Z0-9\&\;\.\#\/\?\-\=\_\+\:\%\,]+$/u',
 									'urlelement' => '/[a-zA-Z0-9\.\/\?\-\=\&\_\+\:\%\,]+/u',
-									'number' => '/^[0-9]+$/u'
+									'number' => '/^[0-9]+$/u',
+									'float' => '/^[0-9]{0,}[\.]{0,1}[0-9]{0,}$/u',
 									);
 								
-	static public function check($string, $type = '', $max = 0, $min = 0) {
-		
+	static public function check($string, $type = '', $max = 0, $min = 0, &$error = '') {
+		$strLen = 0;
 		
 		if ($string && (!$type || (isset(self::$regulars[$type]) && preg_match(self::$regulars[$type], $string)))) {
+			$strLen = mb_strlen($string);
 			
-			if (($max && $max < mb_strlen($string)) || ($min && $min > mb_strlen($string))) {
+			if ($max && $max < $strLen) {
+				$error = 'TOOLONG';
+				
+				return false;
+			} elseif ($min && $min > $strLen) {
+				$error = 'TOOSHORT';
+				
 				return false;
 			}
 			
-			return true;
+			return $string;
+		} else {
+			$error = 'FORMAT';
 		}
 		
 		return false;

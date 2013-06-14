@@ -89,9 +89,9 @@ abstract class Controller extends Setting implements controllerInterface {
 		return false;
 	}
 	
-	protected function display($tplName, $cacheExpired = 0, $cacheExpiredCallback = null) {
+	protected function display($tplName, $cacheExpired = 0, $cacheExpiredCallback = null, $tplSet = '') {
 		if (isset($this->template)) {
-			if ($this->response->setContent($this->template->render($tplName, $cacheExpired, $cacheExpiredCallback))) {
+			if ($this->response->setContent($this->template->render($tplName, $cacheExpired, $cacheExpiredCallback, $tplSet))) {
 				return $this->response->send();
 			}
 		} else {

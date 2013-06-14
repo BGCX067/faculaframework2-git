@@ -238,7 +238,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 			}
 		}
 		
-		return isset($result[0]) ? $result : false;
+		return !empty($result) ? $result : false;
 	}
 	
 	static private function getUserIP($ipstr = '', $outasstring = false) {

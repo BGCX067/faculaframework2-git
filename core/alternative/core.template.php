@@ -80,7 +80,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	private $assigned = array();
 	
 	public function __construct(&$cfg, $common, facula $facula) {
-		$files = array();
+		$files = $fileNameSplit = array();
 		// General settings
 		$this->configs = array(
 			'Cache' => isset($cfg['CacheTemplate']) && $cfg['CacheTemplate'] ? true : false,
@@ -106,16 +106,25 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		// Scan for template files
 		if ($files = $facula->scanModuleFiles($this->configs['TplPool'])) {
 			foreach($files AS $file) {
+				$fileNameSplit = explode('+', $file['Name'], 2);
+				
 				switch($file['Prefix']) {
 					case 'language':
-						$this->pool['File']['Lang'][$file['Name']][] = $file['Path'];
+						$this->pool['File']['Lang'][$fileNameSplit[0]][] = $file['Path'];
 						break;
 						
 					case 'template':
-						if (!isset($this->pool['File']['Tpl'][$file['Name']])) {
-							$this->pool['File']['Tpl'][$file['Name']] = $file['Path'];
+						if (isset($fileNameSplit[1])) { // If this is a ab testing file
+							if (!isset($this->pool['File']['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]])) {
+								$this->pool['File']['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]] = $file['Path'];
+							} else {
+								throw new Exception('Template file ' . $this->pool['File']['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]] . ' conflicted with ' . $file['Path'] . '.');
+								return false;
+							}
+						} elseif (!isset($this->pool['File']['Tpl'][$file['Name']]['default'])) { // If not, save current file to the default
+							$this->pool['File']['Tpl'][$file['Name']]['default'] = $file['Path'];
 						} else {
-							throw new Exception('Template file ' . $this->pool['File']['Tpl'][$file['Name']] . ' conflicted with ' . $file['Path'] . '.');
+							throw new Exception('Template file ' . $this->pool['File']['Tpl'][$file['Name']]['default'] . ' conflicted with ' . $file['Path'] . '.');
 							return false;
 						}
 						break;
@@ -153,6 +162,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		$this->assigned['Time'] = FACULA_TIME;
 		$this->assigned['RootURL'] = facula::core('request')->getClientInfo('rootURL');
 		$this->assigned['AbsRootURL'] = facula::core('request')->getClientInfo('absRootURL');
+		$this->assigned['Message'] = array();
 		
 		facula::core('object')->runHook('template_inited', array(), $error);
 		
@@ -177,10 +187,31 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return true;
 	}
 	
-	public function render($templateName, $expire = 0, $expiredCallback = null) {
+	public function insertMessage($message) {
+		if (isset($message['Args'])) {
+			$msgString = vsprintf($this->getLanguageString('MESSAGE_' . $message['Code']), $message['Args']);
+		} else {
+			$msgString = $this->getLanguageString('MESSAGE_' . $message['Code']);
+		}
+		
+		$messageContent = array(
+			'Message' => $msgString ? $msgString : 'ERROR_UNKNOWN_ERROR',
+			'Type' => isset($message['Type']) ? $message['Type'] : 'UNKNOWN'
+		);
+		
+		if (isset($message['Name'])) {
+			$this->assigned['Message'][$message['Name']][] = $messageContent;
+		} else {
+			$this->assigned['Message']['Default'][] = $messageContent;
+		}
+		
+		return true;
+	}
+	
+	public function render($templateName, $expire = 0, $expiredCallback = null, $templateSet = '') {
 		$content = '';
 		
-		if ($content = $this->getPageContent($templateName, $expire, $expiredCallback)) {
+		if ($content = $this->getPageContent($templateName, $templateSet, $expire, $expiredCallback)) {
 			return $content;
 		} else {
 			facula::core('debug')->exception('ERROR_TEMPLATE_NOCONTENT|' . $templateName, 'template', true);
@@ -189,9 +220,9 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return false;
 	}
 	
-	public function importTemplateFile($name, $path) {
-		if (!isset($this->pool['File']['Tpl'][$name])) {
-			$this->pool['File']['Tpl'][$name] = $path;
+	public function importTemplateFile($name, $path, $templateSet = 'default') {
+		if (!isset($this->pool['File']['Tpl'][$name][$templateSet])) {
+			$this->pool['File']['Tpl'][$name][$templateSet] = $path;
 			
 			return true;
 		} else {
@@ -227,36 +258,42 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return false;
 	}
 	
-	private function getPageContent($templateName, $expire, $expiredCallback = null) {
+	private function getPageContent($templateName, $templateSet, $expire, $expiredCallback = null) {
 		$content = $error = '';
-		$compiledTpl = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledTemplate.' . $templateName . '.' . $this->pool['Language'] . '.php';
+		$compiledTpl = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledTemplate.' . $templateName . ($templateSet ? '+' . $templateSet : '') . '.' . $this->pool['Language'] . '.php';
 		
-		if (isset($this->pool['File']['Tpl'][$templateName])) {
-			if (!$this->configs['Renew'] && is_readable($compiledTpl) && (!$expire || filemtime($compiledTpl) > FACULA_TIME - $expire)) {
+		if (!$this->configs['Renew'] && is_readable($compiledTpl) && (!$expire || filemtime($compiledTpl) > FACULA_TIME - $expire)) {
+			
+			facula::core('object')->runHook('template_render_*', array(), $error);
+			facula::core('object')->runHook('template_render_' . $templateName, array(), $error);
+			
+			if ($content = $this->doRender($compiledTpl)) {
+				return $content;
+			}
+		} else {
+			if ($expiredCallback && is_callable($expiredCallback) && !$expiredCallback()) {
+				facula::core('debug')->exception('ERROR_TEMPLATE_TPLCALLBACK_FAILED', 'template');
+				return false;
+			}
+			
+			facula::core('object')->runHook('template_compile_*', array(), $error);
+			facula::core('object')->runHook('template_compile_' . $templateName, array(), $error);
+			
+			if ($templateSet && isset($this->pool['File']['Tpl'][$templateName][$templateSet])) {
+				$templatePath = $this->pool['File']['Tpl'][$templateName][$templateSet];
+			} elseif (isset($this->pool['File']['Tpl'][$templateName]['default'])) {
+				$templatePath = $this->pool['File']['Tpl'][$templateName]['default'];
+			} else {
+				facula::core('debug')->exception('ERROR_TEMPLATE_NOTFOUND|' . $templateName, 'template', true);
 				
-				facula::core('object')->runHook('template_render_*', array(), $error);
-				facula::core('object')->runHook('template_render_' . $templateName, array(), $error);
-				
+				return false;
+			}
+			
+			if ($this->doCompile($templatePath, $compiledTpl)) {
 				if ($content = $this->doRender($compiledTpl)) {
 					return $content;
 				}
-			} else {
-				if ($expiredCallback && is_callable($expiredCallback) && !$expiredCallback()) {
-					facula::core('debug')->exception('ERROR_TEMPLATE_TPLCALLBACK_FAILED', 'template');
-					return false;
-				}
-				
-				facula::core('object')->runHook('template_compile_*', array(), $error);
-				facula::core('object')->runHook('template_compile_' . $templateName, array(), $error);
-				
-				if ($this->doCompile($this->pool['File']['Tpl'][$templateName], $compiledTpl)) {
-					if ($content = $this->doRender($compiledTpl)) {
-						return $content;
-					}
-				}
 			}
-		} else {
-			facula::core('debug')->exception('ERROR_TEMPLATE_NOTFOUND|' . $templateName, 'template', true);
 		}
 		
 		return false;
@@ -514,12 +551,7 @@ class faculaTemplateDefaultCompiler {
 					$format['Function'] = array(&$this, $format['Command']);
 				}
 				
-				$i = 0;
-				
 				while(preg_match($format['Preg'], $content, $matchedTags, PREG_OFFSET_CAPTURE)) {
-					if ($i++ > 10) {
-						break;
-					}
 					
 					// Get Original content info
 					$tempResult['OriginalLen']		= strlen($matchedTags[0][0]);
@@ -624,8 +656,8 @@ class faculaTemplateDefaultCompiler {
 		$param = explode(' ', $format, 2);
 		$replaces = $temprepleaces = array();
 		
-		if (isset($this->pool['File']['Tpl'][$param[0]])) {
-			$tplFileContent = file_get_contents($this->pool['File']['Tpl'][$param[0]]);
+		if (isset($this->pool['File']['Tpl'][$param[0]]['default'])) {
+			$tplFileContent = file_get_contents($this->pool['File']['Tpl'][$param[0]]['default']);
 			
 			if (isset($param[1])) {
 				$param[1][strlen($param[1]) - 1] = $param[1][0] = null;
@@ -673,8 +705,7 @@ class faculaTemplateDefaultCompiler {
 	}
 	
 	private function doLanguage($format, $pos) {
-		if (isset($this->pool['LanguageMap'][$format])) {
-			
+		if (isset($this->pool['LanguageMap'][$format][0])) {
 			return $this->pool['LanguageMap'][$format];
 		} else {
 			facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LANGUAGE_NOTFOUND|' . $format, 'template', true);
@@ -708,7 +739,7 @@ class faculaTemplateDefaultCompiler {
 						}
 						break;
 					
-					case 'friendlytime':
+					case 'friendlyTime':
 						if (isset($this->pool['LanguageMap']['FORMAT_TIME_SNDBEFORE']) && 
 							isset($this->pool['LanguageMap']['FORMAT_TIME_MINBEFORE']) && 
 							isset($this->pool['LanguageMap']['FORMAT_TIME_HRBEFORE']) &&
@@ -742,7 +773,7 @@ class faculaTemplateDefaultCompiler {
 						$phpcode .= 'echo(htmlspecialchars(json_encode(' . $param[0] . ')));';
 						break;
 						
-					case 'urlchar':
+					case 'urlChar':
 						$phpcode .= 'echo(urlencode(' . $param[0] . '));';
 						break;
 						
@@ -752,6 +783,14 @@ class faculaTemplateDefaultCompiler {
 						
 					case 'html':
 						$phpcode .= 'echo(htmlspecialchars(' . $param[0] . ', ENT_QUOTES));';
+						break;
+						
+					case 'number':
+						$phpcode .= 'echo(number_format(' . $param[0] . '));';
+						break;
+						
+					case 'floatNumber':
+						$phpcode .= 'echo(number_format(' . $param[0] . ', ' . (isset($param[2]) ? intval($param[2]) : 2) . '));';
 						break;
 					
 					default:
