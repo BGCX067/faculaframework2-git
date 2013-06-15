@@ -35,7 +35,7 @@ interface ormInterface {
 	public function getFields();
 	
 	public function get($param);
-	public function fetch($param, $offset = 0, $dist = 0);
+	public function fetch($param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
 	
 	public function finds($param, $offset = 0, $dist = 0, $returnType = 'CLASS');
 	
@@ -45,7 +45,7 @@ interface ormInterface {
 	public function getByPK($key);
 	public function fetchByPKs($keys);
 	
-	public function fetchWith($models, $currentParams, $offset = 0, $dist = 0);
+	public function fetchWith($joinModels, $currentParams, $offset = 0, $dist = 0, $whereOperator = '=');
 	
 	public function save();
 	public function insert();
@@ -80,7 +80,7 @@ class SimpleORM implements ormInterface {
 	}
 	
 	public function __set($key, $val) {
-		if (isset($this->fields[$key])) {
+		if (isset($this->fields[$key]) || $key[0] == '_') {
 			$this->data[$key] = $val;
 		} else {
 			facula::core('debug')->exception('ERROR_ORM_SET_FIELDS_NOT_EXISTED|' . $key, 'orm', true);
@@ -202,33 +202,38 @@ class SimpleORM implements ormInterface {
 		return array();
 	}
 	
-	public function fetchWith($joinModels, $currentParams, $offset = 0, $dist = 0) {
+	public function fetchWith($joinModels, $currentParams, $offset = 0, $dist = 0, $whereOperator = '=') {
 		$principals = $joined = array();
 		
 		$lastJoinedModel = null;
 		
 		/*************
 			$joinModels = array(
-				'Naming this joined model' => array(
-					'Model' => 'ModelName',
-					'Key' => 'Key you want to search and use',
-				),
-				'Model2' => array(
+				array(
+					'Field' => 'TargetField',
 					'Model' => 'ModelName2',
-					'Key' => 'Key you want to search and use',
+					'Key' => 'JoinedKey',
+					'As' => 'JoinResultASFieldName',
+				),
+				array(
+					'Field' => 'TargetField',
+					'Model' => 'ModelName2',
+					'Key' => 'JoinedKey',
+					'As' => 'JoinResultASFieldName',
 				),
 			);
 		*************/
 		
-		if ($principals = $this->fetch($currentParams, $offset, $dist)) {
+		if ($principals = $this->fetch($currentParams, $offset, $dist, 'CLASS', $whereOperator)) {
 			// Scan all the needed key from principal results
 			foreach($principals AS $principalKey => $principal) {
 				foreach($joinModels AS $modelKey => $model) {
-					if (isset($principal->$model['Key'])) {
-						$joinModels[$modelKey]['InKeys'][] = $principal->$model['Key'];
-						$joinModels[$modelKey]['InKeyMap'][$principal->$model['Key']][] = &$principals[$principalKey]; // Should by auto referenced actually.
+					if (isset($model['Field']) && isset($principal->$model['Field'])) {
+						$joinModels[$modelKey]['NewKey'] = (isset($joinModels[$modelKey]['As']) ? '_' . $joinModels[$modelKey]['As'] : $joinModels[$modelKey]['Field']);
+						$joinModels[$modelKey]['InKeys'][] = $principal->$model['Field'];
+						$joinModels[$modelKey]['InKeyMap'][$principal->$model['Field']][] = &$principals[$principalKey]; // Should by auto referenced actually.
 					} else {
-						facula::core('debug')->exception('ERROR_ORM_FETCHWITH_KEY_NOT_EXIST|' . $model['Key'], 'orm', true);
+						facula::core('debug')->exception('ERROR_ORM_FETCHWITH_KEY_NOT_EXIST|' . $model['Field'], 'orm', true);
 						return false;
 						break; break;
 					}
@@ -244,7 +249,7 @@ class SimpleORM implements ormInterface {
 						// If found the property we needed
 						if (isset($modelSetting['InKeyMap'][$joinedKey])) {
 							foreach($modelSetting['InKeyMap'][$joinedKey] AS $inMap) {
-								$inMap->$modelSetting['Key'] = $joinedObj->getData(); // Replace the principal with it.
+								$inMap->$modelSetting['NewKey'] = $joinedObj->getData(); // Replace the principal with it.
 							}
 						}
 						

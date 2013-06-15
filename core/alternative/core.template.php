@@ -188,24 +188,28 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	}
 	
 	public function insertMessage($message) {
-		if (isset($message['Args'])) {
-			$msgString = vsprintf($this->getLanguageString('MESSAGE_' . $message['Code']), $message['Args']);
-		} else {
-			$msgString = $this->getLanguageString('MESSAGE_' . $message['Code']);
+		if (!empty($message)) {
+			if (isset($message['Args'])) {
+				$msgString = vsprintf($this->getLanguageString('MESSAGE_' . $message['Code']), $message['Args']);
+			} else {
+				$msgString = $this->getLanguageString('MESSAGE_' . $message['Code']);
+			}
+			
+			$messageContent = array(
+				'Message' => $msgString ? $msgString : 'ERROR_UNKNOWN_ERROR',
+				'Type' => isset($message['Type']) ? $message['Type'] : 'UNKNOWN'
+			);
+			
+			if (isset($message['Name'])) {
+				$this->assigned['Message'][$message['Name']][] = $messageContent;
+			} else {
+				$this->assigned['Message']['Default'][] = $messageContent;
+			}
+			
+			return true;
 		}
 		
-		$messageContent = array(
-			'Message' => $msgString ? $msgString : 'ERROR_UNKNOWN_ERROR',
-			'Type' => isset($message['Type']) ? $message['Type'] : 'UNKNOWN'
-		);
-		
-		if (isset($message['Name'])) {
-			$this->assigned['Message'][$message['Name']][] = $messageContent;
-		} else {
-			$this->assigned['Message']['Default'][] = $messageContent;
-		}
-		
-		return true;
+		return false;
 	}
 	
 	public function render($templateName, $expire = 0, $expiredCallback = null, $templateSet = '') {
