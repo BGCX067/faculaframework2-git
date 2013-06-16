@@ -837,7 +837,7 @@ class faculaTemplateDefaultCompiler {
 			}
 			
 			// Urlencode the format but replace some string back for url params 
-			$format = str_replace(array('%3A', '%2F', '%3F', '%3D', '%25PAGE%25'), array(':', '/', '?', '=', '%PAGE%'), urlencode($format));
+			$format = str_replace(array('%3A', '%2F', '%3F', '%3D', '%26', '%25PAGE%25'), array(':', '/', '?', '=', '&', '%PAGE%'), urlencode($format));
 			
 			// Replace variables string to variables
 			$format = str_replace($formatVariables['Search'], $formatVariables['Replace'], $format);
