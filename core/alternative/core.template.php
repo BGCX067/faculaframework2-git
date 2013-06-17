@@ -85,8 +85,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		$this->configs = array(
 			'Cache' => isset($cfg['CacheTemplate']) && $cfg['CacheTemplate'] ? true : false,
 			'Compress' => isset($cfg['CompressOutput']) && $cfg['CompressOutput'] ? true : false,
-			'Renew' => isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ? true : false,
-			'AsDbgHandler' => isset($cfg['DisplayDebug']) && $cfg['DisplayDebug'] ? true : false,
+			'Renew' => isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ? true : false
 		);
 	
 		// TemplatePool 
@@ -339,17 +338,37 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 					}
 					
 					// Reassembling compiled content;
-					$compiledContentForCached = implode('', $splitedCompiledContent);
+					$compiledContentForCached = implode('<!-- NOCACHE -->', $splitedCompiledContent);
 					
 					// Save compiled content to a temp file
 					$cachedResultTpl = $resultTpl . '.cached.temp.php';
+					
+					unset($splitedCompiledContent, $splitedCompiledContentIndexLen);
 					
 					if (file_put_contents($cachedResultTpl, $compiledContentForCached)) {
 						$render = new faculaTemplateDefaultRender($cachedResultTpl, $this->assigned);
 						
 						// Render nocached compiled content
 						if (($renderCachedContent = $render->getResult()) && unlink($cachedResultTpl)) {
-							$renderCachedContent = self::$setting['TemplateFileSafeCode'][0] . self::$setting['TemplateFileSafeCode'][1] . $renderCachedContent;
+							/* 
+								Beware the renderCachedContent as it may contains code that assigned by user. After render and cache, the php code may will 
+								turn to executable.
+								
+								Web ui designer should filter those code to avoid danger by using compiler's variable format, but they usually know nothing 
+								about how to keep user input safe.
+								
+								So: belowing code will help you to filter those code if the web ui designer not filter it by their own.
+							*/
+							$splitedRenderedContent = explode('<!-- NOCACHE -->', $renderCachedContent);
+							$splitedRenderedContentLen = count($splitedRenderedContent) - 1;
+							
+							foreach($splitedRenderedContent AS $key => $val) {
+								if (!($key > 0 && $key < $splitedRenderedContentLen && $key%2)) { // Inverse as above to tag and select cached area.
+									$splitedRenderedContent[$key] = str_replace(array('<?', '?>'), array('&lt;?', '?&gt;'), $val); // Replace php code tag to unexecutable tag before save file.
+								}
+							}
+						
+							$renderCachedContent = self::$setting['TemplateFileSafeCode'][0] . self::$setting['TemplateFileSafeCode'][1] . implode('', $splitedRenderedContent);
 							
 							return file_put_contents($resultTpl, $renderCachedContent);
 						}
