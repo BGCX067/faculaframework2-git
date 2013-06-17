@@ -215,8 +215,8 @@ class facula {
 	}
 	
 	private function __construct(&$cfg) {
-		if (version_compare(PHP_VERSION, '5.3.0', '<=')) {
-			throw new Exception('Facula Framework desired to be running with PHP 5.3+');
+		if (version_compare(PHP_VERSION, '5.4.0', '<=')) {
+			throw new Exception('Facula Framework desired to be running with PHP 5.4+');
 		}
 		
 		return $this->_init($cfg);
