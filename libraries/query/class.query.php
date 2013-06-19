@@ -614,6 +614,8 @@ class query implements queryInterface {
 					facula::core('debug')->exception('ERROR_QUERY_BUILDER_INTERFACE_INVALID', 'query', true);
 				}
 				
+			} else {
+				facula::core('debug')->exception('ERROR_QUERY_BUILDER_DRIVER_NOTSUPPORTED|' . $this->connection->_connection['Driver'], 'query', true);
 			}
 		} else {
 			facula::core('debug')->exception('ERROR_QUERY_SQL_BUILDER_NEEDS_CONNECTION', 'query', true);
@@ -668,7 +670,6 @@ class query implements queryInterface {
 						facula::core('debug')->exception('ERROR_QUERY_PREPARE_FAILED|' . $e->getMessage(), 'query', true);
 					}
 				}
-				
 			}
 		} else {
 			facula::core('debug')->exception('ERROR_QUERY_PREPARE_MUST_INITED', 'query', true);

@@ -134,7 +134,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 							// DBP for sort the database item so we can shuffle it without disturb database index
 							$this->map['DBP'][$index] = &$this->pool['DBs'][$index];
 						} else {
-							throw new Exception('Sorry, specified driver ' . $database['Driver'] . ' for database No.' . $index . ' is not supported on this server.');
+							throw new Exception('Sorry, specified driver ' . $database['Driver'] . ' for database No.' . $index . ' is not supported on this server. It\'s only support: ' . implode(', ', $supportedDrivers));
 						}
 					} else {
 						throw new Exception('You must specify the PDO driver for database No.' . $index . '.');
