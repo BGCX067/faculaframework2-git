@@ -297,7 +297,7 @@ class SimpleORM implements ormInterface {
 				}
 			}
 			
-			return query::from($this->table)->insert($keys)->value($data)->save();
+			return query::from($this->table)->insert($keys)->value($data)->save($this->primary);
 		} else {
 			facula::core('debug')->exception('ERROR_ORM_INSERT_PRIMARY_KEY_MUST_NOTSET', 'query', true);
 		}

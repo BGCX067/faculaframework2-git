@@ -737,15 +737,27 @@ class query implements queryInterface {
 		return false;
 	}
 	
-	public function save() {
+	public function save($seqName = '') {
 		$statement = null;
+		$seqFullName = '';
 		
 		if (isset($this->query['Action']) && $this->query['Type'] == 'Write') {
 			if ($statement = $this->prepare($this->query['Required'])) {
 				try {
+					
 					switch($this->query['Action']) {
 						case 'insert':
-							return $statement->connection->lastInsertId();
+							if (isset($this->query['InsertIDWithSeq']) && $this->query['InsertIDWithSeq']) {
+								if ($this->query['QuoteSeqID']) {
+									$seqFullName = '"' . $this->connection->_connection['Prefix'] . $this->query['From'] . '_' . $seqName . '_seq' . '"';
+								} else {
+									$seqFullName = $this->connection->_connection['Prefix'] . $this->query['From'] . '_' . $seqName . '_seq';
+								}
+								
+								return $statement->connection->lastInsertId($seqFullName);
+							} else {
+								return $statement->connection->lastInsertId();
+							}
 							break;
 							
 						case 'update':

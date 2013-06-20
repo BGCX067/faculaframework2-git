@@ -33,6 +33,9 @@ class query_pgsql implements queryBuilderInterface {
 		$this->table = $tableName;
 		$this->query = $querySet;
 		
+		$querySet['InsertIDWithSeq'] = true;
+		$querySet['QuoteSeqID'] = true;
+		
 		return true;
 	}
 	
