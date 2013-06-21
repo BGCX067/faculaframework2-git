@@ -51,13 +51,11 @@ abstract class View implements viewInterface {
 	
 	static private function render($targetTpl) {
 		if (is_readable($targetTpl)) {
-			if ($oldContent = ob_get_contents()) {
-				ob_clean();
-			}
+			$oldContent = ob_get_clean();
 			
 			ob_start();
 			
-			if (isset($oldContent)) {
+			if (isset($oldContent[0])) {
 				echo($oldContent);
 			}
 			
@@ -68,11 +66,13 @@ abstract class View implements viewInterface {
 			require($targetTpl);
 			
 			facula::core('debug')->criticalSection(false);
+			
+			return ob_get_clean();
 		} else {
 			facula::core('debug')->exception('ERROR_VIEW_TEMPLATE_FILENOTFOUND|' . $file, 'data', true);
 		}
 		
-		return ob_get_clean();
+		return false;
 	}
 }
 

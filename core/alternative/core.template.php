@@ -447,13 +447,11 @@ class faculaTemplateDefaultRender {
 	private $content = '';
 	
 	public function __construct(&$targetTpl, &$assigned = array()) {
-		if ($oldContent = ob_get_contents()) {
-			ob_clean();
-		}
+		$oldContent = ob_get_clean();
 		
 		ob_start();
 		
-		if (isset($oldContent)) {
+		if (isset($oldContent[0])) {
 			echo($oldContent);
 		}
 		
