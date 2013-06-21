@@ -293,7 +293,7 @@ class query_pgsql implements queryBuilderInterface {
 	
 	private function doGroup() {
 		$sql = '';
-		print_r($this->query['Group']);
+		
 		foreach($this->query['Group'] AS $group) {
 			$sql .= $sql ? ', ' : '';
 			

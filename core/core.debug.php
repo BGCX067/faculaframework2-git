@@ -72,7 +72,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 	
 	private $configs = array();
 	
-	private $errorHandler = null;
+	private $customHandler = null;
 	
 	public function __construct(&$cfg, &$common) {
 		$this->configs = array(
@@ -174,12 +174,12 @@ class faculaDebugDefault implements faculaDebugInterface {
 	}
 	
 	public function registerHandler($handler) {
-		if (!$this->errorHandler) {
+		if (!$this->customHandler) {
 			if (is_callable($handler)) {
-				$this->errorHandler = $handler;
+				$this->customHandler = $handler;
 			}
 		} else {
-			$this->exception('ERROR_HANDLER_ALREADY_REGISTERED', 'conflict');
+			$this->exception('ERROR_HANDLER_ALREADY_REGISTERED', 'conflict', true);
 		}
 	}
 	
@@ -259,8 +259,9 @@ class faculaDebugDefault implements faculaDebugInterface {
 		$this->addLog($types[0] ? $types[0] : 'Exception', isset($types[1][0]) ? $types[1] : '', $info, $backtraces);
 		
 		if (!$this->tempDisabled) {
-			if ($this->errorHandler) {
-				$this->errorHandler($info, $type, $backtraces, $exit, $this->configs['Debug']);
+			if ($this->customHandler) {
+				$customHandler = $this->customHandler;
+				$customHandler($info, $type, $backtraces, $exit, $this->configs['Debug']);
 			} else {
 				if ($e) {
 					$this->displayErrorBanner($e->getMessage(), $backtraces, false, 0);

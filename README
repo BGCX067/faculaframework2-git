@@ -18,8 +18,8 @@ the behavior of your application.
   
   1. Requirement
   
-  This version of Facula Framework needs PHP 5.3 at minimum with few builtin 
-plugin enabled. Besides that, consider of the customizability of the framework, 
+  This version of Facula Framework needs PHP 5.4 at minimum with few builtin 
+extensions enabled. Besides that, consider of the customizability of the framework, 
 no any other component will be require by force :)
   
   2. Installation

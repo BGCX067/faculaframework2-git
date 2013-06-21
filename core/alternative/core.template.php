@@ -33,6 +33,7 @@ interface faculaTemplateInterface {
 	public function importTemplateFile($name, $path);
 	public function importLanguageFile($languageCode, $path);
 	public function getLanguageString($key);
+	public function getPageContent($templateName, $expire = 0, $templateSet = '', $expiredCallback = null);
 }
 
 class faculaTemplate extends faculaCoreFactory {
@@ -188,10 +189,17 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	
 	public function insertMessage($message) {
 		if (!empty($message)) {
-			if (isset($message['Args'])) {
-				$msgString = vsprintf($this->getLanguageString('MESSAGE_' . $message['Code']), $message['Args']);
+			if (isset($message['Code'])) {
+				if (isset($message['Args'])) {
+					$msgString = vsprintf($this->getLanguageString('MESSAGE_' . $message['Code']), $message['Args']);
+				} else {
+					$msgString = $this->getLanguageString('MESSAGE_' . $message['Code']);
+				}
+			} elseif (isset($message['Message'])) {
+				$msgString = $message['Message'];
 			} else {
-				$msgString = $this->getLanguageString('MESSAGE_' . $message['Code']);
+				facula::core('debug')->exception('ERROR_TEMPLATE_MESSAGE_NOCONTENT', 'template', true);
+				return false;
 			}
 			
 			$messageContent = array(
@@ -214,7 +222,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	public function render($templateName, $expire = 0, $expiredCallback = null, $templateSet = '') {
 		$content = '';
 		
-		if ($content = $this->getPageContent($templateName, $templateSet, $expire, $expiredCallback)) {
+		if ($content = $this->getPageContent($templateName, $expire, $templateSet, $expiredCallback)) {
 			return $content;
 		} else {
 			facula::core('debug')->exception('ERROR_TEMPLATE_NOCONTENT|' . $templateName, 'template', true);
@@ -261,7 +269,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return false;
 	}
 	
-	private function getPageContent($templateName, $templateSet, $expire, $expiredCallback = null) {
+	public function getPageContent($templateName, $expire = 0, $templateSet = '', $expiredCallback = null) {
 		$content = $error = '';
 		$compiledTpl = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledTemplate.' . $templateName . ($templateSet ? '+' . $templateSet : '') . '.' . $this->pool['Language'] . '.php';
 		
