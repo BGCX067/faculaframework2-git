@@ -26,11 +26,54 @@
 *******************************************************************************/
 
 interface viewInterface {
-
+	static public function assign($key, $val);
+	static public function display($file);
 }
 
 abstract class View implements viewInterface {
+	static private $assigned = array();
 	
+	static public function assign($key, $val) {
+		return self::$assigned[$key] = $val;
+	}
+	
+	static public function display($file) {
+		$file = facula::core('object')->getFileByNamespace($file);
+		$content = '';
+		
+		if ($content = self::render($file)) {
+			facula::core('response')->setContent($content);
+			facula::core('response')->send();
+		}
+		
+		return false;
+	}
+	
+	static private function render($targetTpl) {
+		if (is_readable($targetTpl)) {
+			if ($oldContent = ob_get_contents()) {
+				ob_clean();
+			}
+			
+			ob_start();
+			
+			if (isset($oldContent)) {
+				echo($oldContent);
+			}
+			
+			extract(self::$assigned);
+			
+			facula::core('debug')->criticalSection(true);
+			
+			require($targetTpl);
+			
+			facula::core('debug')->criticalSection(false);
+		} else {
+			facula::core('debug')->exception('ERROR_VIEW_TEMPLATE_FILENOTFOUND|' . $file, 'data', true);
+		}
+		
+		return ob_get_clean();
+	}
 }
 
 ?>

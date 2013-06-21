@@ -447,23 +447,25 @@ class faculaTemplateDefaultRender {
 	private $content = '';
 	
 	public function __construct(&$targetTpl, &$assigned = array()) {
-		if (ob_get_contents()) {
+		if ($oldContent = ob_get_contents()) {
 			ob_clean();
 		}
 		
-		facula::core('debug')->criticalSection(true);
-		
 		ob_start();
+		
+		if (isset($oldContent)) {
+			echo($oldContent);
+		}
 		
 		extract($assigned);
 		
+		facula::core('debug')->criticalSection(true);
+		
 		require($targetTpl);
 		
-		$this->content = ob_get_contents();
-		
-		ob_end_clean();
-		
 		facula::core('debug')->criticalSection(false);
+		
+		$this->content = ob_get_clean();
 		
 		return true;
 	}
