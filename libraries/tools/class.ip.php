@@ -1,7 +1,7 @@
 <?php
 
 /*****************************************************************************
-	Facula Framework Tools
+	Facula Framework IP Address Tools
 	
 	FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
 	
@@ -25,36 +25,9 @@
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-abstract class tools {
-	static public function convertIniUnit($str) {
-		$strLen = 0;
-		$lastChar = '';
-		
-		if (is_numeric($lastChar)) {
-			return (int)$str;
-		} else {
-			$strLen = strlen($str);
-			
-			if ($lastChar = $str[$strLen - 1]) {
-				$strSelected = substr($str, 0, $strLen - 1);
-				
-				switch(strtolower($lastChar)) {
-					case 'k':
-						return (int)$strSelected * 1024;
-						break;
-						
-					case 'm':
-						return (int)$strSelected * 1048576;
-						break;
-						
-					case 'g':
-						return (int)$strSelected * 1073741824;
-						break;
-				}
-			}
-		}
-		
-		return 0;
+abstract class IP {
+	static private function splitIP($ip) {
+		return explode(':', str_replace('.', ':', $ip), 7); // Max is 7 for a IP addr
 	}
 	
 	static public function joinIP($ip, $mask = false) {
