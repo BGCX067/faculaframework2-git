@@ -27,7 +27,7 @@
 
 abstract class IP {
 	static private function splitIP($ip) {
-		return explode(':', str_replace('.', ':', $ip), 7); // Max is 7 for a IP addr
+		return explode(':', str_replace('.', ':', $ip), 8); // Max is 8 for a IP addr
 	}
 	
 	static public function joinIP($ip, $mask = false) {
