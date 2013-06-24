@@ -513,7 +513,7 @@ class query implements queryInterface {
 				
 				return $this;
 			} else {
-				facula::core('debug')->exception('ERROR_QUERY_ORDER_SORTOPERATOR_UNKOWN', 'query', true);
+				facula::core('debug')->exception('ERROR_QUERY_ORDER_SORTOPERATOR_UNKOWN|' . $sort, 'query', true);
 			}
 		} else {
 			facula::core('debug')->exception('ERROR_QUERY_ORDER_NOT_SUPPORTED', 'query', true);
