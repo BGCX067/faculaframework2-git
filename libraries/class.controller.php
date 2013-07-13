@@ -38,7 +38,7 @@ abstract class Controller extends Setting implements controllerInterface {
 		$method = $this->request->getClientInfo('method');
 		
 		if (method_exists($this, $method)) {
-			return $this->$method($this->request);
+			return $this->$method();
 		} else {
 			$this->response->setHeader('HTTP/1.1 405 Method Not Allowed');
 			$this->response->send();

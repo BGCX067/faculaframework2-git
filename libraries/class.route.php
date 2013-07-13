@@ -26,64 +26,169 @@
 *******************************************************************************/
 
 /*
-
 	VALID ROUTE FORMAT:
-	
-	URL http://localhost/index.php?/level1.1/level1.run1/level1.run1.sub1/
-	
+
 	$routes = array(
-		'/level1.1/level1.run1/level1.run1.sub1/(*)/(*)/' => array(
-			'\controllers\GoodsController2',
+		'/level1.1/level1.run1/level1.run1.sub1/?/?/' => array(
+			'\controllers\SomeController',
 			array()
 		)
 	);
-	
-	$routesMap = array(
-		'level1.1' => array(
-			'Subs' => array(
-				'level1.run1' => array(
-					'Operator' => '\controllers\GoodsController',
-					'Args' => array(
-						1,2,3
-					),
-					
-					'Subs' => array(
-						'level1.run1.sub1' => array(
-							'Operator' => '\controllers\GoodsController2',
-							'Args' => array(
-								1,2,3
-							),
-							
-							'Subs' => array(
-								'*' => array(
-									'Sub' => array(
-										
-									),
-								),
-							)
-						),
-					)
-				),
-			),
-		),
-	);
-
 */
 
 interface routeInterface {
-	static public function run($routeMap);
-	static public function set($current);
+	static public function setup($paths);
+	static public function run($currentPath);
+
+	static public function setDefaultHandler(Closure $handler);
+	static public function setErrorHandler(Closure $handler);
 }
 
 abstract class Route implements routeInterface {
-	static private $rMap = array();
-	
-	static public function run($routeMap) {
+	static private $routeSplit = '/';
+	static private $routeMap = array();
+	static private $defaultHandler = null;
+	static private $errorHandler = null;
+
+	static public function setup($paths) {
+		$tempLastRef = $tempLastUsedRef = null;
 		
+		foreach($paths AS $path => $operator) {
+			$tempLastRef = &self::$routeMap;
+			
+			foreach(explode(self::$routeSplit, $path) AS $key => $val) {
+				if (!$key && !$val) {
+					continue;
+				}
+
+				$val = $val ? $val : '?';
+				
+				$tempLastUsedRef = &$tempLastRef[$val];
+				
+				if (isset($tempLastRef[$val])) {
+					$tempLastRef = &$tempLastRef[$val]['Subs'];
+				} else {
+					$tempLastRef[$val] = array('Subs' => array());
+					$tempLastRef = &$tempLastRef[$val]['Subs'];
+				}
+			}
+			
+			$tempLastUsedRef['Operator'] = $operator;
+		}
+		
+		return true;
 	}
 	
-	static public function set($current) {
-	
+	static public function run($currentPath) {
+		$usedParams = $operatorParams = array();
+		$pathParams = explode(self::$routeSplit, $currentPath);
+		$lastPathRef = &self::$routeMap;
+		$lastPathOperator = null;
+
+		if (!$pathParams[0]) {
+			array_shift($pathParams);
+		}
+
+		if (!empty($pathParams)) {
+			foreach ($pathParams as $param) {
+				if (isset($lastPathRef[$param])) {
+					$lastPathRef = &$lastPathRef[$param];
+				} elseif (isset($lastPathRef['?'])) {
+					$lastPathRef = &$lastPathRef['?'];
+					$usedParams[] = $param;
+				} else {
+					self::execErrorHandler('PATH_NOT_FOUND');
+
+					return false;
+					break;
+				}
+
+				if (isset($lastPathRef['Operator'])) {
+					$lastPathOperator = &$lastPathRef['Operator'];
+				}
+
+				$lastPathRef = &$lastPathRef['Subs'];
+			}
+
+			if ($lastPathOperator) {
+				if (isset($lastPathOperator[0])) {
+					// now, make params
+					if (isset($lastPathOperator[1])) {
+						foreach ($lastPathOperator[1] as $paramIndex) {
+							if (isset($usedParams[$paramIndex])) {
+								$operatorParams[] = $usedParams[$paramIndex];
+							} else {
+								$operatorParams[] = null;
+							}
+						}
+					}
+
+					return facula::run($lastPathOperator[0], $operatorParams, true);
+				} else {
+					return self::execErrorHandler('PATH_NO_OPERATOR_SPECIFIED');
+				}
+			} else {
+				self::execErrorHandler('PATH_NO_OPERATOR');
+			}
+		} else {
+			self::execDefaultHandler();
+		}
+
+		return false;
+	}
+
+	static public function setDefaultHandler(Closure $handler) {
+		if (!self::$defaultHandler) {
+			self::$defaultHandler = $handler;
+
+			return true;
+		} else {
+			facula::core('debug')->exception('ERROR_ROUTER_DEFAULT_HANDLER_EXISTED', 'router', true);
+		}
+
+		return false;
+	}
+
+	static public function execDefaultHandler() {
+		$handler = null;
+
+		if (is_callable(self::$defaultHandler)) {
+			$handler = self::$defaultHandler;
+
+			return $handler();
+		} else {
+			facula::core('debug')->exception('ERROR_ROUTER_DEFAULT_HANDLER_UNCALLABLE', 'router', true);
+			return false;
+		}
+
+		return false;
+	}
+
+	static public function setErrorHandler(Closure $handler) {
+		if (!self::$errorHandler) {
+			self::$errorHandler = $handler;
+			
+			return true;
+		} else {
+			facula::core('debug')->exception('ERROR_ROUTER_ERROR_HANDLER_EXISTED', 'router', true);
+		}
+
+		return false;
+	}
+
+	static private function execErrorHandler($type) {
+		$handler = null;
+
+		if (is_callable(self::$errorHandler)) {
+			$handler = self::$errorHandler;
+
+			return $handler($type);
+		} else {
+			facula::core('debug')->exception('ERROR_ROUTER_ERROR_HANDLER_UNCALLABLE', 'router', true);
+			return false;
+		}
+
+		return false;
 	}
 }
 
