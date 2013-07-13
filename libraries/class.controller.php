@@ -30,11 +30,15 @@ interface controllerInterface {
 }
 
 abstract class Controller extends Setting implements controllerInterface {
-	public function _run() {
+	public function _init() {
 		foreach(facula::getAllCores() AS $coreName => $coreReference) {
 			$this->$coreName = $coreReference;
 		}
+		
+		return true;
+	}
 	
+	public function _run() {
 		$method = $this->request->getClientInfo('method');
 		
 		if (method_exists($this, $method)) {

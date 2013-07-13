@@ -56,11 +56,7 @@ abstract class Route implements routeInterface {
 		foreach($paths AS $path => $operator) {
 			$tempLastRef = &self::$routeMap;
 			
-			foreach(explode(self::$routeSplit, $path) AS $key => $val) {
-				if (!$key && !$val) {
-					continue;
-				}
-
+			foreach(explode(self::$routeSplit, trim($path, self::$routeSplit)) AS $key => $val) {
 				$val = $val ? $val : '?';
 				
 				$tempLastUsedRef = &$tempLastRef[$val];
@@ -81,14 +77,10 @@ abstract class Route implements routeInterface {
 	
 	static public function run($currentPath) {
 		$usedParams = $operatorParams = array();
-		$pathParams = explode(self::$routeSplit, $currentPath);
+		$pathParams = explode(self::$routeSplit, trim($currentPath, self::$routeSplit));
 		$lastPathRef = &self::$routeMap;
 		$lastPathOperator = null;
-
-		if (!$pathParams[0]) {
-			array_shift($pathParams);
-		}
-
+		
 		if (!empty($pathParams)) {
 			foreach ($pathParams as $param) {
 				if (isset($lastPathRef[$param])) {
@@ -112,7 +104,6 @@ abstract class Route implements routeInterface {
 
 			if ($lastPathOperator) {
 				if (isset($lastPathOperator[0])) {
-					// now, make params
 					if (isset($lastPathOperator[1])) {
 						foreach ($lastPathOperator[1] as $paramIndex) {
 							if (isset($usedParams[$paramIndex])) {

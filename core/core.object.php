@@ -28,8 +28,9 @@
 interface faculaObjectInterface {
 	public function _inited();
 	public function getFile($type, $name);
-	public function getInstance($object, $ags, $cache = false);
+	public function getInstance($object, $args, $cache = false);
 	public function getFileByNamespace($namespace);
+	public function callFunction($function, $args = array());
 	public function run($app, $args = array(), $cache = false);
 	public function runHook($hookName, $hookArgs, &$error);
 	public function addHook($hookName, $processorName, $processor);
@@ -208,60 +209,69 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return false;
 	}
 	
-	public function getInstance($object, $ags, $cache = false) {
+	public function getInstance($object, $args, $cache = false) {
 		$newinstance = null;
 		
 		if (class_exists($object)) {
 			if ($cache && ($newinstance = $this->loadObjectFromCache($object))) {
+				// Call _init after instance has been created to pre init it
+				if (method_exists($newinstance, '_init')) {
+					if (!$newinstance->_init()) {
+						facula::core('debug')->exception('ERROR_OBJECT_NEWINSTNACE_INIT_FAILED|' . $object, 'object', true);
+						
+						return false;
+					}
+				}
+			
 				if (method_exists($newinstance, '_inited')) {
 					$newinstance->_inited();
 				}
 				
 				return $newinstance;
 			} else {
-				switch(count($ags)) {
+				switch(count($args)) {
 					case 0:
 						$newinstance = new $object();
 						break;
 				
 					case 1:
-						$newinstance = new $object($ags[0]);
+						$newinstance = new $object($args[0]);
 						break;
 						
 					case 2:
-						$newinstance = new $object($ags[0], $ags[1]);
+						$newinstance = new $object($args[0], $args[1]);
 						break;
 						
 					case 3:
-						$newinstance = new $object($ags[0], $ags[1], $ags[2]);
+						$newinstance = new $object($args[0], $args[1], $args[2]);
 						break;
 						
 					case 4:
-						$newinstance = new $object($ags[0], $ags[1], $ags[2], $ags[3]);
+						$newinstance = new $object($args[0], $args[1], $args[2], $args[3]);
 						break;
 						
 					case 5:
-						$newinstance = new $object($ags[0], $ags[1], $ags[2], $ags[3], $ags[4]);
+						$newinstance = new $object($args[0], $args[1], $args[2], $args[3], $args[4]);
 						break;
 						
 					case 6:
-						$newinstance = new $object($ags[0], $ags[1], $ags[2], $ags[3], $ags[4], $ags[5]);
+						$newinstance = new $object($args[0], $args[1], $args[2], $args[3], $args[4], $args[5]);
 						break;
 						
 					case 7:
-						$newinstance = new $object($ags[0], $ags[1], $ags[2], $ags[3], $ags[4], $ags[5], $ags[6]);
+						$newinstance = new $object($args[0], $args[1], $args[2], $args[3], $args[4], $args[5], $args[6]);
 						break;
 						
 					case 8:
-						$newinstance = new $object($ags[0], $ags[1], $ags[2], $ags[3], $ags[4], $ags[5], $ags[6], $ags[7]);
+						$newinstance = new $object($args[0], $args[1], $args[2], $args[3], $args[4], $args[5], $args[6], $args[7]);
 						break;
 						
 					case 9:
-						$newinstance = new $object($ags[0], $ags[1], $ags[2], $ags[3], $ags[4], $ags[5], $ags[6], $ags[7], $ags[8]);
+						$newinstance = new $object($args[0], $args[1], $args[2], $args[3], $args[4], $args[5], $args[6], $args[7], $args[8]);
 						break;
 						
 					case 10:
-						$newinstance = new $object($ags[0], $ags[1], $ags[2], $ags[3], $ags[4], $ags[5], $ags[6], $ags[7], $ags[8], $ags[9]);
+						$newinstance = new $object($args[0], $args[1], $args[2], $args[3], $args[4], $args[5], $args[6], $args[7], $args[8], $args[9]);
 						break;
 						
 					default:
@@ -274,6 +284,15 @@ class faculaObjectDefault implements faculaObjectInterface {
 					$this->saveObjectToCache($object, $newinstance);
 				}
 				
+				// Call _init after instance has been created to pre init it
+				if (method_exists($newinstance, '_init')) {
+					if (!$newinstance->_init()) {
+						facula::core('debug')->exception('ERROR_OBJECT_NEWINSTNACE_INIT_FAILED|' . $object, 'object', true);
+						
+						return false;
+					}
+				}
+				
 				// Then call inited to notify object we already done init
 				if (method_exists($newinstance, '_inited')) {
 					$newinstance->_inited();
@@ -283,6 +302,62 @@ class faculaObjectDefault implements faculaObjectInterface {
 			}
 		} else {
 			facula::core('debug')->exception('ERROR_OBJECT_NEWINSTNACE_OBJECTNOTFOUND|' . $object, 'object', true);
+		}
+		
+		return false;
+	}
+	
+	public function callFunction($function, $args = array()) {
+		if (is_callable($function)) {
+			switch(count($args)) {
+				case 0:
+					return $function();
+					break;
+			
+				case 1:
+					return $function($args[0]);
+					break;
+					
+				case 2:
+					return $function($args[0], $args[1]);
+					break;
+					
+				case 3:
+					return $function($args[0], $args[1], $args[2]);
+					break;
+					
+				case 4:
+					return $function($args[0], $args[1], $args[2], $args[3]);
+					break;
+					
+				case 5:
+					return $function($args[0], $args[1], $args[2], $args[3], $args[4]);
+					break;
+					
+				case 6:
+					return $function($args[0], $args[1], $args[2], $args[3], $args[4], $args[5]);
+					break;
+					
+				case 7:
+					return $function($args[0], $args[1], $args[2], $args[3], $args[4], $args[5], $args[6]);
+					break;
+					
+				case 8:
+					return $function($args[0], $args[1], $args[2], $args[3], $args[4], $args[5], $args[6], $args[7]);
+					break;
+					
+				case 9:
+					return $function($args[0], $args[1], $args[2], $args[3], $args[4], $args[5], $args[6], $args[7], $args[8]);
+					break;
+					
+				case 10:
+					return $function($args[0], $args[1], $args[2], $args[3], $args[4], $args[5], $args[6], $args[7], $args[8], $args[9]);
+					break;
+					
+				default:
+					return call_user_func_array($function, $args);
+					break;
+			}
 		}
 		
 		return false;
@@ -314,9 +389,9 @@ class faculaObjectDefault implements faculaObjectInterface {
 		
 		if ($handler = $this->getInstance($appParam[0], $args, $cache)) {
 			if (isset($appParam[1]) && method_exists($handler, $appParam[1])) {
-				$handler->$appParam[1]($args);
+				$this->callFunction(array($handler, $appParam[1]), $args);
 			} elseif (method_exists($handler, '_run')) {
-				$handler->_run($args);
+				$this->callFunction(array($handler, '_run'), $args);
 			}
 		}
 		
