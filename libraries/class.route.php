@@ -81,7 +81,7 @@ abstract class Route implements routeInterface {
 		$lastPathRef = &self::$routeMap;
 		$lastPathOperator = null;
 		
-		if (!empty($pathParams)) {
+		if (isset($pathParams[0]) && $pathParams[0]) {
 			foreach ($pathParams as $param) {
 				if (isset($lastPathRef[$param])) {
 					$lastPathRef = &$lastPathRef[$param];
