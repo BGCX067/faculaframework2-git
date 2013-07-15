@@ -319,10 +319,8 @@ class faculaResponseDefault implements faculaResponseInterface {
 			
 			echo self::$content;
 			
-			ob_end_flush();
-			
+			echo ob_get_flush();
 			// Belowing flush both needed.
-			ob_flush();
 			flush();
 			
 			return true;
