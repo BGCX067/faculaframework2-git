@@ -43,23 +43,21 @@ interface routeInterface {
 	static public function setDefaultHandler(Closure $handler);
 	static public function setErrorHandler(Closure $handler);
 	
-	static public function setPath($prefix, $path, $callback = null);
+	static public function setPath($path);
 }
 
 abstract class Route implements routeInterface {
 	static private $routeSplit = '/';
 	static private $routeMap = array();
 	static private $currentPath = '';
-	static private $currentPathPrefix = '';
 	static private $defaultHandler = null;
 	static private $errorHandler = null;
 
 	static public function setup($paths) {
 		$tempLastRef = $tempLastUsedRef = null;
-		self::$routeMap['Routes'] = array();
 		
 		foreach($paths AS $path => $operator) {
-			$tempLastRef = &self::$routeMap['Routes'];
+			$tempLastRef = &self::$routeMap;
 			
 			foreach(explode(self::$routeSplit, trim($path, self::$routeSplit)) AS $key => $val) {
 				$val = $val ? $val : '?';
@@ -82,66 +80,54 @@ abstract class Route implements routeInterface {
 	
 	static public function run() {
 		$usedParams = $operatorParams = array();
-		$pathParams = array();
+		$pathParams = explode(self::$routeSplit, trim(self::$currentPath, self::$routeSplit));
+		$lastPathOperator = null;
+		$lastPathRef = &self::$routeMap;
 		
-		if (isset(self::$routeMap['currentPath'])) {
-			$pathParams = explode(self::$routeSplit, trim(self::$routeMap['currentPath'], self::$routeSplit));
-			
-			$lastPathRef = $lastPathOperator = null;
-			
-			if (isset(self::$routeMap['Routes'])) {
-				$lastPathRef = &self::$routeMap['Routes'];
-				
-				if (isset($pathParams[0]) && $pathParams[0]) {
-					foreach ($pathParams as $param) {
-						if (isset($lastPathRef[$param])) {
-							$lastPathRef = &$lastPathRef[$param];
-						} elseif (isset($lastPathRef['?'])) {
-							$lastPathRef = &$lastPathRef['?'];
-							$usedParams[] = $param;
-						} else {
-							self::execErrorHandler('PATH_NOT_FOUND');
-
-							return false;
-							break;
-						}
-
-						if (isset($lastPathRef['Operator'])) {
-							$lastPathOperator = &$lastPathRef['Operator'];
-						}
-
-						$lastPathRef = &$lastPathRef['Subs'];
-					}
-
-					if ($lastPathOperator) {
-						if (isset($lastPathOperator[0])) {
-							if (isset($lastPathOperator[1])) {
-								foreach ($lastPathOperator[1] as $paramIndex) {
-									if (isset($usedParams[$paramIndex])) {
-										$operatorParams[] = $usedParams[$paramIndex];
-									} else {
-										$operatorParams[] = null;
-									}
-								}
-							}
-
-							return facula::run($lastPathOperator[0], $operatorParams, true);
-						} else {
-							return self::execErrorHandler('PATH_NO_OPERATOR_SPECIFIED');
-						}
-					} else {
-						self::execErrorHandler('PATH_NO_OPERATOR');
-					}
+		if (isset($pathParams[0]) && $pathParams[0]) {
+			foreach ($pathParams as $param) {
+				if (isset($lastPathRef[$param])) {
+					$lastPathRef = &$lastPathRef[$param];
+				} elseif (isset($lastPathRef['?'])) {
+					$lastPathRef = &$lastPathRef['?'];
+					$usedParams[] = $param;
 				} else {
-					self::execDefaultHandler();
+					self::execErrorHandler('PATH_NOT_FOUND');
+
+					return false;
+					break;
+				}
+
+				if (isset($lastPathRef['Operator'])) {
+					$lastPathOperator = &$lastPathRef['Operator'];
+				}
+
+				$lastPathRef = &$lastPathRef['Subs'];
+			}
+
+			if ($lastPathOperator) {
+				if (isset($lastPathOperator[0])) {
+					if (isset($lastPathOperator[1])) {
+						foreach ($lastPathOperator[1] as $paramIndex) {
+							if (isset($usedParams[$paramIndex])) {
+								$operatorParams[] = $usedParams[$paramIndex];
+							} else {
+								$operatorParams[] = null;
+							}
+						}
+					}
+
+					return facula::run($lastPathOperator[0], $operatorParams, true);
+				} else {
+					return self::execErrorHandler('PATH_NO_OPERATOR_SPECIFIED');
 				}
 			} else {
-				facula::core('debug')->exception('ERROR_ROUTER_ERROR_NO_ROUTE', 'router', true);
+				self::execErrorHandler('PATH_NO_OPERATOR');
 			}
 		} else {
-			facula::core('debug')->exception('ERROR_ROUTER_ERROR_NO_CURRENTPATH', 'router', true);
+			self::execDefaultHandler();
 		}
-		
+	
 		return false;
 	}
 
@@ -199,15 +185,12 @@ abstract class Route implements routeInterface {
 		return false;
 	}
 	
-	static public function setPath($prefix, $path, $callback = null) {
-		self::$routeMap['currentPath'] = $path;
-		self::$routeMap['currentPathPrefix'] = $prefix;
-		
-		if ($callback && is_callable($callback)) {
-			return $callback(self::$routeMap);
+	static public function setPath($path) {
+		if (self::$currentPath = $path) {
+			return true;
 		}
 		
-		return true;
+		return false;
 	}
 }
 
