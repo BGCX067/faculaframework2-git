@@ -74,7 +74,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 	
 	private $configs = array();
 	
-	private $plugins = array();
+	private $hooks = array();
 	
 	private $instances = array();
 	

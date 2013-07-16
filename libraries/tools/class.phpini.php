@@ -30,7 +30,7 @@ abstract class PHPIni {
 		$strLen = 0;
 		$lastChar = '';
 		
-		if (is_numeric($lastChar)) {
+		if (is_numeric($str)) {
 			return (int)$str;
 		} else {
 			$strLen = strlen($str);

@@ -263,10 +263,13 @@ class faculaResponseDefault implements faculaResponseInterface {
 	public $configs = array();
 	
 	public function __construct(&$cfg, &$common, facula $facula) {
+		$setting = array();
+		
 		$this->configs = array(
 			'CookiePrefix' => isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : 'facula_',
 			'GZIPEnabled' => isset($cfg['UseGZIP']) && $cfg['UseGZIP'] && function_exists('gzcompress') ? true : false,
-			'ProfileSignal' => isset($cfg['PostProfileSignal']) && $cfg['PostProfileSignal'] ? true : false,
+			'PSignal' => isset($cfg['PostProfileSignal']) && $cfg['PostProfileSignal'] ? true : false,
+			'UseFFR' => function_exists('fastcgi_finish_request') ? true : false
 		);
 		
 		$cfg = null;
@@ -308,7 +311,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 				header('Content-Type: ' . self::$http_content_type['html'] . '; charset=utf-8');
 			}
 			
-			if ($this->configs['ProfileSignal']) {
+			if ($this->configs['PSignal']) {
 				header('X-Runtime: ' . (facula::$profile['ProductionTime']  * 1000) . 'ms');
 				header('X-Memory: ' . (facula::$profile['MemoryUsage'] / 1024) . 'kb / ' . (facula::$profile['MemoryPeak'] / 1024) . 'kb');
 			}
@@ -317,14 +320,21 @@ class faculaResponseDefault implements faculaResponseInterface {
 				header($header);
 			}
 			
+			header('Connection: Close');
+			
 			echo self::$content;
 			
 			ob_end_flush();
+			
+			if ($this->configs['UseFFR']) {
+				fastcgi_finish_request();
+			}
+			
 			flush();
 			
 			return true;
 		} else {
-			facula::core('debug')->exception('ERROR_RESPONSE_ALREADY_RESPONSED| File: ' . $file . ' Line: ' . $line, 'data');
+			facula::core('debug')->exception('ERROR_RESPONSE_ALREADY_RESPONSED|File: ' . $file . ' Line: ' . $line, 'data');
 		}
 		
 		return false;
@@ -337,14 +347,27 @@ class faculaResponseDefault implements faculaResponseInterface {
 	}
 	
 	public function setContent($content) {
-		if ($this->configs['UseGZIP'] && $this->configs['GZIPEnabled']) {
-			self::$content = "\x1f\x8b\x08\x00\x00\x00\x00\x00".substr(gzcompress($content, 2), 0, -4);
+		$orgSize = $gzSize = 0;
+		$gzContent = '';
+		
+		$orgSize = strlen($content);
+		
+		if ($this->configs['UseGZIP'] && $this->configs['GZIPEnabled'] && $orgSize >= 2048) {
+			$gzContent = gzcompress($content, 2);
+			$gzSize = strlen($gzContent);
+			
+			self::$content = "\x1f\x8b\x08\x00\x00\x00\x00\x00" . substr($gzContent, 0, $gzSize - 4);
+			
+			self::$headers[] = 'Vary: Accept-Encoding';
 			self::$headers[] = 'Content-Encoding: gzip';
+			self::$headers[] = 'X-Length: ' . $gzSize . ' bytes / ' . $orgSize . ' bytes';
 		} else {
 			self::$content = $content;
+			
+			self::$headers[] = 'X-Length: ' . $orgSize . ' bytes';
 		}
 		
-		self::$headers[] = 'Content-Length: '.strlen(self::$content);
+		self::$headers[] = 'Content-Length: ' . strlen(self::$content);
 		
 		return true;
 	}

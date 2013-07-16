@@ -29,7 +29,7 @@ interface faculaDebugInterface {
 	public function _inited();
 	public function registerHandler($handler);
 	public function exception($info, $type = '', $exit = false, Exception $e = null);
-	public function criticalSection($enter);
+	public function criticalSection($enter, $fullEnter = false);
 	public function addLog($type, $errorcode, $content, &$backtraces = array());
 	
 	public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext);
@@ -69,6 +69,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 	private $errorRecords = array();
 	
 	private $tempDisabled = false;
+	private $tempFullDisabled = false;
 	
 	private $configs = array();
 	
@@ -183,11 +184,15 @@ class faculaDebugDefault implements faculaDebugInterface {
 		}
 	}
 	
-	public function criticalSection($enter) {
+	public function criticalSection($enter, $fullEnter = false) {
 		if ($enter) {
 			$this->tempDisabled = true;
+			
+			if ($fullEnter) { // Disable all error message and logging
+				$this->tempFullDisabled = true;
+			}
 		} else {
-			$this->tempDisabled = false;
+			$this->tempFullDisabled = $this->tempDisabled = false;
 		}
 		
 		return true;
@@ -252,26 +257,28 @@ class faculaDebugDefault implements faculaDebugInterface {
 	}
 	
 	public function exception($info, $type = '', $exit = false, Exception $e = null) {
-		$backtraces = array_reverse($this->backtrace($e));
-		
-		$types = explode('|', $type, 2);
-		
-		$this->addLog($types[0] ? $types[0] : 'Exception', isset($types[1][0]) ? $types[1] : '', $info, $backtraces);
-		
-		if (!$this->tempDisabled) {
-			if ($this->customHandler) {
-				$customHandler = $this->customHandler;
-				$customHandler($info, $type, $backtraces, $exit, $this->configs['Debug']);
-			} else {
-				if ($e) {
-					$this->displayErrorBanner($e->getMessage(), $backtraces, false, 0);
+		if (!$this->tempFullDisabled) {
+			$backtraces = array_reverse($this->backtrace($e));
+			
+			$types = explode('|', $type, 2);
+			
+			$this->addLog($types[0] ? $types[0] : 'Exception', isset($types[1][0]) ? $types[1] : '', $info, $backtraces);
+			
+			if (!$this->tempDisabled) {
+				if ($this->customHandler) {
+					$customHandler = $this->customHandler;
+					$customHandler($info, $type, $backtraces, $exit, $this->configs['Debug']);
 				} else {
-					$this->displayErrorBanner($info, $backtraces, false, 2);
+					if ($e) {
+						$this->displayErrorBanner($e->getMessage(), $backtraces, false, 0);
+					} else {
+						$this->displayErrorBanner($info, $backtraces, false, 2);
+					}
 				}
 			}
 		}
 		
-		if ($exit) { // You can exit anyway no matter status of $this->tempDisabled
+		if ($exit) {
 			exit();
 		}
 		
@@ -365,28 +372,30 @@ class faculaDebugDefault implements faculaDebugInterface {
 	private function displayErrorBanner($message, $backtraces, $returncode = false, $callerOffset = 0) {
 		$code = '';
 		
-		if ($this->configs['Debug']) {
-			$code = '<div class="facula-error" style="clear:both;"><span class="title" style="clear:both;font-size:150%;">Facula Error: <strong>' . str_replace(array(FACULA_ROOT, PROJECT_ROOT), array('[Facula Dir]', '[Project Dir]'), $message) . '</strong></span><ul>';
-			
-			if ($traceSize = count($backtraces)) {
-				$traceCallerOffset = $traceSize - ($callerOffset < $traceSize ? $callerOffset : 0);
-				$tracesLoop = 0;
+		if (!headers_sent()) {
+			if ($this->configs['Debug']) {
+				$code = '<div class="facula-error" style="clear:both;"><span class="title" style="clear:both;font-size:150%;">Facula Error: <strong>' . str_replace(array(FACULA_ROOT, PROJECT_ROOT), array('[Facula Dir]', '[Project Dir]'), $message) . '</strong></span><ul>';
 				
-				foreach($backtraces as $key => $val) {
-					$tracesLoop++;
-					$code .= '<li' . ($tracesLoop >= $traceCallerOffset ? ' class="current" style="margin:10px;padding:10px;background-color:#fcc;border-radius:5px;color:#a33;"' : ' style="padding:10px;"') . '><span style="line-height:1.5;"><span class="trace" style="display:block;font-size:120%;">' . str_replace(array(FACULA_ROOT, PROJECT_ROOT), array('[Facula Dir]', '[Project Dir]'), $val['caller']) . '</span><span class="notice" style="display:block;margin-bottom:3px;font-size:60%;">Author: <u>' . $val['nameplate']['author'] . '</u> Reviser: <u>' . $val['nameplate']['reviser'] . '</u> ' . ' Version: <u>' . $val['nameplate']['version'] . '</u> Updated in: <u>' . $val['nameplate']['updated'] . '</u> Contact: <u>' . ($val['nameplate']['contact'] ? $val['nameplate']['contact'] : 'Nobody') . '</u></span><span class="notice" style="display:block;font-size:60%;font-weight:bold;">Triggered in file: ' . str_replace(array(FACULA_ROOT, PROJECT_ROOT), array('[Facula Dir]', '[Project Dir]'), $val['file']) . ' (line ' . $val['line'] . ')' . '</span></span></li>'; 
+				if ($traceSize = count($backtraces)) {
+					$traceCallerOffset = $traceSize - ($callerOffset < $traceSize ? $callerOffset : 0);
+					$tracesLoop = 0;
+					
+					foreach($backtraces as $key => $val) {
+						$tracesLoop++;
+						$code .= '<li' . ($tracesLoop >= $traceCallerOffset ? ' class="current" style="margin:10px;padding:10px;background-color:#fcc;border-radius:5px;color:#a33;"' : ' style="padding:10px;"') . '><span style="line-height:1.5;"><span class="trace" style="display:block;font-size:120%;">' . str_replace(array(FACULA_ROOT, PROJECT_ROOT), array('[Facula Dir]', '[Project Dir]'), $val['caller']) . '</span><span class="notice" style="display:block;margin-bottom:3px;font-size:60%;">Author: <u>' . $val['nameplate']['author'] . '</u> Reviser: <u>' . $val['nameplate']['reviser'] . '</u> ' . ' Version: <u>' . $val['nameplate']['version'] . '</u> Updated in: <u>' . $val['nameplate']['updated'] . '</u> Contact: <u>' . ($val['nameplate']['contact'] ? $val['nameplate']['contact'] : 'Nobody') . '</u></span><span class="notice" style="display:block;font-size:60%;font-weight:bold;">Triggered in file: ' . str_replace(array(FACULA_ROOT, PROJECT_ROOT), array('[Facula Dir]', '[Project Dir]'), $val['file']) . ' (line ' . $val['line'] . ')' . '</span></span></li>'; 
+					}
 				}
+				
+				$code .= '</ul></div>';
+			} else {
+				$code = '<div class="facula-error-min" style="text-align:center;clear:both;">Sorry, we got a problem when trying to cooking a page for you.</div>';
 			}
 			
-			$code .= '</ul></div>';
-		} else {
-			$code = '<div class="facula-error-min" style="text-align:center;clear:both;">Sorry, we got a problem when trying to cooking a page for you.</div>';
-		}
-		
-		if ($returncode) {
-			return $returncode;
-		} else {
-			echo($code);
+			if ($returncode) {
+				return $returncode;
+			} else {
+				echo($code);
+			}
 		}
 		
 		return true;
