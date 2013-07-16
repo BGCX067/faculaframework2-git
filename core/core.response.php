@@ -291,7 +291,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 		return true;
 	}
 	
-	public function send($type = '') {
+	public function send($type = '', $persistConn = false) {
 		$file = $line = '';
 		
 		if (!headers_sent($file, $line)) {
@@ -320,7 +320,11 @@ class faculaResponseDefault implements faculaResponseInterface {
 				header($header);
 			}
 			
-			header('Connection: Close');
+			if ($persistConn) {
+				header('Connection: Keep-Alive');
+			} else {
+				header('Connection: Close');
+			}
 			
 			echo self::$content;
 			
