@@ -284,25 +284,17 @@ class SimpleORM implements ormInterface {
 	
 	public function insert() {
 		$keys = array();
-		$data = array();
+		$data = $this->data;
 		
-		if (!isset($this->data[$this->primary])) {
-			$data = $this->data;
-			
-			foreach($data AS $key => $val) {
-				if (isset($data[$key]) && isset($this->fields[$key])) {
-					$keys[$key] = $this->fields[$key];
-				} else {
-					facula::core('debug')->exception('ERROR_ORM_INSERT_FIELD_NOTSET|' . $key, 'query', true);
-				}
+		foreach($data AS $key => $val) {
+			if (isset($data[$key]) && isset($this->fields[$key])) {
+				$keys[$key] = $this->fields[$key];
+			} else {
+				facula::core('debug')->exception('ERROR_ORM_INSERT_FIELD_NOTSET|' . $key, 'query', true);
 			}
-			
-			return query::from($this->table)->insert($keys)->value($data)->save($this->primary);
-		} else {
-			facula::core('debug')->exception('ERROR_ORM_INSERT_PRIMARY_KEY_MUST_NOTSET', 'query', true);
 		}
 		
-		return false;
+		return query::from($this->table)->insert($keys)->value($data)->save($this->primary);
 	}
 	
 	public function delete() {
