@@ -253,7 +253,7 @@ class FTP {
 
 	public function getCurrentServer() {
 		if (self::$connection) {
-			return self::$currentServer;
+			return &self::$currentServer;
 		}
 
 		return false;
