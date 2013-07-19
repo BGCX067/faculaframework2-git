@@ -114,14 +114,14 @@ class faculaDebugDefault implements faculaDebugInterface {
 		global $_SERVER;
 		
 		list($time, $micro) = explode('.', microtime(true) . '.' . 0, 3); // Anit error when int returns instead of float
-		$date = date('Y-m-d H:m:s', $time);
+		$date = date('l dS \of F Y h:i:s A', $time);
 		
 		if ($this->configs['LogRoot']) {
 			$datefileName = date('Y-m-d H', $time);
 			$errorType = '[' . strtoupper($type) . ']' . ($errorcode ? ':' . $errorcode : '');
 			
 			$filename = 'log.' . $datefileName . '.php';
-			$format = "<?php exit(); ?> {$errorType} {$_SERVER['REMOTE_ADDR']} {$date}.{$micro}: {$content}";
+			$format = "<?php exit(); ?> {$errorType} {$_SERVER['REMOTE_ADDR']} ({$date}.{$micro}): {$content}";
 			
 			return file_put_contents($this->configs['LogRoot'] . DIRECTORY_SEPARATOR . $filename, $format . "\r\n", FILE_APPEND);
 		}
