@@ -17,7 +17,7 @@
 	by the Free Software Foundation, version 3.
 	
 	Facula Framework is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty ofapp:ds:parameter
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Lesser General Public License for more details.
 	
@@ -29,13 +29,14 @@ interface imageHandlerInterface {
 	public function __construct($file, &$config = array());
 
 	public function getLastError();
+	public function getImageRes();
 	
 	public function resize($width, $height, $resizeSmall = false, $drawAreaWidth = 0, $drawAreaHeight = 0);
 	public function ratioResize($width, $height, $resizeSmall = false);
 	public function fillResize($width, $height);
 
-	public function waterMark($file, $align = 'center');
-	public function waterMarkText($text, $align = 'center', $color = array(255, 255, 255));
+	public function waterMark($file, $align = 'center center', $margin = 0);
+	public function waterMarkText($text, $align = 'center center', $margin = 0, $color = array(255, 255, 255));
 
 	public function save($file);
 }
@@ -100,6 +101,65 @@ class Image {
 		}
 
 		return false;
+	}
+}
+
+class ImageCommon {
+	protected function getAlignPos($alignType, $imageWidth, $imageHeight, $subjectWidth, $subjectHeight, $margin = 0) {
+		$result = array(0, 0);
+		
+		switch ($alignType) {
+			// Tops
+			case 'top left':
+				$result[0] = $margin;
+				$result[1] = $margin;
+				break;
+				
+			case 'top center':
+				$result[0] = intval(($imageWidth) - ($subjectWidth / 2));
+				$result[1] = $margin;
+				break;
+
+			case 'top right':
+				$result[0] = intval($imageWidth - $subjectWidth) - $margin;
+				$result[1] = $margin;
+				break;
+			
+			// Center
+			case 'center left':
+				$result[0] = $margin;
+				$result[1] = intval(($imageHeight / 2) - ($subjectHeight / 2));
+				break;
+
+			case 'center right':
+				$result[0] = intval($imageWidth - $subjectWidth) - $margin;
+				$result[1] = intval(($imageHeight / 2) - ($subjectHeight / 2));
+				break;
+
+			// Buttons
+			case 'bottom left':
+				$result[0] = $margin;
+				$result[1] = intval($imageHeight - $subjectHeight) - $margin;
+				break;
+				
+			case 'bottom center':
+				$result[0] = intval(($imageWidth / 2) - ($subjectWidth / 2));
+				$result[1] = intval($imageHeight - $subjectHeight) - $margin;
+				break;
+
+			case 'bottom right':
+				$result[0] = intval($imageWidth - $subjectWidth) - $margin;
+				$result[1] = intval($imageHeight - $subjectHeight) - $margin;
+				break;
+			
+			// Center Center
+			default:
+				$result[0] = intval(($imageWidth / 2) - ($subjectWidth / 2));
+				$result[1] = intval(($imageHeight / 2) - ($subjectHeight / 2));
+				break;
+		}
+		
+		return $result;
 	}
 }
 
