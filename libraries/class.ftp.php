@@ -261,7 +261,7 @@ class FTP {
 	
 	public function upload($localFile, $remotePath, $remoteFileName) {
 		$server = array();
-		$path = $currentRemotePath = '';
+		$path = $currentRemotePath = $resultPath = '';
 
 		if ($server = $this->getCurrentServer()) {
 			if (isset($server['Path']) && !$this->doEnterPath($server['Path'] . '/' . $remotePath, $currentRemotePath)) {
@@ -272,10 +272,12 @@ class FTP {
 				facula::core('debug')->criticalSection(true);
 
 				if (ftp_put(self::$connection, $remoteFileName, $localFile, FTP_BINARY)) {
-					return $currentRemotePath . '/' . $remoteFileName;
+					$resultPath = $currentRemotePath . '/' . $remoteFileName;
 				}
 
 				facula::core('debug')->criticalSection(false);
+
+				return $resultPath;
 			} else {
 				facula::core('debug')->exception('ERROR_FTP_FILE_UNREADABLE|' . $localFile, 'ftp', true);
 			}
