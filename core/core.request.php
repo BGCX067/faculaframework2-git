@@ -233,6 +233,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 				} elseif ($failfalse) {
 					return false;
 				} else {
+					$result[$key] = null;
 					$errors[] = $key;
 				}
 			}
