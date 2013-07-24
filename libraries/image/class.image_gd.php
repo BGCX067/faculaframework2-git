@@ -39,7 +39,6 @@ class Image_GD extends ImageCommon implements imageHandlerInterface {
 		
 		$this->setting = $config;
 		$this->setting['SupportedImageTypes'] = imagetypes();
-		$this->setting['MaxUseableMemory'] = $config['MemoryLimit'];
 		
 		if ($image = $this->openImage($file)) {
 			$this->imageRes = $image['Res'];
@@ -90,7 +89,7 @@ class Image_GD extends ImageCommon implements imageHandlerInterface {
 
 				switch($imageInfo['Type']) {
 					case IMAGETYPE_GIF:
-						if ($this->setting['MaxUseableMemory'] >= ($imageInfo['Area'] * $imageInfo['Channels'])) {
+						if ($this->setting['MemoryLimit'] >= ($imageInfo['Area'] * $imageInfo['Channels'] + 1)) {
 							$imageRes = imagecreatefromgif($file);
 						} else {
 							$this->error = 'ERROR_IMAGE_HANDLER_MEMORYLIMIT_EXCEED';
@@ -98,7 +97,7 @@ class Image_GD extends ImageCommon implements imageHandlerInterface {
 						break;
 
 					case IMAGETYPE_JPEG:
-						if ($this->setting['MaxUseableMemory'] > ($imageInfo['Area'] * $imageInfo['Channels'])) {
+						if ($this->setting['MemoryLimit'] > ($imageInfo['Area'] * $imageInfo['Channels'] + 1)) {
 							$imageRes = imagecreatefromjpeg($file);
 						} else {
 							$this->error = 'ERROR_IMAGE_HANDLER_MEMORYLIMIT_EXCEED';
@@ -106,7 +105,7 @@ class Image_GD extends ImageCommon implements imageHandlerInterface {
 						break;
 
 					case IMAGETYPE_PNG:
-						if ($this->setting['MaxUseableMemory'] >= ($imageInfo['Area'] * ($imageInfo['Channels'] + 1))) {
+						if ($this->setting['MemoryLimit'] >= ($imageInfo['Area'] * ($imageInfo['Channels'] + 3))) {
 							if ($imageRes = imagecreatefrompng($file)) {
 								imagealphablending($imageRes, true);
 
@@ -118,7 +117,7 @@ class Image_GD extends ImageCommon implements imageHandlerInterface {
 						break;
 
 					case IMAGETYPE_WBMP:
-						if ($this->setting['MaxUseableMemory'] >= ($imageInfo['Area'] * $imageInfo['Channels'])) {
+						if ($this->setting['MemoryLimit'] >= ($imageInfo['Area'] * $imageInfo['Channels'] + 1)) {
 							$imageRes = imagecreatefromwbmp($file);
 						} else {
 							$this->error = 'ERROR_IMAGE_HANDLER_MEMORYLIMIT_EXCEED';
@@ -126,7 +125,7 @@ class Image_GD extends ImageCommon implements imageHandlerInterface {
 						break;
 
 					case IMAGETYPE_XBM:
-						if ($this->setting['MaxUseableMemory'] >= ($imageInfo['Area'] * $imageInfo['Channels'])) {
+						if ($this->setting['MemoryLimit'] >= ($imageInfo['Area'] * $imageInfo['Channels'] + 1)) {
 							$imageRes = imagecreatefromxbm($file);
 						} else {
 							$this->error = 'ERROR_IMAGE_HANDLER_MEMORYLIMIT_EXCEED';
@@ -204,31 +203,41 @@ class Image_GD extends ImageCommon implements imageHandlerInterface {
 	}
 
 	public function ratioResize($width, $height, $resizeSmall = false) {
-		$ratio = 0;
-		$ratioWidth = $width / $this->imageInfo['Width'];
-		$ratioHeight = $height / $this->imageInfo['Height'];
+		$ratio = $ratioWidth = $ratioHeight = 0;
 
-		if ($ratioWidth < $ratioHeight) {
-			$ratio = $ratioWidth;
-		} else {
-			$ratio = $ratioHeight;
+		if ($this->imageRes) {
+			$ratioWidth = $width / $this->imageInfo['Width'];
+			$ratioHeight = $height / $this->imageInfo['Height'];
+
+			if ($ratioWidth < $ratioHeight) {
+				$ratio = $ratioWidth;
+			} else {
+				$ratio = $ratioHeight;
+			}
+
+			return $this->resize($this->imageInfo['Width'] * $ratio, $this->imageInfo['Height'] * $ratio, $resizeSmall);
 		}
 
-		return $this->resize($this->imageInfo['Width'] * $ratio, $this->imageInfo['Height'] * $ratio, $resizeSmall);
+		return false;
 	}
 
 	public function fillResize($width, $height) {
-		$ratio = 0;
-		$ratioWidth = $width / $this->imageInfo['Width'];
-		$ratioHeight = $height / $this->imageInfo['Height'];
+		$ratio = $ratioWidth = $ratioHeight = 0;
 
-		if ($ratioWidth > $ratioHeight) {
-			$ratio = $ratioWidth;
-		} else {
-			$ratio = $ratioHeight;
+		if ($this->imageRes) {
+			$ratioWidth = $width / $this->imageInfo['Width'];
+			$ratioHeight = $height / $this->imageInfo['Height'];
+
+			if ($ratioWidth > $ratioHeight) {
+				$ratio = $ratioWidth;
+			} else {
+				$ratio = $ratioHeight;
+			}
+
+			return $this->resize($this->imageInfo['Width'] * $ratio, $this->imageInfo['Height'] * $ratio, true, $width, $height);
 		}
 
-		return $this->resize($this->imageInfo['Width'] * $ratio, $this->imageInfo['Height'] * $ratio, true, $width, $height);
+		return false;
 	}
 
 	public function waterMark($file, $align = 'center center', $margin = 0) {

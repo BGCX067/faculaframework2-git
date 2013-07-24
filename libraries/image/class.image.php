@@ -72,7 +72,7 @@ class Image {
 			self::$handlerClassName = $className;
 
 			self::$setting = array(
-				'MemoryLimit' => intval(PHPIni::convertIniUnit(ini_get('memory_limit')) * 0.8) - memory_get_peak_usage(),
+				'MemoryLimit' => intval((PHPIni::convertIniUnit(ini_get('memory_limit')) * 0.8) - memory_get_peak_usage()),
 				'Font' => isset($setting['Font']) && is_readable($setting['Font']) ? $setting['Font'] : null,
 				'FontSize' => isset($setting['FontSize']) && is_readable($setting['FontSize']) ? $setting['FontSize'] : 12,
 			);

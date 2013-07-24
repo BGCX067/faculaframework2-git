@@ -33,7 +33,7 @@ $setting = array {
 	'SelectMethod' => 'Normal|Random',
 	'Servers' => array(
 		array(
-			'type' => 'ftp',
+			'Type' => 'ftp',
 			'Option' => array(
 				'Username' => 'test',
 				'Password' => 'test',
@@ -69,7 +69,7 @@ rStorage::upload($file);
 
 interface remoteStorageInterface {
 	public function __construct($setting);
-	public function upload($localFile);
+	public function upload($localFile, &$error = '');
 }
 
 class rStorage {
@@ -98,7 +98,7 @@ class rStorage {
 		return false;
 	}
 
-	static public function upload($localFile) {
+	static public function upload($localFile, &$error = '') {
 		$handler = null;
 		$handlerName = '';
 		$result = '';
@@ -107,14 +107,14 @@ class rStorage {
 			// Create handler instance
 			if (!self::$handler) {
 				foreach (self::$servers as $server) {
-					if (isset($server['type'][0])) {
-						$handlerName = __CLASS__ . '_' . $server['type'];
+					if (isset($server['Type'][0])) {
+						$handlerName = __CLASS__ . '_' . $server['Type'];
 
 						if (class_exists($handlerName)) {
 							$handler = new $handlerName(isset($server['Option']) ? $server['Option'] : array());
 
 							if ($handler instanceof remoteStorageInterface) {
-								if ($result = $handler->upload($localFile)) {
+								if ($result = $handler->upload($localFile, $error)) {
 									self::$handler = $handler;
 
 									return $result;
@@ -132,7 +132,7 @@ class rStorage {
 					}
 				}
 			} else {
-				return self::$handler->upload($localFile);
+				return self::$handler->upload($localFile, $error);
 			}
 		} else {
 			facula::core('debug')->exception('ERROR_REMOTESTORAGE_FILE_UNREADABLE|' . $localFile, 'remote storage', true);

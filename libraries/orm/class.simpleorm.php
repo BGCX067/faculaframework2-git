@@ -57,7 +57,7 @@ class SimpleORM implements ormInterface {
 	protected $fields = array();
 	protected $primary = '';
 	
-	protected $data = array();
+	private $data = array();
 	
 	public function __construct($table = '', $fields = array(), $primary = '', $default = array()) {
 		if (empty($this->table) && !($this->table = $table)) {

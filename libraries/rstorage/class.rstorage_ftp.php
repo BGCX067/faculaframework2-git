@@ -74,22 +74,26 @@ class rStorage_ftp implements remoteStorageInterface {
 		return true;
 	}
 
-	public function upload($localFile) {
-		$currentRemotePath = $remoteFileName = $resultPath = '';
+	public function upload($localFile, &$error = '') {
+		$currentRemotePath = $remoteFileName = $resultPath = $fileExt = '';
 
 		if ($this->connection || $this->connect()) {
 			if ($this->setting['Path'] && !$this->chDir($this->setting['Path'] . $this->generatePath(), $currentRemotePath)) {
 				facula::core('debug')->exception('ERROR_FTP_CHANGEDIR_FAILED', 'ftp', true);
 			}
 
+			$fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
+
 			facula::core('debug')->criticalSection(true);
 
 			if (!$remoteFileName = md5_file($localFile)) {
-				$remoteFileName = rand(0, 9999);
+				$remoteFileName = rand(0, 9999) . ($fileExt ? '.' . $fileExt : '');
+			} else {
+				$remoteFileName .= ($fileExt ? '.' . $fileExt : '');
 			}
 
 			if (ftp_put($this->connection, $remoteFileName, $localFile, FTP_BINARY)) {
-				$resultPath =  $currentRemotePath . '/' . $remoteFileName . '.' . strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
+				$resultPath =  $currentRemotePath . '/' . $remoteFileName;
 			}
 
 			facula::core('debug')->criticalSection(false);
