@@ -33,6 +33,7 @@ interface ormInterface {
 	
 	public function getPrimaryValue();
 	public function getFields();
+	public function getData();
 	
 	public function get($param);
 	public function fetch($param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');

@@ -92,7 +92,9 @@ class Image {
 			$handler = new self::$handlerClassName($file, self::$setting);
 
 			if ($handler instanceof imageHandlerInterface) {
-				return $handler;
+				if ($handler->getImageRes()) {
+					return $handler;
+				}
 			} else {
 				facula::core('debug')->exception('ERROR_IMAGE_HANDLER_INTERFACE_INVALID', 'imager', true);
 			}
