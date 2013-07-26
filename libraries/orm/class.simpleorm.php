@@ -59,6 +59,9 @@ class SimpleORM implements ormInterface {
 	protected $primary = '';
 	
 	private $data = array();
+
+	public $cachedObjectFilePath = '';
+	public $cachedObjectSaveTime = 0;
 	
 	public function __construct($table = '', $fields = array(), $primary = '', $default = array()) {
 		if (empty($this->table) && !($this->table = $table)) {

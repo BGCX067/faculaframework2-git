@@ -93,10 +93,14 @@ abstract class Controller extends Setting implements controllerInterface {
 		return false;
 	}
 	
-	protected function display($tplName, $cacheExpired = 0, $cacheExpiredCallback = null, $tplSet = '') {
+	protected function display($tplName, $cacheExpired = 0, $cacheExpiredCallback = null, $tplSet = '', $cacheName = '') {
+		$output = '';
+
 		if (isset($this->template)) {
-			if ($this->response->setContent($this->template->render($tplName, $cacheExpired, $cacheExpiredCallback, $tplSet))) {
-				return $this->response->send();
+			if ($output = $this->template->render($tplName, $cacheExpired, $cacheExpiredCallback, $tplSet, $cacheName)) {
+				if ($this->response->setContent($output)) {
+					return $this->response->send();
+				}
 			}
 		} else {
 			$this->debug->exception('ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE', 'controller', true);
