@@ -29,11 +29,10 @@ interface faculaTemplateInterface {
 	public function _inited();
 	public function assign($key, $val);
 	public function inject($key, $templatecontent);
-	public function render($templateName, $expire = 0, $expiredCallback = null);
+	public function render($templateName, $templateSet = '', $expire = null, $expiredCallback = null, $cacheFactor = '');
 	public function importTemplateFile($name, $path);
 	public function importLanguageFile($languageCode, $path);
 	public function getLanguageString($key);
-	public function getPageContent($templateName, $expire = 0, $templateSet = '', $expiredCallback = null);
 }
 
 class faculaTemplate extends faculaCoreFactory {
@@ -101,6 +100,14 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 			$this->configs['Compiled'] = $cfg['CompiledTemplate'];
 		} else {
 			throw new Exception('CompiledTemplate must be defined and existed.');
+		}
+		
+		if ($this->configs['Cache']) {
+			if (isset($cfg['CachePath']) && is_dir($cfg['CachePath'])) {
+				$this->configs['Cached'] = $cfg['CachePath'];
+			} else {
+				throw new Exception('CachePath must be defined and existed.');
+			}
 		}
 		
 		// Scan for template files
@@ -221,13 +228,151 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return false;
 	}
 	
-	public function render($templateName, $expire = 0, $expiredCallback = null, $templateSet = '') {
-		$content = '';
+	public function render($templateName, $templateSet = '', $expire = null, $expiredCallback = null, $cacheFactor = '') {
+		$templatePath = $content = '';
 		
-		if ($content = $this->getPageContent($templateName, $expire, $templateSet, $expiredCallback)) {
-			return $content;
+		if ($expire === null || $expiredCallback) { // If $expire not null or $expiredCallback not set, means, this is a cache call
+			if ($templatePath = $this->getCacheTemplate($templateName, $templateSet, $expire, $expiredCallback, $cacheFactor)) {
+				return $this->doRender($templatePath);
+			}
+		} else { // Or it just a normal call
+			if ($templatePath = $this->getCompiledTemplate($templateName, $templateSet)) {
+				return $this->doRender($templatePath);
+			}
+		}
+		
+		return false;
+	}
+	
+	private function getCacheTemplate($templateName, $templateSet = '', $expire = null, $expiredCallback = null, $cacheFactor = '') {
+		$templatePath = $templateContent = $cachedPagePath = $cachedPageRoot = $cachedPageFactor = $cachedPageFile = $cachedPageFactorDir = $cachedTmpPage = $renderCachedContent = $renderCachedOutputContent = '';
+		$splitedCompiledContentIndexLen = $splitedRenderedContentLen = 0;
+		$splitedCompiledContent = $splitedRenderedContent = array();
+		
+		if (isset($this->configs['Cached'][0])) {
+			$cachedPageFactor = !$cacheFactor ? 'default' : str_replace(array('/', '\\', '|'), '#', $cacheFactor);
+			$cachedPageFactorDir = !$cacheFactor ? 'default' : $this->getCacheSubPath($cacheFactor);
+			
+			$cachedPageRoot = $this->configs['Cached'] . DIRECTORY_SEPARATOR . $cachedPageFactorDir . DIRECTORY_SEPARATOR;
+			$cachedPageFile = 'cachedPage.' . $templateName . ($templateSet ? '+' . $templateSet : '') . '.' . $this->pool['Language'] . '.' . $cachedPageFactor. '.php';
+			$cachedPagePath = $cachedPageRoot . $cachedPageFile;
+			
+			if (is_readable($cachedPagePath) && (!$expire || filemtime($cachedPagePath) > FACULA_TIME - $expire)) {
+				return $cachedPagePath;
+			} else {
+				if ($templatePath = $this->getCompiledTemplate($templateName, $templateSet)) {
+					if ($expiredCallback && is_callable($expiredCallback) && !$expiredCallback()) {
+						return false;
+					}
+					
+					if ($templateContent = file_get_contents($templatePath)) {
+						// Spilt using no cache 
+						$splitedCompiledContent = explode('<!-- NOCACHE -->', $templateContent);
+						$splitedCompiledContentIndexLen = count($splitedCompiledContent) - 1;
+						
+						// Deal with area which need to be cached
+						foreach($splitedCompiledContent AS $key => $val) {
+							if ($key > 0 && $key < $splitedCompiledContentIndexLen && $key%2) {
+								$splitedCompiledContent[$key] = '<?php echo(stripslashes(\'' . addslashes($val) . '\')); ?>';
+							}
+						}
+						
+						// Reassembling compiled content;
+						$compiledContentForCached = implode('<!-- NOCACHE -->', $splitedCompiledContent);
+						
+						// Save compiled content to a temp file
+						unset($templateContent, $splitedCompiledContent, $splitedCompiledContentIndexLen);
+						
+						if (is_dir($cachedPageRoot) || mkdir($cachedPageRoot, 0, true)) {
+							$cachedTmpPage = $cachedPagePath . '.temp.php';
+							
+							if (file_put_contents($cachedTmpPage, $compiledContentForCached)) {
+								$render = new faculaTemplateDefaultRender($cachedTmpPage, $this->assigned);
+								
+								// Render nocached compiled content
+								if (($renderCachedContent = $render->getResult()) && unlink($cachedTmpPage)) {
+									/*
+										Beware the renderCachedContent as it may contains code that assigned by user. After render and cache, the php code may will 
+										turn to executable.
+										
+										Web ui designer should filter those code to avoid danger by using compiler's variable format, but they usually know nothing 
+										about how to keep user input safe.
+										
+										So: belowing code will help you to filter those code if the web ui designer not filter it by their own.
+									*/
+									$splitedRenderedContent = explode('<!-- NOCACHE -->', $renderCachedContent);
+									$splitedRenderedContentLen = count($splitedRenderedContent) - 1;
+									
+									foreach($splitedRenderedContent AS $key => $val) {
+										if (!($key > 0 && $key < $splitedRenderedContentLen && $key%2)) { // Inverse as above to tag and select cached area.
+											$splitedRenderedContent[$key] = str_replace(array('<?', '?>'), array('&lt;?', '?&gt;'), $val); // Replace php code tag to unexecutable tag before save file.
+										}
+									}
+									
+									$renderCachedOutputContent = self::$setting['TemplateFileSafeCode'][0] . self::$setting['TemplateFileSafeCode'][1] . implode('', $splitedRenderedContent);
+									
+									unset($splitedRenderedContent, $splitedRenderedContentLen);
+									
+									if (file_put_contents($cachedPagePath, $renderCachedOutputContent)) {
+										return $cachedPagePath;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		} else {
-			facula::core('debug')->exception('ERROR_TEMPLATE_NOCONTENT|' . $templateName, 'template', true);
+			facula::core('debug')->exception('ERROR_TEMPLATE_CACHE_DISABLED', 'template', true);
+		}
+		
+		return false;
+	}
+	
+	private function getCacheSubPath($cacheName) {
+		$current = 0;
+		$path = array();
+		
+		$path[] = $current = abs(crc32($cacheName));
+		
+		while(1) {
+			if ($current > 1024) {
+				$path[] = $current = intval($current / 1024);
+			} else {
+				break;
+			}
+		}
+		
+		return implode(DIRECTORY_SEPARATOR, $path);
+	}
+	
+	// Get template and compile it to PHP code if needed
+	private function getCompiledTemplate($templateName, $templateSet) {
+		$content = $error = $templatePath = '';
+		$compiledTpl = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledTemplate.' . $templateName . ($templateSet ? '+' . $templateSet : '') . '.' . $this->pool['Language'] . '.php';
+		
+		if (!$this->configs['Renew'] && is_readable($compiledTpl)) {
+			facula::core('object')->runHook('template_render_*', array(), $error);
+			facula::core('object')->runHook('template_render_' . $templateName, array(), $error);
+		
+			return $compiledTpl;
+		} else {
+			facula::core('object')->runHook('template_compile_*', array(), $error);
+			facula::core('object')->runHook('template_compile_' . $templateName, array(), $error);
+			
+			if ($templateSet && isset($this->pool['File']['Tpl'][$templateName][$templateSet])) {
+				$templatePath = $this->pool['File']['Tpl'][$templateName][$templateSet];
+			} elseif (isset($this->pool['File']['Tpl'][$templateName]['default'])) {
+				$templatePath = $this->pool['File']['Tpl'][$templateName]['default'];
+			} else {
+				facula::core('debug')->exception('ERROR_TEMPLATE_NOTFOUND|' . $templateName, 'template', true);
+				
+				return false;
+			}
+			
+			if ($this->doCompile($templatePath, $compiledTpl)) {
+				return $compiledTpl;
+			}
 		}
 		
 		return false;
@@ -271,47 +416,6 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return false;
 	}
 	
-	public function getPageContent($templateName, $expire = 0, $templateSet = '', $expiredCallback = null) {
-		$content = $error = '';
-		$compiledTpl = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledTemplate.' . $templateName . ($templateSet ? '+' . $templateSet : '') . '.' . $this->pool['Language'] . '.php';
-		
-		if (!$this->configs['Renew'] && is_readable($compiledTpl) && (!$expire || filemtime($compiledTpl) > FACULA_TIME - $expire)) {
-			
-			facula::core('object')->runHook('template_render_*', array(), $error);
-			facula::core('object')->runHook('template_render_' . $templateName, array(), $error);
-			
-			if ($content = $this->doRender($compiledTpl)) {
-				return $content;
-			}
-		} else {
-			if ($expiredCallback && is_callable($expiredCallback) && !$expiredCallback()) {
-				facula::core('debug')->exception('ERROR_TEMPLATE_TPLCALLBACK_FAILED', 'template');
-				return false;
-			}
-			
-			facula::core('object')->runHook('template_compile_*', array(), $error);
-			facula::core('object')->runHook('template_compile_' . $templateName, array(), $error);
-			
-			if ($templateSet && isset($this->pool['File']['Tpl'][$templateName][$templateSet])) {
-				$templatePath = $this->pool['File']['Tpl'][$templateName][$templateSet];
-			} elseif (isset($this->pool['File']['Tpl'][$templateName]['default'])) {
-				$templatePath = $this->pool['File']['Tpl'][$templateName]['default'];
-			} else {
-				facula::core('debug')->exception('ERROR_TEMPLATE_NOTFOUND|' . $templateName, 'template', true);
-				
-				return false;
-			}
-			
-			if ($this->doCompile($templatePath, $compiledTpl)) {
-				if ($content = $this->doRender($compiledTpl)) {
-					return $content;
-				}
-			}
-		}
-		
-		return false;
-	}
-	
 	/* Load setting for compiling */
 	private function doRender(&$compiledTpl) {
 		$render = new faculaTemplateDefaultRender($compiledTpl, $this->assigned);
@@ -320,8 +424,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	}
 	
 	private function doCompile($sourceTpl, $resultTpl) {
-		$sourceContent = $renderCachedContent = $compiledContent = $compiledContentForCached = '';
-		$splitedCompiledContent = array();
+		$sourceContent = $compiledContent = '';
 		
 		if (!isset($this->pool['LanguageMap'])) {
 			$this->loadLangMap();
@@ -334,58 +437,8 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 				if ($this->configs['Compress']) {
 					$compiledContent = str_replace(array('  ', "\r", "\n", "\t"), '', $compiledContent);
 				}
-			
-				if ($this->configs['Cache']) {
-					// Spilt using no cache 
-					$splitedCompiledContent = explode('<!-- NOCACHE -->', $compiledContent);
-					$splitedCompiledContentIndexLen = count($splitedCompiledContent) - 1;
-					
-					// Deal with area which need to be cached
-					foreach($splitedCompiledContent AS $key => $val) {
-						if ($key > 0 && $key < $splitedCompiledContentIndexLen && $key%2) {
-							$splitedCompiledContent[$key] = '<?php echo(stripslashes(\'' . addslashes($val) . '\')); ?>';
-						}
-					}
-					
-					// Reassembling compiled content;
-					$compiledContentForCached = implode('<!-- NOCACHE -->', $splitedCompiledContent);
-					
-					// Save compiled content to a temp file
-					$cachedResultTpl = $resultTpl . '.cached.temp.php';
-					
-					unset($splitedCompiledContent, $splitedCompiledContentIndexLen);
-					
-					if (file_put_contents($cachedResultTpl, $compiledContentForCached)) {
-						$render = new faculaTemplateDefaultRender($cachedResultTpl, $this->assigned);
-						
-						// Render nocached compiled content
-						if (($renderCachedContent = $render->getResult()) && unlink($cachedResultTpl)) {
-							/* 
-								Beware the renderCachedContent as it may contains code that assigned by user. After render and cache, the php code may will 
-								turn to executable.
-								
-								Web ui designer should filter those code to avoid danger by using compiler's variable format, but they usually know nothing 
-								about how to keep user input safe.
-								
-								So: belowing code will help you to filter those code if the web ui designer not filter it by their own.
-							*/
-							$splitedRenderedContent = explode('<!-- NOCACHE -->', $renderCachedContent);
-							$splitedRenderedContentLen = count($splitedRenderedContent) - 1;
-							
-							foreach($splitedRenderedContent AS $key => $val) {
-								if (!($key > 0 && $key < $splitedRenderedContentLen && $key%2)) { // Inverse as above to tag and select cached area.
-									$splitedRenderedContent[$key] = str_replace(array('<?', '?>'), array('&lt;?', '?&gt;'), $val); // Replace php code tag to unexecutable tag before save file.
-								}
-							}
-						
-							$renderCachedContent = self::$setting['TemplateFileSafeCode'][0] . self::$setting['TemplateFileSafeCode'][1] . implode('', $splitedRenderedContent);
-							
-							return file_put_contents($resultTpl, $renderCachedContent);
-						}
-					}
-				} else {
-					return file_put_contents($resultTpl, self::$setting['TemplateFileSafeCode'][0] . self::$setting['TemplateFileSafeCode'][1] . $compiledContent);
-				}
+				
+				return file_put_contents($resultTpl, self::$setting['TemplateFileSafeCode'][0] . self::$setting['TemplateFileSafeCode'][1] . $compiledContent);
 			} else {
 				facula::core('debug')->exception('ERROR_TEMPLATE_COMPILE_FAILED|' . $sourceTpl, 'template', true);
 			}
