@@ -257,7 +257,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 			$cachedPageFile = 'cachedPage.' . $templateName . ($templateSet ? '+' . $templateSet : '') . '.' . $this->pool['Language'] . '.' . $cachedPageFactor. '.php';
 			$cachedPagePath = $cachedPageRoot . $cachedPageFile;
 			
-			if (is_readable($cachedPagePath) && (!$expire || filemtime($cachedPagePath) > FACULA_TIME - $expire)) {
+			if (!$this->configs['Renew'] && is_readable($cachedPagePath) && (!$expire || filemtime($cachedPagePath) > FACULA_TIME - $expire)) {
 				return $cachedPagePath;
 			} else {
 				if ($templatePath = $this->getCompiledTemplate($templateName, $templateSet)) {
