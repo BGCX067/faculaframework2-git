@@ -282,7 +282,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 		self::$headers[] = 'Server: Facula Framework';
 		self::$headers[] = 'X-Powered-By: Facula Framework ' . __FACULAVERSION__;
 		
-		if (facula::core('request')->getClientInfo('gzip')) {
+		if (facula::core('request')->getClientInfo('gzip') && $this->configs['GZIPEnabled']) {
 			$this->configs['UseGZIP'] = true;
 		} else {
 			$this->configs['UseGZIP'] = false;
@@ -356,7 +356,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 		
 		$orgSize = strlen($content);
 		
-		if ($this->configs['UseGZIP'] && $this->configs['GZIPEnabled'] && $orgSize >= 2048) {
+		if ($this->configs['UseGZIP'] && $orgSize >= 2048) {
 			$gzContent = gzcompress($content, 2);
 			$gzSize = strlen($gzContent);
 			

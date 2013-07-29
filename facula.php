@@ -86,6 +86,10 @@ class facula {
 			}
 			
 			self::$instance->_inited();
+			
+			if ((isset($cfg['AppName'], self::$instance->setting['AppName'], $cfg['AppVersion'], self::$instance->setting['AppVersion'])) && ((self::$instance->setting['AppName'] != $cfg['AppName']) || (self::$instance->setting['AppVersion'] != $cfg['AppVersion']))) {
+				self::clearCoreCache();
+			}
 		}
 		
 		$cfg = null; // Clear config, because we already save them inside the core
