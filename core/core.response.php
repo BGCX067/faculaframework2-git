@@ -338,7 +338,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 			
 			return true;
 		} else {
-			facula::core('debug')->exception('ERROR_RESPONSE_ALREADY_RESPONSED|File: ' . $file . ' Line: ' . $line, 'data');
+			facula::core('debug')->exception('ERROR_RESPONSE_ALREADY_RESPONSED|File: ' . $file . ' Line: ' . $line . ' Content: ' . substr(self::$content, 0, 32), 'data');
 		}
 		
 		return false;
