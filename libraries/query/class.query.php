@@ -772,6 +772,7 @@ class query implements queryInterface {
 							facula::core('debug')->exception('ERROR_QUERY_SAVE_METHOD_UNSUPPORTED|' . $this->query['Action'], 'query', true);
 							break;
 					}
+					
 				} catch(PDOException $e) {
 					facula::core('debug')->exception('ERROR_QUERY_SAVE_FAILED|' . $e->getMessage(), 'query', true);
 				}
