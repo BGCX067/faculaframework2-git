@@ -64,6 +64,8 @@ class faculaResponseDefault implements faculaResponseInterface {
 	);
 	
 	static private $headers = array();
+	static private $cookies = array();
+	
 	static private $content = '';
 	
 	static private $http_content_type = array(
@@ -316,6 +318,10 @@ class faculaResponseDefault implements faculaResponseInterface {
 				header('X-Memory: ' . (facula::$profile['MemoryUsage'] / 1024) . 'kb / ' . (facula::$profile['MemoryPeak'] / 1024) . 'kb');
 			}
 			
+			foreach(self::$cookies AS $cookie) {
+				setcookie($cookie['Key'], $cookie['Val'], $cookie['Expire'], $cookie['Path'], $cookie['Domain'], $cookie['Secure'], $cookie['HttpOnly']);
+			}
+			
 			foreach(self::$headers AS $header) {
 				header($header);
 			}
@@ -379,28 +385,43 @@ class faculaResponseDefault implements faculaResponseInterface {
 	public function setCookie($key, $val = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false) {
 		global $_COOKIE;
 		
-		$cKey		= $this->configs['CookiePrefix'] . urlencode($key);
-		$cVal		= $val ? urlencode($val) : 'false';
-		$cExpire	= $expire ? gmstrftime('%A, %d-%b-%Y %H:%M:%S GMT', FACULA_TIME + intval($expire)) : 'false';
-		$cPath		= $path;
-		$cDomain	= $domain ? $domain : (strpos($_SERVER['HTTP_HOST'], '.') != -1 ? $_SERVER['HTTP_HOST'] : ''); // The little dot check for IEs
-		$cSecure	= $secure ? ' Secure;' : '';
-		$cHttponly	= $httponly ? ' HttpOnly;' : '';
+		$cKey			= 		$this->configs['CookiePrefix'] . $key;
+		$cVal			= 		$val !== null ? $val : null;
+		$cExpire		= 		$expire ? FACULA_TIME + intval($expire) : 0;
+		$cPath			= 		$path;
+		$cDomain		= 		$domain ? $domain : (strpos($_SERVER['HTTP_HOST'], '.') != -1 ? $_SERVER['HTTP_HOST'] : '');
+		$cSecure		= 		$secure ? true : false;
+		$cHttpOnly		= 		$httponly ? true : false;
 		
-		// Add cookie to the top of http header
-		array_unshift(self::$headers, "Set-Cookie: {$cKey}={$cVal}; Domain={$cDomain}; Path={$cPath}; Expires={$cExpire};{$cSecure}{$cHttponly}");
+		if ($cDomain == '127.0.0.1' || $cDomain == 'localhost') {
+			$cDomain = '';
+		}
 		
-		$_COOKIE[$this->configs['CookiePrefix'] . $key] = $val; // Assume we already successed. The value can be read immediately, no need to reload page.
+		self::$cookies[] = array(
+			'Key' => $cKey,
+			'Val' => $cVal,
+			'Expire' => $cExpire,
+			'Path' => $cPath,
+			'Domain' => $cDomain,
+			'Secure' => $cSecure,
+			'HttpOnly' => $cHttpOnly,
+		);
+		
+		if ($val) {
+			$_COOKIE[$this->configs['CookiePrefix'] . $key] = $val; // Assume we already successed. The value can be read immediately, no need to reload page.
+		} elseif (isset($_COOKIE[$this->configs['CookiePrefix'] . $key])) {
+			unset($_COOKIE[$this->configs['CookiePrefix'] . $key]);
+		}
 		
 		return true;
 	}
 	
 	public function unsetCookie($key) {
-		$this->setCookie($key, null, -FACULA_TIME);
+		if ($this->setCookie($key, null, -FACULA_TIME -1)) {
+			return true;
+		}
 		
-		unset($_COOKIE[$this->configs['CookiePrefix'] . $key]); // Assume we already unset it
-		
-		return true;
+		return false;
 	}
 }
 
