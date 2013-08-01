@@ -30,6 +30,7 @@ interface faculaTemplateInterface {
 	public function assign($key, $val);
 	public function inject($key, $templatecontent);
 	public function render($templateName, $templateSet = '', $expire = null, $expiredCallback = null, $cacheFactor = '');
+	public function insertMessage($message);
 	public function importTemplateFile($name, $path);
 	public function importLanguageFile($languageCode, $path);
 	public function getLanguageString($key);
@@ -222,7 +223,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 				$this->assigned['Message']['Default'][] = $messageContent;
 			}
 			
-			return true;
+			return $messageContent;
 		}
 		
 		return false;
@@ -873,6 +874,10 @@ class faculaTemplateDefaultCompiler {
 						
 					case 'htmlnl':
 						$phpcode .= 'echo(nl2br(htmlspecialchars(' . $param[0] . ', ENT_QUOTES)));';
+						break;
+						
+					case 'nl':
+						$phpcode .= 'echo(nl2br(' . $param[0] . ', ENT_QUOTES));';
 						break;
 						
 					case 'number':
