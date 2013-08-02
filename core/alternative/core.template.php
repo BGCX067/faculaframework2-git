@@ -818,7 +818,7 @@ class faculaTemplateDefaultCompiler {
 			} else {
 				switch($param[1]) {
 					case 'date':
-						if (isset($this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]])) {
+						if (isset($param[2]) && isset($this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]])) {
 							$phpcode .= 'echo(date(\'' . $this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]] . '\', intval(' . $param[0] . ')));';
 						} else {
 							facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_DATE_LANG_MISSED', 'template', true);
@@ -834,7 +834,7 @@ class faculaTemplateDefaultCompiler {
 							isset($this->pool['LanguageMap']['FORMAT_TIME_MOREBEFORE'])) {
 							$phpcode .= '$temptime = $Time - (' . $param[0] . '); if ($temptime < 60) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_SNDBEFORE'] . '\', $temptime); } elseif ($temptime < 3600) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_MINBEFORE'] . '\', intval($temptime / 60)); } elseif ($temptime < 86400) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_HRBEFORE'] . '\', intval($temptime / 3600)); } elseif ($temptime < 604800) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_DAYBEFORE'] . '\', intval($temptime / 86400)); } elseif ($temptime) { echo(date(\'' . $this->pool['LanguageMap']['FORMAT_TIME_MOREBEFORE'] . '\', intval(' . $param[0] . '))); } $temptime = 0;';
 						} else {
-							facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_BYTE_LANG_MISSED', 'template', true);
+							facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYTIME_LANG_MISSED', 'template', true);
 							return false;
 						}
 						break;
