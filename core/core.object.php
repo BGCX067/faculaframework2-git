@@ -83,10 +83,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 		
 		$this->configs = array(
 			'ObjectCacheRoot' => isset($cfg['ObjectCacheRoot']) && is_dir($cfg['ObjectCacheRoot']) ? $cfg['ObjectCacheRoot'] : '',
-			'AutoPath' => array(
-				'Default' => get_include_path(),
+			'AutoPaths' => array(
 				'CmpRoot' => isset($cfg['ComponentRoot']) && is_dir($cfg['ComponentRoot']) ? $cfg['ComponentRoot'] : '',
-				'LibRoot' => array()
 			)
 		);
 		
@@ -110,8 +108,12 @@ class faculaObjectDefault implements faculaObjectInterface {
 		
 		if (isset($cfg['Libraries']) && is_array($cfg['Libraries'])) {
 			foreach($cfg['Libraries'] AS $libRoot) {
-				$this->configs['AutoPath']['LibRoot'][] = $libRoot;
+				$this->configs['AutoPaths'][] = $libRoot;
 			}
+			
+			$this->configs['AutoPaths'][] = get_include_path();
+			
+			$this->configs['AutoPaths'] = array_unique($this->configs['AutoPaths']);
 		}
 		
 		// Save path to paths
@@ -162,17 +164,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	public function _inited() {
-		$paths = array();
-		
-		if ($this->configs['AutoPath']['CmpRoot']) {
-			$paths[] = $this->configs['AutoPath']['CmpRoot'];
-		}
-		
-		foreach($this->configs['AutoPath']['LibRoot'] AS $path) {
-			$paths[] = $path;
-		}
-		
-		set_include_path(implode(PATH_SEPARATOR, $paths));
+		set_include_path(implode(PATH_SEPARATOR, $this->configs['AutoPaths']));
 		
 		spl_autoload_register(array(&$this, 'getAutoInclude'));
 		
