@@ -83,7 +83,11 @@ class faculaObjectDefault implements faculaObjectInterface {
 		
 		$this->configs = array(
 			'ObjectCacheRoot' => isset($cfg['ObjectCacheRoot']) && is_dir($cfg['ObjectCacheRoot']) ? $cfg['ObjectCacheRoot'] : '',
-			'LibRoot' => isset($cfg['LibrariesRoot']) && is_dir($cfg['LibrariesRoot']) ? $cfg['LibrariesRoot'] : '',
+			'AutoPath' => array(
+				'Default' => get_include_path(),
+				'CmpRoot' => isset($cfg['ComponentRoot']) && is_dir($cfg['ComponentRoot']) ? $cfg['ComponentRoot'] : '',
+				'LibRoot' => array()
+			)
 		);
 		
 		// Convert plugin type file to misc type file to it will be able to use autoload
@@ -101,6 +105,12 @@ class faculaObjectDefault implements faculaObjectInterface {
 				default:
 					$paths['Paths'][$path['Name'] . ucfirst($path['Type'])] = $path;
 					break;
+			}
+		}
+		
+		if (isset($cfg['Libraries']) && is_array($cfg['Libraries'])) {
+			foreach($cfg['Libraries'] AS $libRoot) {
+				$this->configs['AutoPath']['LibRoot'][] = $libRoot;
 			}
 		}
 		
@@ -152,6 +162,18 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	public function _inited() {
+		$paths = array();
+		
+		if ($this->configs['AutoPath']['CmpRoot']) {
+			$paths[] = $this->configs['AutoPath']['CmpRoot'];
+		}
+		
+		foreach($this->configs['AutoPath']['LibRoot'] AS $path) {
+			$paths[] = $path;
+		}
+		
+		set_include_path(implode(PATH_SEPARATOR, $paths));
+		
 		spl_autoload_register(array(&$this, 'getAutoInclude'));
 		
 		return true;
@@ -164,8 +186,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 			return require_once($this->configs['Paths']['class.' . $classfileLower]['Path']);
 		} elseif (isset($this->configs['Paths'][$classfile])) { // If this is not a class file, but other module we dont know
 			return require_once($this->configs['Paths'][$classfile]['Path']);
-		} elseif ($this->configs['LibRoot'] && strpos($classfile, '\\') !== false) { // If above not work, use namespace to locate file
-			return require_once($this->configs['LibRoot'] . DIRECTORY_SEPARATOR . str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, ltrim($classfile, '\\')) . '.php');
+		} elseif (spl_autoload(ltrim($classfile, '\\'), '.php')) {
+			return true;
 		}
 		
 		return false;
@@ -374,8 +396,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	public function getFileByNamespace($namespace) {
-		if ($this->configs['LibRoot'] && strpos($namespace, '\\') !== false) {
-			return $this->configs['LibRoot'] . DIRECTORY_SEPARATOR . str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, ltrim($namespace, '\\')) . '.php';
+		if ($this->configs['CmpRoot'] && strpos($namespace, '\\') !== false) {
+			return $this->configs['CmpRoot'] . DIRECTORY_SEPARATOR . str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, ltrim($namespace, '\\')) . '.php';
 		}
 		
 		return false;
