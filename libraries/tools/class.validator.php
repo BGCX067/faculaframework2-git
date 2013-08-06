@@ -67,8 +67,6 @@ abstract class Validator {
 			self::$regulars[$name] = $regular;
 			
 			return true;
-		} else {
-			facula::core('debug')->exception('ERROR_VALIDATOR_REGULAR_ALREADY_EXISTED|' . $name, 'validator', true);
 		}
 		
 		return false;
