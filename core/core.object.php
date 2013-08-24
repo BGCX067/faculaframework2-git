@@ -111,9 +111,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 				$this->configs['AutoPaths'][] = $libRoot;
 			}
 			
-			$this->configs['AutoPaths'][] = get_include_path();
-			
-			$this->configs['AutoPaths'] = array_unique($this->configs['AutoPaths']);
+			$this->configs['AutoPaths'] = array_unique(array_merge($this->configs['AutoPaths'], explode(PATH_SEPARATOR, get_include_path())));
 		}
 		
 		// Save path to paths
@@ -130,7 +128,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 				require($plugin['Path']);
 				
 				// Is that plugin file contains we wanted plugin?
-				if (class_exists($tempPluginName)) {
+				if (class_exists($tempPluginName, false)) {
 					if (method_exists($tempPluginName, 'register')) {
 						foreach($tempPluginName::register() AS $hook => $action) {
 							if (!isset($this->hooks[$hook][$tempPluginName])) {
@@ -164,8 +162,6 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	public function _inited() {
-		set_include_path(implode(PATH_SEPARATOR, $this->configs['AutoPaths']));
-		
 		spl_autoload_register(array(&$this, 'getAutoInclude'));
 		
 		return true;
@@ -178,8 +174,20 @@ class faculaObjectDefault implements faculaObjectInterface {
 			return require_once($this->configs['Paths']['class.' . $classfileLower]['Path']);
 		} elseif (isset($this->configs['Paths'][$classfile])) { // If this is not a class file, but other module we dont know
 			return require_once($this->configs['Paths'][$classfile]['Path']);
-		} elseif (spl_autoload(ltrim($classfile, '\\'), '.php')) {
+		} elseif ($this->getWithNamespace($classfile)) {
 			return true;
+		}
+		
+		return false;
+	}
+	
+	private function getWithNamespace($namespace) {
+		$modPath = str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, $namespace) . '.php';
+		
+		foreach($this->configs['AutoPaths'] AS $path) {
+			if (file_exists($path . DIRECTORY_SEPARATOR . $modPath)) {
+				return require_once($path . DIRECTORY_SEPARATOR . $modPath);
+			}
 		}
 		
 		return false;
@@ -226,7 +234,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 	public function getInstance($object, $args, $cache = false) {
 		$newinstance = null;
 		
-		if (class_exists($object)) {
+		if (class_exists($object, true)) {
 			if ($cache && ($newinstance = $this->loadObjectFromCache($object))) {
 				// Call _init after instance has been created to pre init it
 				if (method_exists($newinstance, '_init')) {

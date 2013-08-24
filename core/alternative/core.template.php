@@ -284,7 +284,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 						// Save compiled content to a temp file
 						unset($templateContent, $splitedCompiledContent, $splitedCompiledContentIndexLen);
 						
-						if (is_dir($cachedPageRoot) || mkdir($cachedPageRoot, 0, true)) {
+						if (is_dir($cachedPageRoot) || mkdir($cachedPageRoot, 0744, true)) {
 							$cachedTmpPage = $cachedPagePath . '.temp.php';
 							
 							if (file_put_contents($cachedTmpPage, $compiledContentForCached)) {
