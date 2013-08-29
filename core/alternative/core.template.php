@@ -154,14 +154,14 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		$error = '';
 		
 		// Determine what language can be used for this client
-		$siteLanguage = facula::core('request')->getClientInfo('languages');
-		
-		if (isset($this->pool['File']['Lang'])) {
-			$clientLanguage = array_keys($this->pool['File']['Lang']);
-			
-			$selectedLanguage = array_values(array_intersect($siteLanguage, $clientLanguage)); // Use $siteLanguage as the first param so we can follow clients priority
+		if ($siteLanguage = facula::core('request')->getClientInfo('languages')) {
+			if (isset($this->pool['File']['Lang'])) {
+				$clientLanguage = array_keys($this->pool['File']['Lang']);
+				
+				$selectedLanguage = array_values(array_intersect($siteLanguage, $clientLanguage)); // Use $siteLanguage as the first param so we can follow clients priority
+			}
 		}
-
+		
 		if (isset($selectedLanguage[0][0])) {
 			$this->pool['Language'] = $selectedLanguage[0];
 		} else {
@@ -513,7 +513,7 @@ class faculaTemplateDefaultRender {
 		
 		extract($assigned);
 		
-		facula::core('debug')->criticalSection(true);
+		facula::core('debug')->criticalSection(true, true);
 		
 		require($targetTpl);
 		

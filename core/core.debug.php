@@ -388,7 +388,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 				
 				$code .= '</ul></div>';
 			} else {
-				$code = '<div class="facula-error-min" style="text-align:center;clear:both;">Sorry, we got a problem when trying to cooking a page for you.</div>';
+				$code = '<div class="facula-error-min" style="text-align:center;clear:both;">Sorry, we got a problem while cooking a page for you.".</div>';
 			}
 			
 			if ($returncode) {
