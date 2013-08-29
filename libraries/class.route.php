@@ -89,7 +89,7 @@ abstract class Route implements routeInterface {
 		$lastPathOperator = null;
 		$lastPathRef = &self::$routeMap;
 		
-		if (isset(self::$pathParams[0]) && self::$pathParams[0]) {
+		if (isset(self::$pathParams[0]) && self::$pathParams[0] != '') {
 			foreach (self::$pathParams as $param) {
 				if (isset($lastPathRef[$param])) {
 					$lastPathRef = &$lastPathRef[$param];
@@ -132,7 +132,7 @@ abstract class Route implements routeInterface {
 		} else {
 			self::execDefaultHandler();
 		}
-	
+
 		return false;
 	}
 	
@@ -141,7 +141,7 @@ abstract class Route implements routeInterface {
 	}
 	
 	static public function setPath($path) {
-		if ($path && (self::$pathParams = explode(self::$routeSplit, trim($path, self::$routeSplit)))) {
+		if ($path !== null && (self::$pathParams = explode(self::$routeSplit, trim($path, self::$routeSplit), 256))) {
 			return true;
 		}
 		
