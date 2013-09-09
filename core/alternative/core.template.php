@@ -704,8 +704,16 @@ class faculaTemplateDefaultCompiler {
 	/* Compile Tools */
 	public function doCheckUnclosedTags() {
 		foreach($this->tagPositionMaps AS $refKey => $refRecord) {
+			if (!isset($refRecord['Start']) || !isset($refRecord['End'])) {
+				return $refRecord['Name'];
+			}
+		
 			foreach($this->tagPositionMaps AS $tagKey => $tagRecord) {
 				if ($refKey != $tagKey) {
+					if (!isset($tagRecord['Start']) || !isset($tagRecord['End'])) {
+						return $tagRecord['Name'];
+					}
+				
 					if ($refRecord['Start'] < $tagRecord['Start'] && $refRecord['End'] > $tagRecord['Start'] && $refRecord['End'] < $tagRecord['End']) {
 						return $refRecord['Name'] . ':' . $tagRecord['Name'];
 					} elseif ($refRecord['Start'] < $tagRecord['End'] && $refRecord['End'] > $tagRecord['End'] && $refRecord['Start'] > $tagRecord['Start']) {
