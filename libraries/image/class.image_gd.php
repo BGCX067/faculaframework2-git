@@ -163,24 +163,35 @@ class Image_GD extends ImageCommon implements imageHandlerInterface {
 	}
 
 	public function resize($width, $height, $resizeSmall = false, $drawAreaWidth = 0, $drawAreaHeight = 0) {
-		$transparent = 0;
+		$transparent = $cutPosX = $cutPosY = 0;
 		$newImgWidth = $drawAreaWidth ? $drawAreaWidth : $width;
 		$newImgHeight = $drawAreaHeight ? $drawAreaHeight : $height;
 
 		if ($this->imageRes) {
-			if (!$resizeSmall && ($this->imageInfo['Width'] < $width || $this->imageInfo['Height'] < $height)) {
+			if (!$resizeSmall && ($this->imageInfo['Width'] <= $width || $this->imageInfo['Height'] <= $height)) {
 				return true;
 			}
 
 			if ($newImg = imagecreatetruecolor($newImgWidth, $newImgHeight)) {
+				$old_ratio = $this->imageInfo['Width'] / $this->imageInfo['Height'];
+				$new_ratio = $newImgWidth / $newImgHeight;
+			
+				if ($old_ratio > $new_ratio) {
+					$cutPosX = ceil(($this->imageInfo['Width'] - ($this->imageInfo['Height'] * $new_ratio)) / 2);
+					$cutPosY = 0;
+				} else {
+					$cutPosX = 0;
+					$cutPosY = ceil(($this->imageInfo['Height'] - ($this->imageInfo['Width'] / $new_ratio)) /2 );
+				}
+			
 				if (isset($this->imageInfo['Transparent'])) {
 					imagealphablending($newImg, false);
 					imagesavealpha($newImg, true);
 
 					$transparent = $this->imageInfo['Transparent'];
 				}
-
-				if (imagefilledrectangle($newImg, 0, 0, $width, $height, $transparent) && imagecopyresampled($newImg, $this->imageRes, 0, 0, 0, 0, $width, $height,  $this->imageInfo['Width'], $this->imageInfo['Height'])) {
+				
+				if (imagefilledrectangle($newImg, 0, 0, $width, $height, $transparent) && imagecopyresampled($newImg, $this->imageRes, 0, 0, $cutPosX, $cutPosY, $width, $height, $this->imageInfo['Width'], $this->imageInfo['Height'])) {
 					imagedestroy($this->imageRes); // Remove the org image file res
 
 					$this->imageRes = $newImg; // Replace the old image res with new one
