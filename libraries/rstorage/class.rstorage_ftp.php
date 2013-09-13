@@ -96,11 +96,15 @@ class rStorage_ftp implements remoteStorageInterface {
 
 			if (ftp_put($this->connection, $remoteFileName, $localFile, FTP_BINARY)) {
 				$resultPath =  $currentRemotePath . '/' . $remoteFileName;
+			} else {
+				$error = 'ERROR_REMOTESTORAGE_UPLOAD_FAILED';
 			}
 
 			facula::core('debug')->criticalSection(false);
 
 			return $this->setting['Access'] . substr($resultPath, strlen($this->setting['Path']));
+		} else {
+			$error = 'ERROR_REMOTESTORAGE_CONNECTION_FAILED';
 		}
 
 		return false;
