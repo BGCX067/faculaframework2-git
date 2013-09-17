@@ -82,7 +82,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 		$paths = array();
 		
 		$this->configs = array(
-			'ObjectCacheRoot' => isset($cfg['ObjectCacheRoot']) && is_dir($cfg['ObjectCacheRoot']) ? $cfg['ObjectCacheRoot'] : '',
+			'OCRoot' => isset($cfg['ObjectCacheRoot']) && is_dir($cfg['ObjectCacheRoot']) ? $cfg['ObjectCacheRoot'] : '',
+			'OCExpire' => isset($cfg['ObjectCacheExpire']) && $cfg['ObjectCacheExpire'] ? intval($cfg['ObjectCacheExpire']) : 604800,
 			'AutoPaths' => array(
 				'CmpRoot' => isset($cfg['ComponentRoot']) && is_dir($cfg['ComponentRoot']) ? $cfg['ComponentRoot'] : '',
 			)
@@ -205,13 +206,17 @@ class faculaObjectDefault implements faculaObjectInterface {
 		$instance = null;
 		$cache = '';
 		
-		if ($this->configs['ObjectCacheRoot']) {
-			$file = $this->configs['ObjectCacheRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
+		if ($this->configs['OCRoot']) {
+			$file = $this->configs['OCRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
 			
 			if (is_readable($file)) {
 				require($file);
 				
-				if ($instance = unserialize($cache)) {				
+				if ($instance = unserialize($cache)) {
+					if ($this->configs['OCExpire'] && $instance->cachedObjectSaveTime < $this->configs['OCExpire'] - FACULA_TIME) {
+						unlink($file);
+					}
+					
 					return $instance;
 				}
 			}
@@ -221,8 +226,8 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	private function saveObjectToCache($objectName, $instance, $type = '', $uniqueid = '') {
-		if ($this->configs['ObjectCacheRoot']) {
-			$instance->cachedObjectFilePath = $file = $this->configs['ObjectCacheRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
+		if ($this->configs['OCRoot']) {
+			$instance->cachedObjectFilePath = $file = $this->configs['OCRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
 			$instance->cachedObjectSaveTime = FACULA_TIME;
 			
 			return file_put_contents($file, self::$config['CacheSafeCode'][0] . '$cache = \'' . serialize($instance) . '\'' . self::$config['CacheSafeCode'][1]);
