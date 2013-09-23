@@ -389,7 +389,7 @@ class query implements queryInterface {
 					break;
 					
 				case 'IN':
-					if (is_array($value) && isset($value[0])) {
+					if (is_array($value) && !empty($value)) {
 						$params['Operator'] = 'IN';
 						
 						foreach($value AS $val) {
@@ -404,7 +404,7 @@ class query implements queryInterface {
 					break;
 					
 				case 'NOT IN':
-					if (is_array($value) && isset($value[0])) {
+					if (is_array($value) && !empty($value)) {
 						$params['Operator'] = 'NOT IN';
 						
 						foreach($value AS $val) {
