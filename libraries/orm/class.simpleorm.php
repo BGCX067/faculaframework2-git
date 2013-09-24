@@ -26,7 +26,6 @@
 *******************************************************************************/
 
 interface ormInterface {
-	public function __construct($table = '', $fields = array(), $primary = '', $default = array()); // Actually, you better not set your own __construct if you using this orm
 	public function __set($key, $val);
 	public function __get($key);
 	public function __isset($key);
@@ -41,19 +40,19 @@ interface ormInterface {
 	public function finds($param, $offset = 0, $dist = 0, $returnType = 'CLASS');
 	
 	public function getInKey($keyField, $value);
-	public function fetchInKeys($keyField, $values);
+	public function fetchInKeys($keyField, $values, $param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
 	
 	public function getByPK($key);
-	public function fetchByPKs($keys);
+	public function fetchByPKs($keys, $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
 	
-	public function fetchWith($joinModels, $currentParams, $offset = 0, $dist = 0, $whereOperator = '=');
+	public function fetchWith(array $joinModels, array $currentParams, $offset = 0, $dist = 0, $whereOperator = '=');
 	
 	public function save();
 	public function insert();
 	public function delete();
 }
 
-class SimpleORM implements ormInterface {
+class SimpleORM implements ormInterface, ArrayAccess {
 	protected $table = '';
 	protected $fields = array();
 	protected $primary = '';
@@ -63,34 +62,24 @@ class SimpleORM implements ormInterface {
 	public $cachedObjectFilePath = '';
 	public $cachedObjectSaveTime = 0;
 	
-	public function __construct($table = '', $fields = array(), $primary = '', $default = array()) {
-		if (empty($this->table) && !($this->table = $table)) {
+	public function __construct() {
+		if (empty($this->table)) {
 			facula::core('debug')->exception('ERROR_ORM_TABLENAME_MUST_SET', 'orm', true);
 		}
 		
-		if (empty($this->fields) && !($this->fields = $fields)) {
+		if (empty($this->fields)) {
 			facula::core('debug')->exception('ERROR_ORM_FIELDS_MUST_SET', 'orm', true);
 		}
 		
-		if (empty($this->primary) && !($this->primary = $primary)) {
+		if (empty($this->primary)) {
 			facula::core('debug')->exception('ERROR_ORM_PRIMARYKEY_MUST_SET', 'orm', true);
-		}
-		
-		if (empty($this->data)) {
-			$this->data = $default;
 		}
 		
 		return true;
 	}
 	
 	public function __set($key, $val) {
-		if (isset($this->fields[$key]) || $key[0] == '_') {
-			$this->data[$key] = $val;
-		} else {
-			facula::core('debug')->exception('ERROR_ORM_SET_FIELDS_NOT_EXISTED|' . $key, 'orm', true);
-		}
-		
-		return false;
+		$this->data[$key] = $val;
 	}
 	
 	public function __get($key) {
@@ -98,7 +87,27 @@ class SimpleORM implements ormInterface {
 	}
 	
 	public function __isset($key) {
-		return isset($this->data[$key]);
+		isset($this->data[$key]);
+	}
+	
+	public function __unset($key) {
+		unset($this->data[$key]);
+	}
+	
+	public function offsetSet($offset, $value) {
+		$this->data[$offset] = $value;
+	}
+	
+	public function offsetGet($offset) {
+		return isset($this->data[$offset]) ? $this->data[$offset] : null;
+	}
+	
+	public function offsetExists($offset) {
+		isset($this->data[$offset]);
+	}
+	
+	public function offsetUnset($offset) {
+		unset($this->data[$offset]);
 	}
 	
 	public function getPrimaryValue() {
@@ -119,6 +128,10 @@ class SimpleORM implements ormInterface {
 		return $this->data;
 	}
 	
+	private function &getDataRef() {
+		return $this->data;
+	}
+	
 	public function get($param) { // array('FieldName' => 'Value');
 		$data = array();
 		
@@ -130,6 +143,8 @@ class SimpleORM implements ormInterface {
 	}
 	
 	public function fetch($param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=') {
+		$whereParams = array();
+		
 		$query = null;
 		
 		$query = query::from($this->table);
@@ -137,7 +152,15 @@ class SimpleORM implements ormInterface {
 		
 		if (isset($param['Where'])) {
 			foreach($param['Where'] AS $field => $value) {
-				$query->where('AND', $field, $whereOperator, $value);
+				if (is_array($value)) {
+					$whereParams['Operator'] = isset($value[1]) ? $value[1] : $whereOperator;
+					$whereParams['Value'] = isset($value[0]) ? $value[0] : 'NULL';
+				} else {
+					$whereParams['Operator'] = $whereOperator;
+					$whereParams['Value'] = $value;
+				}
+				
+				$query->where('AND', $field, $whereParams['Operator'], $whereParams['Value']);
 			}
 		}
 		
@@ -172,8 +195,8 @@ class SimpleORM implements ormInterface {
 		return $this->getInKey($this->primary, $key);
 	}
 	
-	public function fetchByPKs($keys) {
-		return $this->fetchInKeys($this->primary, $keys);
+	public function fetchByPKs($keys, $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=') {
+		return $this->fetchInKeys($this->primary, $keys, $param, $offset, $dist, $returnType, $whereOperator);
 	}
 	
 	public function getInKey($keyField, $value) {
@@ -191,82 +214,160 @@ class SimpleORM implements ormInterface {
 		return false;
 	}
 	
-	public function fetchInKeys($keyField, $values) {
-		$fetched = $result = array();
+	public function fetchInKeys($keyField, $values, $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=') {
+		$fetched = $where = array();
 		
-		if ($fetched = query::from($this->table)->select($this->fields)->where('AND', $keyField, 'IN', $values)->fetch('CLASSLATE', get_class($this))) {
-			// Convert primary key as array index key
-			foreach($fetched AS $object) {
-				$result[$object->$keyField] = $object; // It will just return one result if key value is the same.
-			}
-			
-			return $result;
+		$param['Where'][$keyField] = array($values, 'IN');
+		
+		if ($fetched = $this->fetch($param, $offset, $dist, $returnType, $whereOperator)) {
+			return $fetched;
 		}
 		
 		return array();
 	}
 	
-	public function fetchWith($joinModels, $currentParams, $offset = 0, $dist = 0, $whereOperator = '=') {
-		$principals = $joined = array();
+	private function fetchWith_JoinParamParser(array &$joinModels, array &$joinedMap, $parnetName = 'main') {
+		foreach($joinModels AS $jMkey => $jMVal) {
+			if (!isset($jMVal['Field']) && $jMVal['Field']) {
+				facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_FIELDNAME_NOTSET', 'orm', true);
+				
+				return false;
+				break;
+			}
+			
+			if (!isset($jMVal['Model']) && $jMVal['Model']) {
+				facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_MODELNAME_NOTSET', 'orm', true);
+				
+				return false;
+				break;
+			}
+			
+			if (!isset($jMVal['Key']) && $jMVal['Key']) {
+				facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_MODELKEYNAME_NOTSET', 'orm', true);
+				
+				return false;
+				break;
+			}
+			
+			if (isset($jMVal['With']) && !is_array($jMVal['With'])) {
+				facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_WITH_INVALID', 'orm', true);
+				
+				return false;
+				break;
+			}
+			
+			$tempJoinedModelAlias = isset($jMVal['Alias']) ? $jMVal['Alias'] : ($jMVal['Field']);
+			$tempJoinedModelAddr = $parnetName . '.' . $tempJoinedModelAlias;
+			
+			$joinedMap[$tempJoinedModelAddr] = array(
+				'Field' => $jMVal['Field'],
+				'Model' => $jMVal['Model'],
+				'Key' => $jMVal['Key'],
+				'Alias' => $tempJoinedModelAlias,
+				'Single' => isset($jMVal['Single']) && $jMVal['Single'] ? true : false,
+				'Param' => isset($jMVal['Param']) ? $jMVal['Param'] : array(),
+				'With' => $parnetName,
+			);
+			
+			if (isset($jMVal['With'])) {
+				$this->fetchWith_JoinParamParser($jMVal['With'], $joinedMap, $tempJoinedModelAddr);
+			}
+		}
+	}
+	
+	private function fetchWith_GetColumnDataRootRef(array &$dataMap, $dataMapName, $elementKey) {
+		$result = array();
 		
-		$lastJoinedModel = null;
+		if (isset($dataMap[$dataMapName])) {
+			foreach($dataMap[$dataMapName] AS $key => $val) {
+				if (isset($val[$elementKey])) {
+					$result[$val[$elementKey]] = &$dataMap[$dataMapName][$key];
+				}
+			}
+		}
+		
+		return $result;
+	}
+	
+	public function fetchWith(array $joinModels, array $currentParams, $offset = 0, $dist = 0, $whereOperator = '=') {
+		$principals = $participants = array();
+		$principal = $participant = null;
+		
+		$joinedMap = $dataMap = $colAddress = array();
 		
 		/*************
 			$joinModels = array(
 				array(
-					'Field' => 'TargetField',
-					'Model' => 'ModelName2',
-					'Key' => 'JoinedKey',
-					'As' => 'JoinResultASFieldName',
+					'Field' => 'TargetField', // Field name of the key in primary table
+					'Model' => 'ModelName2', // Model name of the table you want to join
+					'Key' => 'JoinedKey', // Field name of the key use to query
+					'Alias' => 'JoinResultASFieldName', // Save result in to another name
+					'Single' => true, // Only return one result, use for primary or unique field
+					'Param' => array( // Fetch params for joined table
+						'Where' => array(
+							'key' => 'val',
+						)
+					)
+					'With' => array( // Join Sub table of this sub table
+						array(
+							'Field' => 'TargetField',
+							'Model' => 'ModelName2',
+							'Key' => 'JoinedKey',
+							'Alias' => 'JoinResultASFieldName',
+						),
+					),
 				),
 				array(
 					'Field' => 'TargetField',
 					'Model' => 'ModelName2',
 					'Key' => 'JoinedKey',
-					'As' => 'JoinResultASFieldName',
+					'Alias' => 'JoinResultASFieldName',
 				),
 			);
 		*************/
 		
 		if ($principals = $this->fetch($currentParams, $offset, $dist, 'CLASS', $whereOperator)) {
-			// Scan all the needed key from principal results
+			// First step is, fetch data from master table, and save reference to total reference map
 			foreach($principals AS $principalKey => $principal) {
-				foreach($joinModels AS $modelKey => $model) {
-					if (isset($model['Field']) && isset($principal->$model['Field'])) {
-						$joinModels[$modelKey]['NewKey'] = (isset($joinModels[$modelKey]['As']) ? '_' . $joinModels[$modelKey]['As'] : $joinModels[$modelKey]['Field']);
-						$joinModels[$modelKey]['InKeys'][] = $principal->$model['Field'];
-						$joinModels[$modelKey]['InKeyMap'][$principal->$model['Field']][] = &$principals[$principalKey]; // Should by auto referenced actually.
-					} else {
-						facula::core('debug')->exception('ERROR_ORM_FETCHWITH_KEY_NOT_EXIST|' . $model['Field'], 'orm', true);
-						return false;
-						break; break;
-					}
-				}
+				$dataMap['main'][$principalKey] = &$principal->getDataRef();
 			}
 			
-			// Get joined model one by one, get data out from it
-			foreach($joinModels AS $modelKey => $modelSetting) {
-				$lastJoinedModel = new $modelSetting['Model'](); // Create model instance
+			// Handle With Joined Params after master table successful queried
+			$this->fetchWith_JoinParamParser($joinModels, $joinedMap, 'main');
+			
+			// Now, Init data container for joined tables
+			foreach($joinedMap AS $joinedMapKey => $joinedMapVal) {
+				$dataMap[$joinedMapKey] = array();
 				
-				if ($joined = $lastJoinedModel->fetchInKeys($modelSetting['Key'], $modelSetting['InKeys'])) { // Create model instance for each result
-					foreach($joined AS $joinedKey => $joinedObj) {
-						// If found the property we needed
-						if (isset($modelSetting['InKeyMap'][$joinedKey])) {
-							foreach($modelSetting['InKeyMap'][$joinedKey] AS $inMap) {
-								$inMap->$modelSetting['NewKey'] = $joinedObj->getData(); // Replace the principal with it.
+				$joinedMap[$joinedMapKey]['Data'] = &$dataMap[$joinedMapKey];
+			}
+			
+			// Query joined table one by one
+			foreach($joinedMap AS $joinedKey => $JoinedVal) {
+				if ($participant = facula::core('object')->getInstance($JoinedVal['Model'], array(), true)) {
+					$tempJoinedKeys = $this->fetchWith_GetColumnDataRootRef($dataMap, $JoinedVal['With'], $JoinedVal['Field']);
+					
+					if (!empty($tempJoinedKeys) && ($participants = $participant->fetchInKeys($JoinedVal['Key'], array_keys($tempJoinedKeys), $JoinedVal['Param']))) {
+						foreach($participants AS $participantKey => $participantVal) {
+							$JoinedVal['Data'][$participantKey] = $participantVal->getData();
+							
+							if (!is_array($tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']])) {
+								$tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']] = array();
+							}
+							
+							if ($JoinedVal['Single'] && empty($tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']])) {
+								$tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']] = &$JoinedVal['Data'][$participantKey];
+							} else {
+								$tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']][] = &$JoinedVal['Data'][$participantKey];
 							}
 						}
-						
-						$joinedObj = null; // Try release it.
 					}
 				}
-				
-				$lastJoinedModel = null; // Unset this and hopefully, release memory.
 			}
 			
 			return $principals;
 		}
-		
+
 		return array();
 	}
 	
