@@ -227,52 +227,51 @@ class SimpleORM implements ormInterface, ArrayAccess {
 	}
 	
 	private function fetchWith_JoinParamParser(array &$joinModels, array &$joinedMap, $parnetName = 'main') {
-		foreach($joinModels AS $jMkey => $jMVal) {
-			if (!isset($jMVal['Field']) && $jMVal['Field']) {
-				facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_FIELDNAME_NOTSET', 'orm', true);
+		if (is_array($joinModels)) {
+			foreach($joinModels AS $jMkey => $jMVal) {
+				if (!isset($jMVal['Field']) && $jMVal['Field']) {
+					facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_FIELDNAME_NOTSET', 'orm', true);
+					
+					return false;
+					break;
+				}
 				
-				return false;
-				break;
-			}
-			
-			if (!isset($jMVal['Model']) && $jMVal['Model']) {
-				facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_MODELNAME_NOTSET', 'orm', true);
+				if (!isset($jMVal['Model']) && $jMVal['Model']) {
+					facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_MODELNAME_NOTSET', 'orm', true);
+					
+					return false;
+					break;
+				}
 				
-				return false;
-				break;
-			}
-			
-			if (!isset($jMVal['Key']) && $jMVal['Key']) {
-				facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_MODELKEYNAME_NOTSET', 'orm', true);
+				if (!isset($jMVal['Key']) && $jMVal['Key']) {
+					facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_MODELKEYNAME_NOTSET', 'orm', true);
+					
+					return false;
+					break;
+				}
 				
-				return false;
-				break;
-			}
-			
-			if (isset($jMVal['With']) && !is_array($jMVal['With'])) {
-				facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_WITH_INVALID', 'orm', true);
+				$tempJoinedModelAlias = isset($jMVal['Alias']) ? $jMVal['Alias'] : ($jMVal['Field']);
+				$tempJoinedModelAddr = $parnetName . '.' . $tempJoinedModelAlias;
 				
-				return false;
-				break;
+				$joinedMap[$tempJoinedModelAddr] = array(
+					'Field' => $jMVal['Field'],
+					'Model' => $jMVal['Model'],
+					'Key' => $jMVal['Key'],
+					'Alias' => $tempJoinedModelAlias,
+					'Single' => isset($jMVal['Single']) && $jMVal['Single'] ? true : false,
+					'Param' => isset($jMVal['Param']) ? $jMVal['Param'] : array(),
+					'With' => $parnetName,
+				);
+				
+				if (isset($jMVal['With'])) {
+					$this->fetchWith_JoinParamParser($jMVal['With'], $joinedMap, $tempJoinedModelAddr);
+				}
 			}
-			
-			$tempJoinedModelAlias = isset($jMVal['Alias']) ? $jMVal['Alias'] : ($jMVal['Field']);
-			$tempJoinedModelAddr = $parnetName . '.' . $tempJoinedModelAlias;
-			
-			$joinedMap[$tempJoinedModelAddr] = array(
-				'Field' => $jMVal['Field'],
-				'Model' => $jMVal['Model'],
-				'Key' => $jMVal['Key'],
-				'Alias' => $tempJoinedModelAlias,
-				'Single' => isset($jMVal['Single']) && $jMVal['Single'] ? true : false,
-				'Param' => isset($jMVal['Param']) ? $jMVal['Param'] : array(),
-				'With' => $parnetName,
-			);
-			
-			if (isset($jMVal['With'])) {
-				$this->fetchWith_JoinParamParser($jMVal['With'], $joinedMap, $tempJoinedModelAddr);
-			}
+		} else {
+			facula::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_WITH_INVALID', 'orm', true);
 		}
+		
+		return false;
 	}
 	
 	private function fetchWith_GetColumnDataRootRef(array &$dataMap, $dataMapName, $elementKey) {
