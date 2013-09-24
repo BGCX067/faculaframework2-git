@@ -52,7 +52,7 @@ interface ormInterface {
 	public function delete();
 }
 
-class SimpleORM implements ormInterface, ArrayAccess {
+abstract class SimpleORM implements ormInterface, ArrayAccess {
 	protected $table = '';
 	protected $fields = array();
 	protected $primary = '';
@@ -61,22 +61,6 @@ class SimpleORM implements ormInterface, ArrayAccess {
 
 	public $cachedObjectFilePath = '';
 	public $cachedObjectSaveTime = 0;
-	
-	public function __construct() {
-		if (empty($this->table)) {
-			facula::core('debug')->exception('ERROR_ORM_TABLENAME_MUST_SET', 'orm', true);
-		}
-		
-		if (empty($this->fields)) {
-			facula::core('debug')->exception('ERROR_ORM_FIELDS_MUST_SET', 'orm', true);
-		}
-		
-		if (empty($this->primary)) {
-			facula::core('debug')->exception('ERROR_ORM_PRIMARYKEY_MUST_SET', 'orm', true);
-		}
-		
-		return true;
-	}
 	
 	public function __set($key, $val) {
 		$this->data[$key] = $val;
