@@ -45,6 +45,7 @@ interface ormInterface {
 	public function getByPK($key, $returnType = 'CLASS');
 	public function fetchByPKs($keys, array $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
 	
+	public function getWith(array $joinModels, array $whereParams, $whereOperator = '=');
 	public function fetchWith(array $joinModels, array $currentParams, $offset = 0, $dist = 0, $whereOperator = '=');
 	
 	public function save();
@@ -186,7 +187,7 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 	public function getInKey($keyField, $value, $param = array(), $returnType = 'CLASS', $whereOperator = '=') {
 		$data = array();
 		
-		if ($data = array_values($this->fetchInKeys($keyField, $value, $param, 0, 1, $returnType, $whereOperator))) {
+		if ($data = array_values($this->fetchInKeys($keyField, array($value), $param, 0, 1, $returnType, $whereOperator))) {
 			if (isset($data[0])) {
 				return $data[0];
 			}
@@ -267,6 +268,21 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 		}
 		
 		return $result;
+	}
+	
+	public function getWith(array $joinModels, array $whereParams, $whereOperator = '=') {
+		$data = array();
+		$currentParams = array(
+			'Where' => $whereParams,
+		);
+		
+		if ($data = $this->fetchWith($joinModels, $currentParams, 0, 1, $whereOperator)) {
+			if (isset($data[0])) {
+				return $data[0];
+			}
+		}
+		
+		return false;
 	}
 	
 	public function fetchWith(array $joinModels, array $currentParams, $offset = 0, $dist = 0, $whereOperator = '=') {
