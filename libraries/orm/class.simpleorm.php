@@ -34,16 +34,16 @@ interface ormInterface {
 	public function getFields();
 	public function getData();
 	
-	public function get($param);
-	public function fetch($param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
+	public function get(array $param);
+	public function fetch(array $param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
 	
-	public function finds($param, $offset = 0, $dist = 0, $returnType = 'CLASS');
+	public function finds(array $param, $offset = 0, $dist = 0, $returnType = 'CLASS');
 	
-	public function getInKey($keyField, $value);
-	public function fetchInKeys($keyField, $values, $param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
+	public function getInKey($keyField, $value, $param = array(), $returnType = 'CLASS', $whereOperator = '=');
+	public function fetchInKeys($keyField, array $values, array $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
 	
-	public function getByPK($key);
-	public function fetchByPKs($keys, $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
+	public function getByPK($key, $returnType = 'CLASS');
+	public function fetchByPKs($keys, array $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
 	
 	public function fetchWith(array $joinModels, array $currentParams, $offset = 0, $dist = 0, $whereOperator = '=');
 	
@@ -116,7 +116,7 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 		return $this->data;
 	}
 	
-	public function get($param) { // array('FieldName' => 'Value');
+	public function get(array $param) { // array('FieldName' => 'Value');
 		$data = array();
 		
 		if (($data = $this->fetch(array('Where' => $param), 0, 1)) && isset($data[0])) {
@@ -126,7 +126,7 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 		return false;
 	}
 	
-	public function fetch($param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=') {
+	public function fetch(array $param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=') {
 		$whereParams = array();
 		
 		$query = null;
@@ -171,34 +171,31 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 		return array();
 	}
 	
-	public function finds($param, $offset = 0, $dist = 0, $returnType = 'CLASS') {
+	public function finds(array $param, $offset = 0, $dist = 0, $returnType = 'CLASS') {
 		return $this->fetch($param, $offset, $dist, $returnType, $whereOperator = 'LIKE');
 	}
 	
-	public function getByPK($key) {
-		return $this->getInKey($this->primary, $key);
+	public function getByPK($key, $returnType = 'CLASS') {
+		return $this->getInKey($this->primary, $key, array(), $returnType);
 	}
 	
-	public function fetchByPKs($keys, $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=') {
+	public function fetchByPKs($keys, array $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=') {
 		return $this->fetchInKeys($this->primary, $keys, $param, $offset, $dist, $returnType, $whereOperator);
 	}
 	
-	public function getInKey($keyField, $value) {
-		$data = $values = array();
+	public function getInKey($keyField, $value, $param = array(), $returnType = 'CLASS', $whereOperator = '=') {
+		$data = array();
 		
-		$values[] = $value;
-		
-		if ($data = array_values($this->fetchInKeys($keyField, $values))) {
-			foreach($data AS $d) {
-				return $d; // Return the first element
-				break;
+		if ($data = array_values($this->fetchInKeys($keyField, $value, $param, 0, 1, $returnType, $whereOperator))) {
+			if (isset($data[0])) {
+				return $data[0];
 			}
 		}
 		
 		return false;
 	}
 	
-	public function fetchInKeys($keyField, $values, $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=') {
+	public function fetchInKeys($keyField, array $values, array $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=') {
 		$fetched = $where = array();
 		
 		$param['Where'][$keyField] = array($values, 'IN');
@@ -334,7 +331,7 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 						foreach($participants AS $participantKey => $participantVal) {
 							$JoinedVal['Data'][$participantKey] = $participantVal->getData();
 							
-							if (!is_array($tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']])) {
+							if (isset($tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']]) && !is_array($tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']])) {
 								$tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']] = array();
 							}
 							
@@ -350,7 +347,7 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 			
 			return $principals;
 		}
-
+		
 		return array();
 	}
 	
