@@ -334,7 +334,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		$current = 0;
 		$path = array();
 		
-		$path[] = $current = abs(crc32($cacheName));
+		$current = abs(crc32($cacheName));
 		
 		while(1) {
 			if ($current > 1024) {
