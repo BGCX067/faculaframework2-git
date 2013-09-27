@@ -73,6 +73,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 		if (class_exists('PDO')) {
 			$this->configs = array(
 				'DefaultTimeout' => isset($cfg['DefaultTimeout']) ? intval($cfg['DefaultTimeout']) : 1,
+				'WaitTimeout' => isset($cfg['WaitTimeout']) ? intval($cfg['WaitTimeout']) : 0,
 				'SelectMethod' => isset($cfg['SelectMethod']) ? $cfg['SelectMethod'] : 'Normal',
 				'PriorMethod' => isset($cfg['PriorMethod']) ? $cfg['PriorMethod'] : 'Redundance',
 			);
@@ -92,6 +93,8 @@ class faculaPdoDefault implements faculaPdoInterface {
 								'Username' => isset($database['Username'][0]) ? $database['Username'] : null,
 								'Password' => isset($database['Password'][0]) ? $database['Password'] : null,
 								'Timeout' => isset($database['Timeout']) ? $database['Timeout'] : $this->configs['DefaultTimeout'],
+								'Wait' => isset($database['Wait']) ? $database['Wait'] : $this->configs['WaitTimeout'],
+								'LstConnected' => 0,
 								'Persistent' => isset($database['Persistent']) ? ($database['Persistent'] ? true : false) : false,
 								'Options' => isset($database['Options']) && is_array($database['Options']) ? $database['Options'] : array(),
 							);
@@ -210,7 +213,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 		switch($this->configs['SelectMethod']) {
 			case 'Normal':
 				if (isset($this->connMap[$this->configs['SelectMethod']])) {
-					return $this->connMap[$this->configs['SelectMethod']];
+					return $this->doPDOCheckConnectivity($this->connMap[$this->configs['SelectMethod']], $error);
 				} else {
 					foreach($this->map['DBP'] AS $key => $database) {
 						if ($this->connMap[$this->configs['SelectMethod']] = $this->doPDOConnect($database['ID'], $error)) {
@@ -225,7 +228,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 					$tablekey = $setting['Table'];
 					
 					if (isset($this->connMap[$this->configs['SelectMethod']][$tablekey])) {
-						return $this->connMap[$this->configs['SelectMethod']][$tablekey];
+						return $this->doPDOCheckConnectivity($this->connMap[$this->configs['SelectMethod']][$tablekey], $error);
 					} else {
 						foreach($this->getDatabaseByTable($setting['Table']) AS $key => $database) {
 							if ($this->connMap[$this->configs['SelectMethod']][$tablekey] = $this->doPDOConnect($database['ID'], $error)) {
@@ -251,7 +254,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 					$tablekey = $setting['Operation'];
 					
 					if (isset($this->connMap[$this->configs['SelectMethod']][$tablekey])) {
-						return $this->connMap[$this->configs['SelectMethod']][$tablekey];
+						return $this->doPDOCheckConnectivity($this->connMap[$this->configs['SelectMethod']][$tablekey], $error);
 					} else {
 						foreach($this->getDatabaseByOperation($setting['Operation']) AS $key => $database) {
 							if ($this->connMap[$this->configs['SelectMethod']][$tablekey] = $this->doPDOConnect($database['ID'], $error)) {
@@ -277,7 +280,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 					$tablekey = $setting['Table'] . '#' . $setting['Operation'];
 					
 					if (isset($this->connMap[$this->configs['SelectMethod']][$tablekey])) {
-						return $this->connMap[$this->configs['SelectMethod']][$tablekey];
+						return $this->doPDOCheckConnectivity($this->connMap[$this->configs['SelectMethod']][$tablekey], $error);
 					} else {
 						foreach($this->getDatabaseByTableOperation($setting['Table'], $setting['Operation']) AS $key => $database) {
 							if ($this->connMap[$this->configs['SelectMethod']][$tablekey] = $this->doPDOConnect($database['ID'], $error)) {
@@ -312,9 +315,20 @@ class faculaPdoDefault implements faculaPdoInterface {
 		return false;
 	}
 	
+	private function doPDOCheckConnectivity(&$dbh, &$error) {
+		$currentTime = time();
+		
+		if ($dbh->_connection['Wait'] && $currentTime - $dbh->_connection['LstConnected'] > $dbh->_connection['Wait']) {
+			$dbh = $this->doPDOReconnect($dbh, $error);
+		}
+		
+		return $dbh;
+	}
+	
 	public function doPDOConnect($dbIndex, &$error) {
 		$dbh = null;
 		$successed = false;
+		$currentTime = time();
 		
 		if (!isset($this->map['DBConn'][$dbIndex]['Connection'])) {
 			// Enter Critical Section so no error below belowing code will cause error
@@ -325,6 +339,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 																																																					PDO::ATTR_TIMEOUT => $this->pool['DBs'][$dbIndex]['Timeout'],
 																																																					PDO::ATTR_PERSISTENT => $this->pool['DBs'][$dbIndex]['Persistent'] ) + $this->pool['DBs'][$dbIndex]['Options']);
 				
+				$this->pool['DBs'][$dbIndex]['LstConnected'] = $currentTime;
 				$dbh->_connection = &$this->pool['DBs'][$dbIndex];
 				
 				$successed = true;
@@ -351,11 +366,11 @@ class faculaPdoDefault implements faculaPdoInterface {
 	
 	public function doPDOReconnect(&$dbh, &$error) {
 		if (isset($dbh->_connection)) {
-			if (isset($this->map['DBConn'][$dbh->_connection['Database']['ID']]['Connection'])) {
-				unset($this->map['DBConn'][$dbh->_connection['Database']['ID']]['Connection']);
+			if (isset($this->map['DBConn'][$dbh->_connection['ID']]['Connection'])) {
+				unset($this->map['DBConn'][$dbh->_connection['ID']]['Connection']);
 			}
 			
-			if ($dbh = $this->doPDOConnect($dbh->_connection['Database']['ID'], $error)) {
+			if ($dbh = $this->doPDOConnect($dbh->_connection['ID'], $error)) {
 				return $dbh;
 			}
 		}
