@@ -138,7 +138,7 @@ class faculaCacheDefault implements faculaCacheInterface {
 		}
 		
 		if ($pathArray[0][0]) {
-			$result['Path'] = implode(DIRECTORY_SEPARATOR, $pathArray);
+			$result['Path'] = implode(DIRECTORY_SEPARATOR, array_reverse($pathArray));
 			$result['File'] = $result['Path'] . DIRECTORY_SEPARATOR . 'CacheFile'. $cacheName . '.php';
 			
 			return $result;

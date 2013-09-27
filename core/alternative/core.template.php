@@ -344,7 +344,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 			}
 		}
 		
-		return implode(DIRECTORY_SEPARATOR, $path);
+		return implode(DIRECTORY_SEPARATOR, array_reverse($path));
 	}
 	
 	// Get template and compile it to PHP code if needed
