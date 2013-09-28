@@ -155,7 +155,7 @@ class faculaCacheDefault implements faculaCacheInterface {
 		
 		if (!file_exists($fullPath)) {
 			foreach(explode(DIRECTORY_SEPARATOR, $dirName) AS $path) {
-				if (!file_exists($path) && mkdir($currentPath . $path)) {
+				if (!file_exists($currentPath . $path) && mkdir($currentPath . $path)) {
 					$currentPath .= $path . DIRECTORY_SEPARATOR;
 					
 					file_put_contents($currentPath . 'index.htm', 'Access Denied');
