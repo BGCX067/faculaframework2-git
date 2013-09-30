@@ -248,7 +248,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 		$ips = array();
 		
 		if (!$ipstr) {
-			if(isset($_SERVER['HTTP_CLIENT_IP'][0])){
+			if(isset($_SERVER['HTTP_CLIENT_IP'][0])) {
 				$ip = $_SERVER['HTTP_CLIENT_IP'];
 			} elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR'][0])) {
 				$ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'], 16);
