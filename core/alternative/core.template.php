@@ -513,7 +513,7 @@ class faculaTemplateDefaultRender {
 		
 		extract($assigned);
 		
-		facula::core('debug')->criticalSection(true, true);
+		facula::core('debug')->criticalSection(true);
 		
 		require($targetTpl);
 		
@@ -890,6 +890,21 @@ class faculaTemplateDefaultCompiler {
 						
 					case 'number':
 						$phpcode .= 'echo(number_format(' . $param[0] . '));';
+						break;
+						
+					case 'friendlyNumber':
+						if (isset($this->pool['LanguageMap']['FORMAT_NUMBER_HUNDRED']) && 
+							isset($this->pool['LanguageMap']['FORMAT_NUMBER_THOURSAND']) && 
+							isset($this->pool['LanguageMap']['FORMAT_NUMBER_MILLION']) && 
+							isset($this->pool['LanguageMap']['FORMAT_NUMBER_TRILLION']) && 
+							isset($this->pool['LanguageMap']['FORMAT_NUMBER_QUADRILLION']) && 
+							isset($this->pool['LanguageMap']['FORMAT_NUMBER_QUINTILLION']) && 
+							isset($this->pool['LanguageMap']['FORMAT_NUMBER_SEXTILLION'])) {
+							$phpcode .= 'if (' . $param[0] . ' > 1000000000000000000000) { echo(round((' . $param[0] . ' / 1000000000000000000000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_SEXTILLION'] . '\'); } elseif (' . $param[0] . ' > 1000000000000000000) { echo(round((' . $param[0] . ' / 1000000000000000000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_QUINTILLION'] . '\'); } elseif (' . $param[0] . ' > 1000000000000000) { echo(round((' . $param[0] . ' / 1000000000000000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_QUADRILLION'] . '\'); } elseif (' . $param[0] . ' > 1000000000000) { echo(round((' . $param[0] . ' / 1000000000000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_TRILLION'] . '\'); } elseif (' . $param[0] . ' > 1000000) { echo(round((' . $param[0] . ' / 1000000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_MILLION'] . '\'); } elseif (' . $param[0] . ' > 1000) { echo(round((' . $param[0] . ' / 1000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_THOURSAND'] . '\'); } elseif (' . $param[0] . ' > 100) { echo(round((' . $param[0] . ' / 100) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_HUNDRED'] . '\'); } else { echo(' . $param[0] . '); }';
+						} else {
+							facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYNUMBER_LANG_MISSED', 'template', true);
+							return false;
+						}
 						break;
 						
 					case 'floatNumber':
