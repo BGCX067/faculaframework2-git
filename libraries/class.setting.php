@@ -29,19 +29,34 @@
 abstract class Setting {
 	static private $registered = array();
 	
-	static public function registerSetting($settingName, $operator, $public = false) {
-		$accesser = $public ? '//public//' : get_called_class();
+	static public function registerSetting($settingName, $operator, $accessers = false) {
+		switch(gettype($accessers)) {
+			case 'array':
+				// If $accessers is an array, means we need to specify who can access this setting manually.
+				$accesser = $accessers;
+				break;
+				
+			case 'string':
+				// If $accessers is a string, You means can set one accesser manually .
+				$accesser = array($accessers);
+				break;
+				
+			default:
+				// If $accessers is a bool or other type, when it set to true, means setting can be access from public, other wise, only caller class can access
+				$accesser = $accessers ? array('!PUBLIC!') : array(get_called_class());
+				break;
+		}
 		
 		if (!isset(self::$registered[$settingName])) {
 			if (is_callable($operator)) {
 				self::$registered[$settingName]['Operator'] = $operator;
-				self::$registered[$settingName]['Type'] = 'Function';
+				self::$registered[$settingName]['Type'] = 'Operator';
 			} else {
 				self::$registered[$settingName]['Result'] = $operator;
 				self::$registered[$settingName]['Type'] = 'Data';
 			}
 			
-			self::$registered[$settingName]['Accesser'] = $accesser;
+			self::$registered[$settingName]['Accesser'] = array_flip($accesser); // Flip the array so the val (Access tag or class name) will be the key
 			
 			return true;
 		} else {
@@ -54,10 +69,10 @@ abstract class Setting {
 	static public function getSetting($settingName) {
 		$accesser = get_called_class();
 		
-		if (isset(self::$registered[$settingName]) && (self::$registered[$settingName]['Accesser'] == '//public//' || self::$registered[$settingName]['Accesser'] == $accesser)) {
+		if (isset(self::$registered[$settingName]) && (isset(self::$registered[$settingName]['Accesser']['!PUBLIC!']) || isset(self::$registered[$settingName]['Accesser'][$accesser]))) {
 			
 			switch(self::$registered[$settingName]['Type']) {
-				case 'Function':
+				case 'Operator':
 					if (!isset(self::$registered[$settingName]['Result'])) {
 						$operator = self::$registered[$settingName]['Operator'];
 						
