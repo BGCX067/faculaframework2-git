@@ -94,8 +94,6 @@ abstract class Container {
 					break;
 					
 			}
-		} else {
-			facula::core('debug')->exception('ERROR_CONTAINER_NAME_NOTFOUND|' . $name, 'container', true);
 		}
 		
 		return false;

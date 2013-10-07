@@ -75,11 +75,9 @@ abstract class Setting {
 					break;
 			}
 			
-		} else {
-			facula::core('debug')->exception('ERROR_SETTING_NAME_NOTFOUND|' . $settingName, 'setting', true);
 		}
 		
-		return array();
+		return null;
 	}
 }
 
