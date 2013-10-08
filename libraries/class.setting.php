@@ -57,7 +57,7 @@ abstract class Setting {
 				// If $accessers is a bool or other type, when it set to true, means setting can be access from public, other wise, only caller class can access
 				if ($accesser) {
 					$accessers = array('!PUBLIC!');
-				} elseif (($accesser = get_called_class() != __CLASS__) || ($accesser = self::getCallerClass())) {
+				} elseif ((($accesser = get_called_class()) != __CLASS__) || ($accesser = self::getCallerClass())) {
 					$accessers = array($accesser);
 				}
 				break;
@@ -90,7 +90,7 @@ abstract class Setting {
 		$accesser = '';
 		
 		if (isset(self::$registered[$settingName])) {
-			if (isset(self::$registered[$settingName]['Accesser']['!PUBLIC!']) || ((($accesser = get_called_class() != __CLASS__) || ($accesser = self::getCallerClass())) && isset(self::$registered[$settingName]['Accesser'][$accesser]))) {
+			if (isset(self::$registered[$settingName]['Accesser']['!PUBLIC!']) || (((($accesser = get_called_class()) != __CLASS__) || ($accesser = self::getCallerClass())) && isset(self::$registered[$settingName]['Accesser'][$accesser]))) {
 				
 				switch(self::$registered[$settingName]['Type']) {
 					case 'Operator':
@@ -112,10 +112,9 @@ abstract class Setting {
 				}
 				
 			} else {
-				facula::core('debug')->exception('ERROR_SETTING_ACCESS_DENIED|' . $settingName . ' -> ' . $accesser, 'setting', true);
+				facula::core('debug')->exception('ERROR_SETTING_ACCESS_DENIED|' . $accesser . ' -> ' . $settingName, 'setting', true);
 			}
 		}
-
 		
 		return null;
 	}
