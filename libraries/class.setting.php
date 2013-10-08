@@ -29,34 +29,40 @@
 abstract class Setting {
 	static private $registered = array();
 	
-	static public function registerSetting($settingName, $operator, $accessers = false) {
-		switch(gettype($accessers)) {
+	static public function registerSetting($settingName, $operator, $accesser = false) {
+		$accessers = array();
+		
+		switch(gettype($accesser)) {
 			case 'array':
 				// If $accessers is an array, means we need to specify who can access this setting manually.
-				$accesser = $accessers;
+				$accessers = $accesser;
 				break;
 				
 			case 'string':
 				// If $accessers is a string, You means can set one accesser manually .
-				$accesser = array($accessers);
+				$accessers = $accesser ? array($accesser) : array();
 				break;
 				
 			default:
 				// If $accessers is a bool or other type, when it set to true, means setting can be access from public, other wise, only caller class can access
-				$accesser = $accessers ? array('!PUBLIC!') : array(get_called_class());
+				$accessers = $accesser ? array('!PUBLIC!') : array(get_called_class());
 				break;
 		}
 		
 		if (!isset(self::$registered[$settingName])) {
 			if (is_callable($operator)) {
-				self::$registered[$settingName]['Operator'] = $operator;
-				self::$registered[$settingName]['Type'] = 'Operator';
+				self::$registered[$settingName] = array(
+					'Operator' => $operator,
+					'Type' => 'Operator',
+					'Accesser' => array_flip($accessers)
+				);
 			} else {
-				self::$registered[$settingName]['Result'] = $operator;
-				self::$registered[$settingName]['Type'] = 'Data';
+				self::$registered[$settingName] = array(
+					'Result' => $operator,
+					'Type' => 'Data',
+					'Accesser' => array_flip($accessers)
+				);
 			}
-			
-			self::$registered[$settingName]['Accesser'] = array_flip($accesser); // Flip the array so the val (Access tag or class name) will be the key
 			
 			return true;
 		} else {
@@ -66,31 +72,44 @@ abstract class Setting {
 		return false;
 	}
 	
-	static public function getSetting($settingName) {
-		$accesser = get_called_class();
+	static private function getCallerClass() {
+		$bt = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT + DEBUG_BACKTRACE_IGNORE_ARGS, 3);
 		
-		if (isset(self::$registered[$settingName]) && (isset(self::$registered[$settingName]['Accesser']['!PUBLIC!']) || isset(self::$registered[$settingName]['Accesser'][$accesser]))) {
-			
-			switch(self::$registered[$settingName]['Type']) {
-				case 'Operator':
-					if (!isset(self::$registered[$settingName]['Result'])) {
-						$operator = self::$registered[$settingName]['Operator'];
-						
-						self::$registered[$settingName]['Result'] = $operator();
-					}
-					
-					return self::$registered[$settingName]['Result'];
-					break;
-					
-				case 'Data':
-					return self::$registered[$settingName]['Result'];
-					break;
-					
-				default:
-					break;
-			}
-			
+		if (isset($bt[2]['class'])) {
+			return $bt[2]['class'];
 		}
+	}
+	
+	static public function getSetting($settingName) {
+		$accesser = '';
+		
+		if (isset(self::$registered[$settingName])) {
+			if (isset(self::$registered[$settingName]['Accesser']['!PUBLIC!']) || ((($accesser = get_called_class() != __CLASS__) || ($accesser = self::getCallerClass())) && isset(self::$registered[$settingName]['Accesser'][$accesser]))) {
+				
+				switch(self::$registered[$settingName]['Type']) {
+					case 'Operator':
+						if (!isset(self::$registered[$settingName]['Result'])) {
+							$operator = self::$registered[$settingName]['Operator'];
+							
+							self::$registered[$settingName]['Result'] = $operator();
+						}
+						
+						return self::$registered[$settingName]['Result'];
+						break;
+						
+					case 'Data':
+						return self::$registered[$settingName]['Result'];
+						break;
+						
+					default:
+						break;
+				}
+				
+			} else {
+				facula::core('debug')->exception('ERROR_SETTING_ACCESS_DENIED|' . $settingName . ' -> ' . $accesser, 'setting', true);
+			}
+		}
+
 		
 		return null;
 	}
