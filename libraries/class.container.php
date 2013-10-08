@@ -28,6 +28,16 @@
 abstract class Container {
 	static private $contains = array();
 	
+	static private function getCallerClass() {
+		$bt = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT + DEBUG_BACKTRACE_IGNORE_ARGS, 3);
+		
+		if (isset($bt[2]['class'])) {
+			return $bt[2]['class'];
+		}
+		
+		return null;
+	}
+	
 	static public function register($name, Closure $processor, $accesser = false) {
 		$accessers = array();
 		
@@ -41,7 +51,11 @@ abstract class Container {
 				break;
 				
 			default:
-				$accessers = $accesser ? array('!PUBLIC!') : array(get_called_class());
+				if ($accesser) {
+					$accessers = array('!PUBLIC!');
+				} elseif (($accesser = get_called_class() != __CLASS__) || ($accesser = self::getCallerClass())) {
+					$accessers = array($accesser);
+				}
 				break;
 		}
 		
@@ -57,14 +71,6 @@ abstract class Container {
 		}
 		
 		return false;
-	}
-	
-	static private function getCallerClass() {
-		$bt = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT + DEBUG_BACKTRACE_IGNORE_ARGS, 3);
-		
-		if (isset($bt[2]['class'])) {
-			return $bt[2]['class'];
-		}
 	}
 	
 	static public function resolve($name, $args = array(), $default = null) {

@@ -29,6 +29,16 @@
 abstract class Setting {
 	static private $registered = array();
 	
+	static private function getCallerClass() {
+		$bt = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT + DEBUG_BACKTRACE_IGNORE_ARGS, 3);
+		
+		if (isset($bt[2]['class'])) {
+			return $bt[2]['class'];
+		}
+		
+		return null;
+	}
+	
 	static public function registerSetting($settingName, $operator, $accesser = false) {
 		$accessers = array();
 		
@@ -45,7 +55,11 @@ abstract class Setting {
 				
 			default:
 				// If $accessers is a bool or other type, when it set to true, means setting can be access from public, other wise, only caller class can access
-				$accessers = $accesser ? array('!PUBLIC!') : array(get_called_class());
+				if ($accesser) {
+					$accessers = array('!PUBLIC!');
+				} elseif (($accesser = get_called_class() != __CLASS__) || ($accesser = self::getCallerClass())) {
+					$accessers = array($accesser);
+				}
 				break;
 		}
 		
@@ -70,14 +84,6 @@ abstract class Setting {
 		}
 		
 		return false;
-	}
-	
-	static private function getCallerClass() {
-		$bt = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT + DEBUG_BACKTRACE_IGNORE_ARGS, 3);
-		
-		if (isset($bt[2]['class'])) {
-			return $bt[2]['class'];
-		}
 	}
 	
 	static public function getSetting($settingName) {
