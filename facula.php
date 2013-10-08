@@ -400,47 +400,51 @@ class facula {
 		$modules = array();
 		$moduleFilenames = $tempModuleFilenames = array();
 		
-		$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(realpath($directory), FilesystemIterator::SKIP_DOTS));
-		
-		foreach($iterator AS $file) {
-			if ($file->isFile()) {
-				$moduleFilenames = explode('.', $file->getFilename());
-				
-				switch(count($moduleFilenames)) {
-					case 1:
-						break;
-						
-					case 2:
-						break;
-						
-					case 3:
-						$modules[] = array(
-							'Prefix' => $moduleFilenames[0],
-							'Name' => $moduleFilenames[1],
-							'Ext' => $moduleFilenames[2],
-							'Path' => $file->getPathname()
-						);
-						break;
-						
-					default:
-						$tempModuleFilenames = array(
-							'Prefix' => array_shift($moduleFilenames),
-							'Ext' => array_pop($moduleFilenames),
-						);
-						
-						$modules[] = array(
-							'Prefix' => $tempModuleFilenames['Prefix'],
-							'Name' => implode('.', $moduleFilenames),
-							'Ext' => $tempModuleFilenames['Ext'],
-							'Path' => $file->getPathname()
-						);
-						break;
+		if (is_dir($directory)) {
+			$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(realpath($directory), FilesystemIterator::SKIP_DOTS));
+			
+			foreach($iterator AS $file) {
+				if ($file->isFile()) {
+					$moduleFilenames = explode('.', $file->getFilename());
+					
+					switch(count($moduleFilenames)) {
+						case 1:
+							break;
+							
+						case 2:
+							break;
+							
+						case 3:
+							$modules[] = array(
+								'Prefix' => $moduleFilenames[0],
+								'Name' => $moduleFilenames[1],
+								'Ext' => $moduleFilenames[2],
+								'Path' => $file->getPathname()
+							);
+							break;
+							
+						default:
+							$tempModuleFilenames = array(
+								'Prefix' => array_shift($moduleFilenames),
+								'Ext' => array_pop($moduleFilenames),
+							);
+							
+							$modules[] = array(
+								'Prefix' => $tempModuleFilenames['Prefix'],
+								'Name' => implode('.', $moduleFilenames),
+								'Ext' => $tempModuleFilenames['Ext'],
+								'Path' => $file->getPathname()
+							);
+							break;
+					}
 				}
 			}
-		}
-		
-		if (isset($modules[0])) {
-			return $modules;
+			
+			if (isset($modules[0])) {
+				return $modules;
+			}
+		} else {
+			throw new Exception($directory . ' is not a directory.'); 
 		}
 		
 		return false;
