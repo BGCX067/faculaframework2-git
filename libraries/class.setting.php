@@ -30,10 +30,21 @@ abstract class Setting {
 	static private $registered = array();
 	
 	static private function getCallerClass() {
-		$bt = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT + DEBUG_BACKTRACE_IGNORE_ARGS, 3);
+		$debug = array();
+		$btResult = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT + DEBUG_BACKTRACE_IGNORE_ARGS);
 		
-		if (isset($bt[2]['class'])) {
-			return $bt[2]['class'];
+		$debug[] = array_shift($btResult); // Shift the back trace of this method
+		$debug[] = array_shift($btResult); // Shift next, which must be the call to this method
+		
+		foreach($btResult AS $bt) {
+			if (isset($bt['function']) && $bt['function'] == '{closure}') {
+				continue;
+			}
+			
+			if (isset($bt['class'])) {
+				return $bt['class'];
+				break;
+			}
 		}
 		
 		return null;
