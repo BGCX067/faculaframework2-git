@@ -139,11 +139,11 @@ class faculaCacheDefault implements faculaCacheInterface {
 		
 		if ($pathArray[0][0]) {
 			$result['Path'] = implode(DIRECTORY_SEPARATOR, array_reverse($pathArray));
-			$result['File'] = $result['Path'] . DIRECTORY_SEPARATOR . 'CacheFile'. $cacheName . '.php';
+			$result['File'] = $result['Path'] . DIRECTORY_SEPARATOR . 'CacheFile.'. $cacheName . '.php';
 			
 			return $result;
 		} else {
-			$result['File'] = $result['Path'] . DIRECTORY_SEPARATOR . 'CacheFile'. $cacheName . '.php';
+			$result['File'] = $result['Path'] . DIRECTORY_SEPARATOR . 'CacheFile.'. $cacheName . '.php';
 		
 			return $result;
 		}
@@ -155,11 +155,11 @@ class faculaCacheDefault implements faculaCacheInterface {
 		
 		if (!file_exists($fullPath)) {
 			foreach(explode(DIRECTORY_SEPARATOR, $dirName) AS $path) {
-				if (!file_exists($currentPath . $path) && mkdir($currentPath . $path)) {
-					$currentPath .= $path . DIRECTORY_SEPARATOR;
-					
+				if (!file_exists($currentPath . $path) && mkdir($currentPath . $path, 0744)) {
 					file_put_contents($currentPath . 'index.htm', 'Access Denied');
 				}
+				
+				$currentPath .= $path . DIRECTORY_SEPARATOR;
 			}
 			
 			return $currentPath;
