@@ -59,11 +59,16 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 	protected $primary = '';
 	
 	private $data = array();
+	private $dataOriginal = array();
 
 	public $cachedObjectFilePath = '';
 	public $cachedObjectSaveTime = 0;
 	
 	public function __set($key, $val) {
+		if (!isset($this->data[$key])) {
+			$this->dataOriginal[$key] = $val;
+		}
+		
 		$this->data[$key] = $val;
 	}
 	
@@ -368,14 +373,20 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 	}
 	
 	public function save() {
-		$data = array();
+		$primaryKey = $result = null;
 		
 		if (isset($this->data[$this->primary])) {
-			$data = $this->data;
+			if (isset($this->dataOriginal[$this->primary])) {
+				$primaryKey = $this->dataOriginal[$this->primary];
+			} else {
+				$primaryKey = $this->data[$this->primary];
+			}
 			
-			unset($data[$this->primary]); // No need to update primary key
-			
-			return query::from($this->table)->update($this->fields)->set($this->data)->where('AND', $this->primary, '=', $this->data[$this->primary])->save();
+			if ($result = query::from($this->table)->update($this->fields)->set($this->data)->where('AND', $this->primary, '=', $primaryKey)->save()) {
+				$this->dataOriginal = $this->data;
+				
+				return $result;
+			}
 		} else {
 			facula::core('debug')->exception('ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET', 'orm', true);
 		}
@@ -384,6 +395,7 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 	}
 	
 	public function insert() {
+		$result = null;
 		$keys = array();
 		$data = $this->data;
 		
@@ -395,12 +407,24 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 			}
 		}
 		
-		return query::from($this->table)->insert($keys)->value($data)->save($this->primary);
+		if ($result = query::from($this->table)->insert($keys)->value($data)->save($this->primary)) {
+			$this->dataOriginal = $this->data;
+			
+			return $result;
+		}
+		
+		return false;
 	}
 	
 	public function delete() {
+		$result = null;
+		
 		if (isset($this->data[$this->primary])) {
-			return query::from($this->table)->delete($this->fields)->where('AND', $this->primary, '=', $this->data[$this->primary])->save();
+			if ($result = query::from($this->table)->delete($this->fields)->where('AND', $this->primary, '=', $this->data[$this->primary])->save()) {
+				$this->dataOriginal = $this->data = array();
+				
+				return $result;
+			}
 		} else {
 			facula::core('debug')->exception('ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET', 'orm', true);
 		}
