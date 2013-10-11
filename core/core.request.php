@@ -170,6 +170,10 @@ class faculaRequestDefault implements faculaRequestInterface {
 			$this->requestInfo['ipArray'] = self::splitIP($this->requestInfo['ip']);
 		}
 		
+		if ($this->requestInfo['ipSafe'] = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0') { // Get client IP for identification
+			$this->requestInfo['ipSafeArray'] = self::splitIP($this->requestInfo['ipSafe']);
+		}
+		
 		if ($_SERVER['SERVER_PORT'] == 443) {
 			$this->requestInfo['https'] = true; 
 		} else {
