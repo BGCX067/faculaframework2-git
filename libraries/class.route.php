@@ -37,9 +37,12 @@
 */
 
 interface routeInterface {
-	static public function setup($paths);
+	static public function setup(array $paths);
 	static public function run();
-
+	
+	static public function exportMap();
+	static public function importMap(array $maps);
+	
 	static public function setDefaultHandler(Closure $handler);
 	static public function setErrorHandler(Closure $handler);
 	
@@ -50,7 +53,7 @@ interface routeInterface {
 }
 
 abstract class Route implements routeInterface {
-	static private $routeSplit = '/';
+	static public $routeSplit = '/';
 	static private $routeMap = array();
 	
 	static private $defaultHandler = null;
@@ -59,7 +62,7 @@ abstract class Route implements routeInterface {
 	static private $pathParams = array();
 	static private $operatorParams = array();
 
-	static public function setup($paths) {
+	static public function setup(array $paths) {
 		$tempLastRef = $tempLastUsedRef = null;
 		
 		foreach($paths AS $path => $operator) {
@@ -82,6 +85,14 @@ abstract class Route implements routeInterface {
 		}
 		
 		return true;
+	}
+	
+	static public function exportMap() {
+		return self::$routeMap;
+	}
+	
+	static public function importMap(array $maps) {
+		return (self::$routeMap = $maps);
 	}
 	
 	static public function run() {
