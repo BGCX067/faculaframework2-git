@@ -92,6 +92,11 @@ class query implements queryInterface {
 		'ASC' => 'ASC',
 	);
 	
+	static private $lastStatement = array(
+		'Statement' => null,
+		'Identity' => '',
+	);
+	
 	private $connection = null;
 	private $builder = null;
 	
@@ -625,7 +630,7 @@ class query implements queryInterface {
 	}
 	
 	protected function prepare($requiredQueryParams = array()) {
-		$sql = '';
+		$sql = $sqlID = '';
 		$statement = null;
 		$matchedParams = array();
 		
@@ -644,8 +649,17 @@ class query implements queryInterface {
 				// Build SQL Syntax
 				if ($sql = $this->builder->build()) {
 					try {
+						$sqlID = crc32($sql);
+						
 						// Prepare statement
-						if ($statement = $this->connection->prepare($sql)) {
+						if (self::$lastStatement['Identity'] == $sqlID) {
+							$statement = self::$lastStatement['Statement'];
+						} else {
+							self::$lastStatement['Identity'] = $sqlID;
+							$statement = (self::$lastStatement['Statement'] = $this->connection->prepare($sql));
+						}
+						
+						if ($statement) {
 							// Search string and set key
 							if (preg_match_all('/(:[0-9]+)/', $sql, $matchedParams)) {
 								
