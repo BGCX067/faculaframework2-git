@@ -86,7 +86,9 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		$this->configs = array(
 			'Cache' => isset($cfg['CacheTemplate']) && $cfg['CacheTemplate'] ? true : false,
 			'Compress' => isset($cfg['CompressOutput']) && $cfg['CompressOutput'] ? true : false,
-			'Renew' => isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ? true : false
+			'Renew' => isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ? true : false,
+			'Render' => isset($cfg['Render']) && class_exists($cfg['Render']) ? $cfg['Render'] : 'faculaTemplateDefaultRender',
+			'Compiler' => isset($cfg['Compiler']) && class_exists($cfg['Compiler']) ? $cfg['Compiler'] : 'faculaTemplateDefaultCompiler',
 		);
 	
 		// TemplatePool 
@@ -184,8 +186,6 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 			$this->assigned[$key] = $val;
 			
 			return true;
-		} else {
-			facula::core('debug')->exception('ERROR_TEMPLATE_ASSIGN_KEY_EXISTED', 'template', true);
 		}
 		
 		return false;
@@ -234,11 +234,11 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		
 		if ($expire !== null || $expiredCallback) { // If $expire not null or $expiredCallback not set, means, this is a cache call
 			if ($templatePath = $this->getCacheTemplate($templateName, $templateSet, $expire, $expiredCallback, $cacheFactor)) {
-				return $this->doRender($templatePath);
+				return $this->doRender($templateName, $templatePath);
 			}
 		} else { // Or it just a normal call
 			if ($templatePath = $this->getCompiledTemplate($templateName, $templateSet)) {
-				return $this->doRender($templatePath);
+				return $this->doRender($templateName, $templatePath);
 			}
 		}
 		
@@ -288,10 +288,11 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 							$cachedTmpPage = $cachedPagePath . '.temp.php';
 							
 							if (file_put_contents($cachedTmpPage, $compiledContentForCached)) {
-								$render = new faculaTemplateDefaultRender($cachedTmpPage, $this->assigned);
-								
+								facula::core('object')->runHook('template_cache_prerender_*', array(), $error);
+								facula::core('object')->runHook('template_cache_prerender_' . $templateName, array(), $error);
+		
 								// Render nocached compiled content
-								if (($renderCachedContent = $render->getResult()) && unlink($cachedTmpPage)) {
+								if (($renderCachedContent = $this->doRender($templateName, $cachedTmpPage)) && unlink($cachedTmpPage)) {
 									/*
 										Beware the renderCachedContent as it may contains code that assigned by user. After render and cache, the php code may will 
 										turn to executable.
@@ -353,14 +354,8 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		$compiledTpl = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledTemplate.' . $templateName . ($templateSet ? '+' . $templateSet : '') . '.' . $this->pool['Language'] . '.php';
 		
 		if (!$this->configs['Renew'] && is_readable($compiledTpl)) {
-			facula::core('object')->runHook('template_render_*', array(), $error);
-			facula::core('object')->runHook('template_render_' . $templateName, array(), $error);
-		
 			return $compiledTpl;
 		} else {
-			facula::core('object')->runHook('template_compile_*', array(), $error);
-			facula::core('object')->runHook('template_compile_' . $templateName, array(), $error);
-			
 			if ($templateSet && isset($this->pool['File']['Tpl'][$templateName][$templateSet])) {
 				$templatePath = $this->pool['File']['Tpl'][$templateName][$templateSet];
 			} elseif (isset($this->pool['File']['Tpl'][$templateName]['default'])) {
@@ -371,7 +366,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 				return false;
 			}
 			
-			if ($this->doCompile($templatePath, $compiledTpl)) {
+			if ($this->doCompile($templateName, $templatePath, $compiledTpl)) {
 				return $compiledTpl;
 			}
 		}
@@ -418,21 +413,28 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	}
 	
 	/* Load setting for compiling */
-	private function doRender(&$compiledTpl) {
-		$render = new faculaTemplateDefaultRender($compiledTpl, $this->assigned);
+	private function doRender(&$templateName, &$compiledTpl) {
+		$error = '';
+		facula::core('object')->runHook('template_render_*', array(), $error);
+		facula::core('object')->runHook('template_render_' . $templateName, array(), $error);
+		
+		$render = new $this->configs['Render']($compiledTpl, $this->assigned);
 		
 		return $render->getResult();
 	}
 	
-	private function doCompile($sourceTpl, $resultTpl) {
-		$sourceContent = $compiledContent = '';
+	private function doCompile(&$templateName, &$sourceTpl, &$resultTpl) {
+		$sourceContent = $compiledContent = $error = '';
+		
+		facula::core('object')->runHook('template_compile_*', array(), $error);
+		facula::core('object')->runHook('template_compile_' . $templateName, array(), $error);
 		
 		if (!isset($this->pool['LanguageMap'])) {
 			$this->loadLangMap();
 		}
 		
 		if ($sourceContent = trim(file_get_contents($sourceTpl))) {
-			$compiler = new faculaTemplateDefaultCompiler($this->pool, $sourceContent);
+			$compiler = new $this->configs['Compiler']($this->pool, $sourceContent);
 			
 			if ($compiledContent = $compiler->compile()) {
 				if ($this->configs['Compress']) {

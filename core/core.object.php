@@ -431,7 +431,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		
 		if (isset($this->hooks[$hookName])) {
 			foreach($this->hooks[$hookName] AS $processorName => $hook) {
-				if (!$returns[$processorName] = $hook($hookArgs, $error)) {
+				if (!($returns[$processorName] = $hook($hookArgs, $error))) {
 					return false;
 					
 					break;
