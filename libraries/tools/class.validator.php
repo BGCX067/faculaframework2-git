@@ -35,7 +35,8 @@ abstract class Validator {
 									'url' => '/^[a-zA-Z0-9]+\:\/\/[a-zA-Z0-9\&\;\.\#\/\?\-\=\_\+\:\%\,]+$/u',
 									'urlelement' => '/[a-zA-Z0-9\.\/\?\-\=\&\_\+\:\%\,]+/u',
 									'number' => '/^[0-9]+$/u',
-									'float' => '/^[0-9]{0,}[\.]{0,1}[0-9]{0,}$/u',
+									'integer' => '/^(\+|\-|)[0-9]+$/u',
+									'float' => '/^(\+|\-|)[0-9]+\.[0-9]+$/u',
 									);
 								
 	static public function check($string, $type = '', $max = 0, $min = 0, &$error = '') {

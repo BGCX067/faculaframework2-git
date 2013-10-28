@@ -1015,7 +1015,7 @@ class faculaTemplateDefaultCompiler {
 		
 		switch($params[0]) {
 			case 'EMPTY':
-				if (isset($params[1]) && preg_match('/^([A-Za-z]+)$/', $params[1], $matched)) {
+				if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+)$/', $params[1], $matched)) {
 				
 					// Check if we already opened the tag
 					if (!isset($this->tagPositionMaps['Loop:' . $params[1]]['Start'])) {
@@ -1051,7 +1051,7 @@ class faculaTemplateDefaultCompiler {
 				break;
 				
 			case 'EOF':
-				if (isset($params[1]) && preg_match('/^([A-Za-z]+)$/', $params[1], $matched)) {
+				if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+)$/', $params[1], $matched)) {
 					if (!isset($this->tagPositionMaps['Loop:' . $params[1]]['Start'])) {
 						facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_NOT_OPEN|' . $params[1], 'template', true);
 						return false;
@@ -1080,7 +1080,7 @@ class faculaTemplateDefaultCompiler {
 				break;
 				
 			default:
-				if (preg_match('/^([A-Za-z]+) (\$[A-Za-z0-9\_\'\"\[\]]+)$/', $format, $matched)) {
+				if (preg_match('/^([A-Za-z0-9]+) (\$[A-Za-z0-9\_\'\"\[\]]+)$/', $format, $matched)) {
 					list($org, $name, $valuename) = $matched;
 					
 					if (!isset($this->tagPositionMaps['Loop:' . $name])) {
@@ -1113,7 +1113,7 @@ class faculaTemplateDefaultCompiler {
 		
 		switch($params[0]) {
 			case 'ELSEIF':
-				if (isset($params[1]) && preg_match('/^([A-Za-z]+) (.*)$/', $params[1], $matched)) {
+				if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+) (.*)$/', $params[1], $matched)) {
 					list($org, $name, $condition) = $matched;
 					
 					if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
@@ -1142,7 +1142,7 @@ class faculaTemplateDefaultCompiler {
 				break;
 				
 			case 'ELSE':
-				if (isset($params[1]) && preg_match('/^([A-Za-z]+)$/', $params[1], $matched)) {
+				if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+)$/', $params[1], $matched)) {
 					list($org, $name) = $matched;
 					
 					if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
@@ -1172,7 +1172,7 @@ class faculaTemplateDefaultCompiler {
 				break;
 			
 			case 'EOF':
-				if (isset($params[1]) && preg_match('/^([A-Za-z]+)$/', $params[1], $matched)) {
+				if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+)$/', $params[1], $matched)) {
 					list($org, $name) = $matched;
 					
 					if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
@@ -1196,7 +1196,7 @@ class faculaTemplateDefaultCompiler {
 				break;
 				
 			default:
-				if (preg_match('/^([A-Za-z]+) (.*)$/', $format, $matched)) {
+				if (preg_match('/^([A-Za-z0-9]+) (.*)$/', $format, $matched)) {
 					list($org, $name, $condition) = $matched;
 					
 					if (!isset($this->tagPositionMaps['Logic:' . $name])) {
@@ -1228,7 +1228,7 @@ class faculaTemplateDefaultCompiler {
 		
 		switch($params[0]) {
 			case 'CASE':
-				if (isset($params[1]) && preg_match('/^([A-Za-z]+) (.*)$/', $params[1], $matched)) {
+				if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+) (.*)$/', $params[1], $matched)) {
 					list($org, $name, $value) = $matched;
 					
 					if (!isset($this->tagPositionMaps['Case:' . $name]['Start'])) {
@@ -1252,7 +1252,7 @@ class faculaTemplateDefaultCompiler {
 				break;
 				
 			case 'EOF':
-				if (isset($params[1]) && preg_match('/^([A-Za-z]+)$/', $params[1], $matched)) {
+				if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+)$/', $params[1], $matched)) {
 					list($org, $name) = $matched;
 					
 					if (!isset($this->tagPositionMaps['Case:' . $name]['Start'])) {
@@ -1276,7 +1276,7 @@ class faculaTemplateDefaultCompiler {
 				break;
 				
 			default:
-				if (preg_match('/^([A-Za-z]+) (\$[A-Za-z0-9\_\'\"\[\]]+)$/', $format, $matched)) {
+				if (preg_match('/^([A-Za-z0-9]+) (\$[A-Za-z0-9\_\'\"\[\]]+)$/', $format, $matched)) {
 					list($org, $name, $variable) = $matched;
 					
 					if (!isset($this->tagPositionMaps['Case:' . $name])) {
