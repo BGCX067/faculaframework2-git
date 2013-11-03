@@ -34,7 +34,7 @@ interface ormInterface {
 	public function getFields();
 	public function getData();
 	
-	public function get(array $param);
+	public function get(array $param, $returnType = 'CLASS', $whereOperator = '=');
 	public function fetch(array $param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
 	
 	public function finds(array $param, $offset = 0, $dist = 0, $returnType = 'CLASS');
@@ -122,10 +122,10 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 		return $this->data;
 	}
 	
-	public function get(array $param) { // array('FieldName' => 'Value');
+	public function get(array $param, $returnType = 'CLASS', $whereOperator = '=') { // array('FieldName' => 'Value');
 		$data = array();
 		
-		if (($data = $this->fetch(array('Where' => $param), 0, 1)) && isset($data[0])) {
+		if (($data = $this->fetch(array('Where' => $param), 0, 1, $returnType = 'CLASS', $whereOperator = '=')) && isset($data[0])) {
 			return $data[0];
 		}
 		

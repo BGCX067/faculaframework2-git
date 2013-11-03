@@ -25,14 +25,20 @@
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-abstract class Hash {
-	static private $salt = '';
-	static private $saltLen = 0;
+class Hash {
+	protected $salt = '';
+	private $saltLen = 0;
 	
-	static public function setSalt($salt) {
-		if (!self::$salt) {
-			self::$salt = $salt;
-			self::$saltLen = strlen($salt);
+	public function __construct($salt = '') {
+		if ($salt) {
+			$this->setSalt($salt);
+		}
+	}
+	
+	private function setSalt($salt) {
+		if (!$this->$salt) {
+			$this->salt = $salt;
+			$this->saltLen = strlen($salt);
 			
 			return true;
 		}
@@ -40,7 +46,7 @@ abstract class Hash {
 		return false;
 	}
 	
-	static private function obscure($str) {
+	private function obscure($str) {
 		$strlen = strlen($str);
 		$strlenHalf = intval($strlen / 2);
 		$strlenLast = $strlen - 1;
@@ -51,9 +57,9 @@ abstract class Hash {
 		if ($strlen > 1) {
 			$factor = ord($str[0]) + ord($str[intval($strlenHalf)]) + ord($str[$strlenLast]);
 			
-			if (self::$saltLen) {
-				$salt = self::$salt;
-				$saltlen = self::$saltLen;
+			if ($this->saltLen) {
+				$salt = $this->salt;
+				$saltlen = $this->saltLen;
 			} else {
 				$salt = $str;
 				$saltlen = $strlen;
@@ -76,8 +82,12 @@ abstract class Hash {
 		return false;
 	}
 	
-	static public function obscuredMD5($str) {
-		return md5(self::obscure(md5($str)));
+	public function obscuredMD5($str) {
+		return md5($this->obscure(md5($str)));
+	}
+	
+	public function obscuredSHA1($str) {
+		return sha1($this->obscure(sha1($str)));
 	}
 }
 
