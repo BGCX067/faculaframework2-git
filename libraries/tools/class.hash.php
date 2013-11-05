@@ -36,7 +36,7 @@ class Hash {
 	}
 	
 	private function setSalt($salt) {
-		if (!$this->$salt) {
+		if (!$this->salt) {
 			$this->salt = $salt;
 			$this->saltLen = strlen($salt);
 			
