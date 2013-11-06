@@ -83,12 +83,14 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	public function __construct(&$cfg, $common, facula $facula) {
 		$files = $fileNameSplit = array();
 		// General settings
+		
 		$this->configs = array(
 			'Cache' => isset($cfg['CacheTemplate']) && $cfg['CacheTemplate'] ? true : false,
 			'Compress' => isset($cfg['CompressOutput']) && $cfg['CompressOutput'] ? true : false,
 			'Renew' => isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ? true : false,
 			'Render' => isset($cfg['Render']) && class_exists($cfg['Render']) ? $cfg['Render'] : 'faculaTemplateDefaultRender',
 			'Compiler' => isset($cfg['Compiler']) && class_exists($cfg['Compiler']) ? $cfg['Compiler'] : 'faculaTemplateDefaultCompiler',
+			'CacheVersion' => $common['BootVersion'],
 		);
 	
 		// TemplatePool 
@@ -249,6 +251,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		$templatePath = $templateContent = $cachedPagePath = $cachedPageRoot = $cachedPageFactor = $cachedPageFile = $cachedPageFactorDir = $cachedTmpPage = $renderCachedContent = $renderCachedOutputContent = '';
 		$splitedCompiledContentIndexLen = $splitedRenderedContentLen = 0;
 		$splitedCompiledContent = $splitedRenderedContent = array();
+		$currentExpireTimestamp = FACULA_TIME - $expire;
 		
 		if (isset($this->configs['Cached'][0])) {
 			$cachedPageFactor = !$cacheFactor ? 'default' : str_replace(array('/', '\\', '|'), '#', $cacheFactor);
@@ -258,7 +261,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 			$cachedPageFile = 'cachedPage.' . $templateName . ($templateSet ? '+' . $templateSet : '') . '.' . $this->pool['Language'] . '.' . $cachedPageFactor. '.php';
 			$cachedPagePath = $cachedPageRoot . $cachedPageFile;
 			
-			if (!$this->configs['Renew'] && is_readable($cachedPagePath) && (!$expire || filemtime($cachedPagePath) > FACULA_TIME - $expire)) {
+			if (!$this->configs['Renew'] && is_readable($cachedPagePath) && (!$expire || filemtime($cachedPagePath) > $currentExpireTimestamp)) {
 				return $cachedPagePath;
 			} else {
 				if ($templatePath = $this->getCompiledTemplate($templateName, $templateSet)) {
@@ -353,7 +356,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		$content = $error = $templatePath = '';
 		$compiledTpl = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledTemplate.' . $templateName . ($templateSet ? '+' . $templateSet : '') . '.' . $this->pool['Language'] . '.php';
 		
-		if (!$this->configs['Renew'] && is_readable($compiledTpl)) {
+		if (!$this->configs['Renew'] && is_readable($compiledTpl) && filemtime($compiledTpl) >= $this->configs['CacheVersion']) {
 			return $compiledTpl;
 		} else {
 			if ($templateSet && isset($this->pool['File']['Tpl'][$templateName][$templateSet])) {
@@ -459,7 +462,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		
 		$langContent = '';
 		
-		if (!$this->configs['Renew'] && is_readable($compiledLangFile)) { // Try load lang cache first
+		if (!$this->configs['Renew'] && is_readable($compiledLangFile) && filemtime($compiledLangFile) >= $this->configs['CacheVersion']) { // Try load lang cache first
 			require($compiledLangFile); // require for opcode optimizing
 			
 			if (!empty($langMap)) {

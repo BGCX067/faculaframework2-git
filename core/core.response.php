@@ -271,7 +271,8 @@ class faculaResponseDefault implements faculaResponseInterface {
 			'CookiePrefix' => isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : 'facula_',
 			'GZIPEnabled' => isset($cfg['UseGZIP']) && $cfg['UseGZIP'] && function_exists('gzcompress') ? true : false,
 			'PSignal' => isset($cfg['PostProfileSignal']) && $cfg['PostProfileSignal'] ? true : false,
-			'UseFFR' => function_exists('fastcgi_finish_request') ? true : false
+			'UseFFR' => function_exists('fastcgi_finish_request') ? true : false,
+			'AppVersion' => $common['AppVersion'],
 		);
 		
 		$cfg = null;
@@ -283,6 +284,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 	public function _inited() {
 		self::$headers[] = 'Server: Facula Framework';
 		self::$headers[] = 'X-Powered-By: Facula Framework ' . __FACULAVERSION__;
+		self::$headers[] = 'X-Powered-For: ' . $this->configs['AppVersion'];
 		
 		if (facula::core('request')->getClientInfo('gzip') && $this->configs['GZIPEnabled']) {
 			$this->configs['UseGZIP'] = true;
@@ -314,7 +316,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 			}
 			
 			if ($this->configs['PSignal']) {
-				header('X-Runtime: ' . (facula::$profile['ProductionTime']  * 1000) . 'ms');
+				header('X-Runtime: ' . round(facula::$profile['ProductionTime']  * 1000, 2) . 'ms (' . facula::$profile['ProductionTime'] . 's)');
 				header('X-Memory: ' . (facula::$profile['MemoryUsage'] / 1024) . 'kb / ' . (facula::$profile['MemoryPeak'] / 1024) . 'kb');
 			}
 			

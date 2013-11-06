@@ -29,7 +29,7 @@ if (!defined('IN_FACULA')) {
 	exit('Access Denied');
 }
 
-define('__FACULAVERSION__', '2 Prototype 0.0');
+define('__FACULAVERSION__', '2 Prototype 0.1');
 
 define('FACULA_ROOT', dirname(__FILE__));
 define('PROJECT_ROOT', realpath('.'));
@@ -231,6 +231,9 @@ class facula {
 		if (!function_exists('mb_internal_encoding')) {
 			throw new Exception('Facula needs mb_string extension to be enabled.');
 		}
+		
+		$cfg['Common']['AppVersion'] = (isset($cfg['AppName']) ? $cfg['AppName'] : 'Facula App') . ' ' . (isset($cfg['AppVersion']) ? $cfg['AppVersion'] : '0.0');
+		$cfg['Common']['BootVersion'] = FACULA_TIME;
 		
 		if ($this->importSetting($cfg)) {
 			// Scan all component file and add them to $this->setting['core']['Components']

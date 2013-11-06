@@ -84,6 +84,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		$this->configs = array(
 			'OCRoot' => isset($cfg['ObjectCacheRoot']) && is_dir($cfg['ObjectCacheRoot']) ? $cfg['ObjectCacheRoot'] : '',
 			'OCExpire' => isset($cfg['ObjectCacheExpire']) && $cfg['ObjectCacheExpire'] ? intval($cfg['ObjectCacheExpire']) : 604800,
+			'CacheTime' => $common['BootVersion'],
 			'AutoPaths' => array(
 				'CmpRoot' => isset($cfg['ComponentRoot']) && is_dir($cfg['ComponentRoot']) ? $cfg['ComponentRoot'] : '',
 			)
@@ -209,7 +210,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		if ($this->configs['OCRoot']) {
 			$file = $this->configs['OCRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
 			
-			if (is_readable($file)) {
+			if (is_readable($file) && filemtime($file) >= $this->configs['CacheTime']) {
 				require($file);
 				
 				if ($instance = unserialize($cache)) {

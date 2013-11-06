@@ -68,12 +68,14 @@ class faculaCacheDefault implements faculaCacheInterface {
 	
 	private $configs = array();
 	
-	public function __construct(&$cfg) {
+	public function __construct(&$cfg, $common) {
 		if (isset($cfg['CacheRoot'][0]) && is_dir($cfg['CacheRoot'])) {
 			$this->configs['Root'] = str_replace(array('\\', '/'), DIRECTORY_SEPARATOR, $cfg['CacheRoot']);
 		} else {
 			throw new Exception('Cache root must be set and existed.');
 		}
+		
+		$this->configs['CacheVersion'] = $common['BootVersion'];
 		
 		$cfg = null;
 		unset($cfg);
@@ -92,7 +94,7 @@ class faculaCacheDefault implements faculaCacheInterface {
 				require($file);
 				
 				if (isset($cache['Data'])) {
-					if ($expire && $cache['Time'] < FACULA_TIME - $expire) {
+					if ($expire && ($cache['Time'] < FACULA_TIME - $expire || $this->configs['CacheVersion'] > $cache['Time'])) {
 						unlink($file);
 					}
 					

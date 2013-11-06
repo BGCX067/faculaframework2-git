@@ -97,14 +97,53 @@ class faculaRequestDefault implements faculaRequestInterface {
 		if (isset($cfg['MaxRequestSize'])) { // give memory_limit * 0.8 because our app needs memory to run, so memory cannot be 100%ly use for save request data;
 			$this->configs['MaxRequestSize'] = min(
 													(int)$cfg['MaxRequestSize'],
-													self::convertIniUnit(ini_get('post_max_size')), 
-													self::convertIniUnit(ini_get('memory_limit')) * 0.8
+													$this->convertIniUnit(ini_get('post_max_size')), 
+													$this->convertIniUnit(ini_get('memory_limit')) * 0.8
 													);
 		} else {
 			$this->configs['MaxRequestSize'] = min(
-													self::convertIniUnit(ini_get('post_max_size')), 
-													self::convertIniUnit(ini_get('memory_limit')) * 0.8
+													$this->convertIniUnit(ini_get('post_max_size')), 
+													$this->convertIniUnit(ini_get('memory_limit')) * 0.8
 													);
+		}
+		
+		// CDN or approved proxies servers
+		if (isset($cfg['TrustedProxies']) && is_array($cfg['TrustedProxies'])) {
+			$proxyIPRange = $proxyIPTemp = array();
+			
+			if (defined('AF_INET6')) {
+				$this->configs['TPVerifyFlags'] = FILTER_FLAG_IPV4 + FILTER_FLAG_IPV6;
+			} else {
+				$this->configs['TPVerifyFlags'] = FILTER_FLAG_IPV4;
+			}
+			
+			foreach($cfg['TrustedProxies'] AS $proxy) {
+				$proxyIPRange = explode('-', $proxy, 2);
+				
+				foreach($proxyIPRange AS $proxyIP) {
+					if (!filter_var($proxyIP, FILTER_VALIDATE_IP, $this->configs['TPVerifyFlags'])) {
+						throw new Exception($proxyIP . ' not a valid IP for proxy server.');
+						break; break;
+					}
+				}
+				
+				if (isset($proxyIPRange[1])) {
+					$proxyIPTemp[0] = (inet_pton($proxyIPRange[0]));
+					$proxyIPTemp[1] = (inet_pton($proxyIPRange[1]));
+					
+					if ($proxyIPTemp[0] < $proxyIPTemp[1]) {
+						$this->configs['TrustedProxies'][$proxyIPTemp[0]] = $proxyIPTemp[1];
+					} elseif ($proxyIPTemp[0] > $proxyIPTemp[1]) {
+						$this->configs['TrustedProxies'][$proxyIPTemp[1]] = $proxyIPTemp[0];
+					} else {
+						$this->configs['TrustedProxies'][$proxyIPTemp[0]] = false;
+					}
+				} else {
+					$this->configs['TrustedProxies'][(inet_pton($proxyIPRange[0]))] = false;
+				}
+			}
+		} else {
+			$this->configs['TrustedProxies'] = array();
 		}
 		
 		$this->configs['MaxRequestBlocks'] = isset($cfg['MaxRequestBlocks']) ? (int)$cfg['MaxRequestBlocks'] : 512; // We can handler up to 512 elements in _REQUEST array
@@ -166,12 +205,14 @@ class faculaRequestDefault implements faculaRequestInterface {
 			}
 		}
 		
-		if ($this->requestInfo['ip'] = self::getUserIP(null, true)) { // Get client IP
-			$this->requestInfo['ipArray'] = self::splitIP($this->requestInfo['ip']);
-		}
-		
-		if ($this->requestInfo['ipSafe'] = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0') { // Get client IP for identification
-			$this->requestInfo['ipSafeArray'] = self::splitIP($this->requestInfo['ipSafe']);
+		if ($this->requestInfo['ip'] = $this->getUserIP(null, true)) { // Get client IP
+			$this->requestInfo['ipArray'] = $this->splitIP($this->requestInfo['ip']);
+			
+			if (isset($_SERVER['REMOTE_ADDR']) && $this->requestInfo['ip'] != $_SERVER['REMOTE_ADDR']) {
+				$this->requestInfo['proxy'] = true;
+			} else {
+				$this->requestInfo['proxy'] = false;
+			}
 		}
 		
 		if ($_SERVER['SERVER_PORT'] == 443) {
@@ -246,18 +287,33 @@ class faculaRequestDefault implements faculaRequestInterface {
 		return !empty($result) ? $result : false;
 	}
 	
-	static private function getUserIP($ipstr = '', $outasstring = false) {
+	private function getUserIP($ipstr = '', $outasstring = false) {
 		global $_SERVER;
 		$ip = '';
 		$ips = array();
+		$sForwardName = '';
+		$checkProxy = false;
 		
 		if (!$ipstr) {
-			if(isset($_SERVER['HTTP_CLIENT_IP'][0])) {
-				$ip = $_SERVER['HTTP_CLIENT_IP'];
-			} elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR'][0])) {
-				$ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'], 16);
-				$ip = trim($ips[count($ips) - 1]);
-			} elseif (isset($_SERVER['REMOTE_ADDR'][0])) {
+			// Check if proxy has been set, make sure 'HTTP_X_FORWARDED_FOR' at the first of list
+			foreach(array('HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED') AS $sForwardKeyName) {
+				if (isset($_SERVER[$sForwardKeyName])) {
+					$sForwardName = $sForwardKeyName;
+					$checkProxy = true;
+					break;
+				}
+			}
+			
+			if ($checkProxy) {
+				if (isset($_SERVER['REMOTE_ADDR'])) {
+					if (!$this->checkProxyTrusted($_SERVER['REMOTE_ADDR']) || (($ip = $this->getRealIPAddrFromXForward($_SERVER[$sForwardName])) == '0.0.0.0')) {
+						// If REMOTE_ADDR (Must be proxy's addr here) not in our trusted list OR No any server we can trust in X Forward, set the address to REMOTE_ADDR
+						$ip = $_SERVER['REMOTE_ADDR'];
+					}
+				} else {
+					$ip = '0.0.0.0';
+				}
+			} else {
 				$ip = $_SERVER['REMOTE_ADDR'];
 			}
 			
@@ -269,11 +325,49 @@ class faculaRequestDefault implements faculaRequestInterface {
 		return false;
 	}
 	
-	static private function splitIP($ip) {
+	private function splitIP($ip) {
 		return explode(':', str_replace('.', ':', $ip), 8); // Max is 8 for a IP addr
 	}
 	
-	static private function convertIniUnit($str) {
+	private function getRealIPAddrFromXForward($x_forwarded_for) {
+		$ips = array_reverse(explode(',', str_replace(' ', '', $x_forwarded_for)));
+		$ipsLen = count($ips);
+		$thereTrusted = false;
+		
+		foreach($ips AS $forwarded) {
+			if (filter_var($forwarded, FILTER_VALIDATE_IP, $this->configs['TPVerifyFlags'])) {
+				if (!$this->checkProxyTrusted($forwarded)) {
+					return $forwarded;
+					break;
+				} else {
+					$thereTrusted = true;
+				}
+			} else {
+				break;
+			}
+		}
+		
+		return '0.0.0.0';
+	}
+	
+	private function checkProxyTrusted($ip) {
+		$bIP = inet_pton($ip);
+		
+		if (isset($this->configs['TrustedProxies'][$bIP])) {
+			return true;
+		}
+		
+		foreach($this->configs['TrustedProxies'] AS $start => $end) {
+			if ($end && $bIP >= $start && $bIP <= $end) {
+				return true;
+				break;
+			}
+		}
+		
+		return false;
+	}
+	
+	private function convertIniUnit($str) {
 		$strLen = 0;
 		$lastChar = '';
 		

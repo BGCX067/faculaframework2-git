@@ -34,7 +34,7 @@ abstract class IP {
 		$input = array();
 		$ips = '';
 		
-		if (!is_array($ip)) return false;
+		if (!is_array($ip)) return '0.0.0.0';
 		
 		foreach($ip AS $k => $v) {
 			if($ip[$k]) {
@@ -46,17 +46,23 @@ abstract class IP {
 		
 		$iplen = count($input);
 		
-		if ($mask && $iplen > 2) {
-			$input[$iplen - 2] = $input[$iplen - 1] = '*';
+		if ($mask) {
+			if ($iplen > 2) {
+				$input[$iplen - 2] = $input[$iplen - 1] = '*';
+			} elseif ($iplen > 1) {
+				$input[$iplen - 1] = '*';
+			}
 		}
 		
-		if ($input[0] != '0' && $input[3] != '0' && $input[4] == '0' && $input[5] == '0' && $input[6] == '0' && $input[7] == '0') {
-			$ips = implode('.', array($input[0], $input[1], $input[2], $input[3]));
-		} else {
-			$ips = implode(':', $input);
+		switch($iplen) {
+			case 4:
+				return implode('.', array($input[0], $input[1], $input[2], $input[3]));
+				break;
+				
+			default:
+				return implode(':', $input);
+				break;
 		}
-		
-		return $ips;
 	}
 }
 
