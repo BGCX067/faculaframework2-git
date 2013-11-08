@@ -51,7 +51,7 @@ class Hash {
 		$strlenHalf = intval($strlen / 2);
 		$strlenLast = $strlen - 1;
 		
-		$saltlen = $factor = 0;
+		$saltMaxIdx = $saltlen = $factor = 0;
 		$salt = '';
 		
 		if ($strlen > 1) {
@@ -72,8 +72,9 @@ class Hash {
 			}
 			
 			// Hiding clue to prevent reverse the factor
-			$str[0]				= $salt[$saltlen - 1];
-			$str[$strlenHalf]	= $salt[$saltlen % $strlenHalf];
+			$saltMaxIdx			= $saltlen - 1;
+			$str[0]				= $salt[$saltMaxIdx];
+			$str[$strlenHalf]	= $salt[$saltMaxIdx % $strlenHalf];
 			$str[$strlenLast]	= $salt[0];
 			
 			return $str;

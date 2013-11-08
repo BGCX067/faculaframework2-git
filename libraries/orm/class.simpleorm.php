@@ -407,8 +407,13 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 			}
 		}
 		
+		// Must returning primary key
 		if ($result = query::from($this->table)->insert($keys)->value($data)->save($this->primary)) {
 			$this->dataOriginal = $this->data;
+			
+			if (!isset($this->data[$this->primary])) {
+				$this->data[$this->primary] = $result;
+			}
 			
 			return $result;
 		}

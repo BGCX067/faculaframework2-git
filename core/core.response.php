@@ -296,7 +296,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 	}
 	
 	public function send($type = '', $persistConn = false) {
-		$file = $line = '';
+		$file = $line = $error = '';
 		
 		if (!headers_sent($file, $line)) {
 			// Assume we will finish this application after output, calc belowing profile data
@@ -333,6 +333,8 @@ class faculaResponseDefault implements faculaResponseInterface {
 			} else {
 				header('Connection: Close');
 			}
+			
+			facula::core('object')->runHook('response_sending', array(self::$content), $error);
 			
 			echo self::$content;
 			
