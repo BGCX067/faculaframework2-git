@@ -331,16 +331,12 @@ class faculaRequestDefault implements faculaRequestInterface {
 	
 	private function getRealIPAddrFromXForward($x_forwarded_for) {
 		$ips = array_reverse(explode(',', str_replace(' ', '', $x_forwarded_for)));
-		$ipsLen = count($ips);
-		$thereTrusted = false;
 		
 		foreach($ips AS $forwarded) {
 			if (filter_var($forwarded, FILTER_VALIDATE_IP, $this->configs['TPVerifyFlags'])) {
 				if (!$this->checkProxyTrusted($forwarded)) {
 					return $forwarded;
 					break;
-				} else {
-					$thereTrusted = true;
 				}
 			} else {
 				break;
