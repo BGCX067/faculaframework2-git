@@ -65,14 +65,15 @@ class Hash {
 				$saltlen = $strlen;
 			}
 			
+			$saltMaxIdx			= $saltlen - 1;
+			
 			for ($i = 0; $i < $strlen; $i++) {
 				if (!(($factor + $i) % $strlenHalf)) {
-					$str[$i] = $salt[($i % $saltlen)];
+					$str[$i] = $salt[($i % $saltMaxIdx)];
 				}
 			}
 			
 			// Hiding clue to prevent reverse the factor
-			$saltMaxIdx			= $saltlen - 1;
 			$str[0]				= $salt[$saltMaxIdx];
 			$str[$strlenHalf]	= $salt[$saltMaxIdx % $strlenHalf];
 			$str[$strlenLast]	= $salt[0];
