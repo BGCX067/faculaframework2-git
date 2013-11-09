@@ -327,6 +327,29 @@ class query_mysql implements queryBuilderInterface {
 		
 		return $sql;
 	}
+	
+	// Query resulting methods
+	public function fetch($statement) {
+		$data = array();
+		
+		while($row = $statement->fetch()) {
+			$data[] = $row;
+		}
+		
+		return $data;
+	}
+	
+	public function insert($statement) {
+		return $statement->connection->lastInsertId();
+	}
+	
+	public function update($statement) {
+		return $statement->rowCount();
+	}
+	
+	public function delete($statement) {
+		return $statement->rowCount();
+	}
 }
 
 ?>

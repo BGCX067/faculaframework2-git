@@ -50,6 +50,11 @@ interface queryInterface {
 interface queryBuilderInterface {
 	public function __construct($tableName, &$querySet);
 	public function build();
+	
+	public function fetch($statement);
+	public function update($statement);
+	public function insert($statement);
+	public function delete($statement);
 }
 
 // Yeah, i reworked this unit because i hate the original one.
@@ -98,7 +103,7 @@ class query implements queryInterface {
 	);
 	
 	private $connection = null;
-	private $builder = null;
+	private $adapter = null;
 	
 	protected $query = array();
 	
@@ -601,29 +606,33 @@ class query implements queryInterface {
 		return false;
 	}
 	
-	private function getSQLBuilder() {
+	private function getDBAdapter() {
 		$builderName = '';
-		$builder = null;
+		$adapter = null;
 		
-		if (isset($this->connection->_connection['Driver'])) {
-			$builderName = __CLASS__ . '_' . $this->connection->_connection['Driver'];
-			
-			if (class_exists($builderName)) {
-				$builder = new $builderName($this->connection->_connection['Prefix'] . $this->query['From'], $this->query);
+		if (!$this->adapter) {
+			if (isset($this->connection->_connection['Driver'])) {
+				$builderName = __CLASS__ . '_' . $this->connection->_connection['Driver'];
 				
-				if ($builder instanceof queryBuilderInterface) {
-					$this->builder = $builder;
+				if (class_exists($builderName)) {
+					$adapter = new $builderName($this->connection->_connection['Prefix'] . $this->query['From'], $this->query);
 					
-					return $this->builder;
+					if ($adapter instanceof queryBuilderInterface) {
+						$this->adapter = $adapter;
+						
+						return true;
+					} else {
+						facula::core('debug')->exception('ERROR_QUERY_BUILDER_INTERFACE_INVALID', 'query', true);
+					}
+					
 				} else {
-					facula::core('debug')->exception('ERROR_QUERY_BUILDER_INTERFACE_INVALID', 'query', true);
+					facula::core('debug')->exception('ERROR_QUERY_BUILDER_DRIVER_NOTSUPPORTED|' . $this->connection->_connection['Driver'], 'query', true);
 				}
-				
 			} else {
-				facula::core('debug')->exception('ERROR_QUERY_BUILDER_DRIVER_NOTSUPPORTED|' . $this->connection->_connection['Driver'], 'query', true);
+				facula::core('debug')->exception('ERROR_QUERY_SQL_BUILDER_NEEDS_CONNECTION', 'query', true);
 			}
 		} else {
-			facula::core('debug')->exception('ERROR_QUERY_SQL_BUILDER_NEEDS_CONNECTION', 'query', true);
+			return $this->adapter;
 		}
 		
 		return false;
@@ -645,9 +654,9 @@ class query implements queryInterface {
 				}
 			}
 			
-			if ($this->getPDOConnection() && $this->getSQLBuilder()) {
+			if ($this->getPDOConnection() && $this->getDBAdapter()) {
 				// Build SQL Syntax
-				if ($sql = $this->builder->build()) {
+				if ($sql = $this->adapter->build()) {
 					try {
 						$sqlID = crc32($sql);
 						
@@ -732,11 +741,7 @@ class query implements queryInterface {
 							$statement->setFetchMode($pdoFetchStyle[$mode]);
 						}
 						
-						while($row = $statement->fetch()) {
-							$result[] = $row;
-						}
-						
-						return $result;
+						return $this->adapter->fetch($statement);
 					} else {
 						facula::core('debug')->exception('ERROR_QUERY_FETCH_UNKNOWN_METHOD|' . $mode, 'query', true);
 					}
@@ -761,25 +766,15 @@ class query implements queryInterface {
 					
 					switch($this->query['Action']) {
 						case 'insert':
-							if (isset($this->query['InsertIDWithSeq']) && $this->query['InsertIDWithSeq']) {
-								if ($this->query['QuoteSeqID']) {
-									$seqFullName = '"' . $this->connection->_connection['Prefix'] . $this->query['From'] . '_' . $seqName . '_seq' . '"';
-								} else {
-									$seqFullName = $this->connection->_connection['Prefix'] . $this->query['From'] . '_' . $seqName . '_seq';
-								}
-								
-								return $statement->connection->lastInsertId($seqFullName);
-							} else {
-								return $statement->connection->lastInsertId();
-							}
+							return $this->adapter->insert($statement);
 							break;
 							
 						case 'update':
-							return $statement->rowCount();
+							return $this->adapter->update($statement);
 							break;
 							
 						case 'delete':
-							return $statement->rowCount();
+							return $this->adapter->delete($statement);
 							break;
 							
 						default:

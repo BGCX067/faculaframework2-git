@@ -33,9 +33,6 @@ class query_pgsql implements queryBuilderInterface {
 		$this->table = $tableName;
 		$this->query = $querySet;
 		
-		$querySet['InsertIDWithSeq'] = true;
-		$querySet['QuoteSeqID'] = true;
-		
 		return true;
 	}
 	
@@ -329,6 +326,35 @@ class query_pgsql implements queryBuilderInterface {
 		}
 		
 		return $sql;
+	}
+	
+	// Query resulting methods
+	public function fetch($statement) {
+		$data = array();
+		
+		while($row = $statement->fetch()) {
+			$data[] = $row;
+		}
+		
+		return $data;
+	}
+	
+	public function insert($statement) {
+		$seqFullName = '';
+		
+		if (isset($this->query['InsertIDWithSeq']) && $this->query['InsertIDWithSeq']) {
+			$seqFullName = '"' . $this->table . '_seq' . '"';
+			
+			return $statement->connection->lastInsertId($seqFullName);
+		}
+	}
+	
+	public function update($statement) {
+		return $statement->rowCount();
+	}
+	
+	public function delete($statement) {
+		return $statement->rowCount();
 	}
 }
 
