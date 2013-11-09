@@ -339,14 +339,10 @@ class query_pgsql implements queryBuilderInterface {
 		return $data;
 	}
 	
-	public function insert($statement) {
-		$seqFullName = '';
+	public function insert($statement, $primaryKey) {
+		$seqFullName = '"' . $this->table . '_' . $primaryKey . '_seq' . '"';
 		
-		if (isset($this->query['InsertIDWithSeq']) && $this->query['InsertIDWithSeq']) {
-			$seqFullName = '"' . $this->table . '_seq' . '"';
-			
-			return $statement->connection->lastInsertId($seqFullName);
-		}
+		return $statement->connection->lastInsertId($seqFullName);
 	}
 	
 	public function update($statement) {

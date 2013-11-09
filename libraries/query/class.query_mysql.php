@@ -339,7 +339,7 @@ class query_mysql implements queryBuilderInterface {
 		return $data;
 	}
 	
-	public function insert($statement) {
+	public function insert($statement, $primaryKey) {
 		return $statement->connection->lastInsertId();
 	}
 	

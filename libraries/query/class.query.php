@@ -53,7 +53,7 @@ interface queryBuilderInterface {
 	
 	public function fetch($statement);
 	public function update($statement);
-	public function insert($statement);
+	public function insert($statement, $primaryKey);
 	public function delete($statement);
 }
 
@@ -756,7 +756,7 @@ class query implements queryInterface {
 		return false;
 	}
 	
-	public function save($seqName = '') {
+	public function save($param = null) {
 		$statement = null;
 		$seqFullName = '';
 		
@@ -766,7 +766,7 @@ class query implements queryInterface {
 					
 					switch($this->query['Action']) {
 						case 'insert':
-							return $this->adapter->insert($statement);
+							return $this->adapter->insert($statement, $param);
 							break;
 							
 						case 'update':
