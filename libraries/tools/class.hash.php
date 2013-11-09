@@ -65,7 +65,7 @@ class Hash {
 				$saltlen = $strlen;
 			}
 			
-			$saltMaxIdx			= $saltlen - 1;
+			$saltMaxIdx = $saltlen - 1;
 			
 			for ($i = 0; $i < $strlen; $i++) {
 				if (!(($factor + $i) % $strlenHalf)) {
