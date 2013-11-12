@@ -94,7 +94,7 @@ class faculaCacheDefault implements faculaCacheInterface {
 				require($file);
 				
 				if (isset($cache['Data'])) {
-					if ($expire && ($cache['Time'] < FACULA_TIME - $expire || $this->configs['CacheVersion'] > $cache['Time'])) {
+					if ($expire && ($cache['Time'] < FACULA_TIME - $expire)) {
 						unlink($file);
 					}
 					
