@@ -171,18 +171,26 @@ class faculaRequestDefault implements faculaRequestInterface {
 	}
 	
 	public function _inited() {
-		global $_REQUEST, $_SERVER;
+		global $_GET, $_POST, $_COOKIE, $_REQUEST, $_SERVER;
 		
-		if ($this->configs['AutoMagicQuotes']) { // Impossible by now, remove all slash code back
-			foreach($_REQUEST AS $key => $val) {
-				$_REQUEST[$key] = is_array($val) ? array_map('stripslashes', $val) : stripslashes($val);
-			}
-		}
-		
-		if (count($_REQUEST) + count($_COOKIE) > $this->configs['MaxRequestBlocks']) { // Sec check: Request and cookie array element cannot exceed this
+		if (count($_REQUEST) > $this->configs['MaxRequestBlocks']) { // Sec check: Request array element cannot exceed this
 			facula::core('debug')->exception('ERROR_REQUEST_BLOCKS_OVERLIMIT', 'limit', true);
 		} elseif (isset($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > $this->configs['MaxRequestSize']) { // Sec check: Request size cannot large than this
 			facula::core('debug')->exception('ERROR_REQUEST_SIZE_OVERLIMIT', 'limit', true);
+		}
+		
+		if ($this->configs['AutoMagicQuotes']) { // Impossible by now, remove all slash code back
+			foreach($_GET AS $key => $val) {
+				$_GET[$key] = is_array($val) ? array_map('stripslashes', $val) : stripslashes($val);
+			}
+			
+			foreach($_POST AS $key => $val) {
+				$_POST[$key] = is_array($val) ? array_map('stripslashes', $val) : stripslashes($val);
+			}
+			
+			foreach($_COOKIE AS $key => $val) {
+				$_COOKIE[$key] = is_array($val) ? array_map('stripslashes', $val) : stripslashes($val);
+			}
 		}
 		
 		$this->requestInfo['method'] = isset(self::$requestMethods[$_SERVER['REQUEST_METHOD']]) ? self::$requestMethods[$_SERVER['REQUEST_METHOD']] : 'get'; // Determine the type of request method.
