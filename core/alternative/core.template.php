@@ -231,10 +231,10 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return false;
 	}
 	
-	public function render($templateName, $templateSet = '', $expire = null, $expiredCallback = null, $cacheFactor = '') {
+	public function render($templateName, $templateSet = '', $expire = 0, $expiredCallback = null, $cacheFactor = '') {
 		$templatePath = $content = '';
 		
-		if ($expire !== null || $expiredCallback) { // If $expire not null or $expiredCallback not set, means, this is a cache call
+		if ($expire != 0 || $expiredCallback) { // If $expire not null or $expiredCallback not set, means, this is a cache call
 			if ($templatePath = $this->getCacheTemplate($templateName, $templateSet, $expire, $expiredCallback, $cacheFactor)) {
 				return $this->doRender($templateName, $templatePath);
 			}
@@ -247,7 +247,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return false;
 	}
 	
-	private function getCacheTemplate($templateName, $templateSet = '', $expire = null, $expiredCallback = null, $cacheFactor = '') {
+	private function getCacheTemplate($templateName, $templateSet = '', $expire = 0, $expiredCallback = null, $cacheFactor = '') {
 		$templatePath = $templateContent = $cachedPagePath = $cachedPageRoot = $cachedPageFactor = $cachedPageFile = $cachedPageFactorDir = $cachedTmpPage = $renderCachedContent = $renderCachedOutputContent = '';
 		$splitedCompiledContentIndexLen = $splitedRenderedContentLen = 0;
 		$splitedCompiledContent = $splitedRenderedContent = array();
