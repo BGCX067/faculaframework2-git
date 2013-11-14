@@ -234,7 +234,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	public function render($templateName, $templateSet = '', $expire = 0, $expiredCallback = null, $cacheFactor = '') {
 		$templatePath = $content = '';
 		
-		if ($expire != 0 || $expiredCallback) { // If $expire not null or $expiredCallback not set, means, this is a cache call
+		if (!is_null($expire)) {
 			if ($templatePath = $this->getCacheTemplate($templateName, $templateSet, $expire, $expiredCallback, $cacheFactor)) {
 				return $this->doRender($templateName, $templatePath);
 			}
