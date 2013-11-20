@@ -503,18 +503,18 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	}
 }
 
-// Security cover for anit any accesses to private variables and methods in side templating object
+// Safe cover for anit any accesses to private variables and methods in side templating object
 class faculaTemplateDefaultRender {
 	private $content = '';
 	
 	public function __construct(&$targetTpl, &$assigned = array()) {
-		$oldContent = ob_get_clean();
+		if ($oldContent = ob_get_clean()) {
+			facula::core('debug')->exception('ERROR_TEMPLATE_RENDER_BUFFER_POLLUTED|' . htmlspecialchars($oldContent), 'template', true);
+			
+			return false;
+		}
 		
 		ob_start();
-		
-		if (isset($oldContent[0])) {
-			echo($oldContent);
-		}
 		
 		extract($assigned);
 		

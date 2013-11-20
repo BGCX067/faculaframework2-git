@@ -51,13 +51,13 @@ abstract class View implements viewInterface {
 	
 	static private function render($targetTpl) {
 		if (is_readable($targetTpl)) {
-			$oldContent = ob_get_clean();
+			if ($oldContent = ob_get_clean()) {
+				facula::core('debug')->exception('ERROR_VIEW_BUFFER_POLLUTED|' . htmlspecialchars($oldContent), 'template', true);
+				
+				return false;
+			}
 			
 			ob_start();
-			
-			if (isset($oldContent[0])) {
-				echo($oldContent);
-			}
 			
 			extract(self::$assigned);
 			

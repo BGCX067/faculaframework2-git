@@ -1,7 +1,7 @@
 <?php 
 
 /*****************************************************************************
-	Facula Framework Controller Base Unit
+	Facula Framework Base Controller Unit
 	
 	FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
 	
@@ -24,8 +24,8 @@
 	You should have received a copy of the GNU Lesser General Public License
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
-
 interface controllerInterface {
+	public function _init();
 	public function _run();
 }
 
@@ -62,6 +62,14 @@ abstract class Controller extends Setting implements controllerInterface {
 		return $this->request->getCookie($key);
 	}
 	
+	protected function getGets($keys, &$errors = array()) {
+		return $this->request->getGets($keys, $errors);
+	}
+	
+	protected function getPosts($keys, &$errors = array()) {
+		return $this->request->getPosts($keys, $errors);
+	}
+	
 	protected function redirect($addr, $httpcode = 302, $interior = true) {
 		$rootUrl = $interior ? $this->request->getClientInfo('rootURL') . '/' : '';
 		
@@ -86,6 +94,16 @@ abstract class Controller extends Setting implements controllerInterface {
 			if ($this->template->assign($key, $val)) {
 				return true;
 			}
+		} else {
+			$this->debug->exception('ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE', 'controller', true);
+		}
+		
+		return false;
+	}
+	
+	protected function error($msg) {
+		if ($this->template) {
+			return $this->template->insertMessage($msg);
 		} else {
 			$this->debug->exception('ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE', 'controller', true);
 		}

@@ -396,9 +396,11 @@ class faculaDebugDefault implements faculaDebugInterface {
 			} else {
 				echo($code);
 			}
+			
+			return true;
 		}
 		
-		return true;
+		return false;
 	}
 }
 

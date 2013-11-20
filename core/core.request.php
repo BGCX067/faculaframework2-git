@@ -32,6 +32,8 @@ interface faculaRequestInterface {
 	public function getCookie($key);
 	public function getPost($key);
 	public function getGet($key);
+	public function getPosts($keys, &$errors = array());
+	public function getGets($keys, &$errors = array());
 	public function getClientInfo($key);
 }
 
@@ -107,7 +109,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 													);
 		}
 		
-		// CDN or approved proxies servers
+		// CDN or approved proxy servers
 		if (isset($cfg['TrustedProxies']) && is_array($cfg['TrustedProxies'])) {
 			$proxyIPRange = $proxyIPTemp = array();
 			
@@ -160,7 +162,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 		}
 		
 		// Get current absolute root
-		if (isset($_SERVER['SERVER_NAME']) && isset($_SERVER['SERVER_ADDR']) && isset($_SERVER['SERVER_PORT'])) {
+		if (isset($_SERVER['SERVER_ADDR']) && isset($_SERVER['SERVER_PORT'])) {
 			$this->requestInfo['absRootURL'] = ($_SERVER['SERVER_PORT'] == 443 ? 'https://' : 'http://') . $_SERVER['SERVER_ADDR'] . ($_SERVER['SERVER_PORT'] == 80 ? '' : ':' . $_SERVER['SERVER_PORT'] ) . $this->requestInfo['rootURL'];
 		}
 		
@@ -217,9 +219,9 @@ class faculaRequestDefault implements faculaRequestInterface {
 			$this->requestInfo['ipArray'] = $this->splitIP($this->requestInfo['ip']);
 			
 			if (isset($_SERVER['REMOTE_ADDR']) && $this->requestInfo['ip'] != $_SERVER['REMOTE_ADDR']) {
-				$this->requestInfo['proxy'] = true;
+				$this->requestInfo['forwarded'] = true;
 			} else {
-				$this->requestInfo['proxy'] = false;
+				$this->requestInfo['forwarded'] = false;
 			}
 		}
 		
@@ -246,7 +248,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 	}
 	
 	public function getClientInfo($key) {
-		if (isset($this->requestInfo[$key])) { 
+		if (isset($this->requestInfo[$key])) {
 			return $this->requestInfo[$key];
 		}
 		
@@ -265,8 +267,15 @@ class faculaRequestDefault implements faculaRequestInterface {
 		return $this->get('GET', $key);
 	}
 	
+	public function getPosts($keys, &$errors = array()) {
+		return $this->gets('POST', $keys, $errors, false);
+	}
+	
+	public function getGets($keys, &$errors = array()) {
+		return $this->gets('GET', $keys, $errors, false);
+	}
+	
 	public function get($type, $key, &$errored = false) {
-		// Yeah, originally there we have a strtoupper here, But consider i'm not doing nurse, why i do that waste that function call for lazyer?
 		if (isset($this->pool[$type][$key])) {
 			return $this->pool[$type][$key];
 		} else {
