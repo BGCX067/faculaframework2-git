@@ -890,7 +890,7 @@ class faculaTemplateDefaultCompiler {
 						break;
 						
 					case 'nl':
-						$phpcode .= 'echo(nl2br(' . $param[0] . ', ENT_QUOTES));';
+						$phpcode .= 'echo(nl2br(' . $param[0] . '));';
 						break;
 						
 					case 'number':
@@ -1073,7 +1073,7 @@ class faculaTemplateDefaultCompiler {
 						$phpcode .= '<?php }} ?>'; // We need to both two, the first if, and foreach;
 					}
 					
-					// Tag this loop to emptied
+					// Tag this loop to ended
 					$this->tagPositionMaps['Loop:' . $params[1]]['End'] = $pos + strlen($phpcode);
 					
 					return $phpcode;

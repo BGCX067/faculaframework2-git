@@ -75,8 +75,6 @@ class faculaCacheDefault implements faculaCacheInterface {
 			throw new Exception('Cache root must be set and existed.');
 		}
 		
-		$this->configs['CacheVersion'] = $common['BootVersion'];
-		
 		$cfg = null;
 		unset($cfg);
 		
