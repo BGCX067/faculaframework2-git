@@ -46,7 +46,7 @@ class Hash {
 		return false;
 	}
 	
-	private function obscure($str) {
+	public function obscure($str) {
 		$strlen = strlen($str);
 		$strlenHalf = intval($strlen / 2);
 		$strlenLast = $strlen - 1;
@@ -55,7 +55,7 @@ class Hash {
 		$salt = '';
 		
 		if ($strlen > 1) {
-			$factor = ord($str[0]) + ord($str[intval($strlenHalf)]) + ord($str[$strlenLast]);
+			$factor = ord($str[0]) + ord($str[$strlenHalf]) + ord($str[$strlenLast]);
 			
 			if ($this->saltLen) {
 				$salt = $this->salt;
@@ -85,11 +85,43 @@ class Hash {
 	}
 	
 	public function obscuredMD5($str) {
-		return md5($this->obscure(md5($str)));
+		return hash('md5', $this->obscure(hash('md5', $str)));
 	}
 	
 	public function obscuredSHA1($str) {
-		return sha1($this->obscure(sha1($str)));
+		return hash('sha1', $this->obscure(hash('sha1', $str)));
+	}
+	
+	public function obscuredSHA256($str) {
+		return hash('sha256', $this->obscure(hash('sha256', $this->salt + $str + $this->salt)));
+	}
+	
+	public function obscuredSHA512($str) {
+		return hash('sha512', $this->obscure(hash('sha512', $this->salt + $str + $this->salt)));
+	}
+	
+	public function obscuredRIPEMD160($str) {
+		return hash('ripemd160', $this->obscure(hash('ripemd160', $this->salt + $str + $this->salt)));
+	}
+	
+	public function obscuredRIPEMD160($str) {
+		return hash('ripemd160', $this->obscure(hash('ripemd160', $this->salt + $str + $this->salt)));
+	}
+	
+	public function obscuredWHIRLPOOL($str) {
+		return hash('whirlpool', $this->obscure(hash('whirlpool', $this->salt + $str + $this->salt)));
+	}
+	
+	public function obscuredGOST($str) {
+		return hash('gost', $this->obscure(hash('gost', $this->salt + $str + $this->salt)));
+	}
+	
+	public function obscuredVerify($str) {
+		return $this->obscuredMD5($str);
+	}
+	
+	public function obscuredSafe($str) {
+		return $this->obscuredSHA512($str);
 	}
 }
 
