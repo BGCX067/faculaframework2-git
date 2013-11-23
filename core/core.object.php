@@ -412,15 +412,28 @@ class faculaObjectDefault implements faculaObjectInterface {
 	
 	// Start a handler or other type of class
 	public function run($app, $args = array(), $cache = false) {
-		$handler = null;
-		
+		$handler = $hookResult = $callResult = $error = null;
 		$appParam = explode('::', str_replace(array('::', '->'), '::', $app), 2);
 		
 		if ($handler = $this->getInstance($appParam[0], $args, $cache)) {
 			if (isset($appParam[1]) && method_exists($handler, $appParam[1])) {
-				$this->callFunction(array($handler, $appParam[1]), $args);
+				$hookResult = $this->runHook('call_' . $appParam[0] . '::' . $appParam[1] . '_before', $args, $error);
+				
+				$callResult = $this->callFunction(array($handler, $appParam[1]), $args);
+				
+				$this->runHook('call_' . $appParam[0] . '::' . $appParam[1] . '_after', array(
+					'Call' => $callResult,
+					'Hook' => $hookResult,
+				), $error);
 			} elseif (method_exists($handler, '_run')) {
-				$this->callFunction(array($handler, '_run'), $args);
+				$hookResult = $this->runHook('call_' . $appParam[0] . '_before', $args, $error);
+				
+				$callResult = $this->callFunction(array($handler, '_run'), $args);
+				
+				$this->runHook('call_' . $appParam[0] . '_after', array(
+					'Call' => $callResult,
+					'Hook' => $hookResult,
+				), $error);
 			}
 		}
 		
