@@ -104,16 +104,20 @@ class Hash {
 		return hash('ripemd160', $this->obscure(hash('ripemd160', $this->salt + $str + $this->salt)));
 	}
 	
-	public function obscuredRIPEMD160($str) {
-		return hash('ripemd160', $this->obscure(hash('ripemd160', $this->salt + $str + $this->salt)));
+	public function obscuredRIPEMD320($str) {
+		return hash('ripemd320', $this->obscure(hash('ripemd320', $this->salt + $str + $this->salt)));
 	}
 	
 	public function obscuredWHIRLPOOL($str) {
 		return hash('whirlpool', $this->obscure(hash('whirlpool', $this->salt + $str + $this->salt)));
 	}
 	
-	public function obscuredGOST($str) {
-		return hash('gost', $this->obscure(hash('gost', $this->salt + $str + $this->salt)));
+	public function obscuredSALSA10($str) {
+		return hash('salsa10', $this->obscure(hash('salsa10', $this->salt + $str + $this->salt)));
+	}
+	
+	public function obscuredSALSA20($str) {
+		return hash('salsa20', $this->obscure(hash('salsa20', $this->salt + $str + $this->salt)));
 	}
 	
 	public function obscuredVerify($str) {
