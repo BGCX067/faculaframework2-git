@@ -46,7 +46,7 @@ class Hash {
 		return false;
 	}
 	
-	public function obscure($str) {
+	protected function obscure($str) {
 		$strlen = strlen($str);
 		$strlenHalf = intval($strlen / 2);
 		$strlenLast = $strlen - 1;
@@ -93,31 +93,31 @@ class Hash {
 	}
 	
 	public function obscuredSHA256($str) {
-		return hash('sha256', $this->obscure(hash('sha256', $this->salt . $str . $this->salt)));
+		return hash('sha256', $this->obscure(hash('sha256', $this->salt . $str . $this->obscure(hash('sha256', $str)))));
 	}
 	
 	public function obscuredSHA512($str) {
-		return hash('sha512', $this->obscure(hash('sha512', $this->salt . $str . $this->salt)));
+		return hash('sha512', $this->obscure(hash('sha512', $this->salt . $str . $this->obscure(hash('sha512', $str)))));
 	}
 	
 	public function obscuredRIPEMD160($str) {
-		return hash('ripemd160', $this->obscure(hash('ripemd160', $this->salt . $str . $this->salt)));
+		return hash('ripemd160', $this->obscure(hash('ripemd160', $this->salt . $str . $this->obscure(hash('ripemd160', $str)))));
 	}
 	
 	public function obscuredRIPEMD320($str) {
-		return hash('ripemd320', $this->obscure(hash('ripemd320', $this->salt . $str . $this->salt)));
+		return hash('ripemd320', $this->obscure(hash('ripemd320', $this->salt . $str . $this->obscure(hash('ripemd320', $str)))));
 	}
 	
 	public function obscuredWHIRLPOOL($str) {
-		return hash('whirlpool', $this->obscure(hash('whirlpool', $this->salt . $str . $this->salt)));
+		return hash('whirlpool', $this->obscure(hash('whirlpool', $this->salt . $str . $this->obscure(hash('whirlpool', $str)))));
 	}
 	
 	public function obscuredSALSA10($str) {
-		return hash('salsa10', $this->obscure(hash('salsa10', $this->salt . $str . $this->salt)));
+		return hash('salsa10', $this->obscure(hash('salsa10', $this->salt . $str . $this->obscure(hash('salsa10', $str)))));
 	}
 	
 	public function obscuredSALSA20($str) {
-		return hash('salsa20', $this->obscure(hash('salsa20', $this->salt . $str . $this->salt)));
+		return hash('salsa20', $this->obscure(hash('salsa20', $this->salt . $str . $this->obscure(hash('salsa20', $str)))));
 	}
 	
 	public function obscuredVerify($str) {
