@@ -165,7 +165,10 @@ class faculaObjectDefault implements faculaObjectInterface {
 	
 	public function _inited() {
 		spl_autoload_register(array(&$this, 'getAutoInclude'));
-		register_shutdown_function(array(&$this, 'shutdownHook'));
+		
+		register_shutdown_function(function() {
+			$this->shutdownHook();
+		});
 		
 		return true;
 	}
@@ -473,7 +476,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return false;
 	}
 	
-	public function shutdownHook() {
+	private function shutdownHook() {
 		$error = array();
 		
 		return $this->runHook('shutingdown', array(), $error);

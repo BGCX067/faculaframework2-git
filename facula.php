@@ -109,6 +109,19 @@ class facula {
 		return false;
 	}
 	
+	static public function getVersion() {
+		if (isset(self::$instance)) {
+			return array(
+				'Base' => 'Facula Framework ' . __FACULAVERSION__,
+				'App' => isset(self::$instance->setting['AppName']) ? self::$instance->setting['AppName'] : 'Facula App',
+				'Ver' => isset(self::$instance->setting['AppVersion']) ? self::$instance->setting['AppVersion'] : '0.0',
+				'Boot' => isset(self::$instance->setting['Common']['BootVersion']) ? self::$instance->setting['Common']['BootVersion'] : '0',
+			);
+		}
+		
+		return array();
+	}
+	
 	static public function getCoreInfo() {
 		if (isset(self::$instance)) {
 			$cores = array();

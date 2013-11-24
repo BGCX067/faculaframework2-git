@@ -25,16 +25,186 @@
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-
-
-abstract class SMTP {
+class smtp {
 	static private $config = array();
+	static private $emails = array();
 	
-	static public function init() {
+	static public function init($cfg = array()) {
+		$version = facula::getVersion();
 		
+		self::$config['Handler'] = $version['App'] . ' ' . $version['Ver'];
+		self::$config['Charset'] = isset($cfg['Charset']) ? $cfg['Charset'] : 'utf-8';
+		
+		if (isset($cfg['Servers']) && is_array($cfg['Servers'])) {
+			if (isset($cfg['SelectMethod']) && $cfg['SelectMethod'] == 'Random') {
+				shuffle($cfg['Servers']);
+			}
+		
+			foreach($cfg['Servers'] AS $key => $val) {
+				self::$config['Servers'][$key] = array(
+					'Type' => isset($val['Type']) ? $val['Type'] : 'general',
+					'Host' => isset($val['Host']) ? $val['Host'] : 'localhost',
+					'Port' => isset($val['Port']) ? $val['Port'] : 25,
+					'Timeout' => isset($val['Timeout']) ? $val['Timeout'] : 1,
+					'Username' => isset($val['Username']) ? $val['Username'] : 'nobody',
+					'Password' => isset($val['Password']) ? $val['Password'] : 'nobody',
+					'Handler' => self::$config['Handler'],
+					'Charset' => self::$config['Charset'],
+					'SenderIP' => IP::joinIP(facula::core('request')->getClientInfo('ipArray'), true),
+				);
+				
+				// Set MAIL FROM, this one must be set for future use
+				if (isset($val['From'])) {
+					self::$config['Servers'][$key]['From'] = $val['From'];
+				} else {
+					self::$config['Servers'][$key]['From'] = 'postmaster@localhost';
+				}
+				
+				// Set REPLY TO
+				if (isset($val['ReplyTo'])) {
+					self::$config['Servers'][$key]['ReplyTo'] = $val['ReplyTo'];
+				} else {
+					self::$config['Servers'][$key]['ReplyTo'] = self::$config['Servers'][$key]['Form'];
+				}
+				
+				// Set RETURN TO
+				if (isset($val['ReplyTo'])) {
+					self::$config['Servers'][$key]['ReturnTo'] = $val['ReturnTo'];
+				} else {
+					self::$config['Servers'][$key]['ReturnTo'] = self::$config['Servers'][$key]['Form'];
+				}
+				
+				// Set ERROR TO
+				if (isset($val['ErrorTo'])) {
+					self::$config['Servers'][$key]['ErrorTo'] = $val['ErrorTo'];
+				} else {
+					self::$config['Servers'][$key]['ErrorTo'] = self::$config['Servers'][$key]['Form'];
+				}
+			}
+			
+			facula::core('object')->addHook('response_finished', 'smtpoperatingtask', function() {
+				// Hey, i must mark this. I can call a private method with hook by this way. Nice!
+				self::sendMail();
+			});
+			
+			return true;
+		} else {
+			facula::core('debug')->exception('ERROR_SMTP_NOSERVER', 'smtp', true);
+		}
+		
+		return false;
+	}
+	
+	static public function addMail($title, $body, array $receivers) {
+		self::$emails = array(
+			'Receivers' => $receivers,
+			'Title' => $title,
+			'Body' => $body,
+		);
+	}
+	
+	static private function sendMail() {
+		$operater = null;
+		$operaterClassName = $error = '';
+		
+		foreach(self::$config['Servers'] AS $server) {
+			$operaterClassName = __CLASS__ . '_' . $server['Type'];
+			
+			if (class_exists($operaterClassName, true)) {
+				$operater = new $operaterClassName($server);
+				
+				if (is_subclass_of($operater, 'SMTPBase')) {
+					if ($operater->connect($error)) {
+						
+						foreach(self::$emails AS $email) {
+							if (!$operater->send($email)) {
+								return false;
+							}
+						}
+						
+						$operater->disconnect();
+						
+						return true;
+					}
+				} else {
+					facula::core('debug')->exception('ERROR_SMTP_OPERATOR_BASE_INVALID', 'smtp', true);
+				}
+			} else {
+				facula::core('debug')->exception('ERROR_SMTP_OPERATOR_NOTFOUND|' . $server['Type'], 'smtp', true);
+			}
+		}
+		
+		if ($error) {
+			facula::core('debug')->exception('ERROR_SMTP_OPERATOR_ERROR|' . $error, 'smtp', false);
+		}
+		
+		return false;
 	}
 }
 
-
+abstract class SMTPBase {
+	protected $connection = null;
+	
+	abstract public function connect(&$error);
+	abstract public function send(array $email);
+	abstract public function disconnect();
+	
+	protected function socketOpen($host, $port, $timeout, &$error, &$errorstr) {
+		if (function_exists('fsockopen')) {
+			if ($this->connection = fsockopen($host, $port, $error, $errorstr, $timeout)) {
+				stream_set_blocking($this->connection, true);
+				
+				return true;
+			}
+		} else {
+			facula::core('debug')->exception('ERROR_SMTP_SOCKET_DISABED', 'smtp', true);
+		}
+		
+		return false;
+	}
+	
+	protected function socketPut($command, $getReturn = false) {
+		$response = '';
+		
+		if ($this->connection) {
+			if (fputs($this->connection, $command)) {
+				if (!$getReturn) {
+					return true;
+				} else {
+					while($response = fgets($this->connection, 512)) {
+						continue;
+					}
+					
+					return substr($response, 0, strpos($response, ' '));
+				}
+			} else {
+				facula::core('debug')->exception('ERROR_SMTP_SOCKET_NORESPONSE', 'smtp', false);
+				return false;
+			}
+		}
+	}
+	
+	protected function socketGet($full = false) {
+		$response = '';
+		
+		if ($this->connection) {
+			while($response = fgets($this->connection, 512)) {
+				print_r($response);
+				print_r('<br />');
+				continue;
+			}
+			
+			if ($full) {
+				return $response;
+			} else {
+				return substr($response, 0, strpos($response, ' '));
+			}
+		}
+	}
+	
+	protected function makeBody() {
+	
+	}
+}
 
 ?>

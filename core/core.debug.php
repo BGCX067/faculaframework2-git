@@ -33,8 +33,6 @@ interface faculaDebugInterface {
 	public function addLog($type, $errorcode, $content, &$backtraces = array());
 	
 	public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext);
-	public function exceptionHandler($exception);
-	public function fatalHandler();
 }
 
 class faculaDebug extends faculaCoreFactory {
@@ -93,19 +91,40 @@ class faculaDebugDefault implements faculaDebugInterface {
 	}
 	
 	public function _inited() {
-		set_error_handler(array(&$this, 'errorHandler'), E_ALL); // Use our own error reporter, just like PHP's E_ALL
-		set_exception_handler(array(&$this, 'exceptionHandler')); // Use our own exception reporter
-		register_shutdown_function(array(&$this, 'fatalHandler')); // Experimentally use our own fatal reporter
+		set_error_handler(function($errno, $errstr, $errfile, $errline, $errcontext) {
+			$this->errorHandler($errno, $errstr, $errfile, $errline, $errcontext);
+		}, E_ALL); // Use our own error reporter, just like PHP's E_ALL
+		
+		set_exception_handler(function($exception) {
+			$this->exceptionHandler($exception);
+		}); // Use our own exception reporter
+		
+		register_shutdown_function(function() {
+			$this->shutdownTask();
+		}); // Experimentally use our own fatal reporter
 		
 		if (isset($this->configs['LogServer']['Addr'][0])) {
-			register_shutdown_function(array(&$this, 'reportError')); // Hook up the reportError so we can post error to log server
 			$this->configs['LogServer']['Enabled'] = true;
 		} else {
 			$this->configs['LogServer']['Enabled'] = false;
 		}
 		
 		// error_reporting(E_ALL &~ (E_NOTICE | E_WARNING | E_USER_ERROR | E_USER_WARNING | E_USER_NOTICE | E_USER_DEPRECATED)); // Mute php error reporter from most errors
-		error_reporting(E_ALL &~ (E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_PARSE | E_ERROR | E_WARNING | E_DEPRECATED | E_NOTICE | E_USER_ERROR | E_USER_WARNING | E_USER_DEPRECATED | E_USER_NOTICE));
+		$this->configs['DefaultErrorLevel'] = error_reporting(E_ALL &~ (E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_PARSE | E_ERROR | E_WARNING | E_DEPRECATED | E_NOTICE | E_USER_ERROR | E_USER_WARNING | E_USER_DEPRECATED | E_USER_NOTICE));
+		
+		return true;
+	}
+	
+	private function shutdownTask() {
+		// 1, I remember when any failure in functions that registered with register_shutdown_function will case whole shutdown_function queue be halt.
+		// 2, When this function finished, we will don't have chance to catch any further errors.
+		//    And there may have other shutdown functions still wait to go after this. 
+		// So, we recover the error reporting setting, for giving a chance to log the error on server's error log. ( And since this should be the first one in register_shutdown_function queue, everything will be fine. Remaining functions will be run under default error_reporting level. )
+		error_reporting($this->configs['DefaultErrorLevel']);
+		// However, i'm not recommend you to use register_shutdown_function(and also shutingdown hook), If you want to do something very expensive, do it with response_finished hook.
+		
+		$this->fatalHandler();
+		$this->reportError();
 		
 		return true;
 	}
@@ -138,7 +157,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 		return false;
 	}
 	
-	public function reportError() {
+	private function reportError() {
 		if (!empty($this->errorRecords) && $this->configs['LogServer']['Enabled']) {
 			$app = facula::getCoreInfo();
 			
@@ -234,11 +253,11 @@ class faculaDebugDefault implements faculaDebugInterface {
 		$this->exception(sprintf('Error code %s (%s) in file %s line %s', 'PHP('.$errno.')', $errstr, $errfile, $errline), 'PHP|PHP:' . $errno, !$exit ? $this->configs['ExitOnAnyError'] : true);
 	}
 	
-	public function exceptionHandler($exception) {
+	private function exceptionHandler($exception) {
 		$this->exception('Exception: ' . $exception->getMessage(), 'Exception', true, $exception);
 	}
 	
-	public function fatalHandler() { // http://stackoverflow.com/questions/277224/how-do-i-catch-a-php-fatal-error/277230#277230
+	private function fatalHandler() { // http://stackoverflow.com/questions/277224/how-do-i-catch-a-php-fatal-error/277230#277230
 		$errfile = 'Unknown file';
 		$errstr  = '';
 		$errno   = E_CORE_ERROR;
@@ -348,8 +367,8 @@ class faculaDebugDefault implements faculaDebugInterface {
 		foreach ($trace as $key => $val) {
 			$result[] = array(
 				'caller' => (isset($val['class']) ? $val['class'] . (isset($val['type']) ? $val['type'] : '::') : '') . (isset($val['function']) ? $val['function'] . '(' : 'main (') . (isset($val['args']) ? $this->getArgsType(', ', $val['args']) : '') . ')',
-				'file' => isset($val['file']) ? $val['file'] : null,
-				'line' => isset($val['line']) ? $val['line'] : null,
+				'file' => isset($val['file']) ? $val['file'] : 'unknown',
+				'line' => isset($val['line']) ? $val['line'] : 'unknown',
 				'nameplate' => isset($val['class']) && isset($val['class']::$plate) ? array(
 					'author' => isset($val['class']::$plate['Author'][0]) ? $val['class']::$plate['Author'] : 'Undeclared',
 					'reviser' => isset($val['class']::$plate['Reviser'][0]) ? $val['class']::$plate['Reviser'] : 'Undeclared',

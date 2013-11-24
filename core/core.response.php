@@ -346,6 +346,8 @@ class faculaResponseDefault implements faculaResponseInterface {
 			
 			flush();
 			
+			facula::core('object')->runHook('response_finished', array(), $error);
+			
 			return true;
 		} else {
 			facula::core('debug')->exception('ERROR_RESPONSE_ALREADY_RESPONSED|File: ' . $file . ' Line: ' . $line . ' Content: ' . substr(self::$content, 0, 32), 'data', false);
