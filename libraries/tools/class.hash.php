@@ -90,64 +90,86 @@ class Hash {
 	}
 	
 	public function obscuredMD5($str) {
-		return hash('md5', $this->obscure(hash('md5', $str)));
+		for($i = 0; $i < $this->loopPeriod; $i++) {
+			$str = hash('md5', $this->obscure(hash('md5', $str)));
+		}
+		
+		return $str;
 	}
 	
 	public function obscuredSHA1($str) {
-		return hash('sha1', $this->obscure(hash('sha1', $str)));
+		for($i = 0; $i < $this->loopPeriod; $i++) {
+			$str = hash('sha1', $this->obscure(hash('sha1', $str)));
+		}
+		
+		return $str;
 	}
 	
 	public function obscuredSHA256($str) {
+		$str = $this->salt . $str;
+		
 		for($i = 0; $i < $this->loopPeriod; $i++) {
-			$str = hash('sha256', $this->obscure(hash('sha256', $this->salt . $str . $this->obscure(hash('sha256', $str)))));
+			$str = hash('sha256', $this->obscure(hash('sha256', $str . $this->obscure(hash('sha256', $str)))));
 		}
 		
 		return $str;
 	}
 	
 	public function obscuredSHA512($str) {
+		$str = $this->salt . $str;
+		
 		for($i = 0; $i < $this->loopPeriod; $i++) {
-			$str = hash('sha512', $this->obscure(hash('sha512', $this->salt . $str . $this->obscure(hash('sha512', $str)))));
+			$str = hash('sha512', $this->obscure(hash('sha512', $str . $this->obscure(hash('sha512', $str)))));
 		}
 		
 		return $str;
 	}
 	
 	public function obscuredRIPEMD160($str) {
+		$str = $this->salt . $str;
+		
 		for($i = 0; $i < $this->loopPeriod; $i++) {
-			$str = hash('ripemd160', $this->obscure(hash('ripemd160', $this->salt . $str . $this->obscure(hash('ripemd160', $str)))));
+			$str = hash('ripemd160', $this->obscure(hash('ripemd160', $str . $this->obscure(hash('ripemd160', $str)))));
 		}
 		
 		return $str;
 	}
 	
 	public function obscuredRIPEMD320($str) {
+		$str = $this->salt . $str;
+		
 		for($i = 0; $i < $this->loopPeriod; $i++) {
-			$str = hash('ripemd320', $this->obscure(hash('ripemd320', $this->salt . $str . $this->obscure(hash('ripemd320', $str)))));
+			$str = hash('ripemd320', $this->obscure(hash('ripemd320', $str . $this->obscure(hash('ripemd320', $str)))));
 		}
 		
 		return $str;
 	}
 	
 	public function obscuredWHIRLPOOL($str) {
+		$str = $this->salt . $str;
+		
 		for($i = 0; $i < $this->loopPeriod; $i++) {
-			$str = hash('whirlpool', $this->obscure(hash('whirlpool', $this->salt . $str . $this->obscure(hash('whirlpool', $str)))));
+			$str = hash('whirlpool', $this->obscure(hash('whirlpool', $str . $this->obscure(hash('whirlpool', $str)))));
 		}
 		
 		return $str;
 	}
 	
 	public function obscuredSALSA10($str) {
+		$str = $this->salt . $str;
+		
 		for($i = 0; $i < $this->loopPeriod; $i++) {
-			$str = hash('salsa10', $this->obscure(hash('salsa10', $this->salt . $str . $this->obscure(hash('salsa10', $str)))));
+			$str = hash('salsa10', $this->obscure(hash('salsa10', $str . $this->obscure(hash('salsa10', $str)))));
 		}
 		
 		return $str;
 	}
 	
 	public function obscuredSALSA20($str) {
+		$str = $this->salt . $str;
+		
 		for($i = 0; $i < $this->loopPeriod; $i++) {
-			$str = hash('salsa20', $this->obscure(hash('salsa20', $this->salt . $str . $this->obscure(hash('salsa20', $str)))));
+			$str = hash('salsa20', $this->obscure(hash('salsa20', $str . $this->obscure(hash('salsa20', $str)))));
 		}
 		
 		return $str;
