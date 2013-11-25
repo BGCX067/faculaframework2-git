@@ -171,11 +171,7 @@ abstract class SMTPBase {
 				if (!$getReturn) {
 					return true;
 				} else {
-					while($response = fgets($this->connection, 512)) {
-						continue;
-					}
-					
-					return substr($response, 0, strpos($response, ' '));
+					return $this->socketGetLast(true);
 				}
 			} else {
 				facula::core('debug')->exception('ERROR_SMTP_SOCKET_NORESPONSE', 'smtp', false);
@@ -185,21 +181,27 @@ abstract class SMTPBase {
 	}
 	
 	protected function socketGet($full = false) {
-		$response = '';
+		$response = null;
 		
 		if ($this->connection) {
-			while($response = fgets($this->connection, 512)) {
-				print_r($response);
-				print_r('<br />');
-				continue;
+			$response = fgets($this->connection, 512);
+			
+			if (!$full) {
+				$response = substr($response, 0, strpos($response, ' '));
 			}
 			
-			if ($full) {
-				return $response;
-			} else {
-				return substr($response, 0, strpos($response, ' '));
-			}
+			return $response ? $response : null;
 		}
+	}
+	
+	protected function socketGetLast($full = false) {
+		$response = '';
+		
+		while($response = $this->socketGet($full)) {
+			continue;
+		}
+		
+		return $response;
 	}
 	
 	protected function makeBody() {

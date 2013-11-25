@@ -296,7 +296,9 @@ class faculaResponseDefault implements faculaResponseInterface {
 	}
 	
 	public function send($type = '', $persistConn = false) {
-		$file = $line = $error = '';
+		$file = $line = $error = $oldBufferContent = $finalContent = '';
+		$hookResult = null;
+		$finalContentLen = 0;
 		
 		if (!headers_sent($file, $line)) {
 			// Assume we will finish this application after output, calc belowing profile data
@@ -307,7 +309,10 @@ class faculaResponseDefault implements faculaResponseInterface {
 			facula::$profile['ProductionTime'] = facula::$profile['OutputTime'] - facula::$profile['StartTime'];
 			
 			// Start buffer to output
+			$oldBufferContent = ob_get_clean(); // Safely shutdown early output (May set by PHP itself when output_buffering = On)
 			ob_start();
+			
+			$finalContent = $oldBufferContent . self::$content;
 			
 			if (isset(self::$http_content_type[$type])) {
 				header('Content-Type: ' . self::$http_content_type[$type] . '; charset=utf-8');
@@ -334,9 +339,11 @@ class faculaResponseDefault implements faculaResponseInterface {
 				header('Connection: Close');
 			}
 			
-			facula::core('object')->runHook('response_sending', array(self::$content), $error);
+			$hookResult = facula::core('object')->runHook('response_sending', array($finalContent), $error);
 			
-			echo self::$content;
+			header('Content-Length: ' . strlen($finalContent));
+			
+			echo $finalContent;
 			
 			ob_end_flush();
 			
@@ -346,7 +353,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 			
 			flush();
 			
-			facula::core('object')->runHook('response_finished', array(), $error);
+			facula::core('object')->runHook('response_finished', $hookResult, $error);
 			
 			return true;
 		} else {
@@ -382,8 +389,6 @@ class faculaResponseDefault implements faculaResponseInterface {
 			
 			self::$headers[] = 'X-Length: ' . $orgSize . ' bytes';
 		}
-		
-		self::$headers[] = 'Content-Length: ' . strlen(self::$content);
 		
 		return true;
 	}

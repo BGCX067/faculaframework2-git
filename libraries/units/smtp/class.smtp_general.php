@@ -47,6 +47,8 @@ class smtp_general extends SMTPBase {
 			$response = $this->socketGet();
 			
 			echo "connected";
+			
+			file_put_contents(PROJECT_ROOT . '\\smtp.txt', $response . "\r\n", FILE_APPEND);
 		} else {
 			$error = $errorNo . ':' . $errorMsg;
 			echo "errored";
@@ -58,7 +60,7 @@ class smtp_general extends SMTPBase {
 	}
 	
 	public function send(array $email) {
-		adasds
+		
 	}
 	
 	public function disconnect() {
