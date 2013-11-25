@@ -142,17 +142,27 @@ class smtp {
 	}
 }
 
-abstract class SMTPBase {
-	protected $connection = null;
+class SMTPSocket {
+	private $connection = null;
+	private $responseParsers = array();
 	
-	abstract public function connect(&$error);
-	abstract public function send(array $email);
-	abstract public function disconnect();
+	private $host = 'localhost';
+	private $port = 0;
+	private $timeout = 0;
 	
-	protected function socketOpen($host, $port, $timeout, &$error, &$errorstr) {
+	public function __construct($host, $port, $timeout) {
+		$this->host = $host;
+		$this->port = $port;
+		$this->timeout = $timeout;
+		
+		return true;
+	}
+	
+	public function open(&$error, &$errorstr) {
 		if (function_exists('fsockopen')) {
-			if ($this->connection = fsockopen($host, $port, $error, $errorstr, $timeout)) {
+			if ($this->connection = fsockopen($this->host, $this->port, $error, $errorstr, $this->timeout)) {
 				stream_set_blocking($this->connection, true);
+				stream_set_timeout($this->connection, $this->timeout);
 				
 				return true;
 			}
@@ -163,15 +173,15 @@ abstract class SMTPBase {
 		return false;
 	}
 	
-	protected function socketPut($command, $getReturn = false) {
-		$response = '';
+	public function put($command, $getReturn = false) {
+		file_put_contents(PROJECT_ROOT . '\\smtp.txt', "Sending: {$command}\r\n", FILE_APPEND);
 		
 		if ($this->connection) {
-			if (fputs($this->connection, $command)) {
+			if (fputs($this->connection, $command . "\r\n")) {
 				if (!$getReturn) {
 					return true;
 				} else {
-					return $this->socketGetLast(true);
+					return $this->getLast(true);
 				}
 			} else {
 				facula::core('debug')->exception('ERROR_SMTP_SOCKET_NORESPONSE', 'smtp', false);
@@ -180,28 +190,130 @@ abstract class SMTPBase {
 		}
 	}
 	
-	protected function socketGet($full = false) {
+	public function get($parseResponse = false) {
 		$response = null;
 		
 		if ($this->connection) {
-			$response = fgets($this->connection, 512);
+			if ($response = trim(fgets($this->connection, 512))) {
+				file_put_contents(PROJECT_ROOT . '\\smtp.txt', "Response: {$response}\r\n", FILE_APPEND);
 			
-			if (!$full) {
-				$response = substr($response, 0, strpos($response, ' '));
+				if ($parseResponse) {
+					$response = $this->parseResponse($response);
+				}
+				
+				return $response ? $response : null;
 			}
-			
-			return $response ? $response : null;
 		}
+		
+		return false;
 	}
 	
-	protected function socketGetLast($full = false) {
-		$response = '';
+	public function getLast($parseResponse = false) {
+		$response = $responseLast = null;
 		
-		while($response = $this->socketGet($full)) {
-			continue;
+		while($response = $this->get($parseResponse)) {
+			$responseLast = $response;
 		}
 		
-		return $response;
+		return $responseLast;
+	}
+	
+	public function close() {
+		if ($this->connection) {
+			if ($this->put('QUIT')) {
+				$this->connection = null;
+				
+				return true;
+			};
+		}
+		
+		return false;
+	}
+	
+	public function addResponseParser($responseCode, Closure $parser) {
+		if (!isset($this->responseParsers[$responseCode])) {
+			$this->responseParsers[$responseCode] = $parser;
+		}
+		
+		return false;
+	}
+	
+	private function parseResponse($response) {
+		$responseParam = $parserName = $splitType = '';
+		$responseCode = $responseCode = 0;
+		$responseParams = array();
+		$parser = null;
+		
+		file_put_contents(PROJECT_ROOT . '\\smtp_info.txt', "Parse: {$response};\r\n", FILE_APPEND);
+		
+		if ($responseContent = trim($response)) {
+			// Position check seems the only stable way is do determine which we will use ('-' OR ' ').
+			if (($fstSpacePos = strpos($responseContent, ' ')) === false) {
+				$fstSpacePos = null;
+			}
+			
+			if (($fstDashPos = strpos($responseContent, '-')) === false) {
+				$fstDashPos = null;
+			}
+			
+			if (is_null($fstDashPos) && $fstSpacePos) {
+				$splitType = 'SPACE';
+			} elseif (is_null($fstSpacePos) && $fstDashPos) {
+				$splitType = 'DASH';
+			} elseif ($fstDashPos && $fstDashPos < $fstSpacePos) {
+				$splitType = 'DASH';
+			} elseif ($fstSpacePos && $fstSpacePos < $fstDashPos) {
+				$splitType = 'SPACE';
+			} else {
+				$splitType = 'UNKONWN';
+			}
+			
+			// Use splitType to determine how to split response
+			switch($splitType) {
+				case 'UNKONWN':
+					$responseParams[] = $responseContent;
+					break;
+					
+				case 'DASH':
+					$responseParams = explode('-', $responseContent, 2);
+					break;
+					
+				case 'SPACE':
+					$responseParams = explode(' ', $responseContent, 2);
+					break;
+			}
+			
+			file_put_contents(PROJECT_ROOT . '\\smtp_info.txt', "Parse: {$response}; Split: {$splitType}; DashPOS: {$fstDashPos}; SpacePOS: {$fstSpacePos}; Param: " . implode(',', $responseParams) . "\r\n", FILE_APPEND);
+			
+			if (isset($responseParams[0]) && $responseParams[0] && is_numeric($responseParams[0])) {
+				$responseCode = intval($responseParams[0]);
+			}
+			
+			if (isset($responseParams[1]) && $responseParams[1]) {
+				$responseParam = $responseParams[1];
+			}
+			
+			// Check if parser's existed.
+			if (isset($this->responseParsers[$responseCode])) {
+				$parser = $this->responseParsers[$responseCode];
+				
+				return $parser($responseParam);
+			}
+			
+			return $responseCode;
+		}
+		
+		return false;
+	}
+}
+
+abstract class SMTPBase {
+	abstract public function connect(&$error);
+	abstract public function send(array $email);
+	abstract public function disconnect();
+	
+	final protected function getSocket($host, $port, $timeout) {
+		return new SMTPSocket($host, $port, $timeout);
 	}
 	
 	protected function makeBody() {

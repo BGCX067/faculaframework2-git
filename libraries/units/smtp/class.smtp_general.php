@@ -26,11 +26,43 @@
 *******************************************************************************/
 
 class smtp_general extends SMTPBase {
-	protected $connection = '';
 	protected $server = '';
+	
+	protected $serverInfo = array();
 	
 	public function __construct($server) {
 		$this->server = $server;
+		$this->socket = $this->getSocket($this->server['Host'], $this->server['Port'], $this->server['Timeout']);
+		
+		$this->socket->addResponseParser(250, function($param) {
+			$params = explode(' ', $param, 64);
+			
+			file_put_contents(PROJECT_ROOT . '\\smtp_info.txt', "Info: 250, Parsing {" . implode(',', $params) . "};\r\n", FILE_APPEND);
+			
+			switch(strtolower($params[0])) {
+				case 'size':
+					if (isset($params[1])) {
+						$this->serverInfo['MailMaxSize'] = intval($params[1]);
+					}
+					break;
+					
+				case '8bitmime':
+					$this->serverInfo['8BITMIME'] = true;
+					break;
+					
+				case 'pipelining':
+					$this->serverInfo['PIPELINING'] = true;
+					break;
+					
+				case 'auth':
+					if (isset($params[1])) {
+						$this->serverInfo['AuthMethods'] = explode($params[1], 16);
+					}
+					break;
+			}
+			
+			return 250;
+		});
 		
 		return true;
 	}
@@ -43,12 +75,31 @@ class smtp_general extends SMTPBase {
 		
 		//facula::core('debug')->criticalSection(true);
 		
-		if ($this->socketOpen($this->server['Host'], $this->server['Port'], $this->server['Timeout'], $errorNo, $errorMsg)) {
-			$response = $this->socketGet();
+		if ($this->socket->open($errorNo, $errorMsg)) {
+			// Server response us?
+			if ($this->socket->getLast(true) != 220) {
+				$error = 'ERROR_SMTP_SERVER_RESPONSE_INVALID';
+				$this->disconnect();
+				
+				return false;
+			}
+			
+			// First talk: Greeting
+			// Server will return some info about itself.
+			if ($this->socket->put('EHLO ' . $this->server['Host'], true) != 250) {
+				$error = 'ERROR_SMTP_SERVER_RESPONSE_EHLO_FAILED';
+				$this->disconnect();
+				
+				return false;
+			}
+			
+			// Next should be AUTH, Read AUTH type from $this->serverInfo['AuthMethods']
+			
+			
+			$this->disconnect();
 			
 			echo "connected";
 			
-			file_put_contents(PROJECT_ROOT . '\\smtp.txt', $response . "\r\n", FILE_APPEND);
 		} else {
 			$error = $errorNo . ':' . $errorMsg;
 			echo "errored";
@@ -64,7 +115,7 @@ class smtp_general extends SMTPBase {
 	}
 	
 	public function disconnect() {
-	
+		$this->socket->close();
 	}
 
 }
