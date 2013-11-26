@@ -137,42 +137,43 @@ class SMTP {
 		$operaterClassName = $error = '';
 		$result = false;
 		
-		foreach(self::$config['Servers'] AS $server) {
-			$operaterClassName = __CLASS__ . '_' . $server['Type'];
-			
-			if (class_exists($operaterClassName, true)) {
-				$operater = new $operaterClassName($server);
+		if (!empty(self::$config)) {
+			foreach(self::$config['Servers'] AS $server) {
+				$operaterClassName = __CLASS__ . '_' . $server['Type'];
 				
-				
-				if (is_subclass_of($operater, 'SMTPBase')) {
-					facula::core('debug')->criticalSection(true);
+				if (class_exists($operaterClassName, true)) {
+					$operater = new $operaterClassName($server);
 					
-					try {
-						if ($operater->connect($error)) {
-							
-							foreach(self::$emails AS $email) {
-								$operater->send($email);
+					if (is_subclass_of($operater, 'SMTPBase')) {
+						facula::core('debug')->criticalSection(true);
+						
+						try {
+							if ($operater->connect($error)) {
+								
+								foreach(self::$emails AS $email) {
+									$operater->send($email);
+								}
+								
+								$result = true;
+								
+								$operater->disconnect();
 							}
-							
-							$result = true;
-							
-							$operater->disconnect();
+						} catch (Exception $e) {
+							$error = $e->getMessage();
 						}
-					} catch (Exception $e) {
-						$error = $e->getMessage();
+						
+						facula::core('debug')->criticalSection(false);
+					} else {
+						facula::core('debug')->exception('ERROR_SMTP_OPERATOR_BASE_INVALID', 'smtp', true);
 					}
-					
-					facula::core('debug')->criticalSection(false);
 				} else {
-					facula::core('debug')->exception('ERROR_SMTP_OPERATOR_BASE_INVALID', 'smtp', true);
+					facula::core('debug')->exception('ERROR_SMTP_OPERATOR_NOTFOUND|' . $server['Type'], 'smtp', true);
 				}
-			} else {
-				facula::core('debug')->exception('ERROR_SMTP_OPERATOR_NOTFOUND|' . $server['Type'], 'smtp', true);
 			}
-		}
-		
-		if ($error) {
-			facula::core('debug')->exception('ERROR_SMTP_OPERATOR_ERROR|' . $error, 'smtp', false);
+			
+			if ($error) {
+				facula::core('debug')->exception('ERROR_SMTP_OPERATOR_ERROR|' . $error, 'smtp', false);
+			}
 		}
 		
 		return $result;
@@ -515,7 +516,7 @@ class SMTPDatar {
 	private $mailContent = array();
 	private $parsedMail = array();
 	
-	public function __construct(array &$mail) {
+	public function __construct(array $mail) {
 		global $_SERVER;
 		$senderHost = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
 		
@@ -644,7 +645,7 @@ abstract class SMTPBase {
 		return false;
 	}
 	
-	final protected function getData(array &$mail) {
+	final protected function getData(array $mail) {
 		return new SMTPDatar($mail);
 	}
 }

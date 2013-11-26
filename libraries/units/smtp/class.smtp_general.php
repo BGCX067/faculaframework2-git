@@ -44,18 +44,6 @@ class smtp_general extends SMTPBase {
 						$this->serverInfo['MailMaxSize'] = intval($params[1]);
 					}
 					break;
-					
-				case '8bitmime':
-					$this->serverInfo['8BITMIME'] = true;
-					break;
-					
-				case 'pipelining':
-					$this->serverInfo['PIPELINING'] = true;
-					break;
-					
-				case 'starttls':
-					$this->serverInfo['STARTTLS'] = true;
-					break;
 				
 				case 'auth':
 					if (isset($params[1])) {
@@ -116,14 +104,6 @@ class smtp_general extends SMTPBase {
 				}
 			}
 			
-			// Now, tell SMTP server which email address we want to use on sending email
-			if ($this->socket->put('MAIL FROM: <' . $this->server['From'] . '>', 'one') != 250) {
-				$error = 'ERROR_SMTP_SERVER_RESPONSE_SET_MAILFORM_FAILED';
-				$this->disconnect();
-				
-				return false;
-			}
-			
 			return true;
 		} else {
 			$error = $errorNo . ':' . $errorMsg;
@@ -133,7 +113,12 @@ class smtp_general extends SMTPBase {
 	}
 	
 	public function send(array &$email) {
-		$mailInfo = $this->lastForwardServerRCPT = array(); // Reset lastForwardServerRCPT array for retry sending
+		$this->lastForwardServerRCPT = array(); // Reset lastForwardServerRCPT array for retry sending
+		$mailContent = '';
+		
+		if ($this->socket->put('MAIL FROM: <' . $this->server['From'] . '>', 'one') != 250) {
+			return false;
+		}
 		
 		foreach($email['Receivers'] AS $receiver) {
 			switch($this->socket->put('RCPT TO: <' . $receiver . '>', 'one')) {
@@ -154,28 +139,32 @@ class smtp_general extends SMTPBase {
 			}
 		}
 		
-		if ($this->socket->put('DATA', 'one') == 354) {			
-			$mailInfo = array(
-				'Title' => $email['Title'],
-				'Message' => $email['Message'],
-				'Screenname' => $this->server['Screenname'],
-				'From' => $this->server['From'],
-				'ReplyTo' => $this->server['ReplyTo'],
-				'ReturnTo' => $this->server['ReturnTo'],
-				'ErrorTo' => $this->server['ErrorTo'],
-				'SenderIP' => $this->server['SenderIP'],
-			);
-						
-			foreach(explode("\n", $this->getData($mailInfo)->get()) AS $line) {
-				if ($line == '.') {
-					$line = '. ';
-				}
-				
-				$this->socket->put($line, false);
+		if ($mailContent = $this->getData(array(
+			'Title' => $email['Title'],
+			'Message' => $email['Message'],
+			'Screenname' => $this->server['Screenname'],
+			'From' => $this->server['From'],
+			'ReplyTo' => $this->server['ReplyTo'],
+			'ReturnTo' => $this->server['ReturnTo'],
+			'ErrorTo' => $this->server['ErrorTo'],
+			'SenderIP' => $this->server['SenderIP'],
+		))->get()) {
+			if (isset($this->serverInfo['MailMaxSize']) && strlen($mailContent) > $this->serverInfo['MailMaxSize']) {
+				return false;
 			}
 			
-			if ($this->socket->put("\r\n.\r\n", 'one') == 250) {
-				return true;
+			if ($this->socket->put('DATA', 'one') == 354) {	
+				foreach(explode("\n", $mailContent) AS $line) {
+					if ($line == '.') {
+						$line = '. ';
+					}
+					
+					$this->socket->put($line, false);
+				}
+				
+				if ($this->socket->put("\r\n.\r\n", 'one') == 250) {
+					return true;
+				}
 			}
 		}
 		
