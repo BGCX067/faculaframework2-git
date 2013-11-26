@@ -46,12 +46,19 @@ class smtp {
 					'Host' => isset($val['Host']) ? $val['Host'] : 'localhost',
 					'Port' => isset($val['Port']) ? $val['Port'] : 25,
 					'Timeout' => isset($val['Timeout']) ? $val['Timeout'] : 1,
-					'Username' => isset($val['Username']) ? $val['Username'] : 'nobody',
-					'Password' => isset($val['Password']) ? $val['Password'] : 'nobody',
+					'Username' => isset($val['Username']) ? utf8_encode($val['Username']) : '',
+					'Password' => isset($val['Password']) ? $val['Password'] : '',
 					'Handler' => self::$config['Handler'],
 					'Charset' => self::$config['Charset'],
 					'SenderIP' => IP::joinIP(facula::core('request')->getClientInfo('ipArray'), true),
 				);
+				
+				// Set poster screen name, this will be display on the receiver's list
+				if (isset($val['Screenname'])) {
+					self::$config['Servers'][$key]['Screenname'] = utf8_encode($val['Screenname']);
+				} else {
+					self::$config['Servers'][$key]['Screenname'] = self::$config['Servers'][$key]['Username'];
+				}
 				
 				// Set MAIL FROM, this one must be set for future use
 				if (isset($val['From'])) {
@@ -68,7 +75,7 @@ class smtp {
 				}
 				
 				// Set RETURN TO
-				if (isset($val['ReplyTo'])) {
+				if (isset($val['ReturnTo'])) {
 					self::$config['Servers'][$key]['ReturnTo'] = $val['ReturnTo'];
 				} else {
 					self::$config['Servers'][$key]['ReturnTo'] = self::$config['Servers'][$key]['Form'];
@@ -95,12 +102,14 @@ class smtp {
 		return false;
 	}
 	
-	static public function addMail($title, $body, array $receivers) {
-		self::$emails = array(
+	static public function addMail($title, $message, array $receivers) {
+		self::$emails[] = array(
 			'Receivers' => $receivers,
 			'Title' => $title,
-			'Body' => $body,
+			'Message' => $message,
 		);
+		
+		return true;
 	}
 	
 	static private function sendMail() {
@@ -117,9 +126,7 @@ class smtp {
 					if ($operater->connect($error)) {
 						
 						foreach(self::$emails AS $email) {
-							if (!$operater->send($email)) {
-								return false;
-							}
+							$operater->send($email);
 						}
 						
 						$operater->disconnect();
@@ -178,10 +185,21 @@ class SMTPSocket {
 		
 		if ($this->connection) {
 			if (fputs($this->connection, $command . "\r\n")) {
-				if (!$getReturn) {
-					return true;
-				} else {
-					return $this->getLast(true);
+				switch($getReturn) {
+					case false:
+						return true;
+						
+						break;
+						
+					case 'one':
+						return $this->get(true);
+						
+						break;
+						
+					case 'last':
+						return $this->getLast(true);
+						
+						break;
 				}
 			} else {
 				facula::core('debug')->exception('ERROR_SMTP_SOCKET_NORESPONSE', 'smtp', false);
@@ -190,13 +208,21 @@ class SMTPSocket {
 		}
 	}
 	
-	public function get($parseResponse = false) {
+	public function get($parseResponse = false, &$hasNext = false) {
 		$response = null;
+		$dashPOS = null;
+		$hasNext = false; // Reassign this as we referred it.
 		
 		if ($this->connection) {
 			if ($response = trim(fgets($this->connection, 512))) {
-				file_put_contents(PROJECT_ROOT . '\\smtp.txt', "Response: {$response}\r\n", FILE_APPEND);
-			
+				if (($dashPOS = strpos($response, '-')) !== false) { // If response contain a '-'					
+					if (is_numeric(substr($response, 0, $dashPOS))) { // And all char before the - is numberic (response code)
+						$hasNext = true;
+					}
+				}
+				
+				file_put_contents(PROJECT_ROOT . '\\smtp.txt', "Response: {$response}; HasNext: {$hasNext};\r\n", FILE_APPEND);
+				
 				if ($parseResponse) {
 					$response = $this->parseResponse($response);
 				}
@@ -210,9 +236,14 @@ class SMTPSocket {
 	
 	public function getLast($parseResponse = false) {
 		$response = $responseLast = null;
+		$responseHasNext = false;
 		
-		while($response = $this->get($parseResponse)) {
+		while(($response = $this->get($parseResponse, $responseHasNext)) !== false) {
 			$responseLast = $response;
+			
+			if (!$responseHasNext) {
+				break;
+			}
 		}
 		
 		return $responseLast;
@@ -230,9 +261,11 @@ class SMTPSocket {
 		return false;
 	}
 	
-	public function addResponseParser($responseCode, Closure $parser) {
+	public function registerResponseParser($responseCode, Closure $parser) {
 		if (!isset($this->responseParsers[$responseCode])) {
 			$this->responseParsers[$responseCode] = $parser;
+			
+			return true;
 		}
 		
 		return false;
@@ -307,17 +340,279 @@ class SMTPSocket {
 	}
 }
 
+class SMTPAuther {
+	private $socket = null;
+	private $auths = array();
+	static private $authers = array();
+	
+	public function __construct($socket, array &$auths) {
+		$this->socket = $socket;
+		$this->auths = $auths;
+		
+		return true;
+	}
+	
+	public function auth($username, $password, &$error = '') {
+		$auther = null;
+		
+		foreach($this->auths AS $method) {
+			if (isset(self::$authers[$method])) {
+				$auther = self::$authers[$method];
+				
+				return $auther($this->socket, $username, $password, $error);
+				
+				break;
+			}
+		}
+		
+		$error = 'NOTSUPPORTED|' . implode($this->auths) . ' for ' . implode(array_keys(self::$authers));
+		
+		return false;
+	}
+	
+	static public function register($type, Closure $auther) {
+		if (!isset(self::$authers[$type])) {
+			self::$authers[$type] = $auther;
+			
+			return true;
+		}
+		
+		return false;
+	}
+}
+
+SMTPAuther::register('plain', function($socket, $username, $password, &$error) {
+	$null = "\0";
+	$plainAuthStr = rtrim(base64_encode($username . $null . $username . $null . $password), '=');
+	
+	if ($socket->put('AUTH PLAIN', 'one') != 334) {
+		$error = 'UNKOWN_RESPONSE';
+		return false;
+	}
+	
+	if ($socket->put($plainAuthStr, 'one') != 235) {
+		$error = 'AUTHENTICATION_FAILED';
+		return false;
+	}
+	
+	return true;
+});
+
+SMTPAuther::register('login', function($socket, $username, $password, &$error) {
+	$response = '';
+	$b64Username = rtrim(base64_encode($username), '=');
+	$b64Password = rtrim(base64_encode($password), '=');
+	
+	if ($socket->registerResponseParser(334, function($param) {
+		$resp = strtolower(base64_decode($param)); // I have no idea why they decided to base64 this
+		
+		switch($resp) {
+			case 'username:':
+				return 'Username';
+				break;
+				
+			case 'password:':
+				return 'Password';
+				break;
+				
+			default:
+				return $param;
+				break;
+		}
+	})) {
+		switch($response = $socket->put('AUTH LOGIN', 'one')) {
+			case 'Username':
+				// Response for user name
+				switch($socket->put($b64Username, 'one')) { // Give the username and check return
+					case 'Password': // Want password, give password
+						switch($socket->put($b64Password, 'one')) {
+							case 535:
+								$error = 'AUTHENTICATION_FAILED'; 
+								break;
+								
+							case 235:
+								return true;
+								break;
+								
+							default:
+								$error = 'UNKOWN_RESPONSE';
+								break;
+						}
+						
+						break;
+				}
+				break;
+				
+			case 'Password':
+				// Response for password, it's odd. First case is normal case
+				switch($socket->put($b64Password, 'one')) { // Give the password and check return
+					case 'Username': // Want username? give username
+						switch($socket->put($b64Password, 'one')) {
+							case 535:
+								$error = 'AUTHENTICATION_FAILED';
+								break;
+								
+							case 235:
+								return true;
+								break;
+								
+							default:
+								$error = 'UNKOWN_RESPONSE';
+								break;
+						}
+						
+						break;
+				}
+				
+				break;
+				
+			default:
+				$error = 'UNKOWN_RESPONSE';
+				return false;
+				break;
+		}
+	} else {
+		$error = 'RESPONSE_PARSER_REGISTER_FAILED';
+	}
+	
+	return false;
+});
+
+class SMTPDatar {
+	private $mail = array();
+	private $mailContent = array();
+	private $parsedMail = array();
+	
+	public function __construct(array &$mail) {
+		global $_SERVER;
+		$senderHost = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+		
+		$appInfo = facula::getVersion();
+		
+		$checkContent = '';
+		
+		$mailContent = array(
+			'Title' => isset($mail['Title']) ? $mail['Title'] : null,
+			'Message' => isset($mail['Message']) ? $mail['Message'] : null,
+		);
+		
+		// Parse mail body
+		$mail['Subject'] = '=?UTF-8?B?' . rtrim(base64_encode($mailContent['Title'] ? $mailContent['Title'] : 'Untitled'), '=') . '?=';
+		$mail['Body'] = chunk_split(trim(base64_encode($mailContent['Message'])) . '?=', 76, "\n");
+		$mail['AltBody'] = chunk_split(trim(base64_encode(strip_tags(str_replace('</', "\r\n</", $mailContent['Message'])))) . '?=', 76, "\n");
+		
+		// Make mail header
+		$this->addLine('MIME-Version', '1.0');
+		$this->addLine('X-Priority', '3');
+		$this->addLine('X-MSMail-Priority', 'Normal');
+		
+		$this->addLine('X-Mailer', $appInfo['App'] . ' ' . $appInfo['Ver'] . ' (' . $appInfo['Base'] . ')');
+		$this->addLine('X-MimeOLE', $appInfo['Base'] . ' Mailer OLE');
+		
+		$this->addLine('X-AntiAbuse', 'This header was added to track abuse, please include it with any abuse report');
+		$this->addLine('X-AntiAbuse', 'Primary Hostname - ' .$senderHost);
+		$this->addLine('X-AntiAbuse', 'Original Domain - ' . $senderHost);
+		$this->addLine('X-AntiAbuse', 'Originator/Caller UID/GID - [' . $senderHost . ' ' . $mail['SenderIP'] . '] / [' . $senderHost . ' ' . $mail['SenderIP'] . ']');
+		$this->addLine('X-AntiAbuse', 'Sender Address Domain - ' . $senderHost);
+		
+		// Mail title
+		$this->addLine('Subject', $mail['Subject']);
+		
+		// Addresses
+		$this->addLine('From', $mail['Screenname'] . '<' . $mail['From'] . '>');
+		$this->addLine('Return-Path', '<' . $mail['ReturnTo'] . '>');
+		$this->addLine('Reply-To', '<' . $mail['ReplyTo'] . '>');
+		$this->addLine('Errors-To', '<' . $mail['ErrorTo'] . '>');
+		$this->addLine('Return-Path', '<' . $mail['ErrorTo'] . '>');
+		
+		$this->addLine('To', 'undisclosed-recipients:;');
+		$this->addLine('Date', date('D, d M y H:i:s O', FACULA_TIME));
+		
+		$this->addLine('Message-ID', $this->getFactor() . '@' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost'));
+		
+		// Ready content for boundary check. Combine all content strings to one line, then check if the boundary existed.
+		$checkContent = $mail['Subject'] . $mail['Body'] . $mail['AltBody'];
+		
+		while(true) {
+			$this->mail['Boundary'] = '==!NextPart_FACULA_' . $this->getFactor();
+			$this->mail['BoundarySpliter'] = '--' . $this->mail['Boundary'];
+			
+			if (strpos($checkContent, $this->mail['Boundary']) === false) {
+				break;
+			}
+		}
+		
+		$this->addLine('Content-Type', 'multipart/alternative; boundary="' . $this->mail['Boundary'] .'"');
+		
+		// Make mail body
+		$this->addRaw(null); // Make space
+		$this->addRaw('This email produced by ' . $appInfo['Base'] . ' Mailer for ' . $senderHost . '.');
+		$this->addRaw('If you have any problem reading this email, please contact ' . $mail['ReturnTo'] . ' for help.');
+		$this->addRaw(null);
+		
+		// Primary content
+		$this->addRaw($this->mail['BoundarySpliter']);
+		$this->addLine('Content-Type', 'text/html; charset=' . $mail['Charset'] . '');
+		$this->addLine('Content-Transfer-Encoding', 'base64');
+		$this->addRaw(null);
+		$this->addRaw($mail['Body']);
+		$this->addRaw(null);
+		
+		$this->addRaw($this->mail['BoundarySpliter']);
+		$this->addLine('Content-Type', 'text/plain; charset=' . $mail['Charset'] . '');
+		$this->addLine('Content-Transfer-Encoding', 'base64');
+		$this->addRaw(null);
+		$this->addRaw($mail['AltBody']);
+		$this->addRaw(null);
+		$this->addRaw($this->mail['BoundarySpliter']);
+		
+		return true;
+	}
+	
+	public function get() {
+		return implode("\n", $this->mailContent);
+	}
+	
+	private function addLine($head, $content) {
+		$this->mailContent[] = $head . ': ' . $content;
+		
+		return true;
+	}
+	
+	private function addRaw($content) {
+		$this->mailContent[] = $content;
+	}
+	
+	private function getFactor() {
+		return mt_rand(0, 65535) . mt_rand(0, 65535);
+	}
+}
+
 abstract class SMTPBase {
+	private $socket = null;
+	
 	abstract public function connect(&$error);
-	abstract public function send(array $email);
+	abstract public function send(array &$email);
 	abstract public function disconnect();
 	
 	final protected function getSocket($host, $port, $timeout) {
-		return new SMTPSocket($host, $port, $timeout);
+		if (!$this->socket) {
+			$this->socket = new SMTPSocket($host, $port, $timeout);
+		}
+		
+		return $this->socket;
 	}
 	
-	protected function makeBody() {
+	final protected function getAuth(array &$auths) {
+		if ($this->socket) {
+			return new SMTPAuther($this->socket, $auths);
+		}
+		
+		return false;
+	}
 	
+	final protected function getData(array &$mail) {
+		return new SMTPDatar($mail);
 	}
 }
 

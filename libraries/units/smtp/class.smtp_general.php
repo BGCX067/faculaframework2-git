@@ -29,12 +29,13 @@ class smtp_general extends SMTPBase {
 	protected $server = '';
 	
 	protected $serverInfo = array();
+	protected $lastForwardServerRCPT = array();
 	
 	public function __construct($server) {
 		$this->server = $server;
 		$this->socket = $this->getSocket($this->server['Host'], $this->server['Port'], $this->server['Timeout']);
 		
-		$this->socket->addResponseParser(250, function($param) {
+		$this->socket->registerResponseParser(250, function($param) {
 			$params = explode(' ', $param, 64);
 			
 			file_put_contents(PROJECT_ROOT . '\\smtp_info.txt', "Info: 250, Parsing {" . implode(',', $params) . "};\r\n", FILE_APPEND);
@@ -54,9 +55,13 @@ class smtp_general extends SMTPBase {
 					$this->serverInfo['PIPELINING'] = true;
 					break;
 					
+				case 'starttls':
+					$this->serverInfo['STARTTLS'] = true;
+					break;
+				
 				case 'auth':
 					if (isset($params[1])) {
-						$this->serverInfo['AuthMethods'] = explode($params[1], 16);
+						$this->serverInfo['AuthMethods'] = explode(' ', strtolower($params[1]), 16);
 					}
 					break;
 			}
@@ -64,20 +69,31 @@ class smtp_general extends SMTPBase {
 			return 250;
 		});
 		
+		$this->socket->registerResponseParser(551, function($param) {
+			file_put_contents(PROJECT_ROOT . '\\smtp_info.txt', "Info: 551, Parsing {" . implode(',', $params) . "};\r\n", FILE_APPEND);
+			
+			$newAddrs = array();
+			
+			if (preg_match('/\<(.*)\>/ui', $param, $newAddrs)) {
+				if (isset($newAddrs[1]) && Validator::check($newAddrs[1], 'email', 512, 1)) {
+					$this->lastForwardServerRCPT[] = $newAddrs[1];
+				}
+			}
+			
+			return 551;
+		});
+		
 		return true;
 	}
 	
 	public function connect(&$error) {
-		$result = false;
 		$errorMsg = '';
 		$errorNo = 0;
 		$response = '';
 		
-		//facula::core('debug')->criticalSection(true);
-		
 		if ($this->socket->open($errorNo, $errorMsg)) {
 			// Server response us?
-			if ($this->socket->getLast(true) != 220) {
+			if ($this->socket->get(true) != 220) {
 				$error = 'ERROR_SMTP_SERVER_RESPONSE_INVALID';
 				$this->disconnect();
 				
@@ -86,32 +102,95 @@ class smtp_general extends SMTPBase {
 			
 			// First talk: Greeting
 			// Server will return some info about itself.
-			if ($this->socket->put('EHLO ' . $this->server['Host'], true) != 250) {
+			if ($this->socket->put('EHLO ' . $this->server['Host'], 'last') != 250) {
 				$error = 'ERROR_SMTP_SERVER_RESPONSE_EHLO_FAILED';
 				$this->disconnect();
 				
 				return false;
 			}
 			
-			// Next should be AUTH, Read AUTH type from $this->serverInfo['AuthMethods']
+			// Next should be AUTH, Read AUTH type from $this->serverInfo['AuthMethods']. 
+			// We don't need to bother with TLS since this will be done for other type of server operator
+			if (isset($this->serverInfo['AuthMethods']) && $this->server['Username']) {
+				if (!$this->getAuth($this->serverInfo['AuthMethods'])->auth($this->server['Username'], $this->server['Password'], $errorMsg)) {
+					$error = 'ERROR_SMTP_SERVER_RESPONSE_AUTH_FAILED' . ($errorMsg ? '_' . $errorMsg : '');
+					$this->disconnect();
+					
+					return false;
+				}
+			}
 			
+			// Now, tell SMTP server which email address we want to use on sending email
+			if ($this->socket->put('MAIL FROM: <' . $this->server['From'] . '>', 'one') != 250) {
+				$error = 'ERROR_SMTP_SERVER_RESPONSE_SET_MAILFORM_FAILED';
+				$this->disconnect();
+				
+				return false;
+			}
 			
-			$this->disconnect();
-			
-			echo "connected";
-			
+			return true;
 		} else {
 			$error = $errorNo . ':' . $errorMsg;
-			echo "errored";
 		}
 		
-		//facula::core('debug')->criticalSection(false);
-		
-		return $result;
+		return false;
 	}
 	
-	public function send(array $email) {
+	public function send(array &$email) {
+		$mailInfo = $this->lastForwardServerRCPT = array(); // Reset lastForwardServerRCPT array for retry sending
 		
+		foreach($email['Receivers'] AS $receiver) {
+			switch($this->socket->put('RCPT TO: <' . $receiver . '>', 'one')) {
+				case 250:
+					// Good
+					break;
+					
+				case 251:
+					// Will, it will be send anyway
+					break;
+					
+				case 551:
+					// Yeah, we just try it once
+					foreach($this->lastForwardServerRCPT AS $forwards) {
+						$this->socket->put('RCPT TO: <' . $forwards . '>');
+					}
+					break;
+			}
+		}
+		
+		if ($this->socket->put('DATA', 'one') == 354) {
+			file_put_contents(PROJECT_ROOT . '\\smtp_mail.txt', 'Sending new mail' . "\r\n", FILE_APPEND);
+			
+			$mailInfo = array(
+				'Title' => $email['Title'],
+				'Message' => $email['Message'],
+				'Screenname' => $this->server['Screenname'],
+				'From' => $this->server['From'],
+				'ReplyTo' => $this->server['ReplyTo'],
+				'ReturnTo' => $this->server['ReturnTo'],
+				'ErrorTo' => $this->server['ErrorTo'],
+				'Charset' => $this->server['Charset'],
+				'SenderIP' => $this->server['SenderIP'],
+			);
+			
+			file_put_contents(PROJECT_ROOT . '\\smtp_mail_flat.txt', 'email: ' . $this->getData($mailInfo)->get(), FILE_APPEND);
+			
+			foreach(explode("\n", $this->getData($mailInfo)->get()) AS $line) {
+				file_put_contents(PROJECT_ROOT . '\\mail.txt', $line, FILE_APPEND);
+				
+				if ($line == '.') {
+					$line = '. ';
+				}
+				
+				$this->socket->put($line, false);
+			}
+			
+			if ($this->socket->put("\r\n.\r\n", 'one') == 250) {
+				return true;
+			}
+		}
+		
+		return false;
 	}
 	
 	public function disconnect() {
