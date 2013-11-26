@@ -25,84 +25,104 @@
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-class smtp {
+class SMTP {
 	static private $config = array();
 	static private $emails = array();
 	
 	static public function init($cfg = array()) {
-		$version = facula::getVersion();
+		$version = array();
+		$senderIP = '';
 		
-		self::$config['Handler'] = $version['App'] . ' ' . $version['Ver'];
-		self::$config['Charset'] = isset($cfg['Charset']) ? $cfg['Charset'] : 'utf-8';
-		
-		if (isset($cfg['Servers']) && is_array($cfg['Servers'])) {
-			if (isset($cfg['SelectMethod']) && $cfg['SelectMethod'] == 'Random') {
-				shuffle($cfg['Servers']);
-			}
-		
-			foreach($cfg['Servers'] AS $key => $val) {
-				self::$config['Servers'][$key] = array(
-					'Type' => isset($val['Type']) ? $val['Type'] : 'general',
-					'Host' => isset($val['Host']) ? $val['Host'] : 'localhost',
-					'Port' => isset($val['Port']) ? $val['Port'] : 25,
-					'Timeout' => isset($val['Timeout']) ? $val['Timeout'] : 1,
-					'Username' => isset($val['Username']) ? utf8_encode($val['Username']) : '',
-					'Password' => isset($val['Password']) ? $val['Password'] : '',
-					'Handler' => self::$config['Handler'],
-					'Charset' => self::$config['Charset'],
-					'SenderIP' => IP::joinIP(facula::core('request')->getClientInfo('ipArray'), true),
-				);
-				
-				// Set poster screen name, this will be display on the receiver's list
-				if (isset($val['Screenname'])) {
-					self::$config['Servers'][$key]['Screenname'] = utf8_encode($val['Screenname']);
-				} else {
-					self::$config['Servers'][$key]['Screenname'] = self::$config['Servers'][$key]['Username'];
-				}
-				
-				// Set MAIL FROM, this one must be set for future use
-				if (isset($val['From'])) {
-					self::$config['Servers'][$key]['From'] = $val['From'];
-				} else {
-					self::$config['Servers'][$key]['From'] = 'postmaster@localhost';
-				}
-				
-				// Set REPLY TO
-				if (isset($val['ReplyTo'])) {
-					self::$config['Servers'][$key]['ReplyTo'] = $val['ReplyTo'];
-				} else {
-					self::$config['Servers'][$key]['ReplyTo'] = self::$config['Servers'][$key]['Form'];
-				}
-				
-				// Set RETURN TO
-				if (isset($val['ReturnTo'])) {
-					self::$config['Servers'][$key]['ReturnTo'] = $val['ReturnTo'];
-				} else {
-					self::$config['Servers'][$key]['ReturnTo'] = self::$config['Servers'][$key]['Form'];
-				}
-				
-				// Set ERROR TO
-				if (isset($val['ErrorTo'])) {
-					self::$config['Servers'][$key]['ErrorTo'] = $val['ErrorTo'];
-				} else {
-					self::$config['Servers'][$key]['ErrorTo'] = self::$config['Servers'][$key]['Form'];
-				}
-			}
+		if (empty(self::$config)) {
+			$version = facula::getVersion();
+			$senderIP = IP::joinIP(facula::core('request')->getClientInfo('ipArray'), true);
 			
-			facula::core('object')->addHook('response_finished', 'smtpoperatingtask', function() {
-				// Hey, i must mark this. I can call a private method with hook by this way. Nice!
-				self::sendMail();
-			});
+			self::$config['Handler'] = $version['App'] . ' ' . $version['Ver'];
 			
-			return true;
-		} else {
-			facula::core('debug')->exception('ERROR_SMTP_NOSERVER', 'smtp', true);
+			if (isset($cfg['Servers']) && is_array($cfg['Servers'])) {
+				if (isset($cfg['SelectMethod']) && $cfg['SelectMethod'] == 'Random') {
+					shuffle($cfg['Servers']);
+				}
+			
+				foreach($cfg['Servers'] AS $key => $val) {
+					self::$config['Servers'][$key] = array(
+						'Type' => isset($val['Type']) ? $val['Type'] : 'general',
+						'Host' => isset($val['Host']) ? $val['Host'] : 'localhost',
+						'Port' => isset($val['Port']) ? $val['Port'] : 25,
+						'Timeout' => isset($val['Timeout']) ? $val['Timeout'] : 1,
+						'Username' => isset($val['Username']) ? $val['Username'] : '',
+						'Password' => isset($val['Password']) ? $val['Password'] : '',
+						'Handler' => self::$config['Handler'],
+						'SenderIP' => $senderIP,
+					);
+					
+					// Set poster screen name, this will be display on the receiver's list
+					if (isset($val['Screenname'])) {
+						self::$config['Servers'][$key]['Screenname'] = $val['Screenname'];
+					} else {
+						self::$config['Servers'][$key]['Screenname'] = self::$config['Servers'][$key]['Username'];
+					}
+					
+					// Set MAIL FROM, this one must be set for future use
+					if (Validator::check($val['From'], 'email')) {
+						if (isset($val['From'])) {
+							self::$config['Servers'][$key]['From'] = $val['From'];
+						} else {
+							self::$config['Servers'][$key]['From'] = 'postmaster@localhost';
+						}
+					} else {
+						facula::core('debug')->exception('ERROR_SMTP_ADDRESS_FORM_INVALID', 'smtp', true);
+					}
+					
+					// Set REPLY TO
+					if (isset($val['ReplyTo'])) {
+						if (Validator::check($val['ReplyTo'], 'email')) {
+							self::$config['Servers'][$key]['ReplyTo'] = $val['ReplyTo'];
+						} else {
+							facula::core('debug')->exception('ERROR_SMTP_ADDRESS_REPLYTO_INVALID', 'smtp', true);
+						}
+					} else {
+						self::$config['Servers'][$key]['ReplyTo'] = self::$config['Servers'][$key]['From'];
+					}
+					
+					// Set RETURN TO
+					if (isset($val['ReturnTo'])) {
+						if (Validator::check($val['ReturnTo'], 'email')) {
+							self::$config['Servers'][$key]['ReturnTo'] = $val['ReturnTo'];
+						} else {
+							facula::core('debug')->exception('ERROR_SMTP_ADDRESS_RETURNTO_INVALID', 'smtp', true);
+						}
+					} else {
+						self::$config['Servers'][$key]['ReturnTo'] = self::$config['Servers'][$key]['From'];
+					}
+					
+					// Set ERROR TO
+					if (isset($val['ErrorTo'])) {
+						if (Validator::check($val['ErrorTo'], 'email')) {
+							self::$config['Servers'][$key]['ErrorTo'] = $val['ErrorTo'];
+						} else {
+							facula::core('debug')->exception('ERROR_SMTP_ADDRESS_ERRORTO_INVALID', 'smtp', true);
+						}
+					} else {
+						self::$config['Servers'][$key]['ErrorTo'] = self::$config['Servers'][$key]['From'];
+					}
+				}
+				
+				facula::core('object')->addHook('response_finished', 'smtpoperatingtask', function() {
+					// Hey, i must mark this. I can call a private method with hook by this way. Nice!
+					self::sendMail();
+				});
+				
+				return true;
+			} else {
+				facula::core('debug')->exception('ERROR_SMTP_NOSERVER', 'smtp', true);
+			}
 		}
 		
 		return false;
 	}
 	
-	static public function addMail($title, $message, array $receivers) {
+	static public function newMail($title, $message, array $receivers) {
 		self::$emails[] = array(
 			'Receivers' => $receivers,
 			'Title' => $title,
@@ -115,6 +135,7 @@ class smtp {
 	static private function sendMail() {
 		$operater = null;
 		$operaterClassName = $error = '';
+		$result = false;
 		
 		foreach(self::$config['Servers'] AS $server) {
 			$operaterClassName = __CLASS__ . '_' . $server['Type'];
@@ -122,17 +143,26 @@ class smtp {
 			if (class_exists($operaterClassName, true)) {
 				$operater = new $operaterClassName($server);
 				
+				
 				if (is_subclass_of($operater, 'SMTPBase')) {
-					if ($operater->connect($error)) {
-						
-						foreach(self::$emails AS $email) {
-							$operater->send($email);
+					facula::core('debug')->criticalSection(true);
+					
+					try {
+						if ($operater->connect($error)) {
+							
+							foreach(self::$emails AS $email) {
+								$operater->send($email);
+							}
+							
+							$result = true;
+							
+							$operater->disconnect();
 						}
-						
-						$operater->disconnect();
-						
-						return true;
+					} catch (Exception $e) {
+						$error = $e->getMessage();
 					}
+					
+					facula::core('debug')->criticalSection(false);
 				} else {
 					facula::core('debug')->exception('ERROR_SMTP_OPERATOR_BASE_INVALID', 'smtp', true);
 				}
@@ -145,7 +175,7 @@ class smtp {
 			facula::core('debug')->exception('ERROR_SMTP_OPERATOR_ERROR|' . $error, 'smtp', false);
 		}
 		
-		return false;
+		return $result;
 	}
 }
 
@@ -161,6 +191,12 @@ class SMTPSocket {
 		$this->host = $host;
 		$this->port = $port;
 		$this->timeout = $timeout;
+		
+		return true;
+	}
+	
+	public function __destruct() {
+		$this->close();
 		
 		return true;
 	}
@@ -181,8 +217,6 @@ class SMTPSocket {
 	}
 	
 	public function put($command, $getReturn = false) {
-		file_put_contents(PROJECT_ROOT . '\\smtp.txt', "Sending: {$command}\r\n", FILE_APPEND);
-		
 		if ($this->connection) {
 			if (fputs($this->connection, $command . "\r\n")) {
 				switch($getReturn) {
@@ -220,8 +254,6 @@ class SMTPSocket {
 						$hasNext = true;
 					}
 				}
-				
-				file_put_contents(PROJECT_ROOT . '\\smtp.txt', "Response: {$response}; HasNext: {$hasNext};\r\n", FILE_APPEND);
 				
 				if ($parseResponse) {
 					$response = $this->parseResponse($response);
@@ -266,6 +298,8 @@ class SMTPSocket {
 			$this->responseParsers[$responseCode] = $parser;
 			
 			return true;
+		} else {
+			facula::core('debug')->exception('ERROR_SMTP_SOCKET_RESPONSE_PARSER_EXISTED', 'smtp', true);
 		}
 		
 		return false;
@@ -276,8 +310,6 @@ class SMTPSocket {
 		$responseCode = $responseCode = 0;
 		$responseParams = array();
 		$parser = null;
-		
-		file_put_contents(PROJECT_ROOT . '\\smtp_info.txt', "Parse: {$response};\r\n", FILE_APPEND);
 		
 		if ($responseContent = trim($response)) {
 			// Position check seems the only stable way is do determine which we will use ('-' OR ' ').
@@ -315,8 +347,6 @@ class SMTPSocket {
 					$responseParams = explode(' ', $responseContent, 2);
 					break;
 			}
-			
-			file_put_contents(PROJECT_ROOT . '\\smtp_info.txt', "Parse: {$response}; Split: {$splitType}; DashPOS: {$fstDashPos}; SpacePOS: {$fstSpacePos}; Param: " . implode(',', $responseParams) . "\r\n", FILE_APPEND);
 			
 			if (isset($responseParams[0]) && $responseParams[0] && is_numeric($responseParams[0])) {
 				$responseCode = intval($responseParams[0]);
@@ -375,6 +405,8 @@ class SMTPAuther {
 			self::$authers[$type] = $auther;
 			
 			return true;
+		} else {
+			facula::core('debug')->exception('ERROR_SMTP_AUTHER_EXISTED', 'smtp', true);
 		}
 		
 		return false;
@@ -498,8 +530,8 @@ class SMTPDatar {
 		
 		// Parse mail body
 		$mail['Subject'] = '=?UTF-8?B?' . rtrim(base64_encode($mailContent['Title'] ? $mailContent['Title'] : 'Untitled'), '=') . '?=';
-		$mail['Body'] = chunk_split(trim(base64_encode($mailContent['Message'])) . '?=', 76, "\n");
-		$mail['AltBody'] = chunk_split(trim(base64_encode(strip_tags(str_replace('</', "\r\n</", $mailContent['Message'])))) . '?=', 76, "\n");
+		$mail['Body'] = chunk_split(base64_encode($mailContent['Message']) . '?=', 76, "\n");
+		$mail['AltBody'] = chunk_split(base64_encode(strip_tags(str_replace('</', "\r\n</", $mailContent['Message']))) . '?=', 76, "\n");
 		
 		// Make mail header
 		$this->addLine('MIME-Version', '1.0');
@@ -519,13 +551,12 @@ class SMTPDatar {
 		$this->addLine('Subject', $mail['Subject']);
 		
 		// Addresses
-		$this->addLine('From', $mail['Screenname'] . '<' . $mail['From'] . '>');
+		$this->addLine('From', '=?UTF-8?B?' . base64_encode($mail['Screenname']) . '?= <' . $mail['From'] . '>');
+		$this->addLine('To', 'undisclosed-recipients:;');
 		$this->addLine('Return-Path', '<' . $mail['ReturnTo'] . '>');
 		$this->addLine('Reply-To', '<' . $mail['ReplyTo'] . '>');
 		$this->addLine('Errors-To', '<' . $mail['ErrorTo'] . '>');
-		$this->addLine('Return-Path', '<' . $mail['ErrorTo'] . '>');
 		
-		$this->addLine('To', 'undisclosed-recipients:;');
 		$this->addLine('Date', date('D, d M y H:i:s O', FACULA_TIME));
 		
 		$this->addLine('Message-ID', $this->getFactor() . '@' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost'));
@@ -534,37 +565,39 @@ class SMTPDatar {
 		$checkContent = $mail['Subject'] . $mail['Body'] . $mail['AltBody'];
 		
 		while(true) {
-			$this->mail['Boundary'] = '==!NextPart_FACULA_' . $this->getFactor();
+			$this->mail['Boundary'] = '#' . $this->getFactor();
 			$this->mail['BoundarySpliter'] = '--' . $this->mail['Boundary'];
+			$this->mail['BoundarySpliterEnd'] = $this->mail['BoundarySpliter'] . '--';
 			
 			if (strpos($checkContent, $this->mail['Boundary']) === false) {
 				break;
 			}
 		}
 		
-		$this->addLine('Content-Type', 'multipart/alternative; boundary="' . $this->mail['Boundary'] .'"');
+		$this->addLine('Content-Type', 'multipart/alternative; boundary="' . $this->mail['Boundary'] . '"');
 		
 		// Make mail body
 		$this->addRaw(null); // Make space
-		$this->addRaw('This email produced by ' . $appInfo['Base'] . ' Mailer for ' . $senderHost . '.');
+		$this->addRaw('This MIME email produced by ' . $appInfo['Base'] . ' Mailer for ' . $senderHost . '.');
 		$this->addRaw('If you have any problem reading this email, please contact ' . $mail['ReturnTo'] . ' for help.');
 		$this->addRaw(null);
 		
 		// Primary content
 		$this->addRaw($this->mail['BoundarySpliter']);
-		$this->addLine('Content-Type', 'text/html; charset=' . $mail['Charset'] . '');
+		$this->addLine('Content-Type', 'text/plain; charset=utf-8');
+		$this->addLine('Content-Transfer-Encoding', 'base64');
+		$this->addRaw(null);
+		$this->addRaw($mail['AltBody']);
+		$this->addRaw(null);
+		
+		$this->addRaw($this->mail['BoundarySpliter']);
+		$this->addLine('Content-Type', 'text/html; charset=utf-8');
 		$this->addLine('Content-Transfer-Encoding', 'base64');
 		$this->addRaw(null);
 		$this->addRaw($mail['Body']);
 		$this->addRaw(null);
 		
-		$this->addRaw($this->mail['BoundarySpliter']);
-		$this->addLine('Content-Type', 'text/plain; charset=' . $mail['Charset'] . '');
-		$this->addLine('Content-Transfer-Encoding', 'base64');
-		$this->addRaw(null);
-		$this->addRaw($mail['AltBody']);
-		$this->addRaw(null);
-		$this->addRaw($this->mail['BoundarySpliter']);
+		$this->addRaw($this->mail['BoundarySpliterEnd']);
 		
 		return true;
 	}

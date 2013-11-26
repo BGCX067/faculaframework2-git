@@ -37,9 +37,7 @@ class smtp_general extends SMTPBase {
 		
 		$this->socket->registerResponseParser(250, function($param) {
 			$params = explode(' ', $param, 64);
-			
-			file_put_contents(PROJECT_ROOT . '\\smtp_info.txt', "Info: 250, Parsing {" . implode(',', $params) . "};\r\n", FILE_APPEND);
-			
+						
 			switch(strtolower($params[0])) {
 				case 'size':
 					if (isset($params[1])) {
@@ -69,9 +67,7 @@ class smtp_general extends SMTPBase {
 			return 250;
 		});
 		
-		$this->socket->registerResponseParser(551, function($param) {
-			file_put_contents(PROJECT_ROOT . '\\smtp_info.txt', "Info: 551, Parsing {" . implode(',', $params) . "};\r\n", FILE_APPEND);
-			
+		$this->socket->registerResponseParser(551, function($param) {			
 			$newAddrs = array();
 			
 			if (preg_match('/\<(.*)\>/ui', $param, $newAddrs)) {
@@ -158,9 +154,7 @@ class smtp_general extends SMTPBase {
 			}
 		}
 		
-		if ($this->socket->put('DATA', 'one') == 354) {
-			file_put_contents(PROJECT_ROOT . '\\smtp_mail.txt', 'Sending new mail' . "\r\n", FILE_APPEND);
-			
+		if ($this->socket->put('DATA', 'one') == 354) {			
 			$mailInfo = array(
 				'Title' => $email['Title'],
 				'Message' => $email['Message'],
@@ -169,15 +163,10 @@ class smtp_general extends SMTPBase {
 				'ReplyTo' => $this->server['ReplyTo'],
 				'ReturnTo' => $this->server['ReturnTo'],
 				'ErrorTo' => $this->server['ErrorTo'],
-				'Charset' => $this->server['Charset'],
 				'SenderIP' => $this->server['SenderIP'],
 			);
-			
-			file_put_contents(PROJECT_ROOT . '\\smtp_mail_flat.txt', 'email: ' . $this->getData($mailInfo)->get(), FILE_APPEND);
-			
+						
 			foreach(explode("\n", $this->getData($mailInfo)->get()) AS $line) {
-				file_put_contents(PROJECT_ROOT . '\\mail.txt', $line, FILE_APPEND);
-				
 				if ($line == '.') {
 					$line = '. ';
 				}
