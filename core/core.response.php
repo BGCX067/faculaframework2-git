@@ -29,7 +29,7 @@ interface faculaResponseInterface {
 	public function _inited();
 	public function setHeader($header);
 	public function setContent($content, $forceRaw = false);
-	public function send();
+	public function send($type = '', $persistConn = false);
 	public function setCookie($key, $val = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false);
 	public function unsetCookie($key);
 }
@@ -317,7 +317,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 			if (isset(self::$http_content_type[$type])) {
 				header('Content-Type: ' . self::$http_content_type[$type] . '; charset=utf-8');
 			} else {
-				header('Content-Type: ' . self::$http_content_type['html'] . '; charset=utf-8');
+				header('Content-Type: ' . $type);
 			}
 			
 			if ($this->configs['PSignal']) {
@@ -381,13 +381,21 @@ class faculaResponseDefault implements faculaResponseInterface {
 			
 			self::$content = "\x1f\x8b\x08\x00\x00\x00\x00\x00" . substr($gzContent, 0, $gzSize - 4);
 			
-			self::$headers[] = 'Vary: Accept-Encoding';
-			self::$headers[] = 'Content-Encoding: gzip';
-			self::$headers[] = 'X-Length: ' . $gzSize . ' bytes / ' . $orgSize . ' bytes';
+			self::$headers['Vary'] = 'Vary: Accept-Encoding';
+			self::$headers['Content-Encoding'] = 'Content-Encoding: gzip';
+			self::$headers['X-Length'] = 'X-Length: ' . $gzSize . ' bytes / ' . $orgSize . ' bytes';
 		} else {
 			self::$content = $content;
 			
-			self::$headers[] = 'X-Length: ' . $orgSize . ' bytes';
+			self::$headers['X-Length'] = 'X-Length: ' . $orgSize . ' bytes';
+			
+			if (isset(self::$headers['Vary'])) {
+				unset(self::$headers['Vary']);
+			}
+			
+			if (isset(self::$headers['Content-Encoding'])) {
+				unset(self::$headers['Content-Encoding']);
+			}
 		}
 		
 		return true;
