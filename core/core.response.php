@@ -29,7 +29,7 @@ interface faculaResponseInterface {
 	public function _inited();
 	public function setHeader($header);
 	public function setContent($content, $forceRaw = false);
-	public function send($type = '', $persistConn = false);
+	public function send($type = 'htm', $persistConn = false);
 	public function setCookie($key, $val = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false);
 	public function unsetCookie($key);
 }
@@ -295,12 +295,15 @@ class faculaResponseDefault implements faculaResponseInterface {
 		return true;
 	}
 	
-	public function send($type = '', $persistConn = false) {
+	public function send($type = 'htm', $persistConn = false) {
 		$file = $line = $error = $oldBufferContent = $finalContent = '';
 		$hookResult = null;
 		$finalContentLen = 0;
 		
 		if (!headers_sent($file, $line)) {
+			// If $type is empty, set it to htm as default
+			$type = $type ? $type : 'htm';
+			
 			// Assume we will finish this application after output, calc belowing profile data
 			facula::$profile['MemoryUsage'] = memory_get_usage(true);
 			facula::$profile['MemoryPeak'] = memory_get_peak_usage(true);
