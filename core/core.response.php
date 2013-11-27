@@ -28,7 +28,7 @@
 interface faculaResponseInterface {
 	public function _inited();
 	public function setHeader($header);
-	public function setContent($content);
+	public function setContent($content, $forceRaw = false);
 	public function send();
 	public function setCookie($key, $val = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false);
 	public function unsetCookie($key);
@@ -369,13 +369,13 @@ class faculaResponseDefault implements faculaResponseInterface {
 		return true;
 	}
 	
-	public function setContent($content) {
+	public function setContent($content, $forceRaw = false) {
 		$orgSize = $gzSize = 0;
 		$gzContent = '';
 		
 		$orgSize = strlen($content);
 		
-		if ($this->configs['UseGZIP'] && $orgSize >= 2048) {
+		if (!$forceRaw && $this->configs['UseGZIP'] && $orgSize >= 2048) {
 			$gzContent = gzcompress($content, 2);
 			$gzSize = strlen($gzContent);
 			
