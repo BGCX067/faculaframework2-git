@@ -74,7 +74,7 @@ class facula {
 		self::$profile['StartTime'] = microtime(true);
 		self::$time = time();
 		
-		if (!self::$instance && $cfg) {
+		if (!self::$instance) {
 			if (isset($cfg['core']['SystemCacheRoot'][1])) {
 				if (!self::$instance = self::loadCoreFromCache($cfg['core']['SystemCacheRoot'])) {
 					self::$instance = new self($cfg);
