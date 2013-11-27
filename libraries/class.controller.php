@@ -24,6 +24,7 @@
 	You should have received a copy of the GNU Lesser General Public License
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
+
 interface controllerInterface {
 	public function _init();
 	public function _run();
