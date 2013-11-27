@@ -25,12 +25,11 @@
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-interface modelInterface {
-	
-}
-
-abstract class Model implements modelInterface {
-	
+abstract class Model {
+	abstract public function create(array $data);
+	abstract public function update($primaryKey, array $data);
+	abstract public function read($primaryKey);
+	abstract public function delete($primaryKey);
 }
 
 ?>
