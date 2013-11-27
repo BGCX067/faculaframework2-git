@@ -136,47 +136,66 @@ class SMTP {
 		$operater = null;
 		$operaterClassName = $error = '';
 		$result = false;
+		$remainingMails = count(self::$emails);
+		$retryLimit = 3;
 		
 		if (!empty(self::$config)) {
-			foreach(self::$config['Servers'] AS $server) {
-				$operaterClassName = __CLASS__ . '_' . $server['Type'];
-				
-				if (class_exists($operaterClassName, true)) {
-					$operater = new $operaterClassName($server);
+			facula::core('debug')->criticalSection(true);
+			
+			while(true) {
+				foreach(self::$config['Servers'] AS $server) {
+					$operaterClassName = __CLASS__ . '_' . $server['Type'];
 					
-					if (is_subclass_of($operater, 'SMTPBase')) {
-						facula::core('debug')->criticalSection(true);
+					if (class_exists($operaterClassName, true)) {
+						$operater = new $operaterClassName($server);
 						
-						try {
-							if ($operater->connect($error)) {
-								
-								foreach(self::$emails AS $email) {
-									$operater->send($email);
+						if (is_subclass_of($operater, 'SMTPBase')) {
+							
+							try {
+								if ($operater->connect($error)) {
+									
+									foreach(self::$emails AS $mailkey => $email) {
+										if ($operater->send($email)) {
+											$remainingMails--;
+											unset(self::$emails[$mailkey]);
+										} else {
+											$retryLimit--;
+										}
+									}
+									
+									$operater->disconnect();
 								}
-								
-								$result = true;
-								
-								$operater->disconnect();
+							} catch (Exception $e) {
+								$error = $e->getMessage();
 							}
-						} catch (Exception $e) {
-							$error = $e->getMessage();
+							
+						} else {
+							facula::core('debug')->exception('ERROR_SMTP_OPERATOR_BASE_INVALID', 'smtp', true);
 						}
-						
-						facula::core('debug')->criticalSection(false);
 					} else {
-						facula::core('debug')->exception('ERROR_SMTP_OPERATOR_BASE_INVALID', 'smtp', true);
+						facula::core('debug')->exception('ERROR_SMTP_OPERATOR_NOTFOUND|' . $server['Type'], 'smtp', true);
 					}
-				} else {
-					facula::core('debug')->exception('ERROR_SMTP_OPERATOR_NOTFOUND|' . $server['Type'], 'smtp', true);
+				}
+				
+				if ($retryLimit < 0) {
+					return false;
+					break;
+				}
+				
+				if (!$remainingMails) {
+					return true;
+					break;
 				}
 			}
+			
+			facula::core('debug')->criticalSection(false);
 			
 			if ($error) {
 				facula::core('debug')->exception('ERROR_SMTP_OPERATOR_ERROR|' . $error, 'smtp', false);
 			}
 		}
 		
-		return $result;
+		return false;
 	}
 }
 
