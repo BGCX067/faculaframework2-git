@@ -62,11 +62,11 @@ abstract class Controller extends Setting implements controllerInterface {
 		return $this->request->getCookie($key);
 	}
 	
-	protected function getGets($keys, &$errors = array()) {
+	protected function getGets(array $keys, array &$errors = array()) {
 		return $this->request->getGets($keys, $errors);
 	}
 	
-	protected function getPosts($keys, &$errors = array()) {
+	protected function getPosts(array $keys, array &$errors = array()) {
 		return $this->request->getPosts($keys, $errors);
 	}
 	
