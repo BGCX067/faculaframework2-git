@@ -70,7 +70,7 @@ class facula {
 	
 	private $coreInstances = array();
 	
-	static public function init(&$cfg = array()) {
+	static public function init(array &$cfg = array()) {
 		self::$profile['StartTime'] = microtime(true);
 		self::$time = time();
 		
@@ -99,7 +99,7 @@ class facula {
 		return self::$instance;
 	}
 	
-	static public function run($appname, $args = array(), $cache = false) {
+	static public function run($appname, array $args = array(), $cache = false) {
 		if (self::$instance && isset(self::$instance->coreInstances['object'])) {
 			return self::$instance->coreInstances['object']->run($appname, $args, $cache);
 		} else {
@@ -231,7 +231,7 @@ class facula {
 		return false;
 	}
 	
-	private function __construct(&$cfg) {
+	private function __construct(array &$cfg) {
 		if (version_compare(PHP_VERSION, '5.4.0', '<=')) {
 			throw new Exception('Facula Framework desired to be running with PHP 5.4+');
 		}
@@ -239,7 +239,7 @@ class facula {
 		return $this->_init($cfg);
 	}
 	
-	private function _init(&$cfg) {
+	private function _init(array &$cfg) {
 		// Check environment
 		if (!function_exists('mb_internal_encoding')) {
 			throw new Exception('Facula needs mb_string extension to be enabled.');
@@ -307,11 +307,9 @@ class facula {
 		return false;
 	}
 	
-	private function importSetting(&$cfg) {
-		if (is_array($cfg)) {
-			foreach($cfg AS $key => $val) {
-				$this->setting[$key] = $val;
-			}
+	private function importSetting(array &$cfg) {
+		foreach($cfg AS $key => $val) {
+			$this->setting[$key] = $val;
 		}
 		
 		unset($cfg);
