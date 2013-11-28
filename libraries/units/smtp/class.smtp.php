@@ -138,12 +138,15 @@ class SMTP {
 		$result = false;
 		$remainingMails = count(self::$emails);
 		$retryLimit = 3;
+		$currentServers = array();
 		
 		if (!empty(self::$config)) {
+			$currentServers = self::$config['Servers'];
+			
 			facula::core('debug')->criticalSection(true);
 			
 			while(true) {
-				foreach(self::$config['Servers'] AS $server) {
+				foreach($currentServers AS $serverkey => $server) {
 					$operaterClassName = __CLASS__ . '_' . $server['Type'];
 					
 					if (class_exists($operaterClassName, true)) {
@@ -164,6 +167,8 @@ class SMTP {
 									}
 									
 									$operater->disconnect();
+								} else {
+									unset($currentServers[$serverkey]);
 								}
 							} catch (Exception $e) {
 								$error = $e->getMessage();
@@ -269,14 +274,10 @@ class SMTPSocket {
 		
 		if ($this->connection) {
 			if ($response = trim(fgets($this->connection, 512))) {
-				if (($dashPOS = strpos($response, '-')) !== false) { // If response contain a '-'					
-					if (is_numeric(substr($response, 0, $dashPOS))) { // And all char before the - is numberic (response code)
-						$hasNext = true;
-					}
-				} elseif (($spacePOS = strpos($response, ' ')) !== false) { // Only when response contain a ' '
-					if (is_numeric(substr($response, 0, $spacePOS))) { // And all char before the ' ' is number (response code)
-						$hasNext = false; // Means the response got only one line (Or this is the end of responses)
-					}
+				if ((($dashPOS = strpos($response, '-')) !== false) && is_numeric(substr($response, 0, $dashPOS))) { // If response contain a '-'	and all char before the - is numberic (response code)				
+					$hasNext = true;
+				} elseif ((($spacePOS = strpos($response, ' ')) !== false) && is_numeric(substr($response, 0, $spacePOS))) { // Only when response contain a ' ' and all char before the ' ' is number (response code)
+					$hasNext = false; // Means the response got only one line (Or this is the end of responses)
 				} else {
 					$hasNext = true;
 				}
