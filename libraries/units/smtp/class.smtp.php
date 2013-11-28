@@ -132,7 +132,7 @@ class SMTP {
 		return true;
 	}
 	
-	static private function sendMail() {
+	static public function sendMail() {
 		$operater = null;
 		$operaterClassName = $error = '';
 		$result = false;
@@ -140,7 +140,7 @@ class SMTP {
 		$retryLimit = 3;
 		$currentServers = array();
 		
-		if (!empty(self::$config)) {
+		if (!empty(self::$config) && $remainingMails > 0) {
 			$currentServers = self::$config['Servers'];
 			
 			facula::core('debug')->criticalSection(true);
