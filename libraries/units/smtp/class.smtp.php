@@ -264,7 +264,7 @@ class SMTPSocket {
 	
 	public function get($parseResponse = false, &$hasNext = false) {
 		$response = null;
-		$dashPOS = null;
+		$dashPOS = $spacePOS = null;
 		$hasNext = false; // Reassign this as we referred it.
 		
 		if ($this->connection) {
@@ -273,6 +273,12 @@ class SMTPSocket {
 					if (is_numeric(substr($response, 0, $dashPOS))) { // And all char before the - is numberic (response code)
 						$hasNext = true;
 					}
+				} elseif (($spacePOS = strpos($response, ' ')) !== false) { // Only when response contain a ' '
+					if (is_numeric(substr($response, 0, $spacePOS))) { // And all char before the ' ' is number (response code)
+						$hasNext = false; // Means the response got only one line (Or this is the end of responses)
+					}
+				} else {
+					$hasNext = true;
 				}
 				
 				if ($parseResponse) {

@@ -77,7 +77,7 @@ class smtp_general extends SMTPBase {
 		
 		if ($this->socket->open($errorNo, $errorMsg)) {
 			// Server response us?
-			if ($this->socket->get(true) != 220) {
+			if ($this->socket->getLast(true) != 220) {
 				$error = 'ERROR_SMTP_SERVER_RESPONSE_INVALID';
 				$this->disconnect();
 				
