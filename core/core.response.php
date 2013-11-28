@@ -199,6 +199,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 		'wav' => 'audio/x-wav',
 		'bmp' => 'image/bmp',
 		'cod' => 'image/cis-cod',
+		'png' => 'image/png',
 		'gif' => 'image/gif',
 		'ief' => 'image/ief',
 		'jpe' => 'image/jpeg',
@@ -299,10 +300,12 @@ class faculaResponseDefault implements faculaResponseInterface {
 		$file = $line = $error = $oldBufferContent = $finalContent = '';
 		$hookResult = null;
 		$finalContentLen = 0;
+		$thereIndiscernible = false;
 		
 		if (!headers_sent($file, $line)) {
 			// If $type is empty, set it to htm as default
 			$type = $type ? $type : 'htm';
+			$objCore = facula::core('object');
 			
 			// Assume we will finish this application after output, calc belowing profile data
 			facula::$profile['MemoryUsage'] = memory_get_usage(true);
@@ -313,6 +316,14 @@ class faculaResponseDefault implements faculaResponseInterface {
 			
 			// Start buffer to output
 			$oldBufferContent = ob_get_clean(); // Safely shutdown early output (May set by PHP itself when output_buffering = On)
+			
+			// Check size of response_finished hook queue
+			if ($objCore->hookSize('response_finished') > 0) {
+				ignore_user_abort(true);
+				
+				$thereIndiscernible = true;
+			}
+			
 			ob_start();
 			
 			$finalContent = $oldBufferContent . self::$content;
@@ -342,7 +353,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 				header('Connection: Close');
 			}
 			
-			$hookResult = facula::core('object')->runHook('response_sending', array($finalContent), $error);
+			$hookResult = $objCore->runHook('response_sending', array($finalContent), $error);
 			
 			header('Content-Length: ' . strlen($finalContent));
 			
@@ -356,7 +367,9 @@ class faculaResponseDefault implements faculaResponseInterface {
 			
 			flush();
 			
-			facula::core('object')->runHook('response_finished', $hookResult, $error);
+			if ($thereIndiscernible) {
+				$objCore->runHook('response_finished', $hookResult, $error);
+			}
 			
 			return true;
 		} else {

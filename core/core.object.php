@@ -32,6 +32,7 @@ interface faculaObjectInterface {
 	public function getFileByNamespace($namespace);
 	public function callFunction($function, $args = array());
 	public function run($app, $args = array(), $cache = false);
+	public function hookSize($hookName);
 	public function runHook($hookName, $hookArgs, &$error);
 	public function addHook($hookName, $processorName, $processor);
 }
@@ -444,6 +445,14 @@ class faculaObjectDefault implements faculaObjectInterface {
 	}
 	
 	// Hooks
+	public function hookSize($hookName) {
+		if (isset($this->hooks[$hookName])) {
+			return count($this->hooks[$hookName]);
+		}
+		
+		return 0;
+	}
+	
 	public function runHook($hookName, $hookArgs, &$error) {
 		$returns = array();
 		
