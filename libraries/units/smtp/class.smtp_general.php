@@ -37,7 +37,7 @@ class smtp_general extends SMTPBase {
 		
 		$this->socket->registerResponseParser(250, function($param) {
 			$params = explode(' ', $param, 64);
-						
+			
 			switch(strtolower($params[0])) {
 				case 'size':
 					if (isset($params[1])) {

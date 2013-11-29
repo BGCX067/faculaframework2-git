@@ -64,14 +64,14 @@ class SMTP {
 					}
 					
 					// Set MAIL FROM, this one must be set for future use
-					if (Validator::check($val['From'], 'email')) {
-						if (isset($val['From'])) {
+					if (isset($val['From'])) {
+						if (Validator::check($val['From'], 'email')) {
 							self::$config['Servers'][$key]['From'] = $val['From'];
 						} else {
-							self::$config['Servers'][$key]['From'] = 'postmaster@localhost';
+							facula::core('debug')->exception('ERROR_SMTP_ADDRESS_FORM_INVALID|' . $val['From'], 'smtp', true);
 						}
 					} else {
-						facula::core('debug')->exception('ERROR_SMTP_ADDRESS_FORM_INVALID', 'smtp', true);
+						self::$config['Servers'][$key]['From'] = self::$config['Servers'][$key]['Username'] . '@' . self::$config['Servers'][$key]['Host'];
 					}
 					
 					// Set REPLY TO
@@ -79,7 +79,7 @@ class SMTP {
 						if (Validator::check($val['ReplyTo'], 'email')) {
 							self::$config['Servers'][$key]['ReplyTo'] = $val['ReplyTo'];
 						} else {
-							facula::core('debug')->exception('ERROR_SMTP_ADDRESS_REPLYTO_INVALID', 'smtp', true);
+							facula::core('debug')->exception('ERROR_SMTP_ADDRESS_REPLYTO_INVALID|' . $val['ReplyTo'], 'smtp', true);
 						}
 					} else {
 						self::$config['Servers'][$key]['ReplyTo'] = self::$config['Servers'][$key]['From'];
@@ -90,7 +90,7 @@ class SMTP {
 						if (Validator::check($val['ReturnTo'], 'email')) {
 							self::$config['Servers'][$key]['ReturnTo'] = $val['ReturnTo'];
 						} else {
-							facula::core('debug')->exception('ERROR_SMTP_ADDRESS_RETURNTO_INVALID', 'smtp', true);
+							facula::core('debug')->exception('ERROR_SMTP_ADDRESS_RETURNTO_INVALID|' . $val['ReturnTo'], 'smtp', true);
 						}
 					} else {
 						self::$config['Servers'][$key]['ReturnTo'] = self::$config['Servers'][$key]['From'];
@@ -101,7 +101,7 @@ class SMTP {
 						if (Validator::check($val['ErrorTo'], 'email')) {
 							self::$config['Servers'][$key]['ErrorTo'] = $val['ErrorTo'];
 						} else {
-							facula::core('debug')->exception('ERROR_SMTP_ADDRESS_ERRORTO_INVALID', 'smtp', true);
+							facula::core('debug')->exception('ERROR_SMTP_ADDRESS_ERRORTO_INVALID|' . $val['ErrorTo'], 'smtp', true);
 						}
 					} else {
 						self::$config['Servers'][$key]['ErrorTo'] = self::$config['Servers'][$key]['From'];
@@ -145,21 +145,19 @@ class SMTP {
 			
 			facula::core('debug')->criticalSection(true);
 			
-			while(true) {
-				foreach($currentServers AS $serverkey => $server) {
-					$operaterClassName = __CLASS__ . '_' . $server['Type'];
-					
-					if (class_exists($operaterClassName, true)) {
-						$operater = new $operaterClassName($server);
+			try {
+				while(!empty($currentServers) && !empty(self::$emails) && $retryLimit > 0) {
+					foreach($currentServers AS $serverkey => $server) {
+						$operaterClassName = __CLASS__ . '_' . $server['Type'];
 						
-						if (is_subclass_of($operater, 'SMTPBase')) {
+						if (class_exists($operaterClassName, true)) {
+							$operater = new $operaterClassName($server);
 							
-							try {
+							if (is_subclass_of($operater, 'SMTPBase')) {
 								if ($operater->connect($error)) {
 									
 									foreach(self::$emails AS $mailkey => $email) {
 										if ($operater->send($email)) {
-											$remainingMails--;
 											unset(self::$emails[$mailkey]);
 										} else {
 											$retryLimit--;
@@ -168,35 +166,27 @@ class SMTP {
 									
 									$operater->disconnect();
 								} else {
+									$error .= ' on server: ' . $server['Host'];
 									unset($currentServers[$serverkey]);
 								}
-							} catch (Exception $e) {
-								$error = $e->getMessage();
+							} else {
+								facula::core('debug')->exception('ERROR_SMTP_OPERATOR_BASE_INVALID' . $operaterClassName, 'smtp', true);
 							}
-							
 						} else {
-							facula::core('debug')->exception('ERROR_SMTP_OPERATOR_BASE_INVALID', 'smtp', true);
+							facula::core('debug')->exception('ERROR_SMTP_OPERATOR_NOTFOUND|' . $server['Type'], 'smtp', true);
 						}
-					} else {
-						facula::core('debug')->exception('ERROR_SMTP_OPERATOR_NOTFOUND|' . $server['Type'], 'smtp', true);
 					}
 				}
-				
-				if ($retryLimit < 0) {
-					return false;
-					break;
-				}
-				
-				if (!$remainingMails) {
-					return true;
-					break;
-				}
+			} catch (Exception $e) {
+				$error = $e->getMessage();
 			}
 			
 			facula::core('debug')->criticalSection(false);
 			
 			if ($error) {
 				facula::core('debug')->exception('ERROR_SMTP_OPERATOR_ERROR|' . $error, 'smtp', false);
+			} else {
+				return true;
 			}
 		}
 		
@@ -416,13 +406,19 @@ class SMTPAuther {
 			if (isset(self::$authers[$method])) {
 				$auther = self::$authers[$method];
 				
-				return $auther($this->socket, $username, $password, $error);
+				if ($auther($this->socket, $username, $password, $error)) {
+					return true;
+				} else {
+					$error = $error ? $error : 'UNKONWN_ERROR';
+					
+					return false;
+				}
 				
 				break;
 			}
 		}
 		
-		$error = 'NOTSUPPORTED|' . implode($this->auths) . ' for ' . implode(array_keys(self::$authers));
+		$error = 'NOTSUPPORTED|' . implode(', ', $this->auths) . ' for ' . implode(', ', array_keys(self::$authers));
 		
 		return false;
 	}
@@ -449,9 +445,22 @@ SMTPAuther::register('plain', function($socket, $username, $password, &$error) {
 		return false;
 	}
 	
-	if ($socket->put($plainAuthStr, 'one') != 235) {
-		$error = 'AUTHENTICATION_FAILED';
-		return false;
+	switch($socket->put($plainAuthStr, 'one')) { // Give the username and check return
+		case 535:
+			$error = 'AUTHENTICATION_FAILED'; 
+			break;
+			
+		case 535:
+			$error = 'FROM_INVALID'; 
+			break;
+			
+		case 235:
+			return true;
+			break;
+			
+		default:
+			$error = 'UNKOWN_RESPONSE';
+			break;
 	}
 	
 	return true;
@@ -487,6 +496,10 @@ SMTPAuther::register('login', function($socket, $username, $password, &$error) {
 						switch($socket->put($b64Password, 'one')) {
 							case 535:
 								$error = 'AUTHENTICATION_FAILED'; 
+								break;
+								
+							case 535:
+								$error = 'FROM_INVALID'; 
 								break;
 								
 							case 235:
