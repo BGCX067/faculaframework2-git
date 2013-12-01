@@ -156,6 +156,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	
 	public function _inited() {
 		$error = '';
+		$selectedLanguage = $clientLanguage = array();
 		
 		// Determine what language can be used for this client
 		if ($siteLanguage = facula::core('request')->getClientInfo('languages')) {

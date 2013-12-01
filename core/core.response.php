@@ -314,9 +314,6 @@ class faculaResponseDefault implements faculaResponseInterface {
 			facula::$profile['OutputTime'] = microtime(true);
 			facula::$profile['ProductionTime'] = facula::$profile['OutputTime'] - facula::$profile['StartTime'];
 			
-			// Start buffer to output
-			$oldBufferContent = ob_get_clean(); // Safely shutdown early output (May set by PHP itself when output_buffering = On)
-			
 			// Check size of response_finished hook queue
 			if ($objCore->hookSize('response_finished') > 0) {
 				ignore_user_abort(true);
@@ -324,6 +321,8 @@ class faculaResponseDefault implements faculaResponseInterface {
 				$thereIndiscernible = true;
 			}
 			
+			// Start buffer to output
+			$oldBufferContent = ob_get_clean(); // Safely shutdown early output (May set by PHP itself when output_buffering = On)
 			ob_start();
 			
 			$finalContent = $oldBufferContent . self::$content;
