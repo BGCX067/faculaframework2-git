@@ -76,33 +76,33 @@ class rStorage_ftp implements remoteStorageInterface {
 
 	public function upload($localFile, &$error = '') {
 		$currentRemotePath = $remoteFileName = $resultPath = $fileExt = '';
+		$failed = false;
 
 		if ($this->connection || $this->connect()) {
-			if ($this->setting['Path'] && !$this->chDir($this->setting['Path'] . $this->generatePath(), $currentRemotePath)) {
-				facula::core('debug')->exception('ERROR_FTP_CHANGEDIR_FAILED', 'ftp');
-				
-				return false;
-			}
-
-			$fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
-
 			facula::core('debug')->criticalSection(true);
-
-			if (!$remoteFileName = md5_file($localFile)) {
-				$remoteFileName = rand(0, 9999) . ($fileExt ? '.' . $fileExt : '');
+			
+			if ($this->setting['Path'] && !$this->chDir($this->setting['Path'] . $this->generatePath(), $currentRemotePath)) {
+				facula::core('debug')->exception('ERROR_FTP_CHANGEDIR_FAILED', 'ftp', false);
+				$failed = true;
 			} else {
-				$remoteFileName .= ($fileExt ? '.' . $fileExt : '');
-			}
+				$fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
+				
+				if (!$remoteFileName = md5_file($localFile)) {
+					$remoteFileName = rand(0, 9999) . ($fileExt ? '.' . $fileExt : '');
+				} else {
+					$remoteFileName .= ($fileExt ? '.' . $fileExt : '');
+				}
 
-			if (ftp_put($this->connection, $remoteFileName, $localFile, FTP_BINARY)) {
-				$resultPath =  $currentRemotePath . '/' . $remoteFileName;
-			} else {
-				$error = 'ERROR_REMOTESTORAGE_UPLOAD_FAILED';
+				if (ftp_put($this->connection, $remoteFileName, $localFile, FTP_BINARY)) {
+					$resultPath =  $currentRemotePath . '/' . $remoteFileName;
+				} else {
+					$error = 'ERROR_REMOTESTORAGE_UPLOAD_FAILED';
+				}
 			}
-
+			
 			facula::core('debug')->criticalSection(false);
 
-			return $this->setting['Access'] . substr($resultPath, strlen($this->setting['Path']));
+			return $failed ? false : ($this->setting['Access'] . substr($resultPath, strlen($this->setting['Path'])));
 		} else {
 			$error = 'ERROR_REMOTESTORAGE_CONNECTION_FAILED';
 		}

@@ -264,26 +264,24 @@ class FTP {
 		$path = $currentRemotePath = $resultPath = '';
 
 		if ($server = $this->getCurrentServer()) {
+			facula::core('debug')->criticalSection(true);
+			
 			if (isset($server['Path']) && !$this->doEnterPath($server['Path'] . '/' . $remotePath, $currentRemotePath)) {
 				facula::core('debug')->exception('ERROR_FTP_CHANGEDIR_FAILED', 'ftp', true);
 			}
 
 			if (is_readable($localFile)) {
-				facula::core('debug')->criticalSection(true);
-
 				if (ftp_put(self::$connection, $remoteFileName, $localFile, FTP_BINARY)) {
 					$resultPath = $currentRemotePath . '/' . $remoteFileName;
 				}
-
-				facula::core('debug')->criticalSection(false);
-
-				return $resultPath;
 			} else {
 				facula::core('debug')->exception('ERROR_FTP_FILE_UNREADABLE|' . $localFile, 'ftp', true);
 			}
+			
+			facula::core('debug')->criticalSection(false);
 		}
 
-		return false;
+		return $resultPath;
 	}
 }
 
