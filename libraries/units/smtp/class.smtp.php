@@ -161,6 +161,7 @@ class SMTP {
 											unset(self::$emails[$mailkey]);
 										} else {
 											$retryLimit--;
+											break; // There is no point to continue try this connection to send another email after fail.
 										}
 									}
 									
