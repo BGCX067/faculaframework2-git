@@ -161,6 +161,7 @@ class SMTP {
 											unset(self::$emails[$mailkey]);
 										} else {
 											$retryLimit--;
+											break; // There is no point to continue try this connection to send another email after fail.
 										}
 									}
 									
@@ -181,13 +182,13 @@ class SMTP {
 				$error = $e->getMessage();
 			}
 			
-			facula::core('debug')->criticalSection(false);
-			
 			if ($error) {
 				facula::core('debug')->exception('ERROR_SMTP_OPERATOR_ERROR|' . $error, 'smtp', false);
-			} else {
-				return true;
 			}
+			
+			facula::core('debug')->criticalSection(false);
+				
+			return true;
 		}
 		
 		return false;
@@ -251,7 +252,6 @@ class SMTPSocket {
 						break;
 				}
 			} else {
-				facula::core('debug')->exception('ERROR_SMTP_SOCKET_NORESPONSE', 'smtp', false);
 				return false;
 			}
 		}

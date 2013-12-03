@@ -97,6 +97,8 @@ class faculaCacheDefault implements faculaCacheInterface {
 					}
 					
 					return $cache['Data'];
+				} else {
+					return null;
 				}
 			}
 		}
@@ -113,7 +115,7 @@ class faculaCacheDefault implements faculaCacheInterface {
 			if ($this->makeCacheDir($path['Path'])) {
 				$cacheData = array(
 					'Time' => FACULA_TIME,
-					'Data' => $data,
+					'Data' => $data ? $data : null,
 				);
 				
 				return file_put_contents($file, self::$setting['CacheFileSafeCode'][0] . ' $cache = ' . var_export($cacheData, true) . '; ' . self::$setting['CacheFileSafeCode'][1]);
