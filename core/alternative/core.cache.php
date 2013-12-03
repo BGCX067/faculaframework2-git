@@ -97,6 +97,8 @@ class faculaCacheDefault implements faculaCacheInterface {
 					}
 					
 					return $cache['Data'];
+				} else {
+					return null;
 				}
 			}
 		}
