@@ -39,33 +39,30 @@ class Formated {
 	
 	static private $defaults = array(
 		'Tag' => array(),
+		'Setting' => array(
+			'MaxNests' => 1,
+			'MaxTags' => 30,
+		),
 	);
 	
 	private $tags = array();
-	
 	private $assign = array();
 	
-	private $setting = array(
-		'MaxNests' => 5,
-		'MaxTags' => 30,
-	);
+	private $setting = array();
 	
 	private $content = '';
-	private $scanned = false;
 	private $tagMap = array();
 	
-	private $rendered = '';
-	
-	static public function get($textContent) {
-		return new self($textContent);
+	static public function get($textContent, $setting = array()) {
+		return new self($textContent, $setting);
 	}
 	
-	static public function getFromFile($file) {
+	static public function getFromFile($file, $setting = array()) {
 		$fileContent = '';
 		
 		if (is_readable($file)) {
 			if ($fileContent = file_get_contents($file)) {
-				return new self($fileContent);
+				return new self($fileContent, $setting);
 			}
 		}
 		
@@ -87,9 +84,14 @@ class Formated {
 		return false;
 	}
 	
-	public function __construct(&$textMsg = '') {
-		$this->content = $textMsg;
+	protected function __construct(&$text, &$setting) {
+		$this->content = $text;
 		$this->tags = self::$defaults['Tag'];
+		
+		$this->setting = array(
+			'MaxNests' => isset($setting['MaxNests']) ? intval($setting['MaxNests']) : self::$defaults['Setting']['MaxNests'],
+			'MaxTags' => isset($setting['MaxTags']) ? intval($setting['MaxTags']) : self::$defaults['Setting']['MaxTags'],
+		);
 		
 		return true;
 	}
@@ -101,16 +103,10 @@ class Formated {
 			$assigner = $this->tags[$processerType[0]]['Assigner'];
 			
 			if ($result = $assigner($value)) {
-				if (is_array($result)) {
-					foreach($result AS $key => $val) {
-						$this->assign[$processerType[0]][$name . '.' . $key] = $value;
-					}
-				} else {
-					$this->assign[$processerType[0]][$name] = $result;
-				}
+				$this->assign[$processerType[0]][$name] = $result;
+				
+				return true;
 			}
-			
-			return true;
 		} else {
 			facula::core('debug')->exception('ERROR_FORMATED_TAG_NOT_EXISTE|' . $processerType[0], 'formated', true);
 		}
@@ -127,15 +123,18 @@ class Formated {
 		return true;
 	}
 	
-	public function render(&$error = '') {
-		if ($this->parseTags($error)) {
-			return $this->rendered;
+	public function render(&$error = array()) {
+		if ($rendered = $this->parseTags($error)) {
+			return $rendered;
 		}
 		
 		return false;
 	}
 	
-	private function parseTags(&$error = array()) {
+	protected function parseTags(&$error) {
+		$newValue = $processer = $tempValue = null;
+		$tagPos = $tempData = array();
+		
 		$tagMap = array();
 		
 		if ($this->scanTags($error)) {
@@ -143,104 +142,88 @@ class Formated {
 			$tagMap = $this->tagMap;
 			
 			// Reset rendered content
-			$this->rendered = $this->content;
+			$rendered = $this->content;
 			
-			return $this->walkTags($tagMap['Dim'], $tagMap['Flat']);
-		}
-		
-		return false;
-	}
-	
-	private function walkTags(array &$tagMap, array &$tagFlatMap) {
-		$newValue = $processer = $newConBefore = $newConAfter = $tempValue = null;
-		$tagPos = $tempData = array();
-		
-		$paramValue = $paramParam = '';
-		
-		foreach($tagMap AS $key => $val) {
-			if (isset($val['Subs'])) {
-				$this->walkTags($tagMap[$key]['Subs'], $tagFlatMap);
-			}
-			
-			if (isset($this->tags[$val['Tag']])) {
-				$tagPos = array();
+			foreach($tagMap AS $key => $val) {
+				if (isset($this->tags[$val['Tag']])) {
+					$tagPos = array();
 
-				$tagPos['TagStart'] = $tagMap[$key]['TagStart'];
-				$tagPos['FullStart'] = $tagPos['TagStart'] - 1;
-				
-				if ($tagMap[$key]['PropertyStart'] && $tagMap[$key]['PropertyEnd']) {
-					$tagPos['TagEnd'] = $tagMap[$key]['TagEnd'];
+					$tagPos['TagStart'] = $tagMap[$key]['TagStart'];
+					$tagPos['FullStart'] = $tagPos['TagStart'] - 1;
 					
-					$tagPos['PropertyStart'] = $tagMap[$key]['PropertyStart'];
-					$tagPos['FullEnd'] = ($tagPos['PropertyEnd'] = $tagMap[$key]['PropertyEnd']) + 1;
-					
-					$tagPos['PropertyLen'] = $tagPos['PropertyEnd'] - $tagPos['PropertyStart'];
-					
-					$tagPos['Param'] = substr($this->rendered, $tagPos['PropertyStart'] + 1, $tagPos['PropertyLen'] - 1);
-				} else {
-					$tagPos['FullEnd'] = ($tagPos['TagEnd'] = $tagMap[$key]['TagEnd']) + 1;
-					
-					$tagPos['PropertyLen'] = $tagPos['PropertyStart'] = $tagPos['PropertyEnd'] = 0;
-					$tagPos['Param'] = null;
-				}
-				
-				$tagPos['TagLen'] = $tagPos['TagEnd'] - $tagPos['TagStart'];
-				$tagPos['FullLen'] = $tagPos['FullEnd'] - $tagPos['FullStart'];
-				$tagPos['Value'] = substr($this->rendered, $tagPos['TagStart'] + 1, $tagPos['TagLen'] - 1);
-				
-				$processer = $this->tags[$val['Tag']]['Processer'];
-				
-				if (isset($this->assign[$val['Tag']][$tagPos['Value']])) {
-					$tempValue = &$this->assign[$val['Tag']][$tagPos['Value']];
-				} else {
-					$tempValue = '';
-				}
-				
-				if ($newValue = $processer($tempValue, $tagPos['Param'], $this->assign)) {
-					$this->rendered = substr($this->rendered, 0, $tagPos['FullStart']) . $newValue . substr($this->rendered, $tagPos['FullEnd'], strlen($this->rendered));
-					
-					$newLen = strlen($newValue);
-					
-					if ($tagPos['FullLen'] != $newLen) {
-						$tagNewEnd = $newLen - $tagPos['FullLen'];
+					if ($tagMap[$key]['PropertyStart'] && $tagMap[$key]['PropertyEnd']) {
+						$tagPos['TagEnd'] = $tagMap[$key]['TagEnd'];
 						
-						foreach($tagFlatMap AS $posModifyKey => $posModifyVal) {
-							if ($key != $posModifyKey) {
-								if ($posModifyVal['TagStart'] >= $tagPos['TagStart']) {
-									$tagFlatMap[$posModifyKey]['TagStart'] += $tagNewEnd;
-								}
-								
-								if ($posModifyVal['TagEnd'] >= $tagPos['TagEnd']) {
-									$tagFlatMap[$posModifyKey]['TagEnd'] += $tagNewEnd;
-								}
-								
-								if ($posModifyVal['PropertyStart'] >= $tagPos['PropertyStart']) {
-									$tagFlatMap[$posModifyKey]['PropertyStart'] += $tagNewEnd;
-								}
-								
-								if ($posModifyVal['PropertyEnd'] >= $tagPos['PropertyEnd']) {
-									$tagFlatMap[$posModifyKey]['PropertyEnd'] += $tagNewEnd;
+						$tagPos['PropertyStart'] = $tagMap[$key]['PropertyStart'];
+						$tagPos['FullEnd'] = ($tagPos['PropertyEnd'] = $tagMap[$key]['PropertyEnd']) + 1;
+						
+						$tagPos['PropertyLen'] = $tagPos['PropertyEnd'] - $tagPos['PropertyStart'];
+						
+						$tagPos['Param'] = substr($rendered, $tagPos['PropertyStart'] + 1, $tagPos['PropertyLen'] - 1);
+					} else {
+						$tagPos['FullEnd'] = ($tagPos['TagEnd'] = $tagMap[$key]['TagEnd']) + 1;
+						
+						$tagPos['PropertyLen'] = $tagPos['PropertyStart'] = $tagPos['PropertyEnd'] = 0;
+						$tagPos['Param'] = null;
+					}
+					
+					$tagPos['TagLen'] = $tagPos['TagEnd'] - $tagPos['TagStart'];
+					$tagPos['FullLen'] = $tagPos['FullEnd'] - $tagPos['FullStart'];
+					$tagPos['Value'] = substr($rendered, $tagPos['TagStart'] + 1, $tagPos['TagLen'] - 1);
+					
+					$processer = $this->tags[$val['Tag']]['Processer'];
+					
+					if (isset($this->assign[$val['Tag']][$tagPos['Value']])) {
+						$tempValue = $this->assign[$val['Tag']][$tagPos['Value']];
+					} else {
+						$tempValue = null;
+					}
+					
+					if (($newValue = $processer($tempValue, $tagPos['Value'], $tagPos['Param'], $this->assign)) && (is_string($newValue) || is_numeric($newValue))) {
+						$rendered = substr($rendered, 0, $tagPos['FullStart']) . $newValue . substr($rendered, $tagPos['FullEnd'], strlen($rendered));
+						
+						$newLen = strlen($newValue);
+						
+						if ($tagPos['FullLen'] != $newLen) {
+							$tagNewEnd = $newLen - $tagPos['FullLen'];
+							
+							foreach($tagMap AS $posModifyKey => $posModifyVal) {
+								if ($key != $posModifyKey) {
+									if ($posModifyVal['TagStart'] > $tagPos['TagStart']) {
+										$tagMap[$posModifyKey]['TagStart'] += $tagNewEnd;
+									}
+									
+									if ($posModifyVal['TagEnd'] > $tagPos['TagEnd']) {
+										$tagMap[$posModifyKey]['TagEnd'] += $tagNewEnd;
+									}
+									
+									if ($posModifyVal['PropertyStart'] > $tagPos['PropertyStart']) {
+										$tagMap[$posModifyKey]['PropertyStart'] += $tagNewEnd;
+									}
+									
+									if ($posModifyVal['PropertyEnd'] > $tagPos['PropertyEnd']) {
+										$tagMap[$posModifyKey]['PropertyEnd'] += $tagNewEnd;
+									}
 								}
 							}
 						}
 					}
 				}
 			}
+			
+			return $rendered;
 		}
 		
-		return true;
+		return false;
 	}
 	
-	private function scanTags(&$error = '') {
-		$lastCharOffset = $nextCharOffset = $tagID = $contentLen = 0;
-		$lastNests = $tagInfos = $tagInfo = $positionMap = $tags = $keyPosMarks = array();
+	private function scanTags(&$error) {
+		$lastCharOffset = $nextCharOffset = $tagID = $contentLen = $contentMaxPos = 0;
+		$lastNests = $tagInfos = $tagInfoMap = $tagTempInfo = $keyPosMarks = $scannedTags = $keyChars = array();
 		$lastNested = null;
 		$remainTags = $this->setting['MaxTags'];
 		
 		if (empty($this->tagMap)) {
-			// Set a mark so we don't scan it again.
-			$this->scanned = true;
-			
 			$keyChars = array_keys($this->tags);
 			
 			// Add tag start and end char to key
@@ -263,11 +246,11 @@ class Formated {
 			
 			asort($keyPosMarks);
 			
-			$contentLen = strlen($this->content);
+			$contentMaxPos = ($contentLen = strlen($this->content)) - 1;
 			
 			foreach($keyPosMarks AS $charOffset) {
 				$lastCharOffset = $charOffset > 0 ? $charOffset - 1 : 0;
-				$nextCharOffset = $charOffset < $contentLen ? $charOffset + 1 : $contentLen;
+				$nextCharOffset = $charOffset < $contentMaxPos - 1 ? $charOffset + 1 : $contentMaxPos;
 				
 				switch($this->content[$charOffset]) {
 					case self::$delimiters['Tag']['Start']:
@@ -300,6 +283,8 @@ class Formated {
 									$lastNested['Data']['T.P.Start'] = true;
 								} else {
 									unset($lastNested['Data'], $lastNests[$tagID--]);
+									
+									$scannedTags[] = $lastNested; // Add tag information to result array
 									$lastNested = &$lastNests[$tagID];
 								}
 							}
@@ -319,9 +304,11 @@ class Formated {
 									$lastNested['Data']['D.P.End'] = true;
 								} else {
 									// If something went wrong, Close this tag
-									$lastNested['Positions']['Property']['End'] = $charOffset;
+									$lastNested['PropertyEnd'] = $charOffset;
 									
 									unset($lastNested['Data'], $lastNests[$tagID--]);
+									
+									$scannedTags[] = $lastNested; // Add tag information to result array
 									$lastNested = &$lastNests[$tagID];
 								}
 							}
@@ -336,6 +323,8 @@ class Formated {
 								$lastNested['PropertyEnd'] = $charOffset;
 								
 								unset($lastNested['Data'], $lastNests[$tagID--]);
+								
+								$scannedTags[] = $lastNested; // Add tag information to result array
 								$lastNested = &$lastNests[$tagID];
 							}
 						}
@@ -364,7 +353,7 @@ class Formated {
 								return false;
 							}
 						
-							$tagInfo = array(
+							$tagTempInfo = array(
 								'Data' => array(
 									'T.T.Start' => true,
 									'T.T.End' => false,
@@ -382,24 +371,24 @@ class Formated {
 							);
 							
 							if (is_null($lastNested)) {
-								$tagInfos['Dim'][$charOffset] = $tagInfo;
+								$tagInfos[$charOffset] = $tagTempInfo;
 								
-								$lastNests[++$tagID] = &$tagInfos['Dim'][$charOffset];
-								$tagInfos['Flat'][$charOffset] = &$tagInfos['Dim'][$charOffset];
+								$lastNests[++$tagID] = &$tagInfos[$charOffset];
+								$tagInfoMap[$charOffset] = &$tagInfos[$charOffset];
 								
 								$lastNested = &$lastNests[$tagID];
 							} else {
 								if (isset($lastNested['Data']['Level'])) {
-									$tagInfo['Data']['Level'] = $lastNested['Data']['Level'] + 1;
+									$tagTempInfo['Data']['Level'] = $lastNested['Data']['Level'] + 1;
 								} else {
-									$tagInfo['Data']['Level'] = 1;
+									$tagTempInfo['Data']['Level'] = 1;
 								}
 								
-								if ($tagInfo['Data']['Level'] <= $this->setting['MaxNests']) {
-									$lastNested['Subs'][$charOffset] = $tagInfo;
+								if ($tagTempInfo['Data']['Level'] <= $this->setting['MaxNests']) {
+									$lastNested['Subs'][$charOffset] = $tagTempInfo;
 									
 									$lastNests[++$tagID] = &$lastNested['Subs'][$charOffset];
-									$tagInfos['Flat'][$charOffset] = &$lastNested['Subs'][$charOffset];
+									$tagInfoMap[$charOffset] = &$lastNested['Subs'][$charOffset];
 									
 									$lastNested = &$lastNests[$tagID];
 								}
@@ -409,19 +398,19 @@ class Formated {
 				}
 			}
 			
-			foreach($tagInfos['Flat'] AS $tag) {
+			foreach($tagInfoMap AS $tag) {
 				if (isset($tag['Data'])) {
 					$error['Tag'] = $tag['Tag'];
 					
 					if ($tag['Data']['T.T.End']) {
-						$errorOffset = $tag['Positions']['Tag']['Start'];
+						$errorOffset = $tag['TagStart'];
 						
 						$error['Error'] = 'SYNTAX_ERROR_TAG_UNCLOSE';
 						$error['Arg'] = array(
 							'Remain' => $tag['Data']['D.T'],
 						);
 					} elseif ($tag['Data']['D.P.End']) {
-						$errorOffset = $tag['Positions']['Property']['Start'];
+						$errorOffset = $tag['PropertyStart'];
 						
 						$error['Error'] = 'SYNTAX_ERROR_PROPERTY_UNCLOSE';
 						$error['Arg'] = array(
@@ -441,7 +430,7 @@ class Formated {
 				}
 			}
 			
-			$this->tagMap = $tagInfos;
+			$this->tagMap = $scannedTags;
 			
 			return true;
 		} else {
@@ -453,27 +442,109 @@ class Formated {
 }
 
 Formated::newTag('%',
-	function($value, $param, $pool) {
-		return $value;
+	function($value, $selected, $param, $pool) {
+		$poolRef = null;
+		$result = $value;
+		
+		if (is_null($value)) {
+			$locator = explode('.', trim($selected), 2);
+			
+			if (isset($pool['%'][$locator[0]])) {
+				if (!isset($locator[1])) {
+					$result = $pool['%'][$locator[0]];
+				} elseif (isset($pool['%'][$locator[0]]['.' . $locator[1]])) {
+					$result = $pool['%'][$locator[0]]['.' . $locator[1]];
+				}
+			}
+		}
+		
+		if (is_string($result) || is_numeric($result)) {
+			foreach(explode(' ', $param) AS $currentParam) {
+				switch(trim($currentParam)) {
+					case 'Lower':
+						$result = strtolower($result);
+						break;
+						
+					case 'Upper':
+						$result = strtoupper($result);
+						break;
+						
+					case 'Uppercase':
+						$result = ucfirst($result);
+						break;
+						
+					case 'Lowercase':
+						$result = lcfirst($result);
+						break;
+						
+					case 'Number':
+						$result = number_format(intval($result), 2, '.', ',');
+						break;
+						
+					case 'Html':
+						$result = htmlspecialchars($result);
+						break;
+						
+					case 'URL':
+						$result = urlencode($result);
+						break;
+						
+					case 'Slashes':
+						$result = addslashes($result);
+						break;
+						
+					case 'Br':
+						$result = nl2br($result);
+						break;
+						
+					default:
+						if (isset($pool['!'][$param])) {
+							$result = sprintf($pool['!'][$param], $result);
+						}
+						break;
+				}
+			}
+			
+			return $result;
+		} 
+
+		return false;
 	},
 	function($value) {
-		$result = array();
+		$flated = array();
+		$lastKey = '';
 		
 		if (is_array($value)) {
-			foreach($value AS $key => $val) {
-				$result[$key] = $val;
-			}
+			$recursive_array = function($array, $tag) use(&$recursive_array, &$flated) {
+				foreach($array AS $key => $val) {
+					$key = '.' . $key;
+					
+					if (is_array($val)) {
+						$recursive_array($val, $key);
+					} else {
+						$flated[$tag . $key] = $val;
+					}
+				}
+			};
+			
+			$recursive_array($value, '');
+			
+			return $flated;
 		} else {
 			return $value;
 		}
 
-		return $result;
+		return false;
 	}
 );
 
 Formated::newTag('!',
-	function($value, $param, $pool) {
-		return $value . " ({$param})";
+	function($value, $selected, $param) {
+		if ($value) {
+			return $value;
+		}
+	
+		return $param;
 	},
 	function($value) {
 		return $value;
