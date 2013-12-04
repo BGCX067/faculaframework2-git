@@ -51,6 +51,8 @@ class Formated {
 	);
 	
 	private $content = '';
+	private $scanned = false;
+	private $tagMap = array();
 	
 	private $rendered = '';
 	
@@ -127,52 +129,23 @@ class Formated {
 	
 	public function render(&$error = '') {
 		if ($this->parseTags($error)) {
-			return $this->content;
+			return $this->rendered;
 		}
 		
 		return false;
 	}
 	
 	private function parseTags(&$error = array()) {
-		$tagMap = $splitedContent = array();
-		$splitedContentLens = $errorOffset = 0;
+		$tagMap = array();
 		
-		if ($tagMap = $this->scanTags($error)) {
-			foreach($tagMap['Flat'] AS $tag) {
-				if (isset($tag['Data'])) {
-					$error['Tag'] = $tag['Tag'];
-					
-					if ($tag['Data']['T.T.End']) {
-						$errorOffset = $tag['Positions']['Tag']['Start'];
-						
-						$error['Error'] = 'SYNTAX_ERROR_TAG_UNCLOSE';
-						$error['Arg'] = array(
-							'Remain' => $tag['Data']['D.T'],
-						);
-					} elseif ($tag['Data']['D.P.End']) {
-						$errorOffset = $tag['Positions']['Property']['Start'];
-						
-						$error['Error'] = 'SYNTAX_ERROR_PROPERTY_UNCLOSE';
-						$error['Arg'] = array(
-							'Remain' => $tag['Data']['D.P'],
-						);
-					}
-					
-					$splitedContent = explode("\n", substr($this->content, 0, $errorOffset));
-					$splitedContentLens = count($splitedContent);
-					
-					$error['Arg']['Line'] = $splitedContentLens;
-					
-					unset($splitedContent[$splitedContentLens - 1]);
-					$error['Arg']['Char'] = $errorOffset - strlen(implode("\n", $splitedContent));
-					
-					return false;
-				}
-			}
+		if ($this->scanTags($error)) {
+			// Reset Tag mark map
+			$tagMap = $this->tagMap;
 			
-			if (!$error) {
-				return $this->walkTags($tagMap['Dim'], $tagMap['Flat']);
-			}
+			// Reset rendered content
+			$this->rendered = $this->content;
+			
+			return $this->walkTags($tagMap['Dim'], $tagMap['Flat']);
 		}
 		
 		return false;
@@ -191,7 +164,7 @@ class Formated {
 			
 			if (isset($this->tags[$val['Tag']])) {
 				$tagPos = array();
-				
+
 				$tagPos['TagStart'] = $tagMap[$key]['TagStart'];
 				$tagPos['FullStart'] = $tagPos['TagStart'] - 1;
 				
@@ -203,7 +176,7 @@ class Formated {
 					
 					$tagPos['PropertyLen'] = $tagPos['PropertyEnd'] - $tagPos['PropertyStart'];
 					
-					$tagPos['Param'] = substr($this->content, $tagPos['PropertyStart'] + 1, $tagPos['PropertyLen'] - 1);
+					$tagPos['Param'] = substr($this->rendered, $tagPos['PropertyStart'] + 1, $tagPos['PropertyLen'] - 1);
 				} else {
 					$tagPos['FullEnd'] = ($tagPos['TagEnd'] = $tagMap[$key]['TagEnd']) + 1;
 					
@@ -213,18 +186,18 @@ class Formated {
 				
 				$tagPos['TagLen'] = $tagPos['TagEnd'] - $tagPos['TagStart'];
 				$tagPos['FullLen'] = $tagPos['FullEnd'] - $tagPos['FullStart'];
-				$tagPos['Value'] = substr($this->content, $tagPos['TagStart'] + 1, $tagPos['TagLen'] - 1);
+				$tagPos['Value'] = substr($this->rendered, $tagPos['TagStart'] + 1, $tagPos['TagLen'] - 1);
 				
 				$processer = $this->tags[$val['Tag']]['Processer'];
 				
 				if (isset($this->assign[$val['Tag']][$tagPos['Value']])) {
 					$tempValue = &$this->assign[$val['Tag']][$tagPos['Value']];
 				} else {
-					$tempValue = array();
+					$tempValue = '';
 				}
 				
 				if ($newValue = $processer($tempValue, $tagPos['Param'], $this->assign)) {
-					$this->content = substr($this->content, 0, $tagPos['FullStart']) . $newValue . substr($this->content, $tagPos['FullEnd'], strlen($this->content));
+					$this->rendered = substr($this->rendered, 0, $tagPos['FullStart']) . $newValue . substr($this->rendered, $tagPos['FullEnd'], strlen($this->rendered));
 					
 					$newLen = strlen($newValue);
 					
@@ -264,175 +237,218 @@ class Formated {
 		$lastNested = null;
 		$remainTags = $this->setting['MaxTags'];
 		
-		$keyChars = array_keys($this->tags);
-		
-		// Add tag start and end char to key
-		$keyChars[] = self::$delimiters['Tag']['Start'];
-		$keyChars[] = self::$delimiters['Tag']['End'];
-		
-		// Add property start and end to key
-		$keyChars[] = self::$delimiters['Property']['Start'];
-		$keyChars[] = self::$delimiters['Property']['End'];
-		
-		// Scan all key mark from the content
-		foreach ($keyChars AS $keyChar) {
-			$lastKeyPos = $lastPickUpKeyPos = 0;
+		if (empty($this->tagMap)) {
+			// Set a mark so we don't scan it again.
+			$this->scanned = true;
 			
-			while(($lastKeyPos = strpos($this->content, $keyChar, $lastPickUpKeyPos)) !== false) {
-				$keyPosMarks[] = $lastKeyPos;
-				$lastPickUpKeyPos = $lastKeyPos + 1;
+			$keyChars = array_keys($this->tags);
+			
+			// Add tag start and end char to key
+			$keyChars[] = self::$delimiters['Tag']['Start'];
+			$keyChars[] = self::$delimiters['Tag']['End'];
+			
+			// Add property start and end to key
+			$keyChars[] = self::$delimiters['Property']['Start'];
+			$keyChars[] = self::$delimiters['Property']['End'];
+			
+			// Scan all key mark from the content
+			foreach ($keyChars AS $keyChar) {
+				$lastKeyPos = $lastPickUpKeyPos = 0;
+				
+				while(($lastKeyPos = strpos($this->content, $keyChar, $lastPickUpKeyPos)) !== false) {
+					$keyPosMarks[] = $lastKeyPos;
+					$lastPickUpKeyPos = $lastKeyPos + 1;
+				}
 			}
-		}
-		
-		asort($keyPosMarks);
-		
-		$contentLen = strlen($this->content);
-		
-		foreach($keyPosMarks AS $charOffset) {
-			$lastCharOffset = $charOffset > 0 ? $charOffset - 1 : 0;
-			$nextCharOffset = $charOffset < $contentLen ? $charOffset + 1 : $contentLen;
 			
-			switch($this->content[$charOffset]) {
-				case self::$delimiters['Tag']['Start']:
-					if (isset($lastNested['Data'])) {
-						$lastNested['Data']['D.T']++;
-						
-						if ($lastNested['Data']['T.T.Start']) {
-							$lastNested['Data']['T.T.Start'] = false;
+			asort($keyPosMarks);
+			
+			$contentLen = strlen($this->content);
+			
+			foreach($keyPosMarks AS $charOffset) {
+				$lastCharOffset = $charOffset > 0 ? $charOffset - 1 : 0;
+				$nextCharOffset = $charOffset < $contentLen ? $charOffset + 1 : $contentLen;
+				
+				switch($this->content[$charOffset]) {
+					case self::$delimiters['Tag']['Start']:
+						if (isset($lastNested['Data'])) {
+							$lastNested['Data']['D.T']++;
 							
-							if ($lastNested['Data']['Start'] == $lastCharOffset) {
-								$lastNested['TagStart'] = $charOffset;
+							if ($lastNested['Data']['T.T.Start']) {
+								$lastNested['Data']['T.T.Start'] = false;
 								
-								$lastNested['Data']['T.T.End'] = true;
-							} else {
-								unset($lastNests[$tagID--]);
-								$lastNested = &$lastNests[$tagID];
+								if ($lastNested['Data']['Start'] == $lastCharOffset) {
+									$lastNested['TagStart'] = $charOffset;
+									
+									$lastNested['Data']['T.T.End'] = true;
+								} else {
+									unset($lastNests[$tagID--]);
+									$lastNested = &$lastNests[$tagID];
+								}
 							}
 						}
-					}
-					break;
-					
-				case self::$delimiters['Tag']['End']:
-					if (isset($lastNested['Data']) && $lastNested['Data']['T.T.End']) {
-						if (--$lastNested['Data']['D.T'] == 0) {
-							$lastNested['TagEnd'] = $charOffset;
+						break;
+						
+					case self::$delimiters['Tag']['End']:
+						if (isset($lastNested['Data']) && $lastNested['Data']['T.T.End']) {
+							if (--$lastNested['Data']['D.T'] == 0) {
+								$lastNested['TagEnd'] = $charOffset;
+								
+								$lastNested['Data']['T.T.End'] = false;
+								
+								if ($nextCharOffset != $charOffset && $this->content[$nextCharOffset] == self::$delimiters['Property']['Start']) {
+									$lastNested['Data']['T.P.Start'] = true;
+								} else {
+									unset($lastNested['Data'], $lastNests[$tagID--]);
+									$lastNested = &$lastNests[$tagID];
+								}
+							}
+						}
+						break;
+						
+					case self::$delimiters['Property']['Start']:
+						if (isset($lastNested['Data'])) {
+							$lastNested['Data']['D.P']++;
 							
-							$lastNested['Data']['T.T.End'] = false;
-							
-							if ($nextCharOffset != $charOffset && $this->content[$nextCharOffset] == self::$delimiters['Property']['Start']) {
-								$lastNested['Data']['T.P.Start'] = true;
-							} else {
+							if ($lastNested['Data']['T.P.Start']) {
+								$lastNested['Data']['T.P.Start'] = false;
+								
+								$lastNested['PropertyStart'] = $charOffset;
+								
+								if ($this->content[$lastCharOffset] == self::$delimiters['Tag']['End']) {
+									$lastNested['Data']['D.P.End'] = true;
+								} else {
+									// If something went wrong, Close this tag
+									$lastNested['Positions']['Property']['End'] = $charOffset;
+									
+									unset($lastNested['Data'], $lastNests[$tagID--]);
+									$lastNested = &$lastNests[$tagID];
+								}
+							}
+						}
+						break;
+						
+					case self::$delimiters['Property']['End']:
+						if (isset($lastNested['Data']) && $lastNested['Data']['D.P.End']) {
+							if (--$lastNested['Data']['D.P'] == 0) {
+								$lastNested['Data']['D.P.End'] = false;
+								
+								$lastNested['PropertyEnd'] = $charOffset;
+								
 								unset($lastNested['Data'], $lastNests[$tagID--]);
 								$lastNested = &$lastNests[$tagID];
 							}
 						}
-					}
-					break;
-					
-				case self::$delimiters['Property']['Start']:
-					if (isset($lastNested['Data'])) {
-						$lastNested['Data']['D.P']++;
+						break;
 						
-						if ($lastNested['Data']['T.P.Start']) {
-							$lastNested['Data']['T.P.Start'] = false;
-							
-							$lastNested['PropertyStart'] = $charOffset;
-							
-							if ($this->content[$lastCharOffset] == self::$delimiters['Tag']['End']) {
-								$lastNested['Data']['D.P.End'] = true;
-							} else {
-								// If something went wrong, Close this tag
-								$lastNested['Positions']['Property']['End'] = $charOffset;
+					default:
+						if (isset($this->tags[$this->content[$charOffset]]) && $this->content[$nextCharOffset] == self::$delimiters['Tag']['Start']) {
+							if (--$remainTags < 0) {
+								$splitPrvContent = explode("\n", substr($this->content, 0, $charOffset));
+								$splitPrvTotalLines = count($splitPrvContent);
 								
-								unset($lastNested['Data'], $lastNests[$tagID--]);
+								unset($splitPrvContent[$splitPrvTotalLines - 1]);
+								
+								$prvContentlastLen = $charOffset - strlen(implode("\n", $splitPrvContent));
+								
+								$error = array(
+											'Tag' => $this->content[$charOffset],
+											'Error' => 'GENERAL_ERROR_TAG_OVERLIMIT',
+											'Arg' => array (
+														'Line' => $splitPrvTotalLines,
+														'Char' => $prvContentlastLen,
+														'Max' => $this->setting['MaxTags'],
+													),
+										);
+								
+								return false;
+							}
+						
+							$tagInfo = array(
+								'Data' => array(
+									'T.T.Start' => true,
+									'T.T.End' => false,
+									'T.P.Start' => false,
+									'T.P.End' => false,
+									'D.T' => 0,
+									'D.P' => 0,
+									'Start' => $charOffset,
+								),
+								'Tag' => $this->content[$charOffset],
+								'TagStart' => 0,
+								'TagEnd' => 0,
+								'PropertyStart' => 0,
+								'PropertyEnd' => 0,
+							);
+							
+							if (is_null($lastNested)) {
+								$tagInfos['Dim'][$charOffset] = $tagInfo;
+								
+								$lastNests[++$tagID] = &$tagInfos['Dim'][$charOffset];
+								$tagInfos['Flat'][$charOffset] = &$tagInfos['Dim'][$charOffset];
+								
 								$lastNested = &$lastNests[$tagID];
+							} else {
+								if (isset($lastNested['Data']['Level'])) {
+									$tagInfo['Data']['Level'] = $lastNested['Data']['Level'] + 1;
+								} else {
+									$tagInfo['Data']['Level'] = 1;
+								}
+								
+								if ($tagInfo['Data']['Level'] <= $this->setting['MaxNests']) {
+									$lastNested['Subs'][$charOffset] = $tagInfo;
+									
+									$lastNests[++$tagID] = &$lastNested['Subs'][$charOffset];
+									$tagInfos['Flat'][$charOffset] = &$lastNested['Subs'][$charOffset];
+									
+									$lastNested = &$lastNests[$tagID];
+								}
 							}
 						}
-					}
-					break;
+						break;
+				}
+			}
+			
+			foreach($tagInfos['Flat'] AS $tag) {
+				if (isset($tag['Data'])) {
+					$error['Tag'] = $tag['Tag'];
 					
-				case self::$delimiters['Property']['End']:
-					if (isset($lastNested['Data']) && $lastNested['Data']['D.P.End']) {
-						if (--$lastNested['Data']['D.P'] == 0) {
-							$lastNested['Data']['D.P.End'] = false;
-							
-							$lastNested['PropertyEnd'] = $charOffset;
-							
-							unset($lastNested['Data'], $lastNests[$tagID--]);
-							$lastNested = &$lastNests[$tagID];
-						}
-					}
-					break;
-					
-				default:
-					if (isset($this->tags[$this->content[$charOffset]]) && $this->content[$nextCharOffset] == self::$delimiters['Tag']['Start']) {
-						if (--$remainTags < 0) {
-							$splitPrvContent = explode("\n", substr($this->content, 0, $charOffset));
-							$splitPrvTotalLines = count($splitPrvContent);
-							
-							unset($splitPrvContent[$splitPrvTotalLines - 1]);
-							
-							$prvContentlastLen = $charOffset - strlen(implode("\n", $splitPrvContent));
-							
-							$error = array(
-										'Tag' => $this->content[$charOffset],
-										'Error' => 'GENERAL_ERROR_TAG_OVERLIMIT',
-										'Arg' => array (
-													'Line' => $splitPrvTotalLines,
-													'Char' => $prvContentlastLen,
-													'Max' => $this->setting['MaxTags'],
-												),
-									);
-							
-							return false;
-						}
-					
-						$tagInfo = array(
-							'Data' => array(
-								'T.T.Start' => true,
-								'T.T.End' => false,
-								'T.P.Start' => false,
-								'T.P.End' => false,
-								'D.T' => 0,
-								'D.P' => 0,
-								'Start' => $charOffset,
-							),
-							'Tag' => $this->content[$charOffset],
-							'TagStart' => 0,
-							'TagEnd' => 0,
-							'PropertyStart' => 0,
-							'PropertyEnd' => 0,
+					if ($tag['Data']['T.T.End']) {
+						$errorOffset = $tag['Positions']['Tag']['Start'];
+						
+						$error['Error'] = 'SYNTAX_ERROR_TAG_UNCLOSE';
+						$error['Arg'] = array(
+							'Remain' => $tag['Data']['D.T'],
 						);
+					} elseif ($tag['Data']['D.P.End']) {
+						$errorOffset = $tag['Positions']['Property']['Start'];
 						
-						if (is_null($lastNested)) {
-							$tagInfos['Dim'][$charOffset] = $tagInfo;
-							
-							$lastNests[++$tagID] = &$tagInfos['Dim'][$charOffset];
-							$tagInfos['Flat'][$charOffset] = &$tagInfos['Dim'][$charOffset];
-							
-							$lastNested = &$lastNests[$tagID];
-						} else {
-							if (isset($lastNested['Data']['Level'])) {
-								$tagInfo['Data']['Level'] = $lastNested['Data']['Level'] + 1;
-							} else {
-								$tagInfo['Data']['Level'] = 1;
-							}
-							
-							if ($tagInfo['Data']['Level'] <= $this->setting['MaxNests']) {
-								$lastNested['Subs'][$charOffset] = $tagInfo;
-								
-								$lastNests[++$tagID] = &$lastNested['Subs'][$charOffset];
-								$tagInfos['Flat'][$charOffset] = &$lastNested['Subs'][$charOffset];
-								
-								$lastNested = &$lastNests[$tagID];
-							}
-						}
+						$error['Error'] = 'SYNTAX_ERROR_PROPERTY_UNCLOSE';
+						$error['Arg'] = array(
+							'Remain' => $tag['Data']['D.P'],
+						);
 					}
-					break;
+					
+					$splitedContent = explode("\n", substr($this->content, 0, $errorOffset));
+					$splitedContentLens = count($splitedContent);
+					
+					$error['Arg']['Line'] = $splitedContentLens;
+					
+					unset($splitedContent[$splitedContentLens - 1]);
+					$error['Arg']['Char'] = $errorOffset - strlen(implode("\n", $splitedContent));
+					
+					return false;
+				}
 			}
+			
+			$this->tagMap = $tagInfos;
+			
+			return true;
+		} else {
+			return true;
 		}
 		
-		return $tagInfos;
+		return false;
 	}
 }
 
