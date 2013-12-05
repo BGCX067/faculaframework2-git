@@ -58,6 +58,8 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 	protected $fields = array();
 	protected $primary = '';
 	
+	protected $parsers = array();
+	
 	private $data = array();
 	private $dataOriginal = array();
 
@@ -65,15 +67,44 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 	public $cachedObjectSaveTime = 0;
 	
 	public function __set($key, $val) {
-		if (!isset($this->data[$key])) {
-			$this->dataOriginal[$key] = $val;
+		$parser = $validData = null;
+		$validKey = '';
+		
+		if (!isset($this->fields[$key]) && $key[0] == '_') {
+			$validKey = ltrim($key, '_');
+			
+			if (isset($this->parsers[$validKey]['Import'])) {
+				$parser = array(&$this, $this->parsers[$validKey]['Import']);
+				
+				$validData = $parser($val);
+			}
+		} else {
+			$validKey = $key;
+			$validData = $val;
 		}
 		
-		$this->data[$key] = $val;
+		if (!isset($this->data[$validKey])) {
+			$this->dataOriginal[$validKey] = $validData;
+		}
+		
+		$this->data[$validKey] = $validData;
 	}
 	
 	public function __get($key) {
-		return isset($this->data[$key]) ? $this->data[$key] : null;
+		$parser = null;
+		$validKey = '';
+		
+		if (!isset($this->fields[$key]) && $key[0] == '_') {
+			$validKey = ltrim($key, '_');
+			
+			if (isset($this->parsers[$validKey]['Export'])) {
+				$parser = array(&$this, $this->parsers[$validKey]['Export']);
+			}
+		} else {
+			$validKey = $key;
+		}
+		
+		return isset($this->data[$validKey]) ? ($parser ? $parser($this->data[$validKey]) : $this->data[$validKey]) : null;
 	}
 	
 	public function __isset($key) {
@@ -85,11 +116,44 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 	}
 	
 	public function offsetSet($offset, $value) {
-		$this->data[$offset] = $value;
+		$parser = $validData = null;
+		$validOffset = '';
+		
+		if (!isset($this->fields[$offset]) && $offset[0] == '_') {
+			$validOffset = ltrim($offset, '_');
+			
+			if (isset($this->parsers[$validOffset]['Import'])) {
+				$parser = array(&$this, $this->parsers[$validOffset]['Import']);
+				
+				$validData = $parser($value);
+			}
+		} else {
+			$validOffset = $key;
+			$validData = $value;
+		}
+		
+		if (!isset($this->data[$validOffset])) {
+			$this->dataOriginal[$validOffset] = $validData;
+		}
+		
+		$this->data[$validOffset] = $validData;
 	}
 	
 	public function offsetGet($offset) {
-		return isset($this->data[$offset]) ? $this->data[$offset] : null;
+		$parser = null;
+		$validOffset = '';
+		
+		if (!isset($this->fields[$offset]) && $offset[0] == '_') {
+			$validOffset = ltrim($offset, '_');
+			
+			if (isset($this->parsers[$validOffset]['Export'])) {
+				$parser = array(&$this, $this->parsers[$validKey]['Export']);
+			}
+		} else {
+			$validOffset = $offset;
+		}
+		
+		return isset($this->data[$validOffset]) ? ($parser ? $parser($this->data[$validOffset]) : $this->data[$validOffset]) : null;
 	}
 	
 	public function offsetExists($offset) {
