@@ -25,6 +25,22 @@
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
+/*
+$cfg = array(
+	'SelectMethod' => 'Normal', // Normal|Random
+	'Servers' => array(
+		array(
+			'Host' => 'smtp.server.com',
+			'Timeout' => 5,
+			'Username' => 'username',
+			'Password' => 'password',
+			'From' => 'username@server.com',
+			'Screenname' => 'Sender Name',
+		)
+	)
+);
+*/
+
 class SMTP {
 	static private $config = array();
 	static private $emails = array();

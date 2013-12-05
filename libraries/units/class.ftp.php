@@ -25,6 +25,34 @@
 	along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
+/*
+	$setting Data Struct
+
+	$setting = array(
+		'PriorMethod' => 'Random|Order',
+		'Servers' => array(
+			array(
+				'Host' => '127.0.0.1',
+				'Port' => '21',
+				'Timeout' => '1',
+				'SSL' => false,
+				'Username' => 'ftp',
+				'Password' => 'password',
+				'Path' => '/ftp/fileuploaded/',
+			),
+			array(
+				'Host' => '127.0.0.2',
+				'Port' => '21',
+				'Timeout' => '1',
+				'SSL' => true,
+				'Username' => 'ftp',
+				'Password' => 'password',
+				'Path' => '/ftp/uploadedfiles/',
+			)
+		)
+	);
+*/
+
 class FTP {
 	static private $instance = null;
 	static private $connection = null;
@@ -39,34 +67,6 @@ class FTP {
 	private $config = array();
 
 	static public function setup($setting) {
-		/*
-			$setting Data Struct
-
-			$setting = array(
-				'PriorMethod' => 'Random|Order',
-				'Servers' => array(
-					array(
-						'Host' => '127.0.0.1',
-						'Port' => '21',
-						'Timeout' => '1',
-						'SSL' => false,
-						'Username' => 'ftp',
-						'Password' => 'password',
-						'Path' => '/ftp/fileuploaded/',
-					),
-					array(
-						'Host' => '127.0.0.2',
-						'Port' => '21',
-						'Timeout' => '1',
-						'SSL' => true,
-						'Username' => 'ftp',
-						'Password' => 'password',
-						'Path' => '/ftp/uploadedfiles/',
-					)
-				)
-			);
-		*/
-
 		if (self::$setting = $setting) {
 			return true;
 		}
