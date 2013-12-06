@@ -26,6 +26,8 @@
 *******************************************************************************/
 
 interface queryInterface {
+	static public function from($tableName);
+	
 	public function select($fields);
 	public function insert($fields);
 	public function update($fields);
@@ -102,6 +104,8 @@ class query implements queryInterface {
 		'Identity' => '',
 	);
 	
+	static private $parsers = array();
+	
 	private $connection = null;
 	private $adapter = null;
 	
@@ -132,6 +136,30 @@ class query implements queryInterface {
 	
 	static public function from($tableName) {
 		return new self($tableName);
+	}
+	
+	static public function addParser($name, $type, Closure $parser) {
+		if (!isset(self::$parsers[$name][$type])) {
+			switch($type) {
+				case 'Reader':
+					self::$parsers[$name]['Reader'] = $parser;
+					
+					return true;
+					break;
+					
+				case 'Writer':
+					self::$parsers[$name]['Writer'] = $parser;
+					
+					return true;
+					break;
+					
+				default:
+					facula::core('debug')->exception('ERROR_QUERY_PARSER_TYPE_INVALID|' . $type, 'query', true);
+					break;
+			}
+		}
+		
+		return false;
 	}
 	
 	private function __construct($tableName) {
@@ -248,10 +276,21 @@ class query implements queryInterface {
 	
 	// Save data and data type to data map for bindValue
 	protected function saveFields($fields) {
+		$fieldTypes = array();
+		
 		if (is_array($fields)) {
 			foreach($fields AS $fieldName => $fieldType) {
 				$this->query['Fields'][] = $fieldName;
-				$this->query['FieldTypes'][$fieldName] = $fieldType;
+				
+				if (is_array($fieldType) && isset($fieldType[0], $fieldType[1])) {
+					$this->query['FieldTypes'][$fieldName] = $fieldType[0];
+					
+					if (isset(self::$parsers[$fieldType[1]])) {
+						$this->query['FieldParser'][$fieldName] = $fieldType[1];
+					}
+				} else {
+					$this->query['FieldTypes'][$fieldName] = $fieldType;
+				}
 			}
 			
 			return true;
@@ -263,14 +302,26 @@ class query implements queryInterface {
 	}
 	
 	protected function saveValue($value, $forField) {
+		$saveParser = null;
+		
 		$dataKey = ':' . $this->dataIndex++;
 		
 		if (isset($this->query['FieldTypes'][$forField])) {
 			if (isset(self::$pdoDataTypes[$this->query['FieldTypes'][$forField]])) {
-				$this->dataMap[$dataKey] = array(
-					'Value' => $value,
-					'Type' => self::$pdoDataTypes[$this->query['FieldTypes'][$forField]],
-				);
+				
+				if (isset($this->query['FieldParser'][$forField])) {
+					if (isset(self::$parsers[$this->query['FieldParser'][$forField]]['Writer'])) {
+						$saveParser = self::$parsers[$this->query['FieldParser'][$forField]]['Writer'];
+						
+						$this->dataMap[$dataKey]['Value'] = $saveParser($value); // With parser
+					} else {
+						facula::core('debug')->exception('ERROR_QUERY_SAVEVALUE_PARSER_WRITER_NOTSET|' . $forField, 'query', true);
+					}
+				} else {
+					$this->dataMap[$dataKey]['Value'] = $value; // Without parser
+				}
+				
+				$this->dataMap[$dataKey]['Type'] = self::$pdoDataTypes[$this->query['FieldTypes'][$forField]]; // Type
 				
 				return $dataKey;
 			} else {
@@ -638,7 +689,7 @@ class query implements queryInterface {
 		return false;
 	}
 	
-	protected function prepare($requiredQueryParams = array()) {
+	protected function exec($requiredQueryParams = array()) {
 		$sql = $sqlID = '';
 		$statement = null;
 		$matchedParams = array();
@@ -714,7 +765,7 @@ class query implements queryInterface {
 	
 	public function fetch($mode = 'ASSOC', $argument = null) {
 		$sql = '';
-		$statement = null;
+		$statement = $readParser = null;
 		$result = array();
 		
 		$pdoFetchStyle = array(
@@ -732,7 +783,7 @@ class query implements queryInterface {
 		);
 		
 		if (isset($this->query['Action']) && $this->query['Type'] == 'Read') {
-			if ($statement = $this->prepare($this->query['Required'])) {
+			if ($statement = $this->exec($this->query['Required'])) {
 				try {
 					if (isset($pdoFetchStyle[$mode])) {
 						if ($argument !== null) {
@@ -741,7 +792,21 @@ class query implements queryInterface {
 							$statement->setFetchMode($pdoFetchStyle[$mode]);
 						}
 						
-						return $this->adapter->fetch($statement);
+						if ($result = $this->adapter->fetch($statement)) {
+							if (isset($this->query['FieldParser']) && !empty($this->query['FieldParser'])) {
+								foreach($result AS $statKey => $statVal) {
+									foreach($this->query['FieldParser'] AS $field => $parser) {
+										if (isset($statVal[$field], self::$parsers[$parser]['Reader'])) {
+											$readParser = self::$parsers[$parser]['Reader'];
+											
+											$statVal[$field] = $readParser($statVal[$field]);
+										}
+									}
+								}
+							}
+							
+							return $result;
+						}
 					} else {
 						facula::core('debug')->exception('ERROR_QUERY_FETCH_UNKNOWN_METHOD|' . $mode, 'query', true);
 					}
@@ -761,7 +826,7 @@ class query implements queryInterface {
 		$seqFullName = '';
 		
 		if (isset($this->query['Action']) && $this->query['Type'] == 'Write') {
-			if ($statement = $this->prepare($this->query['Required'])) {
+			if ($statement = $this->exec($this->query['Required'])) {
 				try {
 					
 					switch($this->query['Action']) {
@@ -791,5 +856,13 @@ class query implements queryInterface {
 		}
 	}
 }
+
+query::addParser('Serialize', 'Reader', function($data) {
+	return unserialize($data);
+});
+
+query::addParser('Serialize', 'Writer', function($data) {
+	return serialize($data);
+});
 
 ?>
