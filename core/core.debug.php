@@ -130,17 +130,16 @@ class faculaDebugDefault implements faculaDebugInterface {
 	}
 	
 	public function addLog($type, $errorcode, $content = '', &$backtraces = array()) {
-		global $_SERVER;
-		
 		list($time, $micro) = explode('.', microtime(true) . '.' . 0, 3); // Anit error when int returns instead of float
 		$date = date('l dS \of F Y h:i:s A', $time);
+		$ip = facula::core('request')->getClientInfo('ip');
 		
 		if ($this->configs['LogRoot']) {
 			$datefileName = date('Y-m-d H', $time);
 			$errorType = '[' . strtoupper($type) . ']' . ($errorcode ? ':' . $errorcode : '');
 			
 			$filename = 'log.' . $datefileName . '.php';
-			$format = "<?php exit(); ?> {$errorType} {$_SERVER['REMOTE_ADDR']} ({$date}.{$micro}): {$content}";
+			$format = "<?php exit(); ?> {$errorType} {$ip} ({$date}.{$micro}): {$content}";
 			
 			return file_put_contents($this->configs['LogRoot'] . DIRECTORY_SEPARATOR . $filename, $format . "\r\n", FILE_APPEND);
 		}
@@ -151,7 +150,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 			'ErrorNo' => $errorcode,
 			'Content' => $content,
 			'Backtraces' => $backtraces,
-			'IP' => $_SERVER['REMOTE_ADDR'],
+			'IP' => $ip,
 		);
 		
 		return false;

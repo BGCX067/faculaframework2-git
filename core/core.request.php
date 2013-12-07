@@ -148,7 +148,8 @@ class faculaRequestDefault implements faculaRequestInterface {
 			$this->configs['TrustedProxies'] = array();
 		}
 		
-		$this->configs['MaxRequestBlocks'] = isset($cfg['MaxRequestBlocks']) ? (int)$cfg['MaxRequestBlocks'] : 512; // We can handler up to 512 elements in _REQUEST array
+		$this->configs['MaxRequestBlocks'] = isset($cfg['MaxRequestBlocks']) ? (int)$cfg['MaxRequestBlocks'] : 512; // We can handler up to 512 elements in _GET + _POST + _COOKIE + SERVER array
+		$this->configs['MaxDataSize'] = isset($cfg['MaxDataSize']) ? (int)$cfg['MaxDataSize'] : 0; // How long of the data we can handle.
 		
 		$this->configs['CookiePrefix'] = isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : '';
 		
@@ -173,9 +174,14 @@ class faculaRequestDefault implements faculaRequestInterface {
 	}
 	
 	public function _inited() {
-		global $_GET, $_POST, $_COOKIE, $_REQUEST, $_SERVER;
+		global $_GET, $_POST, $_COOKIE, $_SERVER;
 		
-		if (count($_REQUEST) > $this->configs['MaxRequestBlocks']) { // Sec check: Request array element cannot exceed this
+		// Init all needed array if not set.
+		if (!isset($_GET, $_POST, $_COOKIE, $_SERVER)) {
+			$_SERVER = $_COOKIE = $_POST = $_GET = array();
+		}
+		
+		if ((count($_GET) + count($_POST) + count($_COOKIE) + count($_SERVER)) > $this->configs['MaxRequestBlocks']) { // Sec check: Request array element cannot exceed this
 			facula::core('debug')->exception('ERROR_REQUEST_BLOCKS_OVERLIMIT', 'limit', true);
 		} elseif (isset($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > $this->configs['MaxRequestSize']) { // Sec check: Request size cannot large than this
 			facula::core('debug')->exception('ERROR_REQUEST_SIZE_OVERLIMIT', 'limit', true);
@@ -195,8 +201,20 @@ class faculaRequestDefault implements faculaRequestInterface {
 			}
 		}
 		
-		$this->requestInfo['method'] = isset(self::$requestMethods[$_SERVER['REQUEST_METHOD']]) ? self::$requestMethods[$_SERVER['REQUEST_METHOD']] : 'get'; // Determine the type of request method.
+		if ($this->configs['MaxDataSize']) { // Check if request data over sized
+			foreach($_GET + $_POST + $_COOKIE + $_SERVER AS $key => $val) {
+				if (isset($key[$this->configs['MaxDataSize']]) || isset($val[$this->configs['MaxDataSize']])) {
+					facula::core('debug')->exception('ERROR_DATA_SIZE_OVERLIMIT', 'limit', true);
+				}
+			}
+		}
 		
+		if (isset($_SERVER['REQUEST_METHOD'])) {
+			$this->requestInfo['method'] = isset(self::$requestMethods[$_SERVER['REQUEST_METHOD']]) ? self::$requestMethods[$_SERVER['REQUEST_METHOD']] : 'get'; // Determine the type of request method.
+		} else {
+			$this->requestInfo['method'] = 'get';
+		}
+
 		if (isset($_SERVER['HTTP_ACCEPT_ENCODING']) && strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') != -1) { // Try to found out if our dear client support gzip
 			$this->requestInfo['gzip'] = true;
 		} else {
@@ -225,7 +243,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 			}
 		}
 		
-		if ($_SERVER['SERVER_PORT'] == 443) {
+		if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) {
 			$this->requestInfo['https'] = true; 
 		} else {
 			$this->requestInfo['https'] = false; 
@@ -331,7 +349,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 					$ip = '0.0.0.0';
 				}
 			} else {
-				$ip = $_SERVER['REMOTE_ADDR'];
+				$ip = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0';
 			}
 			
 			return $outasstring ? $ip : self::splitIP($ip);
