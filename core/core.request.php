@@ -202,7 +202,25 @@ class faculaRequestDefault implements faculaRequestInterface {
 		}
 		
 		if ($this->configs['MaxDataSize']) { // Check if request data over sized
-			foreach($_GET + $_POST + $_COOKIE + $_SERVER AS $key => $val) {
+			foreach($_SERVER AS $key => $val) {
+				if (isset($key[$this->configs['MaxDataSize']]) || isset($val[$this->configs['MaxDataSize']])) {
+					facula::core('debug')->exception('ERROR_DATA_SIZE_OVERLIMIT', 'limit', true);
+				}
+			}
+			
+			foreach($_COOKIE AS $key => $val) {
+				if (isset($key[$this->configs['MaxDataSize']]) || isset($val[$this->configs['MaxDataSize']])) {
+					facula::core('debug')->exception('ERROR_DATA_SIZE_OVERLIMIT', 'limit', true);
+				}
+			}
+			
+			foreach($_POST AS $key => $val) {
+				if (isset($key[$this->configs['MaxDataSize']]) || isset($val[$this->configs['MaxDataSize']])) {
+					facula::core('debug')->exception('ERROR_DATA_SIZE_OVERLIMIT', 'limit', true);
+				}
+			}
+			
+			foreach($_GET AS $key => $val) {
 				if (isset($key[$this->configs['MaxDataSize']]) || isset($val[$this->configs['MaxDataSize']])) {
 					facula::core('debug')->exception('ERROR_DATA_SIZE_OVERLIMIT', 'limit', true);
 				}
