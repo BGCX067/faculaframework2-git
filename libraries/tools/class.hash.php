@@ -28,9 +28,9 @@
 class Hash {
 	protected $salt = '';
 	private $saltLen = 0;
-	private $loopPeriod = 1000;
+	private $loopPeriod = 1;
 	
-	public function __construct($salt = '', $loop = 1000) {
+	public function __construct($salt = '', $loop = 1) {
 		if ($salt) {
 			$this->setSalt($salt);
 		}
