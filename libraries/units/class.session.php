@@ -28,13 +28,7 @@
 class Session {
 	static private $inited = false;
 	
-	static private $defaults = array(
-		'Setting' => array(
-			'CookieKey' => '!',
-			'SessionExpire' => 3600,
-			'Salt' => '',
-		),
-	);
+	static private $defaults = array();
 	
 	static private $currentSessionKeys = array();
 	
@@ -119,8 +113,10 @@ class Session {
 				self::$sessions[$for]['Handlers']['Read'] = $handler;
 				
 				return true;
+			} else {
+				self::$cores['debug']->exception('ERROR_SESSION_SETREADER_ALREADY_EXISTED|' . $for, 'session', true);
 			}
-		} else {
+		} elseif (self::$inited) {
 			self::$cores['debug']->exception('ERROR_SESSION_SETREADER_NOT_INITED|' . $for, 'session', true);
 		}
 		
@@ -133,8 +129,10 @@ class Session {
 				self::$sessions[$for]['Handlers']['Update'] = $handler;
 				
 				return true;
+			} else {
+				self::$cores['debug']->exception('ERROR_SESSION_SETWRITER_ALREADY_EXISTED|' . $for, 'session', true);
 			}
-		} else {
+		} elseif (self::$inited) {
 			self::$cores['debug']->exception('ERROR_SESSION_SETWRITER_NOT_INITED|' . $for, 'session', true);
 		}
 		
@@ -147,8 +145,10 @@ class Session {
 				self::$sessions[$for]['Handlers']['Garbage'] = $handler;
 				
 				return true;
+			} else {
+				self::$cores['debug']->exception('ERROR_SESSION_SETGARBAGER_ALREADY_EXISTED|' . $for, 'session', true);
 			}
-		} else {
+		} elseif (self::$inited) {
 			self::$cores['debug']->exception('ERROR_SESSION_SETGARBAGER_NOT_INITED|' . $for, 'session', true);
 		}
 		
@@ -173,7 +173,7 @@ class Session {
 	static public function getCurrent($for = 'General') {
 		$sessionKeyInfo = array();
 		
-		if ($sessionKeyInfo = self::getCurrentKey($for)) {
+		if (($sessionKeyInfo = self::getCurrentKey($for)) && isset($sessionKeyInfo['Key'][0])) {
 			if (isset(self::$sessions[$for]['Sessions'][$sessionKeyInfo['Key']])) {
 				return self::$sessions[$for]['Sessions'][$sessionKeyInfo['Key']];
 			} elseif (isset(self::$sessions[$for]['Handlers']['Read'])) {
@@ -213,8 +213,6 @@ class Session {
 					self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], self::$cores['request']->getClientInfo('https'), true);
 				} else {
 					self::$cores['debug']->exception('ERROR_SESSION_GET_CURRENT_KEY_FAILED|' . $for, 'session', true);
-					
-					return array();
 				}
 				
 				return (self::$currentSessionKeys[$for] = array(
