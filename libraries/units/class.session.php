@@ -194,11 +194,12 @@ class Session {
 		$sessionKey = $sessionRawKey = '';
 		$sessionKeyInfo = array();
 		$safeSession = false;
+		$networkID = self::$cores['request']->getClientInfo('ip');
 		
 		if (isset(self::$sessions[$for]['Setting'])) {
 			if (!isset(self::$currentSessionKeys[$for])) {
 				// Check if this user already has the session key in it's cookie
-				if (($sessionRawKey = self::$cores['request']->getCookie(self::$sessions[$for]['Setting']['CookieKey'])) && ($sessionKeyInfo = self::verifySessionKey($sessionRawKey, $for))) {
+				if (($sessionRawKey = self::$cores['request']->getCookie(self::$sessions[$for]['Setting']['CookieKey'])) && ($sessionKeyInfo = self::verifyKey($sessionRawKey, $networkID, $for))) {
 					$sessionKey = $sessionKeyInfo['Verify'];
 					$safeSession = true;
 					
@@ -207,9 +208,9 @@ class Session {
 						
 						self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], self::$cores['request']->getClientInfo('https'), true);
 					}
-				} elseif ($sessionKeyInfo = self::generateSessionKey($for)) { // If not, generate one from it's ip address.
+				} elseif ($sessionKeyInfo = self::generateKey($networkID, $for)) { // If not, generate one from it's ip address.
 					// Set a stable key for this temp session.
-					$sessionKey = hash('md5', self::$cores['request']->getClientInfo('ip'));
+					$sessionKey = hash('md5', $networkID);
 					
 					// And try set the cookie key for next reading
 					self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], self::$cores['request']->getClientInfo('https'), true);
@@ -227,16 +228,15 @@ class Session {
 		return $sessionKeyInfo;
 	}
 	
-	static private function generateSessionKey($for = 'General') {
+	static private function generateKey($networkID, $for = 'General') {
 		global $_SERVER;
 		$key = $rawKey = array();
 		
 		$hasher = new Hash(self::$sessions[$for]['Setting']['Salt'], 1);
-		$ip = self::$cores['request']->getClientInfo('ip');
 		
 		$rawKey = array(
-			'ClientID' => $ip . mt_rand(0, 65535) . mt_rand(0, 65535) . (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'unknown'),
-			'NetID' => $ip,
+			'ClientID' => $networkID . mt_rand(0, 65535) . mt_rand(0, 65535) . (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'unknown'),
+			'NetID' => $networkID,
 		);
 		
 		$key['Client'] = $hasher->obscuredVerify($rawKey['ClientID']);
@@ -246,7 +246,7 @@ class Session {
 		return $key;
 	}
 	
-	static private function verifySessionKey($sessionRawKey, $for = 'General') {
+	static private function verifyKey($sessionRawKey, $networkID, $for = 'General') {
 		$key = $rawKey = array();
 	
 		$hasher = new Hash(self::$sessions[$for]['Setting']['Salt'], 1);
@@ -259,7 +259,7 @@ class Session {
 				'Expire' => intval($inputKey[2]),
 			);
 			
-			if ($key['Verify'] === $hasher->obscuredVerify($key['Client'] . self::$cores['request']->getClientInfo('ip'))) {
+			if ($key['Verify'] === $hasher->obscuredVerify($key['Client'] . $networkID)) {
 				return $key;
 			}
 		}
