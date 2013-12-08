@@ -174,7 +174,7 @@ class Session {
 	}
 	
 	static public function getCurrent($for = 'General') {
-		$sessionKey = array();
+		$sessionKeyInfo = array();
 		
 		if ($sessionKeyInfo = self::getCurrentKey($for)) {
 			if (isset(self::$sessions[$for]['Sessions'][$sessionKeyInfo['Key']])) {
