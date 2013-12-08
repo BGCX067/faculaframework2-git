@@ -173,15 +173,15 @@ class Session {
 	}
 	
 	static public function getCurrent($for = 'General') {
-		$sessionKey = '';
+		$sessionKey = array();
 		
-		if ($sessionKey = self::getCurrentKey($for)) {
-			if (isset(self::$sessions[$for]['Sessions'][$sessionKey])) {
-				return self::$sessions[$for]['Sessions'][$sessionKey];
+		if ($sessionKeyInfo = self::getCurrentKey($for)) {
+			if (isset(self::$sessions[$for]['Sessions'][$sessionKeyInfo['Key']])) {
+				return self::$sessions[$for]['Sessions'][$sessionKeyInfo['Key']];
 			} elseif (isset(self::$sessions[$for]['Handlers']['Read'])) {
 				$handler = self::$sessions[$for]['Handlers']['Read'];
 				
-				return (self::$sessions[$for]['Sessions'][$sessionKey] = $handler($sessionKey));
+				return (self::$sessions[$for]['Sessions'][$sessionKeyInfo['Key']] = $handler($sessionKeyInfo['Key'], $sessionKeyInfo['Safe']));
 			}
 		}
 		
@@ -192,12 +192,14 @@ class Session {
 	static private function getCurrentKey($for = 'General') {
 		$sessionKey = $sessionRawKey = '';
 		$sessionKeyInfo = array();
+		$safeSession = false;
 		
 		if (isset(self::$sessions[$for]['Setting'])) {
 			if (!isset(self::$currentSessionKeys[$for])) {
 				// Check if this user already has the session key in it's cookie
 				if (($sessionRawKey = self::$cores['request']->getCookie(self::$sessions[$for]['Setting']['CookieKey'])) && ($sessionKeyInfo = self::verifySessionKey($sessionRawKey, $for))) {
-					$sessionKey = hash('md5', $sessionRawKey);
+					$sessionKey = $sessionKeyInfo['Verify'];
+					$safeSession = true;
 					
 					if ($sessionKeyInfo['Expire'] - (self::$sessions[$for]['Setting']['Expire'] / 2) < FACULA_TIME) {
 						$sessionKeyInfo['Expire'] = FACULA_TIME + self::$sessions[$for]['Setting']['Expire'];
@@ -205,18 +207,23 @@ class Session {
 						self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], self::$cores['request']->getClientInfo('https'), true);
 					}
 				} elseif ($sessionKeyInfo = self::generateSessionKey($for)) { // If not, generate one from it's ip address.
+					// Set a stable key for this temp session.
 					$sessionKey = hash('md5', self::$cores['request']->getClientInfo('ip'));
 					
+					// And try set the cookie key for next reading
 					self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], self::$cores['request']->getClientInfo('https'), true);
 				}
 				
-				return (self::$currentSessionKeys[$for] = $sessionKey);
+				return (self::$currentSessionKeys[$for] = array(
+					'Safe' => $safeSession,
+					'Key' => $sessionKey,
+				));
 			} else {
 				return self::$currentSessionKeys[$for];
 			}
 		}
 		
-		return '';
+		return $sessionKeyInfo;
 	}
 	
 	static private function generateSessionKey($for = 'General') {
@@ -256,7 +263,7 @@ class Session {
 			}
 		}
 		
-		return array();
+		return $key;
 	}
 }
 
