@@ -68,10 +68,7 @@ class Session {
 	}
 	
 	static public function setup($setting = array(), $type = 'General') {
-		// Clear the target Array
 		if (!isset(self::$sessions[$type]) && self::$inited) {
-			self::$sessions[$type] = array();
-			
 			self::$sessions[$type] = array(
 				'Setting' => array(
 					'CookieKey' => isset($setting['CookieKey']) ? $setting['CookieKey']: self::$defaults['Setting']['CookieKey'],
