@@ -90,6 +90,7 @@ class Session {
 	
 	static private function update() {
 		$updateHandler = $garbagerHandler = null;
+		$garbageExpiredTime = FACULA_TIME - $sessions['Setting']['Expire'];
 		
 		foreach(self::$sessions AS $type => $sessions) {
 			if (isset($sessions['Handlers']['Update'])) {
@@ -104,7 +105,7 @@ class Session {
 				if (!self::$cores['cache']->load('session-lock-' . $type, $sessions['Setting']['Expire'])) {
 					$garbagerHandler = $sessions['Handlers']['Garbage'];
 					
-					$garbagerHandler($sessions['Setting']['Expire']);
+					$garbagerHandler($garbageExpiredTime);
 					
 					self::$cores['cache']->save('session-lock-' . $type, true);
 				}
