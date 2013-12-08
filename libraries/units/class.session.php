@@ -211,6 +211,10 @@ class Session {
 					
 					// And try set the cookie key for next reading
 					self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], self::$cores['request']->getClientInfo('https'), true);
+				} else {
+					self::$cores['debug']->exception('ERROR_SESSION_GET_CURRENT_KEY_FAILED|' . $for, 'session', true);
+					
+					return array();
 				}
 				
 				return (self::$currentSessionKeys[$for] = array(
@@ -222,7 +226,7 @@ class Session {
 			}
 		}
 		
-		return $sessionKeyInfo;
+		return array();
 	}
 	
 	static private function generateKey($networkID, $for = 'General') {
@@ -232,7 +236,7 @@ class Session {
 		$hasher = new Hash(self::$sessions[$for]['Setting']['Salt'], 1);
 		
 		$rawKey = array(
-			'ClientID' => $networkID . mt_rand(0, 65535) . mt_rand(0, 65535) . (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'unknown'),
+			'ClientID' => FACULA_TIME . $networkID . mt_rand(0, 65535) . mt_rand(0, 65535) . (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'unknown'),
 			'NetID' => $networkID,
 		);
 		
