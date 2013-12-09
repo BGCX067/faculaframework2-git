@@ -36,6 +36,8 @@ class Session {
 	
 	static private $cores = array();
 	
+	static private $hashCharMap = 'abcdefghijklnmopqistuvwxyzABCDEFGHIJKLNMOPQRSTUVWXYZ1234567890`~!@#$%^&*()[]\{}|;\':",./<>?';
+	
 	/* Method for init */
 	static public function init($setting = array()) {
 		if (!self::$inited) {
@@ -81,9 +83,11 @@ class Session {
 	
 	static private function update() {
 		$updateHandler = $garbagerHandler = null;
-		$garbageExpiredTime = FACULA_TIME - $sessions['Setting']['Expire'];
+		$garbageExpiredTime = 0;
 		
 		foreach(self::$sessions AS $type => $sessions) {
+			$garbageExpiredTime = FACULA_TIME - $sessions['Setting']['Expire'];
+			
 			if (isset($sessions['Handlers']['Update'])) {
 				$updateHandler = $sessions['Handlers']['Update'];
 				
@@ -234,7 +238,7 @@ class Session {
 		$hasher = new Hash(self::$sessions[$for]['Setting']['Salt'], 1);
 		
 		$rawKey = array(
-			'ClientID' => FACULA_TIME . $networkID . mt_rand(0, 65535) . mt_rand(0, 65535) . (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'unknown'),
+			'ClientID' => self::$hashCharMap[mt_rand(0, 89) % 90] . FACULA_TIME . $networkID . mt_rand(0, 65535) . (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'unknown') . self::$hashCharMap[mt_rand(0, 89) % 90],
 			'NetID' => $networkID,
 		);
 		
