@@ -115,7 +115,7 @@ class rStorage_ftp implements remoteStorageInterface {
 
 		facula::core('debug')->criticalSection(true);
 
-		if ($this->setting['SSL'] && $this->setting['CanUseSSL']) {
+		if ($this->setting['SSL']) {
 			$conn = ftp_ssl_connect($this->setting['Host'], 
 									isset($this->setting['Port']) ? $this->setting['Port'] : 21, 
 									isset($this->setting['Timeout']) ? $this->setting['Timeout'] : 30);
