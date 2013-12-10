@@ -374,6 +374,7 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 	
 	public function save() {
 		$primaryKey = $result = null;
+		$data = array();
 		
 		if (isset($this->data[$this->primary])) {
 			if (isset($this->dataOriginal[$this->primary])) {
@@ -382,7 +383,13 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 				$primaryKey = $this->data[$this->primary];
 			}
 			
-			if ($result = query::from($this->table)->update($this->fields)->set($this->data)->where('AND', $this->primary, '=', $primaryKey)->save()) {
+			foreach($this->data AS $key => $val) {
+				if (isset($this->fields[$key])) {
+					$data[$key] = $val;
+				}
+			}
+			
+			if ($result = query::from($this->table)->update($this->fields)->set($data)->where('AND', $this->primary, '=', $primaryKey)->save()) {
 				$this->dataOriginal = $this->data;
 				
 				return $result;
@@ -396,14 +403,12 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 	
 	public function insert() {
 		$result = null;
-		$keys = array();
-		$data = $this->data;
+		$data = $keys = array();
 		
-		foreach($data AS $key => $val) {
-			if (isset($data[$key]) && isset($this->fields[$key])) {
+		foreach($this->data AS $key => $val) {
+			if (isset($this->fields[$key])) {
 				$keys[$key] = $this->fields[$key];
-			} else {
-				facula::core('debug')->exception('ERROR_ORM_INSERT_FIELD_NOTSET|' . $key, 'query', true);
+				$data[$key] = $val;
 			}
 		}
 		

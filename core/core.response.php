@@ -451,7 +451,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 	}
 	
 	public function unsetCookie($key) {
-		if ($this->setCookie($key, null, -FACULA_TIME -1)) {
+		if ($this->setCookie($key, null, -FACULA_TIME - 1)) {
 			return true;
 		}
 		
