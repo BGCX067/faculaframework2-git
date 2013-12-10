@@ -207,14 +207,14 @@ class Session {
 					if ($sessionKeyInfo['Expire'] - (self::$sessions[$for]['Setting']['Expire'] / 2) < FACULA_TIME) {
 						$sessionKeyInfo['Expire'] = FACULA_TIME + self::$sessions[$for]['Setting']['Expire'];
 						
-						self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], self::$cores['request']->getClientInfo('https'), true);
+						self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], '/', '', self::$cores['request']->getClientInfo('https'), true);
 					}
 				} elseif ($sessionKeyInfo = self::generateKey($networkID, $for)) { // If not, generate one from it's ip address.
 					// Set a stable key for this temp session.
 					$sessionKey = hash('md5', $networkID);
 					
 					// And try set the cookie key for next reading
-					self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], self::$cores['request']->getClientInfo('https'), true);
+					self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], '/', '', self::$cores['request']->getClientInfo('https'), true);
 				} else {
 					self::$cores['debug']->exception('ERROR_SESSION_GET_CURRENT_KEY_FAILED|' . $for, 'session', true);
 				}
