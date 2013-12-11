@@ -26,7 +26,7 @@
 *******************************************************************************/
 
 interface queryInterface {
-	static public function from($tableName);
+	static public function from($tableName, $autoParse = false);
 	
 	public function select($fields);
 	public function insert($fields);
@@ -116,6 +116,7 @@ class query implements queryInterface {
 		'Action' => 'Select', // SQL Syntax
 		'Type' => 'Write|Read', // Query Type
 		'From' => '', // Table name
+		'Parser' => false, // Enable or disable auto parser
 		'Required' => array('Fields', 'Where', 'Group', 'Having', 'Order', 'Limit', 'Values', 'Sets'), // Required fields of this array for param validation
 		'FieldTypes' => array('STR', 'INT', 'BOOL'), // FieldTypes for insert
 		'Fields' => array(), // Fields name
@@ -134,11 +135,11 @@ class query implements queryInterface {
 	protected $dataIndex = 0;
 	protected $dataMap = array();
 	
-	static public function from($tableName) {
-		return new self($tableName);
+	static public function from($tableName, $autoParse = false) {
+		return new self($tableName, $autoParse);
 	}
 	
-	static public function addParser($name, $type, Closure $parser) {
+	static public function addAutoParser($name, $type, Closure $parser) {
 		if (!isset(self::$parsers[$name][$type])) {
 			switch($type) {
 				case 'Reader':
@@ -162,8 +163,9 @@ class query implements queryInterface {
 		return false;
 	}
 	
-	private function __construct($tableName) {
+	private function __construct($tableName, $autoParse = false) {
 		$this->query['From'] = $tableName;
+		$this->query['Parser'] = $autoParse ? true : false;
 		
 		return true;
 	}
@@ -282,14 +284,20 @@ class query implements queryInterface {
 			foreach($fields AS $fieldName => $fieldType) {
 				$this->query['Fields'][] = $fieldName;
 				
-				if (is_array($fieldType) && isset($fieldType[0], $fieldType[1])) {
-					$this->query['FieldTypes'][$fieldName] = $fieldType[0];
-					
-					if (isset(self::$parsers[$fieldType[1]])) {
-						$this->query['FieldParser'][$fieldName] = $fieldType[1];
+				if ((is_array($fieldType) && ($fieldTypes = $fieldType)) || ($fieldTypes = explode(' ', $fieldType))) {
+					foreach($fieldTypes AS $type) {
+						if (isset(self::$pdoDataTypes[$type])) {
+							$this->query['FieldTypes'][$fieldName] = $type;
+						}
+						
+						if (isset(self::$parsers[$type])) {
+							$this->query['FieldParsers'][$fieldName][] = $type;
+						}
 					}
-				} else {
-					$this->query['FieldTypes'][$fieldName] = $fieldType;
+				}
+				
+				if (!isset($this->query['FieldTypes'][$fieldName]) || !$this->query['FieldTypes'][$fieldName]) {
+					$this->query['FieldTypes'][$fieldName] = 'STR';
 				}
 			}
 			
@@ -308,20 +316,20 @@ class query implements queryInterface {
 		
 		if (isset($this->query['FieldTypes'][$forField])) {
 			if (isset(self::$pdoDataTypes[$this->query['FieldTypes'][$forField]])) {
-				
-				if (isset($this->query['FieldParser'][$forField])) {
-					if (isset(self::$parsers[$this->query['FieldParser'][$forField]]['Writer'])) {
-						$saveParser = self::$parsers[$this->query['FieldParser'][$forField]]['Writer'];
-						
-						$this->dataMap[$dataKey]['Value'] = $saveParser($value); // With parser
-					} else {
-						facula::core('debug')->exception('ERROR_QUERY_SAVEVALUE_PARSER_WRITER_NOTSET|' . $forField, 'query', true);
-					}
-				} else {
-					$this->dataMap[$dataKey]['Value'] = $value; // Without parser
-				}
-				
 				$this->dataMap[$dataKey]['Type'] = self::$pdoDataTypes[$this->query['FieldTypes'][$forField]]; // Type
+				$this->dataMap[$dataKey]['Value'] = $value;
+				
+				if ($this->query['Parser'] && isset($this->query['FieldParsers'][$forField])) {
+					foreach(array_reverse($this->query['FieldParsers'][$forField]) AS $parserType) {
+						if (isset(self::$parsers[$parserType]['Writer'])) {
+							$saveParser = self::$parsers[$parserType]['Writer'];
+							
+							$this->dataMap[$dataKey]['Value'] = $saveParser($this->dataMap[$dataKey]['Value']); // With parser
+						} else {
+							facula::core('debug')->exception('ERROR_QUERY_SAVEVALUE_PARSER_WRITER_NOTSET|' . $forField, 'query', true);
+						}
+					}
+				}
 				
 				return $dataKey;
 			} else {
@@ -669,9 +677,7 @@ class query implements queryInterface {
 					$adapter = new $builderName($this->connection->_connection['Prefix'] . $this->query['From'], $this->query);
 					
 					if ($adapter instanceof queryBuilderInterface) {
-						$this->adapter = $adapter;
-						
-						return true;
+						return ($this->adapter = $adapter);
 					} else {
 						facula::core('debug')->exception('ERROR_QUERY_BUILDER_INTERFACE_INVALID', 'query', true);
 					}
@@ -686,7 +692,7 @@ class query implements queryInterface {
 			return $this->adapter;
 		}
 		
-		return false;
+		return null;
 	}
 	
 	protected function exec($requiredQueryParams = array()) {
@@ -766,7 +772,7 @@ class query implements queryInterface {
 	public function fetch($mode = 'ASSOC', $argument = null) {
 		$sql = '';
 		$statement = $readParser = null;
-		$result = array();
+		$result = $readParsers = array();
 		
 		$pdoFetchStyle = array(
 			'ASSOC' => PDO::FETCH_ASSOC,
@@ -793,13 +799,19 @@ class query implements queryInterface {
 						}
 						
 						if ($result = $this->adapter->fetch($statement)) {
-							if (isset($this->query['FieldParser']) && !empty($this->query['FieldParser'])) {
+							if ($this->query['Parser'] && isset($this->query['FieldParsers'])) {
 								foreach($result AS $statKey => $statVal) {
-									foreach($this->query['FieldParser'] AS $field => $parser) {
-										if (isset($statVal[$field], self::$parsers[$parser]['Reader'])) {
-											$readParser = self::$parsers[$parser]['Reader'];
-											
-											$statVal[$field] = $readParser($statVal[$field]);
+									foreach($this->query['FieldParsers'] AS $field => $parsers) {
+										if (isset($statVal[$field])) {
+											foreach($parsers AS $parser) {
+												if (isset(self::$parsers[$parser]['Reader'])) {
+													if (!isset($readParsers[$parser])) {
+														$readParsers[$parser] = self::$parsers[$parser]['Reader'];
+													}
+													
+													$statVal[$field] = $readParsers[$parser]($statVal[$field]);
+												}
+											}
 										}
 									}
 								}
@@ -857,12 +869,36 @@ class query implements queryInterface {
 	}
 }
 
-query::addParser('Serialize', 'Reader', function($data) {
-	return unserialize($data);
+query::addAutoParser('Serialized', 'Reader', function($data) {
+	return $data ? unserialize($data) : '';
 });
 
-query::addParser('Serialize', 'Writer', function($data) {
-	return serialize($data);
+query::addAutoParser('Serialized', 'Writer', function($data) {
+	return $data ? serialize($data) : '';
+});
+
+query::addAutoParser('Trimed', 'Reader', function($data) {
+	return trim($data);
+});
+
+query::addAutoParser('Trimed', 'Writer', function($data) {
+	return trim($data);
+});
+
+query::addAutoParser('Integer', 'Reader', function($data) {
+	return intval($data);
+});
+
+query::addAutoParser('Integer', 'Writer', function($data) {
+	return intval($data);
+});
+
+query::addAutoParser('Float', 'Reader', function($data) {
+	return floatval($data);
+});
+
+query::addAutoParser('Float', 'Writer', function($data) {
+	return floatval($data);
 });
 
 ?>

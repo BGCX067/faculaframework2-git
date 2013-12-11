@@ -58,6 +58,8 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 	protected $fields = array();
 	protected $primary = '';
 	
+	protected $noParser = false;
+	
 	private $data = array();
 	private $dataOriginal = array();
 	
@@ -137,7 +139,7 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 		
 		$query = null;
 		
-		$query = query::from($this->table);
+		$query = query::from($this->table, $this->noParser);
 		$query->select($this->fields);
 		
 		if (isset($param['Where'])) {
@@ -389,7 +391,7 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 				}
 			}
 			
-			if ($result = query::from($this->table)->update($this->fields)->set($data)->where('AND', $this->primary, '=', $primaryKey)->save()) {
+			if ($result = query::from($this->table, $this->noParser)->update($this->fields)->set($data)->where('AND', $this->primary, '=', $primaryKey)->save()) {
 				$this->dataOriginal = $this->data;
 				
 				return $result;
@@ -413,7 +415,7 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 		}
 		
 		// Must returning primary key
-		if ($result = query::from($this->table)->insert($keys)->value($data)->save($this->primary)) {
+		if ($result = query::from($this->table, $this->noParser)->insert($keys)->value($data)->save($this->primary)) {
 			$this->dataOriginal = $this->data;
 			
 			if (!isset($this->data[$this->primary])) {
@@ -430,7 +432,7 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 		$result = null;
 		
 		if (isset($this->data[$this->primary])) {
-			if ($result = query::from($this->table)->delete($this->fields)->where('AND', $this->primary, '=', $this->data[$this->primary])->save()) {
+			if ($result = query::from($this->table, $this->noParser)->delete($this->fields)->where('AND', $this->primary, '=', $this->data[$this->primary])->save()) {
 				$this->dataOriginal = $this->data = array();
 				
 				return $result;
