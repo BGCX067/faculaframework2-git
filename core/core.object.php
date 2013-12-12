@@ -57,7 +57,7 @@ class faculaObject extends faculaCoreFactory {
 	}
 }
 
-class faculaObjectDefault implements faculaObjectInterface {
+abstract class faculaObjectDefaultBase implements faculaObjectInterface {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',
@@ -66,18 +66,18 @@ class faculaObjectDefault implements faculaObjectInterface {
 		'Version' => __FACULAVERSION__,
 	);
 
-	static private $config = array(
+	static protected $config = array(
 		'CacheSafeCode' => array(
 			'<?php if (!defined(\'IN_FACULA\')) {exit(\'Access Denied\');} ',
 			' ?>',
 		),
 	);
 	
-	private $configs = array();
+	protected $configs = array();
 	
-	private $hooks = array();
+	protected $hooks = array();
 	
-	private $instances = array();
+	protected $instances = array();
 	
 	public function __construct(&$cfg, &$common, $facula) {
 		$paths = array();
@@ -174,7 +174,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return true;
 	}
 	
-	private function getAutoInclude($classfile) {
+	protected function getAutoInclude($classfile) {
 		$classfileLower = strtolower($classfile);
 		
 		if (isset($this->configs['Paths']['class.' . $classfileLower])) { // Use path scope to locate file first
@@ -188,7 +188,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return false;
 	}
 	
-	private function getWithNamespace($namespace) {
+	protected function getWithNamespace($namespace) {
 		$modPath = str_replace(array('\\', '/', '_'), DIRECTORY_SEPARATOR, $namespace) . '.php';
 		
 		foreach($this->configs['AutoPaths'] AS $path) {
@@ -200,7 +200,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return false;
 	}
 	
-	private function &getObjectSetting($objName) {
+	protected function &getObjectSetting($objName) {
 		if (!isset($this->configs['Components'][$objName])) {
 			$this->configs['Components'][$objName] = array(); // You'll get a array anyway
 		}
@@ -208,7 +208,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return $this->configs['Components'][$objName];
 	}
 	
-	private function loadObjectFromCache($objectName, $type = '', $uniqueid = '') {
+	protected function loadObjectFromCache($objectName, $type = '', $uniqueid = '') {
 		$instance = null;
 		$cache = '';
 		
@@ -231,7 +231,7 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return false;
 	}
 	
-	private function saveObjectToCache($objectName, $instance, $type = '', $uniqueid = '') {
+	protected function saveObjectToCache($objectName, $instance, $type = '', $uniqueid = '') {
 		if ($this->configs['OCRoot']) {
 			$instance->cachedObjectFilePath = $file = $this->configs['OCRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
 			$instance->cachedObjectSaveTime = FACULA_TIME;
@@ -485,11 +485,21 @@ class faculaObjectDefault implements faculaObjectInterface {
 		return false;
 	}
 	
-	private function shutdownHook() {
+	protected function shutdownHook() {
 		$error = array();
 		
 		return $this->runHook('shutingdown', array(), $error);
 	}
+}
+
+class faculaObjectDefault extends faculaObjectDefaultBase {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
 }
 
 ?>

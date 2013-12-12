@@ -253,7 +253,7 @@ class facula {
 			
 			// include core (with init) and routine files
 			if (isset($cfg['core']['Enables']) && is_array($cfg['core']['Enables'])) {
-				$cfg['core']['Enables'] = array_merge(self::$config['CoreComponents'], $cfg['core']['Enables']);
+				$cfg['core']['Enables'] = array_merge(self::$config['CoreComponents'], array_values($cfg['core']['Enables'])); // Use array_merge to solve numeric key conflicts automatically
 			} else {
 				$cfg['core']['Enables'] = self::$config['CoreComponents'];
 			}
@@ -316,21 +316,24 @@ class facula {
 		$files = $tempFiles = array();
 		
 		$directories = array(
-			'includes' => FACULA_ROOT . DIRECTORY_SEPARATOR . 'includes',
-			'core' => FACULA_ROOT . DIRECTORY_SEPARATOR . 'core',
-			'libraries' => FACULA_ROOT . DIRECTORY_SEPARATOR . 'libraries',
+			FACULA_ROOT . DIRECTORY_SEPARATOR . 'includes',
+			FACULA_ROOT . DIRECTORY_SEPARATOR . 'core',
 		);
 		
+		if (!isset($this->setting['core']['NoBuildinLibs']) || !$this->setting['core']['NoBuildinLibs']) {
+			$directories[] = FACULA_ROOT . DIRECTORY_SEPARATOR . 'libraries';
+		}
+		
 		if (isset($this->setting['core']['Paths']) && is_array($this->setting['core']['Paths'])) {
-			$directories = $directories + $this->setting['core']['Paths'];
+			$directories = array_merge($directories, array_values($this->setting['core']['Paths'])); // array_merge will automatically solve numeric key conflicts
 		}
 		
 		foreach($directories AS $type => $dir) {
 			if ($dir && ($tempFiles = $this->scanModuleFiles($dir))) {
-			
+				
 				foreach($tempFiles AS $file) {
 					if ($file['Ext'] == 'php') {
-						// Add to autoload only when no any conflict or it's a alternative model file
+						// Add to autoload only when no any conflict
 						if (!isset(self::$config['ComponentInfo'][$file['Prefix'].'.'.$file['Name']])) {
 							self::$config['ComponentInfo'][$file['Prefix'].'.'.$file['Name']] = array(
 								'Path' => $file['Path'],
@@ -396,7 +399,7 @@ class facula {
 	
 	private function &getSetting($key) {
 		if (!isset($this->setting[$key])) {
-			$this->setting[$key] = array();  // If this array not set yet, make a new one and return it
+			$this->setting[$key] = array();  // If this array not set yet, make a new fake one and return it
 		}
 		
 		return $this->setting[$key];

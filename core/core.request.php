@@ -57,7 +57,7 @@ class faculaRequest extends faculaCoreFactory {
 	}
 }
 
-class faculaRequestDefault implements faculaRequestInterface {
+abstract class faculaRequestDefaultBase implements faculaRequestInterface {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',
@@ -66,7 +66,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 		'Version' => __FACULAVERSION__,
 	);
 	
-	static private $requestMethods = array(
+	static protected $requestMethods = array(
 		'GET' => 'get',
 		'POST' => 'post',
 		'PUT' => 'put',
@@ -78,7 +78,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 		'PATCH' => 'patch'
 	);
 	
-	private $configs = array(
+	protected $configs = array(
 		'MaxHeaderSize' => 0,
 		'MaxDataSize' => 0,
 		'MaxRequestBlocks' => 0,
@@ -86,7 +86,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 		'CookiePrefix' => 'facula_',
 	);
 	
-	private $pool = array();
+	protected $pool = array();
 	
 	public $requestInfo = array(
 			'method' => 'get',
@@ -342,7 +342,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 		return !empty($result) ? $result : false;
 	}
 	
-	private function getUserIP($ipstr = '', $outasstring = false) {
+	protected function getUserIP($ipstr = '', $outasstring = false) {
 		global $_SERVER;
 		$ip = '';
 		$ips = array();
@@ -380,11 +380,11 @@ class faculaRequestDefault implements faculaRequestInterface {
 		return false;
 	}
 	
-	private function splitIP($ip) {
+	protected function splitIP($ip) {
 		return explode(':', str_replace('.', ':', $ip), 8); // Max is 8 for a IP addr
 	}
 	
-	private function getRealIPAddrFromXForward($x_forwarded_for) {
+	protected function getRealIPAddrFromXForward($x_forwarded_for) {
 		$ips = array_reverse(explode(',', str_replace(' ', '', $x_forwarded_for)));
 		
 		foreach($ips AS $forwarded) {
@@ -401,7 +401,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 		return '0.0.0.0';
 	}
 	
-	private function checkProxyTrusted($ip) {
+	protected function checkProxyTrusted($ip) {
 		$bIP = inet_pton($ip);
 		
 		if (isset($this->configs['TrustedProxies'][$bIP])) {
@@ -418,7 +418,7 @@ class faculaRequestDefault implements faculaRequestInterface {
 		return false;
 	}
 	
-	private function convertIniUnit($str) {
+	protected function convertIniUnit($str) {
 		$strLen = 0;
 		$lastChar = '';
 		
@@ -448,6 +448,16 @@ class faculaRequestDefault implements faculaRequestInterface {
 		
 		return 0;
 	}
+}
+
+class faculaRequestDefault extends faculaRequestDefaultBase {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
 }
 
 ?>

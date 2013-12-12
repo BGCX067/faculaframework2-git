@@ -52,7 +52,7 @@ class faculaPdo extends faculaCoreFactory {
 	}
 }
 
-class faculaPdoDefault implements faculaPdoInterface {
+abstract class faculaPdoDefaultBase implements faculaPdoInterface {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',
@@ -61,13 +61,13 @@ class faculaPdoDefault implements faculaPdoInterface {
 		'Version' => __FACULAVERSION__,
 	);
 	
-	private $configs = array();
+	protected $configs = array();
 	
-	private $pool = array();
+	protected $pool = array();
 	
-	private $map = array();
+	protected $map = array();
 	
-	private $connMap = array();
+	protected $connMap = array();
 	
 	public function __construct(&$cfg) {
 		if (class_exists('PDO')) {
@@ -181,7 +181,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 		}
 	}
 	
-	private function getDatabaseByTable($tableName) {
+	protected function getDatabaseByTable($tableName) {
 		if (isset($this->pool['TTDBs'][$tableName])) {
 			return array_intersect_key($this->map['DBP'], $this->pool['TTDBs'][$tableName]);
 
@@ -190,7 +190,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 		return array();
 	}
 	
-	private function getDatabaseByOperation($operationName) {
+	protected function getDatabaseByOperation($operationName) {
 		if (isset($this->pool['OTDBs'][$operationName])) {
 			return array_intersect_key($this->map['DBP'], $this->pool['OTDBs'][$operationName]);
 		}
@@ -198,7 +198,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 		return array();
 	}
 	
-	private function getDatabaseByTableOperation($table, $operation) {
+	protected function getDatabaseByTableOperation($table, $operation) {
 		$selected = array();
 		
 		$selectedByTable		= $this->getDatabaseByTable($table);
@@ -315,7 +315,7 @@ class faculaPdoDefault implements faculaPdoInterface {
 		return false;
 	}
 	
-	private function doPDOCheckConnectivity(&$dbh, &$error) {
+	protected function doPDOCheckConnectivity(&$dbh, &$error) {
 		$currentTime = time();
 		
 		if ($dbh->_connection['Wait'] && $currentTime - $dbh->_connection['LstConnected'] > $dbh->_connection['Wait']) {
@@ -377,6 +377,16 @@ class faculaPdoDefault implements faculaPdoInterface {
 		
 		return false;
 	}
+}
+
+class faculaPdoDefault extends faculaPdoDefaultBase {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
 }
 
 ?>

@@ -54,7 +54,7 @@ class faculaResponse extends faculaCoreFactory {
 	}
 }
 
-class faculaResponseDefault implements faculaResponseInterface {
+abstract class faculaResponseDefaultBase implements faculaResponseInterface {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',
@@ -63,12 +63,12 @@ class faculaResponseDefault implements faculaResponseInterface {
 		'Version' => __FACULAVERSION__,
 	);
 	
-	static private $headers = array();
-	static private $cookies = array();
+	static protected $headers = array();
+	static protected $cookies = array();
 	
-	static private $content = '';
+	static protected $content = '';
 	
-	static private $http_content_type = array(
+	static protected $httpContentTypes = array(
 		'evy' => 'application/envoy',
 		'fif' => 'application/fractals',
 		'spl' => 'application/futuresplash',
@@ -328,8 +328,8 @@ class faculaResponseDefault implements faculaResponseInterface {
 			
 			$finalContent = $oldBufferContent . self::$content;
 			
-			if (isset(self::$http_content_type[$type])) {
-				header('Content-Type: ' . self::$http_content_type[$type] . '; charset=' . $this->configs['Encoding']);
+			if (isset(self::$httpContentTypes[$type])) {
+				header('Content-Type: ' . self::$httpContentTypes[$type] . '; charset=' . $this->configs['Encoding']);
 			} else {
 				header('Content-Type: ' . $type);
 			}
@@ -458,6 +458,16 @@ class faculaResponseDefault implements faculaResponseInterface {
 		
 		return false;
 	}
+}
+
+class faculaResponseDefault extends faculaResponseDefaultBase {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
 }
 
 ?>

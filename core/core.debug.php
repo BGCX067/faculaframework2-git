@@ -55,7 +55,7 @@ class faculaDebug extends faculaCoreFactory {
 	}
 }
 
-class faculaDebugDefault implements faculaDebugInterface {
+abstract class faculaDebugDefaultBase implements faculaDebugInterface {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',
@@ -64,14 +64,14 @@ class faculaDebugDefault implements faculaDebugInterface {
 		'Version' => __FACULAVERSION__,
 	);
 	
-	private $errorRecords = array();
+	protected $errorRecords = array();
 	
-	private $tempDisabled = false;
-	private $tempFullDisabled = false;
+	protected $tempDisabled = false;
+	protected $tempFullDisabled = false;
 	
-	private $configs = array();
+	protected $configs = array();
 	
-	private $customHandler = null;
+	protected $customHandler = null;
 	
 	public function __construct(&$cfg, &$common) {
 		$this->configs = array(
@@ -115,7 +115,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 		return true;
 	}
 	
-	private function shutdownTask() {
+	protected function shutdownTask() {
 		// 1, I remember when any failure in functions that registered with register_shutdown_function will case whole shutdown_function queue be halt.
 		// 2, When this function finished, we will don't have chance to catch any further errors.
 		//    And there may have other shutdown functions still wait to go after this. 
@@ -156,7 +156,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 		return false;
 	}
 	
-	private function reportError() {
+	protected function reportError() {
 		if (!empty($this->errorRecords) && $this->configs['LogServer']['Enabled']) {
 			$app = facula::getCoreInfo();
 			
@@ -252,11 +252,11 @@ class faculaDebugDefault implements faculaDebugInterface {
 		$this->exception(sprintf('Error code %s (%s) in file %s line %s', 'PHP('.$errno.')', $errstr, $errfile, $errline), 'PHP|PHP:' . $errno, !$exit ? $this->configs['ExitOnAnyError'] : true);
 	}
 	
-	private function exceptionHandler($exception) {
+	protected function exceptionHandler($exception) {
 		$this->exception('Exception: ' . $exception->getMessage(), 'Exception', true, $exception);
 	}
 	
-	private function fatalHandler() { // http://stackoverflow.com/questions/277224/how-do-i-catch-a-php-fatal-error/277230#277230
+	protected function fatalHandler() { // http://stackoverflow.com/questions/277224/how-do-i-catch-a-php-fatal-error/277230#277230
 		$errfile = 'Unknown file';
 		$errstr  = '';
 		$errno   = E_CORE_ERROR;
@@ -303,7 +303,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 		return true;
 	}
 	
-	private function getArgsType($split, $array = array()) {
+	protected function getArgsType($split, $array = array()) {
 		$tmpstr = '';
 		
 		if (is_array($array)) {
@@ -353,7 +353,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 		return false;
 	}
 	
-	private function backtrace($e = null) {
+	protected function backtrace($e = null) {
 		$result = array();
 		
 		if ($e) {
@@ -387,7 +387,7 @@ class faculaDebugDefault implements faculaDebugInterface {
 		return $result;
 	}
 	
-	private function displayErrorBanner($message, $backtraces, $returncode = false, $callerOffset = 0) {
+	protected function displayErrorBanner($message, $backtraces, $returncode = false, $callerOffset = 0) {
 		$code = '';
 		
 		if (!headers_sent()) {
@@ -420,6 +420,16 @@ class faculaDebugDefault implements faculaDebugInterface {
 		
 		return false;
 	}
+}
+
+class faculaDebugDefault extends faculaDebugDefaultBase {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
 }
 
 ?>

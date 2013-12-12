@@ -56,7 +56,7 @@ class faculaTemplate extends faculaCoreFactory {
 	}
 }
 
-class faculaTemplateDefault implements faculaTemplateInterface {
+abstract class faculaTemplateDefaultBase implements faculaTemplateInterface {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',
@@ -65,20 +65,20 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		'Version' => __FACULAVERSION__,
 	);
 	
-	static private $setting = array(
+	static protected $setting = array(
 		'TemplateFileSafeCode' => array(
 			'<?php if (!defined(\'IN_FACULA\')) {exit(\'Access Denied\');} ',
 			' ?>',
 		)
 	);
 	
-	private $response = null;
+	protected $response = null;
 	
-	private $configs = array();
+	protected $configs = array();
 	
-	private $pool = array();
+	protected $pool = array();
 	
-	private $assigned = array();
+	protected $assigned = array();
 	
 	public function __construct(&$cfg, $common, facula $facula) {
 		$files = $fileNameSplit = array();
@@ -88,8 +88,8 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 			'Cache' => isset($cfg['CacheTemplate']) && $cfg['CacheTemplate'] ? true : false,
 			'Compress' => isset($cfg['CompressOutput']) && $cfg['CompressOutput'] ? true : false,
 			'Renew' => isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ? true : false,
-			'Render' => isset($cfg['Render']) && class_exists($cfg['Render']) ? $cfg['Render'] : 'faculaTemplateDefaultRender',
-			'Compiler' => isset($cfg['Compiler']) && class_exists($cfg['Compiler']) ? $cfg['Compiler'] : 'faculaTemplateDefaultCompiler',
+			'Render' => isset($cfg['Render']) && class_exists('faculaTemplateRender' . $cfg['Render']) ? ('faculaTemplateRender' . $cfg['Render']) : 'faculaTemplateDefaultRender',
+			'Compiler' => isset($cfg['Compiler']) && class_exists('faculaTemplateCompiler' . $cfg['Compiler']) ? ('faculaTemplateCompiler' . $cfg['Compiler']) : 'faculaTemplateDefaultCompiler',
 			'CacheVersion' => $common['BootVersion'],
 		);
 	
@@ -248,7 +248,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return false;
 	}
 	
-	private function getCacheTemplate($templateName, $templateSet = '', $expire = 0, $expiredCallback = null, $cacheFactor = '') {
+	protected function getCacheTemplate($templateName, $templateSet = '', $expire = 0, $expiredCallback = null, $cacheFactor = '') {
 		$templatePath = $templateContent = $cachedPagePath = $cachedPageRoot = $cachedPageFactor = $cachedPageFile = $cachedPageFactorDir = $cachedTmpPage = $renderCachedContent = $renderCachedOutputContent = '';
 		$splitedCompiledContentIndexLen = $splitedRenderedContentLen = 0;
 		$splitedCompiledContent = $splitedRenderedContent = array();
@@ -335,7 +335,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return false;
 	}
 	
-	private function getCacheSubPath($cacheName) {
+	protected function getCacheSubPath($cacheName) {
 		$current = 0;
 		$path = array();
 		
@@ -353,7 +353,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	}
 	
 	// Get template and compile it to PHP code if needed
-	private function getCompiledTemplate($templateName, $templateSet) {
+	protected function getCompiledTemplate($templateName, $templateSet) {
 		$content = $error = $templatePath = '';
 		$compiledTpl = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledTemplate.' . $templateName . ($templateSet ? '+' . $templateSet : '') . '.' . $this->pool['Language'] . '.php';
 		
@@ -417,7 +417,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 	}
 	
 	/* Load setting for compiling */
-	private function doRender(&$templateName, &$compiledTpl) {
+	protected function doRender(&$templateName, &$compiledTpl) {
 		$error = '';
 		facula::core('object')->runHook('template_render_*', array(), $error);
 		facula::core('object')->runHook('template_render_' . $templateName, array(), $error);
@@ -427,7 +427,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return $render->getResult();
 	}
 	
-	private function doCompile(&$templateName, &$sourceTpl, &$resultTpl) {
+	protected function doCompile(&$templateName, &$sourceTpl, &$resultTpl) {
 		$sourceContent = $compiledContent = $error = '';
 		
 		facula::core('object')->runHook('template_compile_*', array(), $error);
@@ -456,7 +456,7 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		return false;
 	}
 	
-	private function loadLangMap() {
+	protected function loadLangMap() {
 		$this->pool['LanguageMap'] = $langMap = $langMapPre = $langMapTemp = array(); // Set LanguageMap first, because we need to tell application, we already tried to get lang file so it will not waste time retrying it.
 		
 		$compiledLangFile = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledLanguage.' . $this->pool['Language'] . '.php';
@@ -502,6 +502,16 @@ class faculaTemplateDefault implements faculaTemplateInterface {
 		
 		return false;
 	}
+}
+
+class faculaTemplateDefault extends faculaTemplateDefaultBase {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
 }
 
 // Safe cover for anit any accesses to private variables and methods in side templating object

@@ -36,7 +36,7 @@ interface coreInterface {
 abstract class faculaCoreFactory implements coreInterface { 
 	static private $instances = array();
 	
-	static public final function getInstance(&$cfg, $commonCfg, facula $parent) {
+	final static public function getInstance(&$cfg, $commonCfg, facula $parent) {
 		$caller = get_called_class();
 		// If $cfg['Core'] has beed set, means user wants to use their own core instead of default one
 		$class = $caller . (isset($cfg['Core'][0]) ? $cfg['Core'] : 'Default');

@@ -50,7 +50,7 @@ class faculaCache extends faculaCoreFactory {
 	}
 }
 
-class faculaCacheDefault implements faculaCacheInterface {
+abstract class faculaCacheDefaultBase implements faculaCacheInterface {
 	static public $plate = array(
 		'Author' => 'Rain Lee',
 		'Reviser' => '',
@@ -59,14 +59,14 @@ class faculaCacheDefault implements faculaCacheInterface {
 		'Version' => __FACULAVERSION__,
 	);
 	
-	static private $setting = array(
+	static protected $setting = array(
 		'CacheFileSafeCode' => array(
 			'<?php if (!defined(\'IN_FACULA\')) {exit(\'Access Denied\');} ',
 			' ?>',
 		)
 	);
 	
-	private $configs = array();
+	protected $configs = array();
 	
 	public function __construct(&$cfg, $common) {
 		if (isset($cfg['CacheRoot'][0]) && is_dir($cfg['CacheRoot'])) {
@@ -125,7 +125,7 @@ class faculaCacheDefault implements faculaCacheInterface {
 		return false;
 	}
 	
-	private function getCacheFileByName($cacheName) {
+	protected function getCacheFileByName($cacheName) {
 		$pathArray = array();
 		
 		$result = array(
@@ -151,7 +151,7 @@ class faculaCacheDefault implements faculaCacheInterface {
 		}
 	}
 	
-	private function makeCacheDir($dirName) {
+	protected function makeCacheDir($dirName) {
 		$fullPath = $this->configs['Root'] . DIRECTORY_SEPARATOR . $dirName;
 		$currentPath = $this->configs['Root'] . DIRECTORY_SEPARATOR;
 		
@@ -171,6 +171,16 @@ class faculaCacheDefault implements faculaCacheInterface {
 			
 		return false;
 	}
+}
+
+class faculaCacheDefault extends faculaCacheDefaultBase {
+	static public $plate = array(
+		'Author' => 'Rain Lee',
+		'Reviser' => '',
+		'Updated' => '2013',
+		'Contact' => 'raincious@gmail.com',
+		'Version' => __FACULAVERSION__,
+	);
 }
 
 ?>
