@@ -240,11 +240,6 @@ class facula {
 	}
 	
 	private function _init(array &$cfg) {
-		// Check environment
-		if (!function_exists('mb_internal_encoding')) {
-			throw new Exception('Facula needs mb_string extension to be enabled.');
-		}
-		
 		$cfg['Common']['AppVersion'] = (isset($cfg['AppName']) ? $cfg['AppName'] : 'Facula App') . ' ' . (isset($cfg['AppVersion']) ? $cfg['AppVersion'] : '0.0');
 		$cfg['Common']['BootVersion'] = FACULA_TIME;
 		
@@ -352,9 +347,6 @@ class facula {
 	}
 	
 	private function _inited() {
-		// Set mb internal to utf 8 as we forcely used in whole facula apps
-		mb_internal_encoding('UTF-8');
-		
 		// Call sub core to wake up
 		foreach($this->coreInstances AS $core) {
 			if (method_exists($core, '_inited')) {

@@ -272,6 +272,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 			'CookiePrefix' => isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : 'facula_',
 			'GZIPEnabled' => isset($cfg['UseGZIP']) && $cfg['UseGZIP'] && function_exists('gzcompress') ? true : false,
 			'PSignal' => isset($cfg['PostProfileSignal']) && $cfg['PostProfileSignal'] ? true : false,
+			'Encoding' => isset($cfg['Encoding']) ? $cfg['Encoding'] : 'utf-8',
 			'UseFFR' => function_exists('fastcgi_finish_request') ? true : false,
 			'AppVersion' => $common['AppVersion'],
 		);
@@ -328,7 +329,7 @@ class faculaResponseDefault implements faculaResponseInterface {
 			$finalContent = $oldBufferContent . self::$content;
 			
 			if (isset(self::$http_content_type[$type])) {
-				header('Content-Type: ' . self::$http_content_type[$type] . '; charset=utf-8');
+				header('Content-Type: ' . self::$http_content_type[$type] . '; charset=' . $this->configs['Encoding']);
 			} else {
 				header('Content-Type: ' . $type);
 			}
