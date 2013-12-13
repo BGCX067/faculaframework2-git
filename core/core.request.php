@@ -234,8 +234,8 @@ abstract class faculaRequestDefaultBase implements faculaRequestInterface {
 					case 'HTTP_ACCEPT_LANGUAGE':
 						$lang = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE'], 3); // No need to read all languages that client has
 						
-						foreach($lang AS $language) {
-							$this->requestInfo['languages'][] = trim(strtolower(explode(';', $language, 2)[0]));
+						foreach($lang AS $languageOrder => $language) {
+							$this->requestInfo['languages'][$languageOrder] = trim(strtolower(explode(';', $language, 2)[0]));
 						}
 						
 						if (isset($this->requestInfo['languages'][0])) {
