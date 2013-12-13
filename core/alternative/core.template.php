@@ -488,7 +488,7 @@ abstract class faculaTemplateDefaultBase implements faculaTemplateInterface {
 			$langMapPre = explode("\n", $langContent);
 			
 			foreach($langMapPre AS $lang) {
-				$langMapTemp = explode('=', $lang);
+				$langMapTemp = explode('=', $lang, 2);
 				
 				if (isset($langMapTemp[1])) { // If $langMapTemp[1] not set, may means this is just a comment.
 					$this->pool['LanguageMap'][trim($langMapTemp[0])] = trim($langMapTemp[1]);
