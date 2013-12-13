@@ -90,7 +90,8 @@ abstract class faculaTemplateDefaultBase implements faculaTemplateInterface {
 			'Renew' => isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ? true : false,
 			'Render' => isset($cfg['Render']) && class_exists('faculaTemplateRender' . $cfg['Render']) ? ('faculaTemplateRender' . $cfg['Render']) : 'faculaTemplateDefaultRender',
 			'Compiler' => isset($cfg['Compiler']) && class_exists('faculaTemplateCompiler' . $cfg['Compiler']) ? ('faculaTemplateCompiler' . $cfg['Compiler']) : 'faculaTemplateDefaultCompiler',
-			'CacheVersion' => $common['BootVersion'],
+			'CacheTTL' => isset($cfg['CacheMaxLifeTime']) ? (int)($cfg['CacheMaxLifeTime']) : null,
+			'CacheVer' => $common['BootVersion'],
 		);
 	
 		// TemplatePool 
@@ -250,8 +251,13 @@ abstract class faculaTemplateDefaultBase implements faculaTemplateInterface {
 	
 	protected function getCacheTemplate($templateName, $templateSet = '', $expire = 0, $expiredCallback = null, $cacheFactor = '') {
 		$templatePath = $templateContent = $cachedPagePath = $cachedPageRoot = $cachedPageFactor = $cachedPageFile = $cachedPageFactorDir = $cachedTmpPage = $renderCachedContent = $renderCachedOutputContent = '';
-		$splitedCompiledContentIndexLen = $splitedRenderedContentLen = 0;
+		$splitedCompiledContentIndexLen = $splitedRenderedContentLen = $currentExpireTimestamp = 0;
 		$splitedCompiledContent = $splitedRenderedContent = array();
+		
+		if (!$expire && !is_null($this->configs['CacheTTL'])) {
+			$expire = $this->configs['CacheTTL'];
+		}
+		
 		$currentExpireTimestamp = FACULA_TIME - $expire;
 		
 		if (isset($this->configs['Cached'][0])) {
@@ -357,7 +363,7 @@ abstract class faculaTemplateDefaultBase implements faculaTemplateInterface {
 		$content = $error = $templatePath = '';
 		$compiledTpl = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledTemplate.' . $templateName . ($templateSet ? '+' . $templateSet : '') . '.' . $this->pool['Language'] . '.php';
 		
-		if (!$this->configs['Renew'] && is_readable($compiledTpl) && filemtime($compiledTpl) >= $this->configs['CacheVersion']) {
+		if (!$this->configs['Renew'] && is_readable($compiledTpl) && filemtime($compiledTpl) >= $this->configs['CacheVer']) {
 			return $compiledTpl;
 		} else {
 			if ($templateSet && isset($this->pool['File']['Tpl'][$templateName][$templateSet])) {
@@ -463,7 +469,7 @@ abstract class faculaTemplateDefaultBase implements faculaTemplateInterface {
 		
 		$langContent = '';
 		
-		if (!$this->configs['Renew'] && is_readable($compiledLangFile) && filemtime($compiledLangFile) >= $this->configs['CacheVersion']) { // Try load lang cache first
+		if (!$this->configs['Renew'] && is_readable($compiledLangFile) && filemtime($compiledLangFile) >= $this->configs['CacheVer']) { // Try load lang cache first
 			require($compiledLangFile); // require for opcode optimizing
 			
 			if (!empty($langMap)) {
