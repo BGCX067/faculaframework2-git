@@ -27,28 +27,19 @@
 
 class Hash {
 	protected $salt = '';
-	private $saltLen = 0;
+	protected $saltLen = 0;
+	
 	private $loopPeriod = 1;
 	
 	public function __construct($salt = '', $loop = 1) {
 		if ($salt) {
-			$this->setSalt($salt);
+			$this->salt = $salt;
+			$this->saltLen = strlen($salt);
 		}
 		
 		$this->loopPeriod = $loop > 0 ? $loop : 1;
 		
 		return true;
-	}
-	
-	private function setSalt($salt) {
-		if (!$this->salt) {
-			$this->salt = $salt;
-			$this->saltLen = strlen($salt);
-			
-			return true;
-		}
-		
-		return false;
 	}
 	
 	protected function obscure($str) {
