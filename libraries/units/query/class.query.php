@@ -732,7 +732,9 @@ class query implements queryInterface {
 								// Use key to search in datamap, and bind the value and types
 								foreach($matchedParams[0] AS $paramKey) {
 									if (isset($this->dataMap[$paramKey])) {
-										$statement->bindValue($paramKey, $this->dataMap[$paramKey]['Value'], $this->dataMap[$paramKey]['Type']);
+										if (!$statement->bindValue($paramKey, $this->dataMap[$paramKey]['Value'], $this->dataMap[$paramKey]['Type'])) {
+											facula::core('debug')->exception('ERROR_QUERY_PREPARE_PARAM_BINDVALUE_FAILED|' . ($paramKey . ' = (' . $this->dataMap[$paramKey]['Type'] . ')' . $this->dataMap[$paramKey]['Value']), 'query', true);
+										}
 									} else {
 										facula::core('debug')->exception('ERROR_QUERY_PREPARE_PARAM_NOTSET|' . $paramKey, 'query', true);
 									}
