@@ -210,7 +210,7 @@ abstract class faculaObjectDefaultBase implements faculaObjectInterface {
 	
 	protected function loadObjectFromCache($objectName, $type = '', $uniqueid = '') {
 		$instance = null;
-		$cache = '';
+		$obj = array();
 		
 		if ($this->configs['OCRoot']) {
 			$file = $this->configs['OCRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
@@ -218,7 +218,8 @@ abstract class faculaObjectDefaultBase implements faculaObjectInterface {
 			if (is_readable($file) && filemtime($file) >= $this->configs['CacheTime']) {
 				require($file);
 				
-				if ($instance = unserialize($cache)) {
+				if ($obj && $instance = unserialize($obj)) {
+					
 					if ($this->configs['OCExpire'] && $instance->cachedObjectSaveTime < $this->configs['OCExpire'] - FACULA_TIME) {
 						unlink($file);
 					}
@@ -232,11 +233,13 @@ abstract class faculaObjectDefaultBase implements faculaObjectInterface {
 	}
 	
 	protected function saveObjectToCache($objectName, $instance, $type = '', $uniqueid = '') {
+		$objectInfo = array();
+		
 		if ($this->configs['OCRoot']) {
-			$instance->cachedObjectFilePath = $file = $this->configs['OCRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
+			$instance->cachedObjectFilePath = $this->configs['OCRoot'] . DIRECTORY_SEPARATOR . 'cachedObject.' . ($type ? $type : 'general') . '#' . str_replace(array('\\', '/'), '%', $objectName) . '#' . ($uniqueid ? $uniqueid : 'common') . '.php';
 			$instance->cachedObjectSaveTime = FACULA_TIME;
 			
-			return file_put_contents($file, self::$config['CacheSafeCode'][0] . '$cache = \'' . serialize($instance) . '\'' . self::$config['CacheSafeCode'][1]);
+			return file_put_contents($instance->cachedObjectFilePath, self::$config['CacheSafeCode'][0] . '$obj = ' . var_export(serialize($instance), true) . ';' . self::$config['CacheSafeCode'][1]);
 		}
 		
 		return false;
