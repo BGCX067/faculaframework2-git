@@ -30,9 +30,9 @@ abstract class Pager {
 		$tp = $p = 0;
 		$vip = $vc = $vti = 0;
 		
-		$vc = intval($current) - 1;
-		$vip = intval($itemprepage);
-		$vti = intval($totalitems);
+		$vc = (int)($current) - 1;
+		$vip = (int)($itemprepage);
+		$vti = (int)($totalitems);
 		
 		if ($vc < 0) {
 			$vc = 0;
@@ -52,6 +52,16 @@ abstract class Pager {
 		$p = $vip * $vc;
 		
 		return array('Offset' => $p, 'Distance' => $vip, 'Current' => $vc ? $vc + 1 : 1, 'TotalPages' => $tp, 'MaxPagesDisplay' => $maxpages);
+	}
+	
+	static public function getSwitch($current, $hasNext = false) {
+		$currentPage = $current > 0 ? (int)($current) : 1;
+		
+		return array(
+			'Previous' => $currentPage > 1 ? $currentPage - 1 : 0,
+			'Current' => $currentPage,
+			'Next' => $hasNext ? $currentPage + 1 : 0,
+		);
 	}
 }
 

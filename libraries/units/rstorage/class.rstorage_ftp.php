@@ -220,7 +220,7 @@ class rStorage_ftp implements remoteStorageInterface {
 	}
 
 	private function generatePath() {
-		return '/' . date('Y') . '/' . abs(intval(crc32(date('m/w')) / 10240));
+		return '/' . date('Y') . '/' . abs((int)(crc32(date('m/w')) / 10240));
 	}
 }
 

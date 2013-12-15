@@ -382,7 +382,7 @@ class SMTPSocket {
 			}
 			
 			if (isset($responseParams[0]) && $responseParams[0] && is_numeric($responseParams[0])) {
-				$responseCode = intval($responseParams[0]);
+				$responseCode = (int)($responseParams[0]);
 			}
 			
 			if (isset($responseParams[1]) && $responseParams[1]) {

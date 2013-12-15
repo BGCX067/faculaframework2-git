@@ -1,7 +1,7 @@
 <?php 
 
 /*****************************************************************************
-	Facula Framework Simple Object Relation Mapping (!Experimental!)
+	Facula Framework Simple Object Relation Mapping
 	
 	FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
 	
@@ -67,7 +67,10 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 	public $cachedObjectSaveTime = 0;
 	
 	public function __set($key, $val) {
-		if (!isset($this->data[$key])) {
+		// Behaver changed. It will not try to protect original value, but backup last value.
+		if (isset($this->data[$key])) {
+			$this->dataOriginal[$key] = $this->data[$key];
+		} else {
 			$this->dataOriginal[$key] = $val;
 		}
 		

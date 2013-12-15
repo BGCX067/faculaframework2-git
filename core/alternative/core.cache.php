@@ -136,7 +136,7 @@ abstract class faculaCacheDefaultBase implements faculaCacheInterface {
 		$crc = abs(crc32($cacheName));
 		
 		while($crc > 0) {
-			$pathArray[] = ($crc = intval($crc / 10240)) . '';
+			$pathArray[] = ($crc = (int)($crc / 10240)) . '';
 		}
 		
 		if ($pathArray[0][0]) {

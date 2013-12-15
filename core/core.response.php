@@ -422,7 +422,7 @@ abstract class faculaResponseDefaultBase implements faculaResponseInterface {
 		
 		$cKey			= 		$this->configs['CookiePrefix'] . $key;
 		$cVal			= 		$val !== null ? $val : null;
-		$cExpire		= 		$expire ? FACULA_TIME + intval($expire) : 0;
+		$cExpire		= 		$expire ? FACULA_TIME + (int)($expire) : 0;
 		$cPath			= 		$path;
 		$cDomain		= 		$domain ? $domain : (strpos($_SERVER['HTTP_HOST'], '.') != -1 ? $_SERVER['HTTP_HOST'] : '');
 		$cSecure		= 		$secure ? true : false;

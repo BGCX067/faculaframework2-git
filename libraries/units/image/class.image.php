@@ -72,7 +72,7 @@ class Image {
 			self::$handlerClassName = $className;
 
 			self::$setting = array(
-				'MemoryLimit' => intval((PHPIni::convertIniUnit(ini_get('memory_limit')) * 0.8) - memory_get_peak_usage()),
+				'MemoryLimit' => (int)((PHPIni::convertIniUnit(ini_get('memory_limit')) * 0.8) - memory_get_peak_usage()),
 				'Font' => isset($setting['Font']) && is_readable($setting['Font']) ? $setting['Font'] : null,
 				'FontSize' => isset($setting['FontSize']) && is_readable($setting['FontSize']) ? $setting['FontSize'] : 12,
 			);
@@ -118,46 +118,46 @@ class ImageCommon {
 				break;
 				
 			case 'top center':
-				$result[0] = intval(($imageWidth) - ($subjectWidth / 2));
+				$result[0] = (int)(($imageWidth) - ($subjectWidth / 2));
 				$result[1] = $margin;
 				break;
 
 			case 'top right':
-				$result[0] = intval($imageWidth - $subjectWidth) - $margin;
+				$result[0] = (int)($imageWidth - $subjectWidth) - $margin;
 				$result[1] = $margin;
 				break;
 			
 			// Center
 			case 'center left':
 				$result[0] = $margin;
-				$result[1] = intval(($imageHeight / 2) - ($subjectHeight / 2));
+				$result[1] = (int)(($imageHeight / 2) - ($subjectHeight / 2));
 				break;
 
 			case 'center right':
-				$result[0] = intval($imageWidth - $subjectWidth) - $margin;
-				$result[1] = intval(($imageHeight / 2) - ($subjectHeight / 2));
+				$result[0] = (int)($imageWidth - $subjectWidth) - $margin;
+				$result[1] = (int)(($imageHeight / 2) - ($subjectHeight / 2));
 				break;
 
 			// Buttons
 			case 'bottom left':
 				$result[0] = $margin;
-				$result[1] = intval($imageHeight - $subjectHeight) - $margin;
+				$result[1] = (int)($imageHeight - $subjectHeight) - $margin;
 				break;
 				
 			case 'bottom center':
-				$result[0] = intval(($imageWidth / 2) - ($subjectWidth / 2));
-				$result[1] = intval($imageHeight - $subjectHeight) - $margin;
+				$result[0] = (int)(($imageWidth / 2) - ($subjectWidth / 2));
+				$result[1] = (int)($imageHeight - $subjectHeight) - $margin;
 				break;
 
 			case 'bottom right':
-				$result[0] = intval($imageWidth - $subjectWidth) - $margin;
-				$result[1] = intval($imageHeight - $subjectHeight) - $margin;
+				$result[0] = (int)($imageWidth - $subjectWidth) - $margin;
+				$result[1] = (int)($imageHeight - $subjectHeight) - $margin;
 				break;
 			
 			// Center Center
 			default:
-				$result[0] = intval(($imageWidth / 2) - ($subjectWidth / 2));
-				$result[1] = intval(($imageHeight / 2) - ($subjectHeight / 2));
+				$result[0] = (int)(($imageWidth / 2) - ($subjectWidth / 2));
+				$result[1] = (int)(($imageHeight / 2) - ($subjectHeight / 2));
 				break;
 		}
 		

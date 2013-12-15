@@ -89,8 +89,8 @@ class Formated {
 		$this->tags = self::$defaults['Tag'];
 		
 		$this->setting = array(
-			'MaxNests' => isset($setting['MaxNests']) ? intval($setting['MaxNests']) : self::$defaults['Setting']['MaxNests'],
-			'MaxTags' => isset($setting['MaxTags']) ? intval($setting['MaxTags']) : self::$defaults['Setting']['MaxTags'],
+			'MaxNests' => isset($setting['MaxNests']) ? (int)($setting['MaxNests']) : self::$defaults['Setting']['MaxNests'],
+			'MaxTags' => isset($setting['MaxTags']) ? (int)($setting['MaxTags']) : self::$defaults['Setting']['MaxTags'],
 		);
 		
 		return true;
@@ -478,7 +478,7 @@ Formated::newTag('%',
 						break;
 						
 					case 'Number':
-						$result = number_format(intval($result), 2, '.', ',');
+						$result = number_format((int)($result), 2, '.', ',');
 						break;
 						
 					case 'Html':

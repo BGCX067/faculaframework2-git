@@ -84,7 +84,7 @@ abstract class faculaObjectDefaultBase implements faculaObjectInterface {
 		
 		$this->configs = array(
 			'OCRoot' => isset($cfg['ObjectCacheRoot']) && is_dir($cfg['ObjectCacheRoot']) ? $cfg['ObjectCacheRoot'] : '',
-			'OCExpire' => isset($cfg['ObjectCacheExpire']) && $cfg['ObjectCacheExpire'] ? intval($cfg['ObjectCacheExpire']) : 604800,
+			'OCExpire' => isset($cfg['ObjectCacheExpire']) && $cfg['ObjectCacheExpire'] ? (int)($cfg['ObjectCacheExpire']) : 604800,
 			'CacheTime' => $common['BootVersion'],
 			'AutoPaths' => array(
 				'CmpRoot' => isset($cfg['ComponentRoot']) && is_dir($cfg['ComponentRoot']) ? $cfg['ComponentRoot'] : '',

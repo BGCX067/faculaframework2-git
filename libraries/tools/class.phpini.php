@@ -40,15 +40,15 @@ abstract class PHPIni {
 				
 				switch(strtolower($lastChar)) {
 					case 'k':
-						return (int)$strSelected * 1024;
+						return (int)($strSelected) * 1024;
 						break;
 						
 					case 'm':
-						return (int)$strSelected * 1048576;
+						return (int)($strSelected) * 1048576;
 						break;
 						
 					case 'g':
-						return (int)$strSelected * 1073741824;
+						return (int)($strSelected) * 1073741824;
 						break;
 				}
 			}

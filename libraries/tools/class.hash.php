@@ -44,7 +44,7 @@ class Hash {
 	
 	protected function obscure($str) {
 		$strlen = strlen($str);
-		$strlenHalf = intval($strlen / 2);
+		$strlenHalf = (int)($strlen / 2);
 		$strlenLast = $strlen - 1;
 		
 		$saltMaxIdx = $saltlen = $factor = 0;

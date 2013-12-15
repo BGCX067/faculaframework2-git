@@ -349,7 +349,7 @@ abstract class faculaTemplateDefaultBase implements faculaTemplateInterface {
 		
 		while(1) {
 			if ($current > 1024) {
-				$path[] = $current = intval($current / 1024);
+				$path[] = $current = (int)($current / 1024);
 			} else {
 				break;
 			}
@@ -849,7 +849,7 @@ class faculaTemplateDefaultCompiler {
 				switch($param[1]) {
 					case 'date':
 						if (isset($param[2]) && isset($this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]])) {
-							$phpcode .= 'echo(date(\'' . $this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]] . '\', intval(' . $param[0] . ')));';
+							$phpcode .= 'echo(date(\'' . $this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]] . '\', (int)(' . $param[0] . ')));';
 						} else {
 							facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_DATE_LANG_MISSED', 'template', true);
 							return false;
@@ -862,7 +862,7 @@ class faculaTemplateDefaultCompiler {
 							isset($this->pool['LanguageMap']['FORMAT_TIME_HRBEFORE']) &&
 							isset($this->pool['LanguageMap']['FORMAT_TIME_DAYBEFORE']) &&
 							isset($this->pool['LanguageMap']['FORMAT_TIME_MOREBEFORE'])) {
-							$phpcode .= '$temptime = $Time - (' . $param[0] . '); if ($temptime < 60) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_SNDBEFORE'] . '\', $temptime); } elseif ($temptime < 3600) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_MINBEFORE'] . '\', intval($temptime / 60)); } elseif ($temptime < 86400) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_HRBEFORE'] . '\', intval($temptime / 3600)); } elseif ($temptime < 604800) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_DAYBEFORE'] . '\', intval($temptime / 86400)); } elseif ($temptime) { echo(date(\'' . $this->pool['LanguageMap']['FORMAT_TIME_MOREBEFORE'] . '\', intval(' . $param[0] . '))); } $temptime = 0;';
+							$phpcode .= '$temptime = $Time - (' . $param[0] . '); if ($temptime < 60) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_SNDBEFORE'] . '\', $temptime); } elseif ($temptime < 3600) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_MINBEFORE'] . '\', (int)($temptime / 60)); } elseif ($temptime < 86400) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_HRBEFORE'] . '\', (int)($temptime / 3600)); } elseif ($temptime < 604800) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_DAYBEFORE'] . '\', (int)($temptime / 86400)); } elseif ($temptime) { echo(date(\'' . $this->pool['LanguageMap']['FORMAT_TIME_MOREBEFORE'] . '\', (int)(' . $param[0] . '))); } $temptime = 0;';
 						} else {
 							facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYTIME_LANG_MISSED', 'template', true);
 							return false;
@@ -875,7 +875,7 @@ class faculaTemplateDefaultCompiler {
 							isset($this->pool['LanguageMap']['FORMAT_FILESIZE_MEGABYTES']) &&
 							isset($this->pool['LanguageMap']['FORMAT_FILESIZE_GIGABYTES']) &&
 							isset($this->pool['LanguageMap']['FORMAT_FILESIZE_TRILLIONBYTES'])) {
-							$phpcode .= '$tempsize = ' . $param[0] . '; if ($tempsize < 1024) { echo (($tempsize).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_BYTES'] . '\'); } elseif ($tempsize < 1048576) { echo (intval($tempsize / 1024).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_KILOBYTES'] . '\'); } elseif ($tempsize < 1073741824) { echo (round($tempsize / 1048576, 1).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_MEGABYTES'] . '\'); } elseif ($tempsize < 1099511627776) { echo (round($tempsize / 1073741824, 2).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_GIGABYTES'] . '\'); } elseif ($tempsize < 1125899906842624) { echo (round($tempsize / 1099511627776, 3).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_TRILLIONBYTES'] . '\'); } $tempsize = 0;';
+							$phpcode .= '$tempsize = ' . $param[0] . '; if ($tempsize < 1024) { echo (($tempsize).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_BYTES'] . '\'); } elseif ($tempsize < 1048576) { echo ((int)($tempsize / 1024).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_KILOBYTES'] . '\'); } elseif ($tempsize < 1073741824) { echo (round($tempsize / 1048576, 1).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_MEGABYTES'] . '\'); } elseif ($tempsize < 1099511627776) { echo (round($tempsize / 1073741824, 2).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_GIGABYTES'] . '\'); } elseif ($tempsize < 1125899906842624) { echo (round($tempsize / 1099511627776, 3).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_TRILLIONBYTES'] . '\'); } $tempsize = 0;';
 						} else {
 							facula::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_BYTE_LANG_MISSED', 'template', true);
 							return false;
@@ -931,7 +931,7 @@ class faculaTemplateDefaultCompiler {
 						break;
 						
 					case 'floatNumber':
-						$phpcode .= 'echo(number_format(' . $param[0] . ', ' . (isset($param[2]) ? intval($param[2]) : 2) . '));';
+						$phpcode .= 'echo(number_format(' . $param[0] . ', ' . (isset($param[2]) ? (int)($param[2]) : 2) . '));';
 						break;
 					
 					default:
@@ -988,7 +988,7 @@ class faculaTemplateDefaultCompiler {
 						if (' . $currentpage . ' > 1) 
 							echo(\'<li><a href="' . str_replace('%PAGE%', '1', $format) . '">&laquo;</a></li><li><a href="\' . str_replace(\'%PAGE%\', (' . $currentpage . ' - 1), \'' . $format . '\') . \'">&lsaquo;</a></li>\'); 
 						
-						$loop = intval(' . $maxdisplay . ' / 2); 
+						$loop = (int)(' . $maxdisplay . ' / 2); 
 						
 						if (' . $currentpage . ' - $loop > 0) { 
 							for ($i = ' . $currentpage . ' - $loop; $i <= ' . $totalpage . ' && $i <= ' . $currentpage . ' + $loop; $i++) { 

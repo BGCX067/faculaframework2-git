@@ -168,7 +168,7 @@ class query_pgsql implements queryBuilderInterface {
 	
 	// Builder Functions
 	public function doFields() {
-		return '"' . implode('", "', $this->query['Fields']) . '"';
+		return '"' . implode('", "', array_keys($this->query['Fields'])) . '"';
 	}
 	
 	public function doCondition($name) {
@@ -291,10 +291,10 @@ class query_pgsql implements queryBuilderInterface {
 	private function doGroup() {
 		$sql = '';
 		
-		foreach($this->query['Group'] AS $group) {
+		foreach($this->query['Group'] AS $field) {
 			$sql .= $sql ? ', ' : '';
 			
-			$sql .= '"' . $group['Field'] . '"';
+			$sql .= '"' . $field . '"';
 		}
 		
 		return $sql;

@@ -41,7 +41,7 @@ class smtp_general extends SMTPBase {
 			switch(strtolower($params[0])) {
 				case 'size':
 					if (isset($params[1])) {
-						$this->serverInfo['MailMaxSize'] = intval($params[1]);
+						$this->serverInfo['MailMaxSize'] = (int)($params[1]);
 					}
 					break;
 				

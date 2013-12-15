@@ -118,8 +118,7 @@ class query implements queryInterface {
 		'From' => '', // Table name
 		'Parser' => false, // Enable or disable auto parser
 		'Required' => array('Fields', 'Where', 'Group', 'Having', 'Order', 'Limit', 'Values', 'Sets'), // Required fields of this array for param validation
-		'FieldTypes' => array('STR', 'INT', 'BOOL'), // FieldTypes for insert
-		'Fields' => array(), // Fields name
+		'Fields' => array('STR', 'INT', 'BOOL', 'PARSERS'), // Fields => Types
 		'Where' => array(), // Where conditions
 		'Group' => array(), // Group by
 		'Having' => array(), // Group having
@@ -132,7 +131,7 @@ class query implements queryInterface {
 	);
 	*/
 	
-	protected $dataIndex = 0;
+	private $dataIndex = 0;
 	protected $dataMap = array();
 	
 	static public function from($tableName, $autoParse = false) {
@@ -282,12 +281,10 @@ class query implements queryInterface {
 		
 		if (is_array($fields)) {
 			foreach($fields AS $fieldName => $fieldType) {
-				$this->query['Fields'][] = $fieldName;
-				
 				if ((is_array($fieldType) && ($fieldTypes = $fieldType)) || ($fieldTypes = explode(' ', $fieldType))) {
 					foreach($fieldTypes AS $type) {
 						if (isset(self::$pdoDataTypes[$type])) {
-							$this->query['FieldTypes'][$fieldName] = $type;
+							$this->query['Fields'][$fieldName] = $type;
 						}
 						
 						if (isset(self::$parsers[$type])) {
@@ -296,8 +293,8 @@ class query implements queryInterface {
 					}
 				}
 				
-				if (!isset($this->query['FieldTypes'][$fieldName]) || !$this->query['FieldTypes'][$fieldName]) {
-					$this->query['FieldTypes'][$fieldName] = 'STR';
+				if (!isset($this->query['Fields'][$fieldName]) || !$this->query['Fields'][$fieldName]) {
+					$this->query['Fields'][$fieldName] = 'STR';
 				}
 			}
 			
@@ -314,9 +311,9 @@ class query implements queryInterface {
 		
 		$dataKey = ':' . $this->dataIndex++;
 		
-		if (isset($this->query['FieldTypes'][$forField])) {
-			if (isset(self::$pdoDataTypes[$this->query['FieldTypes'][$forField]])) {
-				$this->dataMap[$dataKey]['Type'] = self::$pdoDataTypes[$this->query['FieldTypes'][$forField]]; // Type
+		if (isset($this->query['Fields'][$forField])) {
+			if (isset(self::$pdoDataTypes[$this->query['Fields'][$forField]])) {
+				$this->dataMap[$dataKey]['Type'] = self::$pdoDataTypes[$this->query['Fields'][$forField]]; // Type
 				$this->dataMap[$dataKey]['Value'] = $value;
 				
 				if ($this->query['Parser'] && isset($this->query['FieldParsers'][$forField])) {
@@ -333,7 +330,7 @@ class query implements queryInterface {
 				
 				return $dataKey;
 			} else {
-				facula::core('debug')->exception('ERROR_QUERY_SAVEVALUE_TYPE_UNKNOWN|' . $this->query['FieldTypes'][$forField], 'query', true);
+				facula::core('debug')->exception('ERROR_QUERY_SAVEVALUE_TYPE_UNKNOWN|' . $this->query['Fields'][$forField], 'query', true);
 			}
 		} else {
 			facula::core('debug')->exception('ERROR_QUERY_SAVEVALUE_FIELD_UNKNOWN|' . $forField, 'query', true);
@@ -346,192 +343,200 @@ class query implements queryInterface {
 	private function condition($logic = '', $fieldName, $operator, $value) {
 		$params = array();
 		
-		if (isset(self::$queryOperators[$operator])) {
-			switch(self::$queryOperators[$operator]) {
-				case '=':
-					$params = array(
-						'Operator' => '=',
-						'Value' => $this->saveValue($value, $fieldName),
-					);
-					break;
-					
-				case '>':
-					$params = array(
-						'Operator' => '>',
-						'Value' => $this->saveValue($value, $fieldName),
-					);
-					break;
-					
-				case '<':
-					$params = array(
-						'Operator' => '<',
-						'Value' => $this->saveValue($value, $fieldName),
-					);
-					break;
-					
-				case '<>':
-					$params = array(
-						'Operator' => '<>',
-						'Value' => $this->saveValue($value, $fieldName),
-					);
-					break;
-					
-				case '<=>':
-					$params = array(
-						'Operator' => '<=>',
-						'Value' => $this->saveValue($value, $fieldName),
-					);
-					break;
-					
-				case '<=':
-					$params = array(
-						'Operator' => '<=',
-						'Value' => $this->saveValue($value, $fieldName),
-					);
-					break;
-					
-				case '>=':
-					$params = array(
-						'Operator' => '>=',
-						'Value' => $this->saveValue($value, $fieldName),
-					);
-					break;
-					
-				case 'IS':
-					$params = array(
-						'Operator' => 'IS',
-						'Value' => $this->saveValue($value, $fieldName),
-					);
-					break;
-					
-				case 'IS NOT':
-					$params = array(
-						'Operator' => 'IS NOT',
-						'Value' => $this->saveValue($value, $fieldName),
-					);
-					break;
-					
-				case 'LIKE':
-					$params = array(
-						'Operator' => 'LIKE',
-						'Value' => $this->saveValue($value, $fieldName),
-					);
-					break;
-					
-				case 'NOT LIKE':
-					$params = array(
-						'Operator' => 'NOT LIKE',
-						'Value' => $this->saveValue($value, $fieldName),
-					);
-					break;
-					
-				case 'BETWEEN':
-					if (is_array($value) && isset($value[0]) && isset($value[1])) {
-						$params = array(
-							'Operator' => 'BETWEEN',
-							'Value' => array(
-								$this->saveValue($value[0], $fieldName),
-								$this->saveValue($value[1], $fieldName)
-							),
-						);
-					} else {
-						facula::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
-						
-						return false;
-					}
-					break;
-					
-				case 'NOT BETWEEN':
-					if (is_array($value) && isset($value[0]) && isset($value[1])) {
-						$params = array(
-							'Operator' => 'NOT BETWEEN',
-							'Value' => array(
-								$this->saveValue($value[0], $fieldName),
-								$this->saveValue($value[1], $fieldName)
-							),
-						);
-					} else {
-						facula::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
-						
-						return false;
-					}
-					break;
-					
-				case 'IN':
-					if (is_array($value) && !empty($value)) {
-						$params['Operator'] = 'IN';
-						
-						foreach($value AS $val) {
-							$params['Value'][] = $this->saveValue($val, $fieldName);
-						}
-						
-					} else {
-						facula::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
-						
-						return false;
-					}
-					break;
-					
-				case 'NOT IN':
-					if (is_array($value) && !empty($value)) {
-						$params['Operator'] = 'NOT IN';
-						
-						foreach($value AS $val) {
-							$params['Value'][] = $this->saveValue($val, $fieldName);
-						}
-						
-					} else {
-						facula::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
-						
-						return false;
-					}
-					break;
-					
-				case 'IS NULL':
-					$params = array(
-						'Operator' => 'IS NULL',
-						'Value' => '',
-					);
-					break;
-					
-				case 'IS NOT NULL':
-					$params = array(
-						'Operator' => 'IS NULL',
-						'Value' => '',
-					);
-					break;
-			}
-			
-			if (isset(self::$logicOperators[$logic])) {
-				$params['Logic'] = self::$logicOperators[$logic];
-			} else {
-				facula::core('debug')->exception('ERROR_QUERY_CONDITION_UNKNOWN_LOGIC|' . $logic, 'query', true);
-				return false;
-			}
-			
-			$condition = array(
-				'Field' => $fieldName,
-				'Operator' => $params['Operator'],
-				'Value' => $params['Value'],
-				'Logic' => $params['Logic'],
-			);
-			
-			return $condition;
-		} else {
+		if (!isset(self::$queryOperators[$operator])) {
 			facula::core('debug')->exception('ERROR_QUERY_CONDITION_UNKNOWN_OPERATOR|' . $operator, 'query', true);
+			
+			return false;
+		}
+	
+		switch(self::$queryOperators[$operator]) {
+			case '=':
+				$params = array(
+					'Operator' => '=',
+					'Value' => $this->saveValue($value, $fieldName),
+				);
+				break;
+				
+			case '>':
+				$params = array(
+					'Operator' => '>',
+					'Value' => $this->saveValue($value, $fieldName),
+				);
+				break;
+				
+			case '<':
+				$params = array(
+					'Operator' => '<',
+					'Value' => $this->saveValue($value, $fieldName),
+				);
+				break;
+				
+			case '<>':
+				$params = array(
+					'Operator' => '<>',
+					'Value' => $this->saveValue($value, $fieldName),
+				);
+				break;
+				
+			case '<=>':
+				$params = array(
+					'Operator' => '<=>',
+					'Value' => $this->saveValue($value, $fieldName),
+				);
+				break;
+				
+			case '<=':
+				$params = array(
+					'Operator' => '<=',
+					'Value' => $this->saveValue($value, $fieldName),
+				);
+				break;
+				
+			case '>=':
+				$params = array(
+					'Operator' => '>=',
+					'Value' => $this->saveValue($value, $fieldName),
+				);
+				break;
+				
+			case 'IS':
+				$params = array(
+					'Operator' => 'IS',
+					'Value' => $this->saveValue($value, $fieldName),
+				);
+				break;
+				
+			case 'IS NOT':
+				$params = array(
+					'Operator' => 'IS NOT',
+					'Value' => $this->saveValue($value, $fieldName),
+				);
+				break;
+				
+			case 'LIKE':
+				$params = array(
+					'Operator' => 'LIKE',
+					'Value' => $this->saveValue($value, $fieldName),
+				);
+				break;
+				
+			case 'NOT LIKE':
+				$params = array(
+					'Operator' => 'NOT LIKE',
+					'Value' => $this->saveValue($value, $fieldName),
+				);
+				break;
+				
+			case 'BETWEEN':
+				if (is_array($value) && isset($value[0]) && isset($value[1])) {
+					$params = array(
+						'Operator' => 'BETWEEN',
+						'Value' => array(
+							$this->saveValue($value[0], $fieldName),
+							$this->saveValue($value[1], $fieldName)
+						),
+					);
+				} else {
+					facula::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
+					
+					return false;
+				}
+				break;
+				
+			case 'NOT BETWEEN':
+				if (is_array($value) && isset($value[0]) && isset($value[1])) {
+					$params = array(
+						'Operator' => 'NOT BETWEEN',
+						'Value' => array(
+							$this->saveValue($value[0], $fieldName),
+							$this->saveValue($value[1], $fieldName)
+						),
+					);
+				} else {
+					facula::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
+					
+					return false;
+				}
+				break;
+				
+			case 'IN':
+				if (is_array($value) && !empty($value)) {
+					$params['Operator'] = 'IN';
+					
+					foreach($value AS $val) {
+						$params['Value'][] = $this->saveValue($val, $fieldName);
+					}
+					
+				} else {
+					facula::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
+					
+					return false;
+				}
+				break;
+				
+			case 'NOT IN':
+				if (is_array($value) && !empty($value)) {
+					$params['Operator'] = 'NOT IN';
+					
+					foreach($value AS $val) {
+						$params['Value'][] = $this->saveValue($val, $fieldName);
+					}
+					
+				} else {
+					facula::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
+					
+					return false;
+				}
+				break;
+				
+			case 'IS NULL':
+				$params = array(
+					'Operator' => 'IS NULL',
+					'Value' => '',
+				);
+				break;
+				
+			case 'IS NOT NULL':
+				$params = array(
+					'Operator' => 'IS NULL',
+					'Value' => '',
+				);
+				break;
 		}
 		
-		return false;
+		if (isset(self::$logicOperators[$logic])) {
+			$params['Logic'] = self::$logicOperators[$logic];
+		} else {
+			facula::core('debug')->exception('ERROR_QUERY_CONDITION_UNKNOWN_LOGIC|' . $logic, 'query', true);
+			return false;
+		}
+		
+		$condition = array(
+			'Field' => $fieldName,
+			'Operator' => $params['Operator'],
+			'Value' => $params['Value'],
+			'Logic' => $params['Logic'],
+		);
+		
+		return $condition;
 	}
 	
 	// Where
 	public function where($logic = '', $fieldName, $operator, $value) {
-		if (isset($this->query['Where'])) {
-			if ($this->query['Where'][] = $this->condition($logic, $fieldName, $operator, $value)) {
-				return $this;
-			}
-		} else {
+		if (!isset($this->query['Where'])) {
 			facula::core('debug')->exception('ERROR_QUERY_WHERE_NOT_SUPPORTED', 'query', true);
+			
+			return false;
+		}
+		
+		if (!isset($this->query['Fields'][$fieldName])) {
+			facula::core('debug')->exception('ERROR_QUERY_WHERE_FIELD_UNKOWN|' . $fieldName, 'query', true);
+			
+			return false;
+		}
+		
+		if ($this->query['Where'][] = $this->condition($logic, $fieldName, $operator, $value)) {
+			return $this;
 		}
 		
 		return false;
@@ -539,12 +544,20 @@ class query implements queryInterface {
 	
 	// Having
 	public function having($logic = '', $fieldName, $operator, $value) {
-		if (isset($this->query['Having'])) {
-			if ($this->query['Having'][] = $this->condition($logic, $fieldName, $operator, $value)) {
-				return $this;
-			}
-		} else {
+		if (!isset($this->query['Having'])) {
 			facula::core('debug')->exception('ERROR_QUERY_HAVING_NOT_SUPPORTED', 'query', true);
+			
+			return false;
+		}
+		
+		if (!isset($this->query['Fields'][$fieldName])) {
+			facula::core('debug')->exception('ERROR_QUERY_HAVING_FIELD_UNKOWN|' . $fieldName, 'query', true);
+			
+			return false;
+		}
+		
+		if ($this->query['Having'][] = $this->condition($logic, $fieldName, $operator, $value)) {
+			return $this;
 		}
 		
 		return false;
@@ -552,43 +565,52 @@ class query implements queryInterface {
 	
 	// Group
 	public function group($fieldName) {
-		if (isset($this->query['Group'])) {
-			$this->query['Group'][] = array(
-				'Field' => $fieldName,
-			);
-			
-			// Enable Having for group by
-			$this->query['Having'] = array();
-			
-			return $this;
-		} else {
+		if (!isset($this->query['Group'])) {
 			facula::core('debug')->exception('ERROR_QUERY_GROUP_NOT_SUPPORTED', 'query', true);
+			
+			return false;
 		}
 		
-		return false;
+		if (!isset($this->query['Fields'][$fieldName])) {
+			facula::core('debug')->exception('ERROR_QUERY_GROUP_FIELD_UNKOWN|' . $fieldName, 'query', true);
+			
+			return false;
+		}
+		
+		$this->query['Group'][] = $fieldName;
+		
+		// Enable Having for group by
+		$this->query['Having'] = array();
+		
+		return $this;
 	}
 	
 	// Order
 	public function order($fieldName, $sort) {
-		$sortMethod = '';
-		
-		if (isset($this->query['Order'])) {
-			if (isset(self::$orderOperators[$sort])) {
-				
-				$this->query['Order'][] = array(
-					'Field' => $fieldName,
-					'Sort' => self::$orderOperators[$sort],
-				);
-				
-				return $this;
-			} else {
-				facula::core('debug')->exception('ERROR_QUERY_ORDER_SORTOPERATOR_UNKOWN|' . $sort, 'query', true);
-			}
-		} else {
+		if (!isset($this->query['Order'])) {
 			facula::core('debug')->exception('ERROR_QUERY_ORDER_NOT_SUPPORTED', 'query', true);
+			
+			return false;
 		}
 		
-		return false;
+		if (!isset(self::$orderOperators[$sort])) {
+			facula::core('debug')->exception('ERROR_QUERY_ORDER_SORTOPERATOR_UNKOWN|' . $sort, 'query', true);
+			
+			return false;
+		}
+		
+		if (!isset($this->query['Fields'][$fieldName])) {
+			facula::core('debug')->exception('ERROR_QUERY_ORDER_FIELD_UNKOWN|' . $fieldName, 'query', true);
+			
+			return false;
+		}
+			
+		$this->query['Order'][] = array(
+			'Field' => $fieldName,
+			'Sort' => self::$orderOperators[$sort],
+		);
+		
+		return $this;
 	}
 	
 	// Values
@@ -596,7 +618,7 @@ class query implements queryInterface {
 		$tempValueData = array();
 		
 		if (isset($this->query['Values'])) {
-			foreach($this->query['Fields'] AS $field) {
+			foreach($this->query['Fields'] AS $field => $type) {
 				if (isset($value[$field])) {
 					$tempValueData[] = $this->saveValue($value[$field], $field);
 				} else {
@@ -639,8 +661,8 @@ class query implements queryInterface {
 			if (empty($this->query['Limit'])) {
 				
 				$this->query['Limit'] = array(
-					'Offset' => $offset,
-					'Distance' => $distance,
+					'Offset' => (int)($offset),
+					'Distance' => (int)($distance),
 				);
 				
 				return $this;
@@ -888,19 +910,19 @@ query::addAutoParser('Trimed', 'Writer', function($data) {
 });
 
 query::addAutoParser('Integer', 'Reader', function($data) {
-	return intval($data);
+	return (int)($data);
 });
 
 query::addAutoParser('Integer', 'Writer', function($data) {
-	return intval($data);
+	return (int)($data);
 });
 
 query::addAutoParser('Float', 'Reader', function($data) {
-	return floatval($data);
+	return (float)($data);
 });
 
 query::addAutoParser('Float', 'Writer', function($data) {
-	return floatval($data);
+	return (float)($data);
 });
 
 ?>

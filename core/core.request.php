@@ -114,7 +114,7 @@ abstract class faculaRequestDefaultBase implements faculaRequestInterface {
 		
 		if (isset($cfg['MaxDataSize'])) { // give memory_limit * 0.8 because our app needs memory to run, so memory cannot be 100%ly use for save request data;
 			$this->configs['MaxDataSize'] = min(
-													(int)$cfg['MaxDataSize'],
+													(int)($cfg['MaxDataSize']),
 													$this->convertIniUnit(ini_get('post_max_size')), 
 													$this->convertIniUnit(ini_get('memory_limit')) * 0.8
 													);
@@ -164,8 +164,8 @@ abstract class faculaRequestDefaultBase implements faculaRequestInterface {
 			$this->configs['TrustedProxies'] = array();
 		}
 		
-		$this->configs['MaxRequestBlocks'] = isset($cfg['MaxRequestBlocks']) ? (int)$cfg['MaxRequestBlocks'] : 512; // We can handler up to 512 elements in _GET + _POST + _COOKIE + SERVER array
-		$this->configs['MaxHeaderSize'] = isset($cfg['MaxHeaderSize']) ? (int)$cfg['MaxHeaderSize'] : 1024; // How long of the data we can handle.
+		$this->configs['MaxRequestBlocks'] = isset($cfg['MaxRequestBlocks']) ? (int)($cfg['MaxRequestBlocks']) : 512; // We can handler up to 512 elements in _GET + _POST + _COOKIE + SERVER array
+		$this->configs['MaxHeaderSize'] = isset($cfg['MaxHeaderSize']) ? (int)($cfg['MaxHeaderSize']) : 1024; // How long of the data we can handle.
 		
 		$this->configs['CookiePrefix'] = isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : '';
 		
@@ -199,7 +199,7 @@ abstract class faculaRequestDefaultBase implements faculaRequestInterface {
 		
 		if ((count($_GET) + count($_POST) + count($_COOKIE) + count($_SERVER)) > $this->configs['MaxRequestBlocks']) { // Sec check: Request array element cannot exceed this
 			facula::core('debug')->exception('ERROR_REQUEST_BLOCKS_OVERLIMIT', 'limit', true);
-		} elseif (isset($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > $this->configs['MaxDataSize']) { // Sec check: Request size cannot large than this
+		} elseif (isset($_SERVER['CONTENT_LENGTH']) && (int)($_SERVER['CONTENT_LENGTH']) > $this->configs['MaxDataSize']) { // Sec check: Request size cannot large than this
 			facula::core('debug')->exception('ERROR_REQUEST_SIZE_OVERLIMIT', 'limit', true);
 		}
 		
@@ -423,7 +423,7 @@ abstract class faculaRequestDefaultBase implements faculaRequestInterface {
 		$lastChar = '';
 		
 		if (is_numeric($str)) {
-			return (int)$str;
+			return (int)($str);
 		} else {
 			$strLen = strlen($str);
 			
@@ -432,15 +432,15 @@ abstract class faculaRequestDefaultBase implements faculaRequestInterface {
 				
 				switch(strtolower($lastChar)) {
 					case 'k':
-						return (int)$strSelected * 1024;
+						return (int)($strSelected) * 1024;
 						break;
 						
 					case 'm':
-						return (int)$strSelected * 1048576;
+						return (int)($strSelected) * 1048576;
 						break;
 						
 					case 'g':
-						return (int)$strSelected * 1073741824;
+						return (int)($strSelected) * 1073741824;
 						break;
 				}
 			}

@@ -46,7 +46,7 @@ class Session {
 			self::$defaults = array(
 				'Setting' => array(
 					'CookieKey' => isset($setting['CookieKey']) ? $setting['CookieKey'] : '!',
-					'Expire' => isset($setting['Expire']) ? intval($setting['Expire']) : 3600,
+					'Expire' => isset($setting['Expire']) ? (int)($setting['Expire']) : 3600,
 					'Salt' => isset($setting['Salt']) ? $setting['Salt'] : '',
 				),
 			);
@@ -68,7 +68,7 @@ class Session {
 			self::$sessions[$type] = array(
 				'Setting' => array(
 					'CookieKey' => isset($setting['CookieKey']) ? $setting['CookieKey']: self::$defaults['Setting']['CookieKey'],
-					'Expire' => isset($setting['Expire']) ? intval($setting['Expire']): self::$defaults['Setting']['Expire'],
+					'Expire' => isset($setting['Expire']) ? (int)($setting['Expire']): self::$defaults['Setting']['Expire'],
 					'Salt' => isset($setting['Salt']) ? $setting['Salt'] : self::$defaults['Setting']['Salt'],
 				),
 				'Sessions' => array(),
@@ -259,7 +259,7 @@ class Session {
 			$key = array(
 				'Client' => $inputKey[0],
 				'Verify' => $inputKey[1],
-				'Expire' => intval($inputKey[2]),
+				'Expire' => (int)($inputKey[2]),
 			);
 			
 			if ($key['Verify'] === $hasher->obscuredVerify($key['Client'] . $networkID)) {

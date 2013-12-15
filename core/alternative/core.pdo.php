@@ -72,8 +72,8 @@ abstract class faculaPdoDefaultBase implements faculaPdoInterface {
 	public function __construct(&$cfg) {
 		if (class_exists('PDO')) {
 			$this->configs = array(
-				'DefaultTimeout' => isset($cfg['DefaultTimeout']) ? intval($cfg['DefaultTimeout']) : 1,
-				'WaitTimeout' => isset($cfg['WaitTimeout']) ? intval($cfg['WaitTimeout']) : 0,
+				'DefaultTimeout' => isset($cfg['DefaultTimeout']) ? (int)($cfg['DefaultTimeout']) : 1,
+				'WaitTimeout' => isset($cfg['WaitTimeout']) ? (int)($cfg['WaitTimeout']) : 0,
 				'SelectMethod' => isset($cfg['SelectMethod']) ? $cfg['SelectMethod'] : 'Normal',
 				'PriorMethod' => isset($cfg['PriorMethod']) ? $cfg['PriorMethod'] : 'Redundance',
 			);
