@@ -77,5 +77,3 @@ abstract class Validator {
 		return self::$regulars;
 	}
 }
-
-?>

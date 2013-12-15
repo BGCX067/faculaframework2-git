@@ -353,5 +353,3 @@ class query_pgsql implements queryBuilderInterface {
 		return $statement->rowCount();
 	}
 }
-
-?>

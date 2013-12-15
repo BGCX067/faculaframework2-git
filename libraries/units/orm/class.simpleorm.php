@@ -447,5 +447,3 @@ abstract class SimpleORM implements ormInterface, ArrayAccess {
 		return false;
 	}
 }
-
-?>

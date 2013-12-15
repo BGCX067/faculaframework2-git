@@ -164,5 +164,3 @@ class ImageCommon {
 		return $result;
 	}
 }
-
-?>

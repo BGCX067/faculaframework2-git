@@ -49,5 +49,3 @@ abstract class Strings {
 		return mb_strpos($haystack, $needle, $offset);
 	}
 }
-
-?>

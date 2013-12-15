@@ -140,5 +140,3 @@ abstract class Controller extends Setting implements controllerInterface {
 		return false;
 	}
 }
-
-?>

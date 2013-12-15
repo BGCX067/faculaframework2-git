@@ -151,5 +151,3 @@ abstract class Container {
 		return false;
 	}
 }
-
-?>

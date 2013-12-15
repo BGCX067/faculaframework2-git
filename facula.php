@@ -459,5 +459,3 @@ class facula {
 		return false;
 	}
 }
-
-?>

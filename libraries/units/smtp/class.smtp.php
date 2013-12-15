@@ -704,5 +704,3 @@ abstract class SMTPBase {
 		return new SMTPDatar($mail);
 	}
 }
-
-?>

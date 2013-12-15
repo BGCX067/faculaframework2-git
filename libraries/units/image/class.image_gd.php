@@ -370,5 +370,3 @@ class Image_GD extends ImageCommon implements imageHandlerInterface {
 		return false;
 	}
 }
-
-?>

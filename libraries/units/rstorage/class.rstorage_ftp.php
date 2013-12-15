@@ -223,5 +223,3 @@ class rStorage_ftp implements remoteStorageInterface {
 		return '/' . date('Y') . '/' . abs((int)(crc32(date('m/w')) / 10240));
 	}
 }
-
-?>

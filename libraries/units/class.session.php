@@ -270,5 +270,3 @@ class Session {
 		return $key;
 	}
 }
-
-?>

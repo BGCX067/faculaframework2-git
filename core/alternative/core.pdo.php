@@ -388,5 +388,3 @@ class faculaPdoDefault extends faculaPdoDefaultBase {
 		'Version' => __FACULAVERSION__,
 	);
 }
-
-?>

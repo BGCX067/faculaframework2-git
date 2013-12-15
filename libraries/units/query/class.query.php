@@ -924,5 +924,3 @@ query::addAutoParser('Float', 'Reader', function($data) {
 query::addAutoParser('Float', 'Writer', function($data) {
 	return (float)($data);
 });
-
-?>

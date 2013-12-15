@@ -431,5 +431,3 @@ class faculaDebugDefault extends faculaDebugDefaultBase {
 		'Version' => __FACULAVERSION__,
 	);
 }
-
-?>

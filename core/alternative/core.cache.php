@@ -182,5 +182,3 @@ class faculaCacheDefault extends faculaCacheDefaultBase {
 		'Version' => __FACULAVERSION__,
 	);
 }
-
-?>

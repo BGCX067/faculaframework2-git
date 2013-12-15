@@ -351,5 +351,3 @@ class query_mysql implements queryBuilderInterface {
 		return $statement->rowCount();
 	}
 }
-
-?>

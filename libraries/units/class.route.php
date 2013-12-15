@@ -217,5 +217,3 @@ abstract class Route implements routeInterface {
 		return false;
 	}
 }
-
-?>

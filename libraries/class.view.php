@@ -75,5 +75,3 @@ abstract class View implements viewInterface {
 		return false;
 	}
 }
-
-?>

@@ -174,7 +174,4 @@ class smtp_general extends SMTPBase {
 	public function disconnect() {
 		$this->socket->close();
 	}
-
 }
-
-?>

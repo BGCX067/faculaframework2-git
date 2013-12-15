@@ -141,5 +141,3 @@ class rStorage {
 		return false;
 	}
 }
-
-?>

@@ -566,13 +566,13 @@ class faculaTemplateDefaultCompiler {
 		
 		{~ IDName (ClassName) CurrentPage TotalPages MaxPagesToDisplay (URLFORMAT/%PAGE%/) ~} // Display page switcher
 		
-		{* LoopName $Variable *} 
+		{* LoopName $Variable *}
 			<!--HTML CONTENTS--> 
 		{* EMPTY LoopName *}
 			<!--HTML CONTENTS WHEN LOOP IS EMPTY--> 
 		{* EOF LoopName *} // Loop the Variable if it is an array
 		
-		{? LogicName $Variable > 1 ?} 
+		{? LogicName $Variable > 1 ?}
 		<!--HTML CONTENTS--> 
 		{? ELSEIF LogicName $Variable > 2 ?}
 		<!--HTML CONTENTS-->
@@ -1321,5 +1321,3 @@ class faculaTemplateDefaultCompiler {
 		return false;
 	}
 }
-
-?>

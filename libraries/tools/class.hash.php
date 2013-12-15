@@ -174,5 +174,3 @@ class Hash {
 		return $this->obscuredSHA512($str);
 	}
 }
-
-?>

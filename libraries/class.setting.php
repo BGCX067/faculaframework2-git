@@ -130,5 +130,3 @@ abstract class Setting {
 		return null;
 	}
 }
-
-?>

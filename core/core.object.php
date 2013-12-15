@@ -504,5 +504,3 @@ class faculaObjectDefault extends faculaObjectDefaultBase {
 		'Version' => __FACULAVERSION__,
 	);
 }
-
-?>

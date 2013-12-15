@@ -469,5 +469,3 @@ class faculaResponseDefault extends faculaResponseDefaultBase {
 		'Version' => __FACULAVERSION__,
 	);
 }
-
-?>

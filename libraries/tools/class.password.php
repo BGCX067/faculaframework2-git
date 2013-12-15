@@ -88,5 +88,3 @@ class Password {
 		return $salt;
 	}
 }
-
-?>

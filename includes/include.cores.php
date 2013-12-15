@@ -57,5 +57,3 @@ abstract class faculaCoreFactory implements coreInterface {
 		return self::$instances[$class];
 	}
 }
-
-?>

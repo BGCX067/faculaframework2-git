@@ -31,5 +31,3 @@ abstract class Model {
 	abstract public function read($primaryKey);
 	abstract public function delete($primaryKey);
 }
-
-?>

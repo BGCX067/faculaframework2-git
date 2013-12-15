@@ -506,7 +506,7 @@ Formated::newTag('%',
 			}
 			
 			return $result;
-		} 
+		}
 
 		return false;
 	},
@@ -550,5 +550,3 @@ Formated::newTag('!',
 		return $value;
 	}
 );
-
-?>
