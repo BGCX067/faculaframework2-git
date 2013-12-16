@@ -1,55 +1,54 @@
-  
+
                            FACULA PHP FRAMEWORK
                                  Version 2
                                 By Rain Lee
-  
+
   0. Thank you
-  
+
   Thank you for download and try this framework.
-  
+
   This framework designed for medium sized website which has minor traffic
-to process and need an all-in-one solution for load balancing and multi 
+to process and need an all-in-one solution for load balancing and multi
 databse support.
-  
-  For personal developer, this framework not a restriction to force you to use 
+
+  For personal developer, this framework not a restriction to force you to use
 MVC pattern (You can use it when you want to of course). It provides lot of free-
-dom and expandability in to your web develop and allows you to detailly controll 
+dom and expandability in to your web develop and allows you to detailly controll
 the behavior of your application.
-  
+
   1. Requirement
-  
-  This version of Facula Framework needs PHP 5.4 at minimum with few builtin 
-extensions enabled. Besides that, consider of the customizability of the framework, 
+
+  This version of Facula Framework needs PHP 5.4 at minimum with few builtin
+extensions enabled. Besides that, consider of the customizability of the framework,
 no any other component will be require by force :)
-  
+
   2. Installation
-  
-  Well, install this framework is easy. But also it's a long story. If this is 
+
+  Well, install this framework is easy. But also it's a long story. If this is
 the first time you use it to help you to make a application. Please check wiki.
-  
+
   3. Copyright
-  
-  Yeah, if you reading this file right now, the copy must be right. Otherwise, 
+
+  Yeah, if you reading this file right now, the copy must be right. Otherwise,
 the copy is not right.
-  
-  I don't know why you want to copy this, because since you use git, fork it 
+
+  I don't know why you want to copy this, because since you use git, fork it
 is more easy.
-  
+
   This framework can also be git from:
-  
+
   https://github.com/raincious/facula/
   https://code.google.com/p/faculaframework2/
   https://bitbucket.org/raincious/facula-framework-2/ // Privated
-  
-  Oh, If you looking for document for redistribution, please check a file name 
+
+  Oh, If you looking for document for redistribution, please check a file name
 COPYRIGHT.
-  
+
   4. Please notice
-  
+
   Don't be too serious to the section 0, third paragraph.
-  
-  
+
                                              Written by Rain Lee, 06/09/2013
                                                          raincious@gmail.com
-  
-  
+
+ 
