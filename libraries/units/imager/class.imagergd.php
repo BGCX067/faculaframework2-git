@@ -96,7 +96,7 @@ class ImagerGD extends ImageCommon implements ImageHandlerInterface
                 switch ($imageInfo['Type']) {
                     case IMAGETYPE_GIF:
                         if ($this->setting['MemoryLimit'] >= ($imageInfo['Area'] * $imageInfo['Channels'] + 1)) {
-                            $imageRes = imagecreatefromgif ($file);
+                            $imageRes = imagecreatefromgif($file);
                         } else {
                             $this->error = 'ERROR_IMAGE_HANDLER_MEMORYLIMIT_EXCEED';
                         }

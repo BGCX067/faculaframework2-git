@@ -25,13 +25,13 @@
     along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 
-interface viewInterface
+interface ViewInterface
 {
     public static function assign($key, $val);
     public static function display($file);
 }
 
-abstract class View implements viewInterface
+abstract class View implements ViewInterface
 {
     private static $assigned = array();
 

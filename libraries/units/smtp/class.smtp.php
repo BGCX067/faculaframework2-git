@@ -297,10 +297,13 @@ class SMTPSocket
 
         if ($this->connection) {
             if ($response = trim(fgets($this->connection, 512))) {
-                if ((($dashPOS = strpos($response, '-')) !== false) && is_numeric(substr($response, 0, $dashPOS))) { // If response contain a '-'    and all char before the - is numberic (response code)               
+                // If response contain a '-'    and all char before the - is numberic (response code)
+                if ((($dashPOS = strpos($response, '-')) !== false) && is_numeric(substr($response, 0, $dashPOS))) {
                     $hasNext = true;
-                } elseif ((($spacePOS = strpos($response, ' ')) !== false) && is_numeric(substr($response, 0, $spacePOS))) { // Only when response contain a ' ' and all char before the ' ' is number (response code)
-                    $hasNext = false; // Means the response got only one line (Or this is the end of responses)
+                } elseif ((($spacePOS = strpos($response, ' ')) !== false) && is_numeric(substr($response, 0, $spacePOS))) {
+                    // Only when response contain a ' ' and all char before the ' ' is number (response code)
+                    // Means the response got only one line (Or this is the end of responses)
+                    $hasNext = false;
                 } else {
                     $hasNext = true;
                 }
@@ -516,6 +519,7 @@ SMTPAuther::register('login', function ($socket, $username, $password, &$error) 
         334, 
         function ($param) {
             $resp = strtolower(base64_decode($param)); // I have no idea why they decided to base64 this
+
             switch ($resp) {
                 case 'username:':
                     return 'Username';

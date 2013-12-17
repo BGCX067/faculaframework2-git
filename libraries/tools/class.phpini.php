@@ -59,5 +59,3 @@ abstract class PHPIni
         return 0;
     }
 }
-
-?>

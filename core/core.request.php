@@ -146,7 +146,8 @@ abstract class FaculaRequestDefaultBase implements FaculaRequestInterface
                 foreach ($proxyIPRange as $proxyIP) {
                     if (!filter_var($proxyIP, FILTER_VALIDATE_IP, $this->configs['TPVerifyFlags'])) {
                         throw new Exception($proxyIP . ' not a valid IP for proxy server.');
-                        break; break;
+                        break;
+                        break;
                     }
                 }
 

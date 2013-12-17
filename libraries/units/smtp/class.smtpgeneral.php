@@ -37,37 +37,43 @@ class SMTPGeneral extends SMTPBase
         $this->server = $server;
         $this->socket = $this->getSocket($this->server['Host'], $this->server['Port'], $this->server['Timeout']);
 
-        $this->socket->registerResponseParser(250, function ($param) {
-            $params = explode(' ', $param, 64);
+        $this->socket->registerResponseParser(
+            250, 
+            function ($param) {
+                $params = explode(' ', $param, 64);
 
-            switch (strtolower($params[0])) {
-                case 'size':
-                    if (isset($params[1])) {
-                        $this->serverInfo['MailMaxSize'] = (int)($params[1]);
-                    }
-                    break;
+                switch (strtolower($params[0])) {
+                    case 'size':
+                        if (isset($params[1])) {
+                            $this->serverInfo['MailMaxSize'] = (int)($params[1]);
+                        }
+                        break;
 
-                case 'auth':
-                    if (isset($params[1])) {
-                        $this->serverInfo['AuthMethods'] = explode(' ', strtolower($params[1]), 16);
-                    }
-                    break;
-            }
-
-            return 250;
-        });
-
-        $this->socket->registerResponseParser(551, function ($param) {           
-            $newAddrs = array();
-
-            if (preg_match('/\<(.*)\>/ui', $param, $newAddrs)) {
-                if (isset($newAddrs[1]) && Validator::check($newAddrs[1], 'email', 512, 1)) {
-                    $this->lastForwardServerRCPT[] = $newAddrs[1];
+                    case 'auth':
+                        if (isset($params[1])) {
+                            $this->serverInfo['AuthMethods'] = explode(' ', strtolower($params[1]), 16);
+                        }
+                        break;
                 }
-            }
 
-            return 551;
-        });
+                return 250;
+            }
+        );
+
+        $this->socket->registerResponseParser(
+            551, 
+            function ($param) {           
+                $newAddrs = array();
+
+                if (preg_match('/\<(.*)\>/ui', $param, $newAddrs)) {
+                    if (isset($newAddrs[1]) && Validator::check($newAddrs[1], 'email', 512, 1)) {
+                        $this->lastForwardServerRCPT[] = $newAddrs[1];
+                    }
+                }
+
+                return 551;
+            }
+        );
 
         return true;
     }
