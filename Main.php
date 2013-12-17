@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Facula Framework Main File
+ * Facula Framework Struct Manage Unit
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -44,32 +45,49 @@ class Main
 
     /** Config container */
     protected static $cfg = array(
-        
+        // File extension for PHP script files
+        'PHPExt' => 'php',
+
         // The char to split namespaces
         'NSSpliter' => DIRECTORY_SEPARATOR,
 
         // Framework namespace
         'FWNS' => array(
-            '\Facula\Cores' => 'Cores',
-            '\Facula\Bases' => 'Bases',
-            '\Facula\Units' => 'Units',
+            '\Facula' => FACULA_ROOT,
         ),
 
         // Cores that needed for every boot time
         'RequiredCores' => array(
-            'Debug', 'Object', 'Request', 'Response'
+            '\Facula\Cores\Debug\Core',
+            '\Facula\Cores\Object\Core',
+            '\Facula\Cores\Request\Core',
+            '\Facula\Cores\Response\Core'
         ),
     );
 
     /** Config container */
     static protected $nsMap = array();
 
+    /** Class and other files that will be use by Facula */
+    static protected $scopeMap = array();
+
+    /** Hooks will be use by Facula */
+    static protected $hookMap = array();
+
     /** Data container for Facula framework instance */
-    protected $setting = array(
+    protected $setting = array( );
 
-    );
+    /** Mirror: For static::$nsMap. It will be reference by static::$nsMap after warm boot */
+    protected $namespaces = array();
 
-    protected $component = array();
+    /** Mirror: Scope information container */
+    protected $scope = array();
+
+    /** Mirror: Hook information container */
+    protected $hooks = array();
+
+    /** Mirror of Components information container */
+    protected $components = array();
 
     /**
      * Initialization exposure
@@ -78,7 +96,7 @@ class Main
      *
      * @return mixed Return a singleton Facula object when successed, false otherwise.
      */
-    public static function init(array &$cfg)
+    public static function run(array &$cfg)
     {
         spl_autoload_register(function ($class) {
             return static::loadClass($class);
@@ -91,35 +109,132 @@ class Main
         return (static::$instance = new static($cfg));
     }
 
-    public static function loadClass($className)
+    /**
+     * Global class autoloader
+     *
+     * @param string $className Fully qualified class name
+     *
+     * @return bool Return true when success, false otherwise.
+     */
+    protected static function loadClass($className)
     {
         // Check if this is a namespace calling
         if (strpos($className, static::$cfg['NSSpliter'])) {
             return static::loadNamespace($className);
-        } elseif (false) {
-            // Nothing here
+        } else {
+            return static::loadScope($className);
         }
 
         return false;
     }
 
-    public static function loadNamespace($namespace)
+    /**
+     * Load a class with namespace
+     *
+     * @param string $class Fully qualified class name
+     *
+     * @return bool Return true when success, false otherwise.
+     */
+    protected static function loadNamespace($class)
     {
-        $splitedNamespace = self::splitNamespace($namespace, true);
+
+        $splitedNamespace = self::splitNamespace($class, true);
 
         // Pop the last element as it will be the class name it self
         $className = array_pop($splitedNamespace);
 
-        $map = self::locateNamespace($splitedNamespace, true);
-        print_r($namespace);
-        print_r($map);
-        if ($map['Ref']['P'] && is_readable($map['Ref']['P'] . DIRECTORY_SEPARATOR . $map['Ref']['Remain'] . DIRECTORY_SEPARATOR . $className . '.php')) {
-            require($map['Ref']['P'] . DIRECTORY_SEPARATOR . $map['Ref']['Remain'] . DIRECTORY_SEPARATOR . $className . '.php');
+        $map = self::locateNamespace($splitedNamespace, false);
+
+        $fullPath = $map['Ref']['P']
+                    . DIRECTORY_SEPARATOR
+                    . ($map['Remain'] ? $map['Remain'] . DIRECTORY_SEPARATOR : '')
+                    . $className
+                    . '.' . static::$cfg['PHPExt'];
+
+        if ($map['Ref']['P'] && is_readable($fullPath)) {
+            require($fullPath);
+
+            return true;
         } else {
-            throw new \Exception('Class ' . $namespace . ' not found.');
+            throw new \Exception('Class ' . $class . ' not found.');
         }
 
         return false;
+    }
+
+    /**
+     * Load a class with Scope
+     *
+     * @param string $class Fully qualified class name
+     *
+     * @return bool Return true when success, false otherwise.
+     */
+    protected static function loadScope($class)
+    {
+        $className = strtolower($class);
+
+        if (isset(static::$scopeMap['Class'][$className])) {
+            require(static::$scopeMap['Class'][$className]);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Register a class into Scope
+     *
+     * @param string $class Class name
+     * @param string $file File path to that file
+     *
+     * @return bool Return true when success, false otherwise.
+     */
+    public static function registerScope($class, $file)
+    {
+        $className = strtolower($class);
+
+        if (isset(static::$scopeMap['Class'][$className])) {
+            throw new \Exception('Trying register a class(' . $class . ') to scope while it already registered.');
+
+            return false;
+        }
+
+        if (!is_readable($file)) {
+            throw new \Exception(
+                'Trying register a class('
+                . $class
+                . '), but the class file('
+                . $file
+                . ') is not readable.'
+            );
+
+            return false;
+        }
+
+        return static::$scopeMap['Class'][$className] = $file;
+    }
+
+    /**
+     * Unregister a class from Scope
+     *
+     * @param string $class Class name
+     *
+     * @return bool Return true when success, false otherwise. A error will show up when the class not existe.
+     */
+    public static function unregisterScope($class)
+    {
+        $className = strtolower($class);
+
+        if (!isset(static::$scopeMap['Class'][$className])) {
+            throw new \Exception('Trying unregister a class(' . $class . '), but the class was not found.');
+
+            return false;
+        }
+
+        unset(static::$scopeMap['Class'][$className]);
+
+        return true;
     }
 
     /**
@@ -140,11 +255,11 @@ class Main
 
                 return true;
             } else {
-                throw new \Exception('Trying register a namespace(' . $nsPrefix . ') while it already registered');
+                throw new \Exception('Trying register a namespace(' . $nsPrefix . ') while it already registered.');
             }
 
         } else {
-            throw new \Exception('Path ' . $path . ' for namespace ' . $nsPrefix . ' not exist');
+            throw new \Exception('Path ' . $path . ' for namespace ' . $nsPrefix . ' not exist.');
         }
 
         return false;
@@ -165,14 +280,14 @@ class Main
             if ($map['Ref']) {
                 $map['Ref'] = null;
             } else {
-                throw new \Exception('Trying unregister a namespace while it not existed');
-                
+                throw new \Exception('Trying unregister a namespace while it not existed.');
+
                 return false;
             }
 
             return true;
         } else {
-            throw new \Exception('Namespace ' . $nsPrefix . ' not registered');
+            throw new \Exception('Namespace ' . $nsPrefix . ' not registered.');
         }
 
         return false;
@@ -183,7 +298,7 @@ class Main
      *
      * @param string $namespace The namespace
      *
-     * @return array
+     * @return array Array of splited namespace name
      */
     protected static function splitNamespace($namespace)
     {
@@ -206,8 +321,8 @@ class Main
     /**
      * Get reference of the namespace in inner Namespacing map
      *
-     * @param string $namespace The namespace
-     * @param bool $create true will create the array when it's not exist, false will return current matched
+     * @param array $splitedNamespace The namespace
+     * @param bool $create Set to true to create the array when it's not exist, false to return last matched
      *
      * @return &array array('Ref' => reference, 'Parent' => reference, 'Remain' => string)
      */
@@ -248,6 +363,63 @@ class Main
         );
     }
 
+    public static function registerPlugin($pluginName, $mainFile)
+    {
+        $pluginClassname = $pluginName . 'Plugin';
+        $invokeResult = null;
+
+        if (!static::registerScope($pluginClassname, $mainFile)) {
+            throw new \Exception('Cannot register class scope for plugin class ' . $pluginClassname .'.');
+
+            return false;
+        }
+
+        $plugRef = new \ReflectionClass($pluginClassname);
+
+        if (!$plugRef->implementsInterface('\Facula\Base\Implement\Plugin')) {
+            throw new \Exception('Plugin have to implement interface \\Facula\\Base\\Implement\\Plugin');
+
+            return false;
+        }
+
+        if (!is_array($invokeResult = $plugRef->getMethod('register')->invoke(null))) {
+            throw new \Exception('Registering plugin ' . $pluginClassname . ', but registrant returns invalid result.');
+
+            return false;
+        }
+
+        foreach ($invokeResult as $hookName => $binded) {
+            if (isset(static::$hookMap[$hookName][$pluginClassname])) {
+                throw new \Exception(
+                    'Registering plugin '
+                    . $pluginClassname
+                    . ' for '
+                    . $hookName
+                    . ', But seems it already registered'
+                );
+
+                return false;
+            }
+
+            if (is_callable($binded)) {
+                static::$hookMap[$hookName][$pluginClassname] = $binded;
+            } else {
+                throw new \Exception(
+                    'Registering plugin '
+                    . $pluginClassname
+                    . ' for hook '
+                    . $hookName
+                    . '. But seems the callback function is not callable.'
+                );
+
+                return false;
+            }
+
+        }
+
+        return true;
+    }
+
     /**
      * The entity of initialization
      *
@@ -257,7 +429,7 @@ class Main
      */
     private function __construct(array &$cfg)
     {
-        
+
         // Following process will only be call when the framework boot from cold
 
         // First, import all the settings in to Facula core
@@ -265,7 +437,30 @@ class Main
             // Now we have settings, the first step: register namespace
             $this->registerAllNamespaces();
 
+            // Second, start components pickup
+            $this->pickComponents();
+
+            // After all, send inited signal
+            $this->finishingWarmup();
         }
+    }
+
+    protected function finishingWarmup()
+    {
+        // Takeover static::$nsMap, static::$scopeMap and static::$hookMap;
+        $this->namespaces = static::$nsMap;
+        $this->scope = static::$scopeMap;
+        $this->hooks = static::$hookMap;
+
+        // Set all old container to empty
+        static::$nsMap = static::$scopeMap = static::$hookMap = null;
+
+        //Mapping the static map to dynamic instance
+        static::$nsMap = & $this->namespaces;
+        static::$scopeMap = & $this->scope;
+        static::$hookMap = & $this->hooks;
+
+        return true;
     }
 
     protected function importConfigs(array &$cfg)
@@ -282,8 +477,8 @@ class Main
         $namespaces = $validNamespaces = array();
 
         // Convert core namespace's relative path in to actual path
-        foreach (static::$cfg['FWNS'] as $namespace => $relativePath) {
-            static::registerNamespace($namespace, FACULA_ROOT . DIRECTORY_SEPARATOR . $relativePath);
+        foreach (static::$cfg['FWNS'] as $namespace => $path) {
+            static::registerNamespace($namespace, $path);
         }
 
         if (isset($this->setting['Namespaces']) && is_array($this->setting['Namespaces'])) {
@@ -291,15 +486,43 @@ class Main
                 static::registerNamespace($namespace, $path);
             }
         }
-        
+
         return true;
     }
 
-    protected function scanComponents()
+    protected function pickComponents()
     {
+        $components = $modules = array();
+
         if (isset($this->setting['Paths']) && is_array($this->setting['Paths'])) {
+
             foreach ($this->setting['Paths'] as $path) {
-                # code...
+                $scanner = new Base\File\ModuleScanner($path);
+                $modules = array_merge($modules, $scanner->scan());
+            }
+
+            foreach ($modules as $module) {
+                switch ($module['Prefix']) {
+                    case 'include':
+                        $this->components['Inc'][] = $module['Path'];
+                        break;
+
+                    case 'routine':
+                        $this->components['Rot'][] = $module['Path'];
+                        break;
+
+                    case 'plugin':
+                        self::registerPlugin($module['Name'], $module['Path']);
+                        break;
+
+                    case 'class':
+                        self::registerScope(strtolower($module['Name']), $module['Path']);
+                        break;
+
+                    default:
+                        self::registerScope(strtolower($module['Name']), $module['Path']);
+                        break;
+                }
             }
 
             // Unset the setting and release memory
