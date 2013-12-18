@@ -67,7 +67,7 @@ class Framework
         'PHPExt' => 'php',
 
         // The char to split namespaces
-        'NSSpliter' => DIRECTORY_SEPARATOR,
+        'NSSplitter' => '\\',
 
         // Framework namespace
         'FWNS' => array(
@@ -223,7 +223,7 @@ class Framework
     protected static function loadClass($className)
     {
         // Check if this is a namespace calling
-        if (strpos($className, static::$cfg['NSSpliter'])) {
+        if (strpos($className, static::$cfg['NSSplitter'])) {
             return static::loadNamespace($className);
         } else {
             return static::loadScope($className);
@@ -426,17 +426,17 @@ class Framework
     protected static function splitNamespace($namespace)
     {
         return explode(
-            static::$cfg['NSSpliter'],
+            static::$cfg['NSSplitter'],
             trim(
                 str_replace(
                     array(
                         '/',
                         '\\'
                     ),
-                    static::$cfg['NSSpliter'],
+                    static::$cfg['NSSplitter'],
                     $namespace
                 ),
-                static::$cfg['NSSpliter']
+                static::$cfg['NSSplitter']
             )
         );
     }
@@ -482,7 +482,7 @@ class Framework
         return array(
             'Ref' => & $mapCurrentRef,
             'Parent' => & $mapParentRef,
-            'Remain' => implode(static::$cfg['NSSpliter'], $splitedRemainNS),
+            'Remain' => implode(static::$cfg['NSSplitter'], $splitedRemainNS),
         );
     }
 
