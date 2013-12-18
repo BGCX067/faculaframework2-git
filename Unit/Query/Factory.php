@@ -730,7 +730,7 @@ class Factory implements Impl
                 $adapterName = $this->connection->_connection['Driver'];
                 $adapterName[0] = strtoupper($adapterName[0]);
 
-                $builderName = __NAMESPACE__ . DIRECTORY_SEPARATOR . 'Query' . $adapterName;
+                $builderName = __NAMESPACE__ . NAMESPACE_SEPARATER . 'Query' . $adapterName;
 
                 if (class_exists($builderName)) {
                     $adapter = new $builderName($this->connection->_connection['Prefix'] . $this->query['From'], $this->query);

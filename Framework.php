@@ -32,6 +32,8 @@ define('__FACULAVERSION__', '2 Prototype 0.2');
 define('FACULA_ROOT', dirname(__FILE__));
 define('PROJECT_ROOT', realpath('.'));
 
+define(NAMESPACE_SEPARATER, '\\');
+
 define('IN_FACULA', true);
 define('FACULA_TIME', isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time());
 
@@ -65,9 +67,9 @@ class Framework
 
         // File extension for PHP script files
         'PHPExt' => 'php',
-NAMESPACE_SEPARATOR
+
         // The char to split namespaces
-        'NSSplitter' => '\\',
+        'NSSplitter' => NAMESPACE_SEPARATER,
 
         // Framework namespace
         'FWNS' => array(

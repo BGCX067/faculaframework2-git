@@ -111,7 +111,7 @@ class Factory
                         $adapterName = $server['Type'];
                         $adapterName[0] = strtoupper($adapterName[0]);
 
-                        $handlerName = __NAMESPACE__ . DIRECTORY_SEPARATOR . 'Handler' . $adapterName;
+                        $handlerName = __NAMESPACE__ . NAMESPACE_SEPARATER . 'Handler' . $adapterName;
 
                         if (class_exists($handlerName)) {
                             $handler = new $handlerName(isset($server['Option']) ? $server['Option'] : array());

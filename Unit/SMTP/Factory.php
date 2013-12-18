@@ -178,7 +178,7 @@ class Factory
             try {
                 while (!empty($currentServers) && !empty(self::$emails) && $retryLimit > 0) {
                     foreach ($currentServers as $serverkey => $server) {
-                        $operaterClassName = __NAMESPACE__ . DIRECTORY_SEPARATOR . 'Handler' . $server['Type'];
+                        $operaterClassName = __NAMESPACE__ . NAMESPACE_SEPARATER . 'Handler' . $server['Type'];
 
                         if (class_exists($operaterClassName, true)) {
                             $operater = new $operaterClassName($server);

@@ -54,7 +54,7 @@ class Factory
             }
         }
 
-        $className = __NAMESPACE__ . DIRECTORY_SEPARATOR . 'Handler' . $type;
+        $className = __NAMESPACE__ . NAMESPACE_SEPARATER . 'Handler' . $type;
 
         if (class_exists($className)) {
             self::$handlerClassName = $className;
