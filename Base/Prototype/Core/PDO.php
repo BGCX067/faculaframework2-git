@@ -1,61 +1,33 @@
 <?php
 
-/*****************************************************************************
-    Facula Framework PHP Data Object Connection Manager
+/**
+ * Facula Framework Struct Manage Unit
+ *
+ * Facula Framework 2013 (C) Rain Lee
+ *
+ * Facula Framework is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, version 3.
+ *
+ * Facula Framework is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author     Rain Lee <raincious@gmail.com>
+ * @copyright  2013 Rain Lee
+ * @package    FaculaFramework
+ * @version    2.2 prototype
+ * @see        https://github.com/raincious/facula FYI
+ *
+ */
 
-    FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
+namespace Facula\Base\Prototype\Core;
 
-    @Copyright 2013 Rain Lee <raincious@gmail.com>
-    @Author Rain Lee <raincious@gmail.com>
-    @Package FaculaFramework
-    @Version 2.0 prototype
-
-    This file is part of Facula Framework.
-
-    Facula Framework is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published
-    by the Free Software Foundation, version 3.
-
-    Facula Framework is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
-*******************************************************************************/
-
-interface FaculaPDOInterface
-{
-    public function _inited();
-    public function getConnection($setting = array());
-    public function doPDOConnect($dbIndex, &$error);
-    public function doPDOReconnect(&$dbh, &$error);
-}
-
-class FaculaPDO extends FaculaCoreFactory
-{
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
-
-    public static function checkInstance($instance)
-    {
-        if ($instance instanceof FaculaPDOinterface) {
-            return true;
-        } else {
-            throw new Exception('Facula core ' . get_class($instance) . ' needs to implements interface \'FaculaPDOInterface\'');
-        }
-
-        return false;
-    }
-}
-
-abstract class FaculaPDODefaultBase implements FaculaPDOInterface
+abstract class PDO implements \Facula\Base\Implement\Core\PDO
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -83,7 +55,7 @@ abstract class FaculaPDODefaultBase implements FaculaPDOInterface
                 'PriorMethod' => isset($cfg['PriorMethod']) ? $cfg['PriorMethod'] : 'Redundance',
             );
 
-            $supportedDrivers = PDO::getAvailableDrivers();
+            $supportedDrivers = \PDO::getAvailableDrivers();
 
             if (isset($cfg['DatabaseGroup']) && is_array($cfg['DatabaseGroup'])) {
                 foreach ($cfg['DatabaseGroup'] as $index => $database) {
@@ -114,7 +86,7 @@ abstract class FaculaPDODefaultBase implements FaculaPDOInterface
                                         $this->pool['DBs'][$index]['Tables'][] = $table;
                                     }
                                 } else {
-                                    throw new Exception('Specified database select method require table declaration which is missing for database No.' . $index . '.');
+                                    throw new \Exception('Specified database select method require table declaration which is missing for database No.' . $index . '.');
                                 }
                             }
 
@@ -128,7 +100,7 @@ abstract class FaculaPDODefaultBase implements FaculaPDOInterface
                                         $this->pool['DBs'][$index]['Operations'][] = $operate;
                                     }
                                 } else {
-                                    throw new Exception('Specified database select method require allowance setting which is missing for database No.' . $index . '.');
+                                    throw new \Exception('Specified database select method require allowance setting which is missing for database No.' . $index . '.');
                                 }
                             }
 
@@ -142,17 +114,17 @@ abstract class FaculaPDODefaultBase implements FaculaPDOInterface
                             // DBP for sort the database item so we can shuffle it without disturb database index
                             $this->map['DBP'][$index] = &$this->pool['DBs'][$index];
                         } else {
-                            throw new Exception('Sorry, specified driver ' . $database['Driver'] . ' for database No.' . $index . ' is not supported on this server. It\'s only support: ' . implode(', ', $supportedDrivers));
+                            throw new \Exception('Sorry, specified driver ' . $database['Driver'] . ' for database No.' . $index . ' is not supported on this server. It\'s only support: ' . implode(', ', $supportedDrivers));
                         }
                     } else {
-                        throw new Exception('You must specify the PDO driver for database No.' . $index . '.');
+                        throw new \Exception('You must specify the PDO driver for database No.' . $index . '.');
                     }
                 }
             } else {
-                throw new Exception('Sorry, no database setting. So we can\'t set up for the PDO connection.');
+                throw new \Exception('Sorry, no database setting. So we can\'t set up for the PDO connection.');
             }
         } else {
-            throw new Exception('PHP Data Object (PDO) interface not found. This server may not support it.');
+            throw new \Exception('PHP Data Object (PDO) interface not found. This server may not support it.');
         }
 
         $cfg = null;
@@ -161,7 +133,7 @@ abstract class FaculaPDODefaultBase implements FaculaPDOInterface
         return true;
     }
 
-    public function _inited()
+    public function inited()
     {
         switch ($this->configs['PriorMethod']) {
             case 'Balance':
@@ -255,7 +227,7 @@ abstract class FaculaPDODefaultBase implements FaculaPDOInterface
                         }
                     }
                 } else {
-                    Facula::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSION_TABLE', 'data', true);
+                    \Facula\Main::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSION_TABLE', 'data', true);
                 }
                 break;
 
@@ -281,7 +253,7 @@ abstract class FaculaPDODefaultBase implements FaculaPDOInterface
                         }
                     }
                 } else {
-                    Facula::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSION_OPERATION', 'data', true);
+                    \Facula\Main::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSION_OPERATION', 'data', true);
                 }
                 break;
 
@@ -311,16 +283,16 @@ abstract class FaculaPDODefaultBase implements FaculaPDOInterface
                         }
                     }
                 } else {
-                    Facula::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSED_TABLEOPERATION', 'data', true);
+                    \Facula\Main::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSED_TABLEOPERATION', 'data', true);
                 }
                 break;
 
             default:
-                Facula::core('debug')->exception('ERROR_PDO_UNKNOWNSELECTMETHOD|' . $this->configs['SelectMethod'], 'data', true);
+                \Facula\Main::core('debug')->exception('ERROR_PDO_UNKNOWNSELECTMETHOD|' . $this->configs['SelectMethod'], 'data', true);
                 break;
         }
 
-        Facula::core('debug')->exception('ERROR_PDO_NOSERVERAVAILABLE' . ($error ? '|' . $error : '|' . implode(',', $setting)), 'data');
+        \Facula\Main::core('debug')->exception('ERROR_PDO_NOSERVERAVAILABLE' . ($error ? '|' . $error : '|' . implode(',', $setting)), 'data');
 
         return false;
     }
@@ -344,28 +316,28 @@ abstract class FaculaPDODefaultBase implements FaculaPDOInterface
 
         if (!isset($this->map['DBConn'][$dbIndex]['Connection'])) {
             // Enter Critical Section so no error below belowing code will cause error
-            Facula::core('debug')->criticalSection(true);
+            \Facula\Main::core('debug')->criticalSection(true);
 
             try {
-                $dbh = new PDO($this->pool['DBs'][$dbIndex]['Driver'] . ':' . $this->pool['DBs'][$dbIndex]['Connection'], $this->pool['DBs'][$dbIndex]['Username'], $this->pool['DBs'][$dbIndex]['Password'], array(PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING, PDO::ATTR_TIMEOUT => $this->pool['DBs'][$dbIndex]['Timeout'], PDO::ATTR_PERSISTENT => $this->pool['DBs'][$dbIndex]['Persistent']) + $this->pool['DBs'][$dbIndex]['Options']);
+                $dbh = new PDO($this->pool['DBs'][$dbIndex]['Driver'] . ':' . $this->pool['DBs'][$dbIndex]['Connection'], $this->pool['DBs'][$dbIndex]['Username'], $this->pool['DBs'][$dbIndex]['Password'], array(\PDO::ATTR_ERRMODE => \PDO::ERRMODE_WARNING, \PDO::ATTR_TIMEOUT => $this->pool['DBs'][$dbIndex]['Timeout'], \PDO::ATTR_PERSISTENT => $this->pool['DBs'][$dbIndex]['Persistent']) + $this->pool['DBs'][$dbIndex]['Options']);
 
                 $this->pool['DBs'][$dbIndex]['LstConnected'] = $currentTime;
                 $dbh->_connection = &$this->pool['DBs'][$dbIndex];
 
                 $successed = true;
-            } catch (PDOException $e) {
+            } catch (PDO\Exception $e) {
                 $error = 'PDO Connection failed: Database No.' . $dbIndex . ' Error: ' . $e->getMessage();
             }
 
             // Exit Critical Section, restore error caught
-            Facula::core('debug')->criticalSection(false);
+            \Facula\Main::core('debug')->criticalSection(false);
 
             if ($successed) {
                 $this->map['DBConn'][$dbIndex]['Connection'] = &$dbh;
 
                 return $this->map['DBConn'][$dbIndex]['Connection'];
             } else {
-                Facula::core('debug')->addLog('data', $error);
+                \Facula\Main::core('debug')->addLog('data', $error);
             }
         } else {
             return $this->map['DBConn'][$dbIndex]['Connection'];
@@ -388,15 +360,4 @@ abstract class FaculaPDODefaultBase implements FaculaPDOInterface
 
         return false;
     }
-}
-
-class FaculaPDODefault extends FaculaPDODefaultBase
-{
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
 }

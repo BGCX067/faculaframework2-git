@@ -1,66 +1,33 @@
 <?php
 
-/*****************************************************************************
-    Facula Framework User Request Pre-Processing Unit
+/**
+ * Facula Framework Struct Manage Unit
+ *
+ * Facula Framework 2013 (C) Rain Lee
+ *
+ * Facula Framework is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, version 3.
+ *
+ * Facula Framework is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author     Rain Lee <raincious@gmail.com>
+ * @copyright  2013 Rain Lee
+ * @package    FaculaFramework
+ * @version    2.2 prototype
+ * @see        https://github.com/raincious/facula FYI
+ *
+ */
 
-    FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
+namespace Facula\Base\Prototype\Core;
 
-    @Copyright 2013 Rain Lee <raincious@gmail.com>
-    @Author Rain Lee <raincious@gmail.com>
-    @Package FaculaFramework
-    @Version 2.0 prototype
-
-    This file is part of Facula Framework.
-
-    Facula Framework is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published
-    by the Free Software Foundation, version 3.
-
-    Facula Framework is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
-*******************************************************************************/
-
-interface FaculaRequestInterface
-{
-    public function _inited();
-    public function get($type, $key, &$errored = false);
-    public function gets($type, $keys, &$errors = array(), $failfalse = false);
-    public function getCookie($key);
-    public function getPost($key);
-    public function getGet($key);
-    public function getPosts($keys, &$errors = array());
-    public function getGets($keys, &$errors = array());
-    public function getClientInfo($key);
-}
-
-class FaculaRequest extends FaculaCoreFactory
-{
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
-
-    public static function checkInstance($instance)
-    {
-        if ($instance instanceof FaculaRequestInterface) {
-            return true;
-        } else {
-            throw new Exception('Facula core ' . get_class($instance) . ' needs to implements interface \'FaculaRequestInterface\'');
-        }
-
-        return false;
-    }
-}
-
-abstract class FaculaRequestDefaultBase implements FaculaRequestInterface
+abstract class Request implements \Facula\Base\Implement\Core\Request
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -145,7 +112,7 @@ abstract class FaculaRequestDefaultBase implements FaculaRequestInterface
 
                 foreach ($proxyIPRange as $proxyIP) {
                     if (!filter_var($proxyIP, FILTER_VALIDATE_IP, $this->configs['TPVerifyFlags'])) {
-                        throw new Exception($proxyIP . ' not a valid IP for proxy server.');
+                        throw new \Exception($proxyIP . ' not a valid IP for proxy server.');
                         break;
                         break;
                     }
@@ -195,7 +162,7 @@ abstract class FaculaRequestDefaultBase implements FaculaRequestInterface
         return true;
     }
 
-    public function _inited()
+    public function inited()
     {
         global $_GET, $_POST, $_COOKIE, $_SERVER;
 
@@ -205,9 +172,9 @@ abstract class FaculaRequestDefaultBase implements FaculaRequestInterface
         }
 
         if ((count($_GET) + count($_POST) + count($_COOKIE) + count($_SERVER)) > $this->configs['MaxRequestBlocks']) { // Sec check: Request array element cannot exceed this
-            Facula::core('debug')->exception('ERROR_REQUEST_BLOCKS_OVERLIMIT', 'limit', true);
+            \Facula\Main::core('debug')->exception('ERROR_REQUEST_BLOCKS_OVERLIMIT', 'limit', true);
         } elseif (isset($_SERVER['CONTENT_LENGTH']) && (int)($_SERVER['CONTENT_LENGTH']) > $this->configs['MaxDataSize']) { // Sec check: Request size cannot large than this
-            Facula::core('debug')->exception('ERROR_REQUEST_SIZE_OVERLIMIT', 'limit', true);
+            \Facula\Main::core('debug')->exception('ERROR_REQUEST_SIZE_OVERLIMIT', 'limit', true);
         }
 
         if ($this->configs['AutoMagicQuotes']) { // Impossible by now, remove all slash code back
@@ -268,7 +235,7 @@ abstract class FaculaRequestDefaultBase implements FaculaRequestInterface
                         break;
                 }
             } else {
-                Facula::core('debug')->exception('ERROR_REQUEST_HEADER_SIZE_OVERLIMIT|' . $key, 'limit', true);
+                \Facula\Main::core('debug')->exception('ERROR_REQUEST_HEADER_SIZE_OVERLIMIT|' . $key, 'limit', true);
 
                 return false;
                 break;
@@ -468,15 +435,4 @@ abstract class FaculaRequestDefaultBase implements FaculaRequestInterface
 
         return 0;
     }
-}
-
-class FaculaRequestDefault extends FaculaRequestDefaultBase
-{
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
 }

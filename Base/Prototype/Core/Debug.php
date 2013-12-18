@@ -1,64 +1,33 @@
 <?php
 
-/*****************************************************************************
-    Facula Framework Debug Manager
+/**
+ * Facula Framework Struct Manage Unit
+ *
+ * Facula Framework 2013 (C) Rain Lee
+ *
+ * Facula Framework is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, version 3.
+ *
+ * Facula Framework is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author     Rain Lee <raincious@gmail.com>
+ * @copyright  2013 Rain Lee
+ * @package    FaculaFramework
+ * @version    2.2 prototype
+ * @see        https://github.com/raincious/facula FYI
+ *
+ */
 
-    FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
+namespace Facula\Base\Prototype\Core;
 
-    @Copyright 2013 Rain Lee <raincious@gmail.com>
-    @Author Rain Lee <raincious@gmail.com>
-    @Package FaculaFramework
-    @Version 2.0 prototype
-
-    This file is part of Facula Framework.
-
-    Facula Framework is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published
-    by the Free Software Foundation, version 3.
-
-    Facula Framework is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
-*******************************************************************************/
-
-interface FaculaDebugInterface
-{
-    public function _inited();
-    public function registerHandler($handler);
-    public function exception($info, $type = '', $exit = false, Exception $e = null);
-    public function criticalSection($enter, $fullEnter = false);
-    public function addLog($type, $errorcode, $content, &$backtraces = array());
-
-    public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext);
-}
-
-class FaculaDebug extends FaculaCoreFactory
-{
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
-
-    public static function checkInstance($instance)
-    {
-        if ($instance instanceof FaculaDebugInterface) {
-            return true;
-        } else {
-            throw new Exception('Facula core ' . get_class($instance) . ' needs to implements interface \'FaculaDebugInterface\'');
-        }
-
-        return false;
-    }
-}
-
-abstract class FaculaDebugDefaultBase implements FaculaDebugInterface
+abstract class Debug implements \Facula\Base\Implement\Core\Debug
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -95,7 +64,7 @@ abstract class FaculaDebugDefaultBase implements FaculaDebugInterface
         return true;
     }
 
-    public function _inited()
+    public function inited()
     {
         set_error_handler(function ($errno, $errstr, $errfile, $errline, $errcontext) {
             $this->errorHandler($errno, $errstr, $errfile, $errline, $errcontext);
@@ -140,7 +109,7 @@ abstract class FaculaDebugDefaultBase implements FaculaDebugInterface
     {
         list($time, $micro) = explode('.', microtime(true) . '.' . 0, 3); // Anit error when int returns instead of float
         $date = date('l dS \of F Y h:i:s A', $time);
-        $ip = Facula::core('request')->getClientInfo('ip');
+        $ip = \Facula\Main::core('request')->getClientInfo('ip');
 
         if ($this->configs['LogRoot']) {
             $datefileName = date('Y-m-d H', $time);
@@ -167,7 +136,7 @@ abstract class FaculaDebugDefaultBase implements FaculaDebugInterface
     protected function reportError()
     {
         if (!empty($this->errorRecords) && $this->configs['LogServer']['Enabled']) {
-            $app = Facula::getCoreInfo();
+            $app = \Facula\Main::getCoreInfo();
 
             $data = array(
                 'KEY' => $this->configs['LogServer']['Key'],
@@ -288,7 +257,7 @@ abstract class FaculaDebugDefaultBase implements FaculaDebugInterface
         return false;
     }
 
-    public function exception($info, $type = '', $exit = false, Exception $e = null)
+    public function exception($info, $type = '', $exit = false, \Exception $e = null)
     {
         if (!$this->tempFullDisabled) {
             $backtraces = array_reverse($this->backtrace($e));
@@ -438,15 +407,4 @@ abstract class FaculaDebugDefaultBase implements FaculaDebugInterface
 
         return false;
     }
-}
-
-class FaculaDebugDefault extends FaculaDebugDefaultBase
-{
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
 }

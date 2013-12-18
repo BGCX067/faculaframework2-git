@@ -1,59 +1,33 @@
 <?php
 
-/*****************************************************************************
-    Facula Framework Cacher
+/**
+ * Facula Framework Struct Manage Unit
+ *
+ * Facula Framework 2013 (C) Rain Lee
+ *
+ * Facula Framework is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, version 3.
+ *
+ * Facula Framework is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author     Rain Lee <raincious@gmail.com>
+ * @copyright  2013 Rain Lee
+ * @package    FaculaFramework
+ * @version    2.2 prototype
+ * @see        https://github.com/raincious/facula FYI
+ *
+ */
 
-    FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
+namespace Facula\Base\Prototype\Core;
 
-    @Copyright 2013 Rain Lee <raincious@gmail.com>
-    @Author Rain Lee <raincious@gmail.com>
-    @Package FaculaFramework
-    @Version 2.0 prototype
-
-    This file is part of Facula Framework.
-
-    Facula Framework is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published
-    by the Free Software Foundation, version 3.
-
-    Facula Framework is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
-*******************************************************************************/
-
-interface FaculaCacheInterface
-{
-    public function load($cacheName, $expire = 0);
-    public function save($cacheName, $data);
-}
-
-class FaculaCache extends FaculaCoreFactory
-{
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
-
-    public static function checkInstance($instance)
-    {
-        if ($instance instanceof FaculaCacheinterface) {
-            return true;
-        } else {
-            throw new Exception('Facula core ' . get_class($instance) . ' needs to implements interface \'FaculaCacheInterface\'');
-        }
-
-        return false;
-    }
-}
-
-abstract class FaculaCacheDefaultBase implements FaculaCacheInterface
+abstract class Cache implements \Facula\Base\Implement\Core\Cache
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -180,15 +154,4 @@ abstract class FaculaCacheDefaultBase implements FaculaCacheInterface
 
         return false;
     }
-}
-
-class FaculaCacheDefault extends FaculaCacheDefaultBase
-{
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
 }

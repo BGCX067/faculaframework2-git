@@ -1,63 +1,33 @@
 <?php
 
-/*****************************************************************************
-    Facula Framework HTTP Responser
+/**
+ * Facula Framework Struct Manage Unit
+ *
+ * Facula Framework 2013 (C) Rain Lee
+ *
+ * Facula Framework is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, version 3.
+ *
+ * Facula Framework is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author     Rain Lee <raincious@gmail.com>
+ * @copyright  2013 Rain Lee
+ * @package    FaculaFramework
+ * @version    2.2 prototype
+ * @see        https://github.com/raincious/facula FYI
+ *
+ */
 
-    FaculaFramework 2013 (C) Rain Lee <raincious@gmail.com>
+namespace Facula\Base\Prototype\Core;
 
-    @Copyright 2013 Rain Lee <raincious@gmail.com>
-    @Author Rain Lee <raincious@gmail.com>
-    @Package FaculaFramework
-    @Version 2.0 prototype
-
-    This file is part of Facula Framework.
-
-    Facula Framework is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published
-    by the Free Software Foundation, version 3.
-
-    Facula Framework is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
-*******************************************************************************/
-
-interface FaculaResponseInterface
-{
-    public function _inited();
-    public function setHeader($header);
-    public function setContent($content, $forceRaw = false);
-    public function send($type = 'htm', $persistConn = false);
-    public function setCookie($key, $val = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false);
-    public function unsetCookie($key);
-}
-
-class FaculaResponse extends FaculaCoreFactory
-{
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
-
-    public static function checkInstance($instance)
-    {
-        if ($instance instanceof FaculaResponseInterface) {
-            return true;
-        } else {
-            throw new Exception('Facula core ' . get_class($instance) . ' needs to implements interface \'FaculaResponseInterface\'');
-        }
-
-        return false;
-    }
-}
-
-abstract class FaculaResponseDefaultBase implements FaculaResponseInterface
+abstract class Response implements \Facula\Base\Implement\Core\Response
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -269,7 +239,7 @@ abstract class FaculaResponseDefaultBase implements FaculaResponseInterface
 
     public $configs = array();
 
-    public function __construct(&$cfg, &$common, facula $facula)
+    public function __construct(&$cfg, &$common, $facula)
     {
         $setting = array();
 
@@ -288,13 +258,13 @@ abstract class FaculaResponseDefaultBase implements FaculaResponseInterface
         return true;
     }
 
-    public function _inited()
+    public function inited()
     {
         self::$headers[] = 'Server: Facula Framework';
         self::$headers[] = 'X-Powered-By: Facula Framework ' . __FACULAVERSION__;
         self::$headers[] = 'X-Powered-For: ' . $this->configs['AppVersion'];
 
-        if (Facula::core('request')->getClientInfo('gzip') && $this->configs['GZIPEnabled']) {
+        if (\Facula\Main::core('request')->getClientInfo('gzip') && $this->configs['GZIPEnabled']) {
             $this->configs['UseGZIP'] = true;
         } else {
             $this->configs['UseGZIP'] = false;
@@ -313,14 +283,14 @@ abstract class FaculaResponseDefaultBase implements FaculaResponseInterface
         if (!headers_sent($file, $line)) {
             // If $type is empty, set it to htm as default
             $type = $type ? $type : 'htm';
-            $objCore = Facula::core('object');
+            $objCore = \Facula\Main::core('object');
 
             // Assume we will finish this application after output, calc belowing profile data
-            Facula::$profile['MemoryUsage'] = memory_get_usage(true);
-            Facula::$profile['MemoryPeak'] = memory_get_peak_usage(true);
+            \Facula\Main::$profile['MemoryUsage'] = memory_get_usage(true);
+            \Facula\Main::$profile['MemoryPeak'] = memory_get_peak_usage(true);
 
-            Facula::$profile['OutputTime'] = microtime(true);
-            Facula::$profile['ProductionTime'] = Facula::$profile['OutputTime'] - Facula::$profile['StartTime'];
+            \Facula\Main::$profile['OutputTime'] = microtime(true);
+            \Facula\Main::$profile['ProductionTime'] = \Facula\Main::$profile['OutputTime'] - \Facula\Main::$profile['StartTime'];
 
             // Check size of response_finished hook queue
             if ($objCore->hookSize('response_finished') > 0) {
@@ -342,8 +312,8 @@ abstract class FaculaResponseDefaultBase implements FaculaResponseInterface
             }
 
             if ($this->configs['PSignal']) {
-                header('X-Runtime: ' . round(Facula::$profile['ProductionTime']  * 1000, 2) . 'ms (' . Facula::$profile['ProductionTime'] . 's)');
-                header('X-Memory: ' . (Facula::$profile['MemoryUsage'] / 1024) . 'kb / ' . (Facula::$profile['MemoryPeak'] / 1024) . 'kb');
+                header('X-Runtime: ' . round(\Facula\Main::$profile['ProductionTime']  * 1000, 2) . 'ms (' . \Facula\Main::$profile['ProductionTime'] . 's)');
+                header('X-Memory: ' . (\Facula\Main::$profile['MemoryUsage'] / 1024) . 'kb / ' . (\Facula\Main::$profile['MemoryPeak'] / 1024) . 'kb');
             }
 
             foreach (self::$cookies as $cookie) {
@@ -380,7 +350,7 @@ abstract class FaculaResponseDefaultBase implements FaculaResponseInterface
 
             return true;
         } else {
-            Facula::core('debug')->exception('ERROR_RESPONSE_ALREADY_RESPONSED|File: ' . $file . ' Line: ' . $line . ' Content: ' . substr(self::$content, 0, 32), 'data', false);
+            \Facula\Main::core('debug')->exception('ERROR_RESPONSE_ALREADY_RESPONSED|File: ' . $file . ' Line: ' . $line . ' Content: ' . substr(self::$content, 0, 32), 'data', false);
         }
 
         return false;
@@ -469,15 +439,4 @@ abstract class FaculaResponseDefaultBase implements FaculaResponseInterface
 
         return false;
     }
-}
-
-class FaculaResponseDefault extends FaculaResponseDefaultBase
-{
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
 }

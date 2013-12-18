@@ -25,7 +25,7 @@
  *
  */
 
-namespace Facula\Base\File;
+namespace Facula\Base\Tool\File;
 
 /**
  * Scanner for scan facula components
@@ -69,7 +69,7 @@ class ModuleScanner
         );
 
         foreach ($iterator as $file) {
-            if ($file->isFile()) {
+            if ($file->isFile() && $file->isReadable()) {
                 $moduleFilenames = explode('.', $file->getFilename());
 
                 switch (count($moduleFilenames)) {
