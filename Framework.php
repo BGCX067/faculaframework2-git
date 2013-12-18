@@ -65,7 +65,7 @@ class Framework
 
         // File extension for PHP script files
         'PHPExt' => 'php',
-
+NAMESPACE_SEPARATOR
         // The char to split namespaces
         'NSSplitter' => '\\',
 
@@ -431,7 +431,8 @@ class Framework
                 str_replace(
                     array(
                         '/',
-                        '\\'
+                        '\\',
+                        DIRECTORY_SEPARATOR
                     ),
                     static::$cfg['NSSplitter'],
                     $namespace
@@ -482,7 +483,7 @@ class Framework
         return array(
             'Ref' => & $mapCurrentRef,
             'Parent' => & $mapParentRef,
-            'Remain' => implode(static::$cfg['NSSplitter'], $splitedRemainNS),
+            'Remain' => implode(DIRECTORY_SEPARATOR, $splitedRemainNS),
         );
     }
 
