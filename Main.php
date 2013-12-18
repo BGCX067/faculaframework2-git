@@ -107,11 +107,11 @@ class Main
      */
     public static function run(array &$cfg)
     {
-        spl_autoload_register(function ($class) {
-            return static::loadClass($class);
-        });
-
         if (!static::$instance) {
+            spl_autoload_register(function ($class) {
+                return static::loadClass($class);
+            });
+
             if (isset($cfg['StateCache'][0])) {
                 if (!static::$instance = static::initFromStateCache($cfg['StateCache'])) {
                     static::$instance = new static($cfg);
