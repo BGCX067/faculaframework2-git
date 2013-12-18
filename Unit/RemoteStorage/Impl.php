@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Core Interface
+ * Facula Framework Struct Manage Unit
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -25,9 +25,10 @@
  *
  */
 
-namespace Facula\Base\Implement\Factory;
+namespace Facula\Unit\RemoteStorage;
 
-interface Core
+interface Impl
 {
-    public static function getInstance(array $cfg, array $common, \Facula\Framework $parent);
+    public function __construct($setting);
+    public function upload($localFile, &$error = '');
 }

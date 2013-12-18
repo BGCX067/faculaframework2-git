@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Core Interface
+ * Facula Framework Struct Manage Unit
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -25,9 +25,36 @@
  *
  */
 
-namespace Facula\Base\Implement\Factory;
+namespace Facula\Unit\SMTP;
 
-interface Core
+abstract class Base
 {
-    public static function getInstance(array $cfg, array $common, \Facula\Framework $parent);
+    private $socket = null;
+
+    abstract public function connect(&$error);
+    abstract public function send(array &$email);
+    abstract public function disconnect();
+
+    final protected function getSocket($host, $port, $timeout)
+    {
+        if (!$this->socket) {
+            $this->socket = new Socket($host, $port, $timeout);
+        }
+
+        return $this->socket;
+    }
+
+    final protected function getAuth(array &$auths)
+    {
+        if ($this->socket) {
+            return new Auther($this->socket, $auths);
+        }
+
+        return false;
+    }
+
+    final protected function getData(array $mail)
+    {
+        return new Datar($mail);
+    }
 }

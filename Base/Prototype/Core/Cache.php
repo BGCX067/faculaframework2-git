@@ -27,7 +27,7 @@
 
 namespace Facula\Base\Prototype\Core;
 
-abstract class Cache implements \Facula\Base\Implement\Core\Cache
+abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Cache
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -57,6 +57,11 @@ abstract class Cache implements \Facula\Base\Implement\Core\Cache
         $cfg = null;
         unset($cfg);
 
+        return true;
+    }
+    
+    public function inited()
+    {
         return true;
     }
 

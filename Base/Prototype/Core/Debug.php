@@ -27,7 +27,7 @@
 
 namespace Facula\Base\Prototype\Core;
 
-abstract class Debug implements \Facula\Base\Implement\Core\Debug
+abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Debug
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -55,7 +55,7 @@ abstract class Debug implements \Facula\Base\Implement\Core\Debug
                 'Addr' => isset($cfg['LogServerInterface'][0]) ? $cfg['LogServerInterface'] : '',
                 'Key' => isset($cfg['LogServerKey'][0]) ? $cfg['LogServerKey'] : '',
             ),
-            'Debug' => isset($cfg['Debug']) && $cfg['Debug'] ? true : false,
+            'Debug' => !isset($cfg['Debug']) || $cfg['Debug'] ? true : false,
         );
 
         $cfg = null;
@@ -66,6 +66,10 @@ abstract class Debug implements \Facula\Base\Implement\Core\Debug
 
     public function inited()
     {
+        register_shutdown_function(function () {
+            $this->shutdownTask();
+        }); // Experimentally use our own fatal reporter
+        
         set_error_handler(function ($errno, $errstr, $errfile, $errline, $errcontext) {
             $this->errorHandler($errno, $errstr, $errfile, $errline, $errcontext);
         }, E_ALL); // Use our own error reporter, just like PHP's E_ALL
@@ -73,11 +77,7 @@ abstract class Debug implements \Facula\Base\Implement\Core\Debug
         set_exception_handler(function ($exception) {
             $this->exceptionHandler($exception);
         }); // Use our own exception reporter
-
-        register_shutdown_function(function () {
-            $this->shutdownTask();
-        }); // Experimentally use our own fatal reporter
-
+        
         if (isset($this->configs['LogServer']['Addr'][0])) {
             $this->configs['LogServer']['Enabled'] = true;
         } else {
@@ -105,15 +105,15 @@ abstract class Debug implements \Facula\Base\Implement\Core\Debug
         return true;
     }
 
-    public function addLog($type, $errorcode, $content = '', &$backtraces = array())
+    public function addLog($type, $errorCode, $content = '', &$backtraces = array())
     {
         list($time, $micro) = explode('.', microtime(true) . '.' . 0, 3); // Anit error when int returns instead of float
         $date = date('l dS \of F Y h:i:s A', $time);
-        $ip = \Facula\Main::core('request')->getClientInfo('ip');
+        $ip = \Facula\Framework::core('request')->getClientInfo('ip');
 
         if ($this->configs['LogRoot']) {
             $datefileName = date('Y-m-d H', $time);
-            $errorType = '[' . strtoupper($type) . ']' . ($errorcode ? ':' . $errorcode : '');
+            $errorType = '[' . strtoupper($type) . ']' . ($errorCode ? ':' . $errorCode : '');
 
             $filename = 'log.' . $datefileName . '.php';
             $format = "<?php exit(); ?> {$errorType} {$ip} ({$date}.{$micro}): {$content}";
@@ -124,7 +124,7 @@ abstract class Debug implements \Facula\Base\Implement\Core\Debug
         $this->errorRecords[] = array(
             'Time' => $date,
             'Type' => $type,
-            'ErrorNo' => $errorcode,
+            'ErrorNo' => $errorCode,
             'Content' => $content,
             'Backtraces' => $backtraces,
             'IP' => $ip,
@@ -136,7 +136,7 @@ abstract class Debug implements \Facula\Base\Implement\Core\Debug
     protected function reportError()
     {
         if (!empty($this->errorRecords) && $this->configs['LogServer']['Enabled']) {
-            $app = \Facula\Main::getCoreInfo();
+            $app = \Facula\Framework::getCoreInfo();
 
             $data = array(
                 'KEY' => $this->configs['LogServer']['Key'],
@@ -230,12 +230,12 @@ abstract class Debug implements \Facula\Base\Implement\Core\Debug
                 break;
         }
 
-        $this->exception(sprintf('Error code %s (%s) in file %s line %s', 'PHP('.$errno.')', $errstr, $errfile, $errline), 'PHP|PHP:' . $errno, !$exit ? $this->configs['ExitOnAnyError'] : true);
+        return $this->exception(sprintf('Error code %s (%s) in file %s line %s', 'PHP('.$errno.')', $errstr, $errfile, $errline), 'PHP|PHP:' . $errno, !$exit ? $this->configs['ExitOnAnyError'] : true);
     }
 
     protected function exceptionHandler($exception)
     {
-        $this->exception('Exception: ' . $exception->getMessage(), 'Exception', true, $exception);
+        return $this->exception('Exception: ' . $exception->getMessage(), 'Exception', true, $exception);
     }
 
     protected function fatalHandler()
@@ -373,11 +373,12 @@ abstract class Debug implements \Facula\Base\Implement\Core\Debug
         return $result;
     }
 
-    protected function displayErrorBanner($message, $backtraces, $returncode = false, $callerOffset = 0)
+    protected function displayErrorBanner($message, array $backtraces, $returncode = false, $callerOffset = 0)
     {
-        $code = '';
+        $code = $file = '';
+        $line = 0;
 
-        if (!headers_sent()) {
+        if (!headers_sent($file, $line)) {
             if ($this->configs['Debug']) {
                 $code = '<div class="facula-error" style="clear:both;"><span class="title" style="clear:both;font-size:150%;">Facula Error: <strong>' . str_replace(array(FACULA_ROOT, PROJECT_ROOT), array('[Facula Dir]', '[Project Dir]'), $message) . '</strong></span><ul>';
 
@@ -403,6 +404,8 @@ abstract class Debug implements \Facula\Base\Implement\Core\Debug
             }
 
             return true;
+        } else {
+            $this->addLog('Error banner', '0', 'Encountered an error but header already sent in file ' . $file . ' line: ' . $line);
         }
 
         return false;

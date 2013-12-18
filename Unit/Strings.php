@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Core Interface
+ * Facula Framework Struct Manage Unit
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -25,9 +25,33 @@
  *
  */
 
-namespace Facula\Base\Implement\Factory;
+namespace Facula\Unit;
 
-interface Core
+abstract class Strings
 {
-    public static function getInstance(array $cfg, array $common, \Facula\Framework $parent);
+    public static function substr($string, $start, $len, $apostrophe = false)
+    {
+        if ($len > mb_strlen($string)) {
+            return $string;
+        } else {
+            if ($apostrophe && $len > 3) {
+                return mb_substr($string, $start, $len - 3) . '...';
+            } else {
+                return mb_substr($string, $start, $len);
+            }
+
+        }
+
+        return false;
+    }
+
+    public static function strlen($string)
+    {
+        return mb_strlen($string);
+    }
+
+    public static function strpos($haystack, $needle, $offset = 0)
+    {
+        return mb_strpos($haystack, $needle, $offset);
+    }
 }

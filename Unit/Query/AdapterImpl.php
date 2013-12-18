@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Core Interface
+ * Facula Framework Struct Manage Unit
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -25,9 +25,15 @@
  *
  */
 
-namespace Facula\Base\Implement\Factory;
+namespace Facula\Unit\Query;
 
-interface Core
+interface AdapterImpl
 {
-    public static function getInstance(array $cfg, array $common, \Facula\Framework $parent);
+    public function __construct($tableName, &$querySet);
+    public function build();
+
+    public function fetch($statement);
+    public function update($statement);
+    public function insert($statement, $primaryKey);
+    public function delete($statement);
 }

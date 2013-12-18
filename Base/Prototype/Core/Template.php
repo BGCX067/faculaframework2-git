@@ -27,7 +27,7 @@
 
 namespace Facula\Base\Prototype\Core;
 
-abstract class Template implements \Facula\Base\Implement\Core\Template
+abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Template
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -61,8 +61,8 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
             'Cache' => isset($cfg['CacheTemplate']) && $cfg['CacheTemplate'] ? true : false,
             'Compress' => isset($cfg['CompressOutput']) && $cfg['CompressOutput'] ? true : false,
             'Renew' => isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ? true : false,
-            'Render' => isset($cfg['Render']) && class_exists($cfg['Render']) ? $cfg['Render'] : '\Facula\Base\Tool\Templating\Render',
-            'Compiler' => isset($cfg['Compiler']) && class_exists($cfg['Compiler']) ? $cfg['Compiler'] : '\Facula\Base\Tool\Templating\Compiler',
+            'Render' => isset($cfg['Render'][0]) && class_exists($cfg['Render']) ? $cfg['Render'] : '\Facula\Base\Tool\Paging\Render',
+            'Compiler' => isset($cfg['Compiler'][0]) && class_exists($cfg['Compiler']) ? $cfg['Compiler'] : '\Facula\Base\Tool\Paging\Compiler',
             'CacheTTL' => isset($cfg['CacheMaxLifeTime']) ? (int)($cfg['CacheMaxLifeTime']) : null,
             'CacheVer' => $common['BootVersion'],
         );
@@ -132,10 +132,10 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
     public function inited()
     {
         $error = '';
-        $selectedLanguage = $clientLanguage = array();
+        $selectedLanguage = $clientLanguage = $errors = array();
 
         // Determine what language can be used for this client
-        if ($siteLanguage = \Facula\Main::core('request')->getClientInfo('languages')) {
+        if ($siteLanguage = \Facula\Framework::core('request')->getClientInfo('languages')) {
             if (isset($this->pool['File']['Lang'])) {
                 $clientLanguage = array_keys($this->pool['File']['Lang']);
 
@@ -151,11 +151,11 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
 
         // Set Essential assign value
         $this->assigned['Time'] = FACULA_TIME;
-        $this->assigned['RootURL'] = \Facula\Main::core('request')->getClientInfo('rootURL');
-        $this->assigned['AbsRootURL'] = \Facula\Main::core('request')->getClientInfo('absRootURL');
+        $this->assigned['RootURL'] = \Facula\Framework::core('request')->getClientInfo('rootURL');
+        $this->assigned['AbsRootURL'] = \Facula\Framework::core('request')->getClientInfo('absRootURL');
         $this->assigned['Message'] = array();
 
-        \Facula\Main::core('object')->runHook('template_inited', array(), $error);
+        \Facula\Framework::summonHook('template_inited', array(), $errors);
 
         return true;
     }
@@ -190,7 +190,7 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
             } elseif (isset($message['Message'])) {
                 $msgString = $message['Message'];
             } else {
-                \Facula\Main::core('debug')->exception('ERROR_TEMPLATE_MESSAGE_NOCONTENT', 'template', true);
+                \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_MESSAGE_NOCONTENT', 'template', true);
                 return false;
             }
 
@@ -214,7 +214,7 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
     public function render($templateName, $templateSet = '', $expire = 0, $expiredCallback = null, $cacheFactor = '')
     {
         $templatePath = $content = '';
-
+        
         if (!is_null($expire)) {
             if ($templatePath = $this->getCacheTemplate($templateName, $templateSet, $expire, $expiredCallback, $cacheFactor)) {
                 return $this->doRender($templateName, $templatePath);
@@ -232,7 +232,7 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
     {
         $templatePath = $templateContent = $cachedPagePath = $cachedPageRoot = $cachedPageFactor = $cachedPageFile = $cachedPageFactorDir = $cachedTmpPage = $renderCachedContent = $renderCachedOutputContent = '';
         $splitedCompiledContentIndexLen = $splitedRenderedContentLen = $currentExpireTimestamp = 0;
-        $splitedCompiledContent = $splitedRenderedContent = array();
+        $splitedCompiledContent = $splitedRenderedContent = $errors = array();
 
         if (!$expire && !is_null($this->configs['CacheTTL'])) {
             $expire = $this->configs['CacheTTL'];
@@ -278,8 +278,8 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
                             $cachedTmpPage = $cachedPagePath . '.temp.php';
 
                             if (file_put_contents($cachedTmpPage, $compiledContentForCached)) {
-                                \Facula\Main::core('object')->runHook('template_cache_prerender_*', array(), $error);
-                                \Facula\Main::core('object')->runHook('template_cache_prerender_' . $templateName, array(), $error);
+                                \Facula\Framework::summonHook('template_cache_prerender_*', array(), $errors);
+                                \Facula\Framework::summonHook('template_cache_prerender_' . $templateName, array(), $errors);
 
                                 // Render nocached compiled content
                                 if (($renderCachedContent = $this->doRender($templateName, $cachedTmpPage)) && unlink($cachedTmpPage)) {
@@ -315,7 +315,7 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
                 }
             }
         } else {
-            \Facula\Main::core('debug')->exception('ERROR_TEMPLATE_CACHE_DISABLED', 'template', true);
+            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_CACHE_DISABLED', 'template', true);
         }
 
         return false;
@@ -353,7 +353,7 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
             } elseif (isset($this->pool['File']['Tpl'][$templateName]['default'])) {
                 $templatePath = $this->pool['File']['Tpl'][$templateName]['default'];
             } else {
-                \Facula\Main::core('debug')->exception('ERROR_TEMPLATE_NOTFOUND|' . $templateName, 'template', true);
+                \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_NOTFOUND|' . $templateName, 'template', true);
 
                 return false;
             }
@@ -373,7 +373,7 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
 
             return true;
         } else {
-            \Facula\Main::core('debug')->exception('ERROR_TEMPLATE_IMPORT_TEMPLATE_EXISTED|' . $name, 'template', true);
+            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_IMPORT_TEMPLATE_EXISTED|' . $name, 'template', true);
         }
 
         return false;
@@ -386,7 +386,7 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
 
             return true;
         } else {
-            \Facula\Main::core('debug')->exception('ERROR_TEMPLATE_IMPORT_LANGUAGE_UNSPPORTED|' . $name, 'template', true);
+            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_IMPORT_LANGUAGE_UNSPPORTED|' . $name, 'template', true);
         }
 
         return false;
@@ -410,9 +410,9 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
     /* Load setting for compiling */
     protected function doRender(&$templateName, &$compiledTpl)
     {
-        $error = '';
-        \Facula\Main::core('object')->runHook('template_render_*', array(), $error);
-        \Facula\Main::core('object')->runHook('template_render_' . $templateName, array(), $error);
+        $errors = array();
+        \Facula\Framework::summonHook('template_render_*', array(), $errors);
+        \Facula\Framework::summonHook('template_render_' . $templateName, array(), $errors);
 
         $render = new $this->configs['Render']($compiledTpl, $this->assigned);
 
@@ -421,10 +421,11 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
 
     protected function doCompile(&$templateName, &$sourceTpl, &$resultTpl)
     {
-        $sourceContent = $compiledContent = $error = '';
+        $sourceContent = $compiledContent = '';
+        $errors = array();
 
-        \Facula\Main::core('object')->runHook('template_compile_*', array(), $error);
-        \Facula\Main::core('object')->runHook('template_compile_' . $templateName, array(), $error);
+        \Facula\Framework::summonHook('template_compile_*', array(), $errors);
+        \Facula\Framework::summonHook('template_compile_' . $templateName, array(), $errors);
 
         if (!isset($this->pool['LanguageMap'])) {
             $this->loadLangMap();
@@ -440,10 +441,10 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
 
                 return file_put_contents($resultTpl, self::$setting['TemplateFileSafeCode'][0] . self::$setting['TemplateFileSafeCode'][1] . $compiledContent);
             } else {
-                \Facula\Main::core('debug')->exception('ERROR_TEMPLATE_COMPILE_FAILED|' . $sourceTpl, 'template', true);
+                \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILE_FAILED|' . $sourceTpl, 'template', true);
             }
         } else {
-            \Facula\Main::core('debug')->exception('ERROR_TEMPLATE_COMPILE_OPEN_FAILED|' . $sourceTpl, 'template', true);
+            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILE_OPEN_FAILED|' . $sourceTpl, 'template', true);
         }
 
         return false;
@@ -451,7 +452,7 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
 
     protected function loadLangMap()
     {
-        $this->pool['LanguageMap'] = $langMap = $langMapPre = $langMapTemp = array(); // Set LanguageMap first, because we need to tell application, we already tried to get lang file so it will not waste time retrying it.
+        $this->pool['LanguageMap'] = $langMap = $langMapPre = $langMapTemp = $errors = array(); // Set LanguageMap first, because we need to tell application, we already tried to get lang file so it will not waste time retrying it.
 
         $compiledLangFile = $this->configs['Compiled'] . DIRECTORY_SEPARATOR . 'compiledLanguage.' . $this->pool['Language'] . '.php';
 
@@ -465,7 +466,7 @@ abstract class Template implements \Facula\Base\Implement\Core\Template
                 return true;
             }
         } else { // load default lang file then client lang file
-            \Facula\Main::core('object')->runHook('template_load_language', array(), $error);
+            \Facula\Framework::summonHook('template_load_language', array(), $errors);
 
             // Must load default lang first
             foreach ($this->pool['File']['Lang']['default'] as $file) {

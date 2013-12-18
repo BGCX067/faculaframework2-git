@@ -27,7 +27,7 @@
 
 namespace Facula\Base\Prototype\Core;
 
-abstract class PDO implements \Facula\Base\Implement\Core\PDO
+abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\PDO
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -126,10 +126,7 @@ abstract class PDO implements \Facula\Base\Implement\Core\PDO
         } else {
             throw new \Exception('PHP Data Object (PDO) interface not found. This server may not support it.');
         }
-
-        $cfg = null;
-        unset($cfg);
-
+        
         return true;
     }
 
@@ -157,6 +154,8 @@ abstract class PDO implements \Facula\Base\Implement\Core\PDO
             default:
                 break;
         }
+        
+        return true;
     }
 
     protected function getDatabaseByTable($tableName)
@@ -227,7 +226,7 @@ abstract class PDO implements \Facula\Base\Implement\Core\PDO
                         }
                     }
                 } else {
-                    \Facula\Main::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSION_TABLE', 'data', true);
+                    \Facula\Framework::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSION_TABLE', 'data', true);
                 }
                 break;
 
@@ -253,7 +252,7 @@ abstract class PDO implements \Facula\Base\Implement\Core\PDO
                         }
                     }
                 } else {
-                    \Facula\Main::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSION_OPERATION', 'data', true);
+                    \Facula\Framework::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSION_OPERATION', 'data', true);
                 }
                 break;
 
@@ -283,16 +282,16 @@ abstract class PDO implements \Facula\Base\Implement\Core\PDO
                         }
                     }
                 } else {
-                    \Facula\Main::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSED_TABLEOPERATION', 'data', true);
+                    \Facula\Framework::core('debug')->exception('ERROR_PDO_GETCONNECTION_SETTINGMISSED_TABLEOPERATION', 'data', true);
                 }
                 break;
 
             default:
-                \Facula\Main::core('debug')->exception('ERROR_PDO_UNKNOWNSELECTMETHOD|' . $this->configs['SelectMethod'], 'data', true);
+                \Facula\Framework::core('debug')->exception('ERROR_PDO_UNKNOWNSELECTMETHOD|' . $this->configs['SelectMethod'], 'data', true);
                 break;
         }
 
-        \Facula\Main::core('debug')->exception('ERROR_PDO_NOSERVERAVAILABLE' . ($error ? '|' . $error : '|' . implode(',', $setting)), 'data');
+        \Facula\Framework::core('debug')->exception('ERROR_PDO_NOSERVERAVAILABLE' . ($error ? '|' . $error : '|' . implode(',', $setting)), 'data');
 
         return false;
     }
@@ -316,28 +315,28 @@ abstract class PDO implements \Facula\Base\Implement\Core\PDO
 
         if (!isset($this->map['DBConn'][$dbIndex]['Connection'])) {
             // Enter Critical Section so no error below belowing code will cause error
-            \Facula\Main::core('debug')->criticalSection(true);
+            \Facula\Framework::core('debug')->criticalSection(true);
 
             try {
-                $dbh = new PDO($this->pool['DBs'][$dbIndex]['Driver'] . ':' . $this->pool['DBs'][$dbIndex]['Connection'], $this->pool['DBs'][$dbIndex]['Username'], $this->pool['DBs'][$dbIndex]['Password'], array(\PDO::ATTR_ERRMODE => \PDO::ERRMODE_WARNING, \PDO::ATTR_TIMEOUT => $this->pool['DBs'][$dbIndex]['Timeout'], \PDO::ATTR_PERSISTENT => $this->pool['DBs'][$dbIndex]['Persistent']) + $this->pool['DBs'][$dbIndex]['Options']);
+                $dbh = new \PDO($this->pool['DBs'][$dbIndex]['Driver'] . ':' . $this->pool['DBs'][$dbIndex]['Connection'], $this->pool['DBs'][$dbIndex]['Username'], $this->pool['DBs'][$dbIndex]['Password'], array(\PDO::ATTR_ERRMODE => \PDO::ERRMODE_WARNING, \PDO::ATTR_TIMEOUT => $this->pool['DBs'][$dbIndex]['Timeout'], \PDO::ATTR_PERSISTENT => $this->pool['DBs'][$dbIndex]['Persistent']) + $this->pool['DBs'][$dbIndex]['Options']);
 
                 $this->pool['DBs'][$dbIndex]['LstConnected'] = $currentTime;
                 $dbh->_connection = &$this->pool['DBs'][$dbIndex];
 
                 $successed = true;
-            } catch (PDO\Exception $e) {
+            } catch (\PDOException $e) {
                 $error = 'PDO Connection failed: Database No.' . $dbIndex . ' Error: ' . $e->getMessage();
             }
 
             // Exit Critical Section, restore error caught
-            \Facula\Main::core('debug')->criticalSection(false);
+            \Facula\Framework::core('debug')->criticalSection(false);
 
             if ($successed) {
                 $this->map['DBConn'][$dbIndex]['Connection'] = &$dbh;
 
                 return $this->map['DBConn'][$dbIndex]['Connection'];
             } else {
-                \Facula\Main::core('debug')->addLog('data', $error);
+                \Facula\Framework::core('debug')->addLog('data', $error);
             }
         } else {
             return $this->map['DBConn'][$dbIndex]['Connection'];

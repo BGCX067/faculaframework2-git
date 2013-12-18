@@ -27,7 +27,7 @@
 
 namespace Facula\Base\Prototype\Core;
 
-abstract class Request implements \Facula\Base\Implement\Core\Request
+abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Request
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -172,9 +172,9 @@ abstract class Request implements \Facula\Base\Implement\Core\Request
         }
 
         if ((count($_GET) + count($_POST) + count($_COOKIE) + count($_SERVER)) > $this->configs['MaxRequestBlocks']) { // Sec check: Request array element cannot exceed this
-            \Facula\Main::core('debug')->exception('ERROR_REQUEST_BLOCKS_OVERLIMIT', 'limit', true);
+            \Facula\Framework::core('debug')->exception('ERROR_REQUEST_BLOCKS_OVERLIMIT', 'limit', true);
         } elseif (isset($_SERVER['CONTENT_LENGTH']) && (int)($_SERVER['CONTENT_LENGTH']) > $this->configs['MaxDataSize']) { // Sec check: Request size cannot large than this
-            \Facula\Main::core('debug')->exception('ERROR_REQUEST_SIZE_OVERLIMIT', 'limit', true);
+            \Facula\Framework::core('debug')->exception('ERROR_REQUEST_SIZE_OVERLIMIT', 'limit', true);
         }
 
         if ($this->configs['AutoMagicQuotes']) { // Impossible by now, remove all slash code back
@@ -235,7 +235,7 @@ abstract class Request implements \Facula\Base\Implement\Core\Request
                         break;
                 }
             } else {
-                \Facula\Main::core('debug')->exception('ERROR_REQUEST_HEADER_SIZE_OVERLIMIT|' . $key, 'limit', true);
+                \Facula\Framework::core('debug')->exception('ERROR_REQUEST_HEADER_SIZE_OVERLIMIT|' . $key, 'limit', true);
 
                 return false;
                 break;

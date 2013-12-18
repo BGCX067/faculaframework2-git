@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Core Interface
+ * Facula Framework Plugin Interface
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -25,9 +25,12 @@
  *
  */
 
-namespace Facula\Base\Implement\Factory;
+namespace Facula\App;
 
-interface Core
+abstract class Model
 {
-    public static function getInstance(array $cfg, array $common, \Facula\Framework $parent);
+    abstract public function create(array $data);
+    abstract public function update($primaryKey, array $data);
+    abstract public function read($primaryKey);
+    abstract public function delete($primaryKey);
 }

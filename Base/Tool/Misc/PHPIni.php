@@ -25,12 +25,39 @@
  *
  */
 
-namespace Facula\Base\Implement\Core;
+namespace \Facula\Base\Tool\Misc;
 
-interface Object
+abstract class PHPIni
 {
-    public function inited();
-    public function getInstance($object, $args, $cache = false);
-    public function callFunction($function, $args = array());
-    public function run($app, $args = array(), $cache = false);
+    public static function convertIniUnit($str)
+    {
+        $strLen = 0;
+        $lastChar = '';
+
+        if (is_numeric($str)) {
+            return (int)$str;
+        } else {
+            $strLen = strlen($str);
+
+            if ($lastChar = $str[$strLen - 1]) {
+                $strSelected = substr($str, 0, $strLen - 1);
+
+                switch (strtolower($lastChar)) {
+                    case 'k':
+                        return (int)($strSelected) * 1024;
+                        break;
+
+                    case 'm':
+                        return (int)($strSelected) * 1048576;
+                        break;
+
+                    case 'g':
+                        return (int)($strSelected) * 1073741824;
+                        break;
+                }
+            }
+        }
+
+        return 0;
+    }
 }

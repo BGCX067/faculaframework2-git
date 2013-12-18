@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Core Interface
+ * Facula Framework Struct Manage Unit
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -25,9 +25,21 @@
  *
  */
 
-namespace Facula\Base\Implement\Factory;
+namespace Facula\Unit\Imager;
 
-interface Core
+interface HandlerImpl
 {
-    public static function getInstance(array $cfg, array $common, \Facula\Framework $parent);
+    public function __construct($file, &$config = array());
+
+    public function getLastError();
+    public function getImageRes();
+
+    public function resize($width, $height, $resizeSmall = false, $drawAreaWidth = 0, $drawAreaHeight = 0);
+    public function ratioResize($width, $height, $resizeSmall = false);
+    public function fillResize($width, $height);
+
+    public function waterMark($file, $align = 'center center', $margin = 0);
+    public function waterMarkText($text, $align = 'center center', $margin = 0, $color = array(255, 255, 255));
+
+    public function save($file);
 }

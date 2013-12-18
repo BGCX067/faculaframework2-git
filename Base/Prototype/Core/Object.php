@@ -27,7 +27,7 @@
 
 namespace Facula\Base\Prototype\Core;
 
-abstract class Object implements \Facula\Base\Implement\Core\Object
+abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Object
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -124,7 +124,7 @@ abstract class Object implements \Facula\Base\Implement\Core\Object
                 // Call init after instance has been created to pre init it
                 if (method_exists($newinstance, 'init')) {
                     if (!$newinstance->init()) {
-                        \Facula\Main::core('debug')->exception('ERROR_OBJECT_NEWINSTNACE_INIT_FAILED|' . $object, 'object', true);
+                        \Facula\Framework::core('debug')->exception('ERROR_OBJECT_NEWINSTNACE_INIT_FAILED|' . $object, 'object', true);
 
                         return false;
                     }
@@ -182,7 +182,7 @@ abstract class Object implements \Facula\Base\Implement\Core\Object
                         break;
 
                     default:
-                        \Facula\Main::core('debug')->exception('ERROR_OBJECT_NEWINSTNACE_MAXPARAMEXCEEDED', 'object', true);
+                        \Facula\Framework::core('debug')->exception('ERROR_OBJECT_NEWINSTNACE_MAXPARAMEXCEEDED', 'object', true);
                         break;
                 }
 
@@ -194,7 +194,7 @@ abstract class Object implements \Facula\Base\Implement\Core\Object
                 // Call init after instance has been created to pre init it
                 if (method_exists($newinstance, 'init')) {
                     if (!$newinstance->init()) {
-                        \Facula\Main::core('debug')->exception('ERROR_OBJECT_NEWINSTNACE_INIT_FAILED|' . $object, 'object', true);
+                        \Facula\Framework::core('debug')->exception('ERROR_OBJECT_NEWINSTNACE_INIT_FAILED|' . $object, 'object', true);
 
                         return false;
                     }
@@ -208,7 +208,7 @@ abstract class Object implements \Facula\Base\Implement\Core\Object
                 return $newinstance;
             }
         } else {
-            \Facula\Main::core('debug')->exception('ERROR_OBJECT_NEWINSTNACE_OBJECTNOTFOUND|' . $object, 'object', true);
+            \Facula\Framework::core('debug')->exception('ERROR_OBJECT_NEWINSTNACE_OBJECTNOTFOUND|' . $object, 'object', true);
         }
 
         return false;
@@ -269,5 +269,36 @@ abstract class Object implements \Facula\Base\Implement\Core\Object
         }
 
         return false;
+    }
+    
+    public function run($app, $args = array(), $cache = false)
+    {
+        $handler = $hookResult = $callResult = null;
+        $errors = array();
+        $appParam = explode('::', str_replace(array('::', '->'), '::', $app), 2);
+
+        if ($handler = $this->getInstance($appParam[0], $args, $cache)) {
+            if (isset($appParam[1]) && method_exists($handler, $appParam[1])) {
+                $hookResult = \Facula\Framework::summonHook('call_' . $appParam[0] . '::' . $appParam[1] . '_before', $args, $errors);
+
+                $callResult = $this->callFunction(array($handler, $appParam[1]), $args);
+
+                \Facula\Framework::summonHook('call_' . $appParam[0] . '::' . $appParam[1] . '_after', array(
+                    'Call' => $callResult,
+                    'Hook' => $hookResult,
+                ), $errors);
+            } elseif (method_exists($handler, '_run')) {
+                $hookResult = \Facula\Framework::summonHook('call_' . $appParam[0] . '_before', $args, $errors);
+
+                $callResult = $this->callFunction(array($handler, '_run'), $args);
+
+                \Facula\Framework::summonHook('call_' . $appParam[0] . '_after', array(
+                    'Call' => $callResult,
+                    'Hook' => $hookResult,
+                ), $errors);
+            }
+        }
+
+        return $handler;
     }
 }

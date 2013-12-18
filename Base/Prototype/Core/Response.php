@@ -27,7 +27,7 @@
 
 namespace Facula\Base\Prototype\Core;
 
-abstract class Response implements \Facula\Base\Implement\Core\Response
+abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Response
 {
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -264,7 +264,7 @@ abstract class Response implements \Facula\Base\Implement\Core\Response
         self::$headers[] = 'X-Powered-By: Facula Framework ' . __FACULAVERSION__;
         self::$headers[] = 'X-Powered-For: ' . $this->configs['AppVersion'];
 
-        if (\Facula\Main::core('request')->getClientInfo('gzip') && $this->configs['GZIPEnabled']) {
+        if (\Facula\Framework::core('request')->getClientInfo('gzip') && $this->configs['GZIPEnabled']) {
             $this->configs['UseGZIP'] = true;
         } else {
             $this->configs['UseGZIP'] = false;
@@ -275,25 +275,26 @@ abstract class Response implements \Facula\Base\Implement\Core\Response
 
     public function send($type = 'htm', $persistConn = false)
     {
-        $file = $line = $error = $oldBufferContent = $finalContent = '';
+        $file = $line = $oldBufferContent = $finalContent = '';
         $hookResult = null;
         $finalContentLen = 0;
         $thereIndiscernible = false;
+        $errors = array();
 
         if (!headers_sent($file, $line)) {
             // If $type is empty, set it to htm as default
             $type = $type ? $type : 'htm';
-            $objCore = \Facula\Main::core('object');
+            $objCore = \Facula\Framework::core('object');
 
             // Assume we will finish this application after output, calc belowing profile data
-            \Facula\Main::$profile['MemoryUsage'] = memory_get_usage(true);
-            \Facula\Main::$profile['MemoryPeak'] = memory_get_peak_usage(true);
+            \Facula\Framework::$profile['MemoryUsage'] = memory_get_usage(true);
+            \Facula\Framework::$profile['MemoryPeak'] = memory_get_peak_usage(true);
 
-            \Facula\Main::$profile['OutputTime'] = microtime(true);
-            \Facula\Main::$profile['ProductionTime'] = \Facula\Main::$profile['OutputTime'] - \Facula\Main::$profile['StartTime'];
+            \Facula\Framework::$profile['OutputTime'] = microtime(true);
+            \Facula\Framework::$profile['ProductionTime'] = \Facula\Framework::$profile['OutputTime'] - \Facula\Framework::$profile['StartTime'];
 
             // Check size of response_finished hook queue
-            if ($objCore->hookSize('response_finished') > 0) {
+            if (\Facula\Framework::getHookSize('response_finished') > 0) {
                 ignore_user_abort(true);
 
                 $thereIndiscernible = true;
@@ -312,8 +313,8 @@ abstract class Response implements \Facula\Base\Implement\Core\Response
             }
 
             if ($this->configs['PSignal']) {
-                header('X-Runtime: ' . round(\Facula\Main::$profile['ProductionTime']  * 1000, 2) . 'ms (' . \Facula\Main::$profile['ProductionTime'] . 's)');
-                header('X-Memory: ' . (\Facula\Main::$profile['MemoryUsage'] / 1024) . 'kb / ' . (\Facula\Main::$profile['MemoryPeak'] / 1024) . 'kb');
+                header('X-Runtime: ' . round(\Facula\Framework::$profile['ProductionTime']  * 1000, 2) . 'ms (' . \Facula\Framework::$profile['ProductionTime'] . 's)');
+                header('X-Memory: ' . (\Facula\Framework::$profile['MemoryUsage'] / 1024) . 'kb / ' . (\Facula\Framework::$profile['MemoryPeak'] / 1024) . 'kb');
             }
 
             foreach (self::$cookies as $cookie) {
@@ -330,7 +331,7 @@ abstract class Response implements \Facula\Base\Implement\Core\Response
                 header('Connection: Close');
             }
 
-            $hookResult = $objCore->runHook('response_sending', array($finalContent), $error);
+            $hookResult = \Facula\Framework::summonHook('response_sending', array($finalContent), $errors);
 
             header('Content-Length: ' . strlen($finalContent));
 
@@ -345,12 +346,12 @@ abstract class Response implements \Facula\Base\Implement\Core\Response
             flush();
 
             if ($thereIndiscernible) {
-                $objCore->runHook('response_finished', $hookResult, $error);
+                \Facula\Framework::summonHook('response_finished', $hookResult, $errors);
             }
 
             return true;
         } else {
-            \Facula\Main::core('debug')->exception('ERROR_RESPONSE_ALREADY_RESPONSED|File: ' . $file . ' Line: ' . $line . ' Content: ' . substr(self::$content, 0, 32), 'data', false);
+            \Facula\Framework::core('debug')->exception('ERROR_RESPONSE_ALREADY_RESPONSED|File: ' . $file . ' Line: ' . $line . ' Content: ' . substr(self::$content, 0, 32), 'data', false);
         }
 
         return false;

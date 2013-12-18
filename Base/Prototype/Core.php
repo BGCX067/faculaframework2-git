@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Core Interface
+ * Facula Framework Struct Manage Unit
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -25,9 +25,9 @@
  *
  */
 
-namespace Facula\Base\Implement\Factory;
+namespace Facula\Base\Prototype;
 
-interface Core
+abstract class Core
 {
-    public static function getInstance(array $cfg, array $common, \Facula\Framework $parent);
+    abstract public function inited();
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Core Interface
+ * Facula Framework Struct Manage Unit
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -25,9 +25,29 @@
  *
  */
 
-namespace Facula\Base\Implement\Factory;
+namespace Facula\Unit\Query;
 
-interface Core
+interface Impl
 {
-    public static function getInstance(array $cfg, array $common, \Facula\Framework $parent);
+    public static function from($tableName, $autoParse = false);
+
+    public function select($fields);
+    public function insert($fields);
+    public function update($fields);
+    public function delete($fields);
+
+    public function where($logic, $fieldName, $operator, $value);
+    public function having($logic, $fieldName, $operator, $value);
+
+    public function group($fieldName);
+    public function order($fieldName, $sort);
+
+    public function value($value);
+    public function set($values);
+
+    public function limit($offset, $distance);
+
+    public function get();
+    public function fetch();
+    public function save();
 }

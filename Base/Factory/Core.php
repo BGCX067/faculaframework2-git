@@ -31,7 +31,7 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
 {
     private static $instances = array();
 
-    final public static function getInstance(array $cfg, array $common, \Facula\Main $parent)
+    final public static function getInstance(array $cfg, array $common, \Facula\Framework $parent)
     {
         $caller = get_called_class();
         // If $cfg['Core'] has beed set, means user wants to use their own core instead of default one
@@ -80,6 +80,15 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
     {
         $classInstance = get_class($instance);
         $classInterface = '';
+        
+        if (!($instance instanceof \Facula\Base\Prototype\Core)) {
+            throw new \Exception(
+                'Facula core '
+                . $classInstance
+                . ' must be extend from base class '
+                . '\\Facula\\Base\\Prototype\\Core'
+            );
+        }
 
         if (!isset(static::$interface)) {
             return true;
