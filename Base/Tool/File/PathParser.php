@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Module Scanner
+ * Path Parser
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,16 +19,15 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Base\Tool\File;
 
 /**
- * Scanner for scan facula components
+ * Parsing the path string to make it valid
  */
 class PathParser
 {
@@ -41,7 +40,14 @@ class PathParser
 
     public static function get($path)
     {
-        $rightPath = rtrim(str_replace(static::$config['Separators'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+        $rightPath = rtrim(
+            str_replace(
+                static::$config['Separators'],
+                DIRECTORY_SEPARATOR,
+                $path
+            ),
+            DIRECTORY_SEPARATOR
+        );
 
         while (strpos($rightPath, DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR) === true) {
             $rightPath = str_replace(

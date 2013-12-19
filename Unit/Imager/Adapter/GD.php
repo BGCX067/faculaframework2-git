@@ -19,10 +19,9 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Unit\Imager\Adapter;

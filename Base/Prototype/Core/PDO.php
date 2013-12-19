@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * PDO Core Prototype
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,14 +19,16 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Base\Prototype\Core;
 
+/**
+ * Prototype class for PDO core for make core remaking more easy
+ */
 abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\PDO
 {
     public static $plate = array(
@@ -126,7 +128,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
         } else {
             throw new \Exception('PHP Data Object (PDO) interface not found. This server may not support it.');
         }
-        
+
         return true;
     }
 
@@ -154,7 +156,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
             default:
                 break;
         }
-        
+
         return true;
     }
 

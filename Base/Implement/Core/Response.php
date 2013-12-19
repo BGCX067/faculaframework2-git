@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Response Core Interface
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,7 +19,7 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
  *
@@ -27,6 +27,9 @@
 
 namespace Facula\Base\Implement\Core;
 
+/**
+ * Interface that must be implemented by any Response function core
+ */
 interface Response
 {
     public function inited();

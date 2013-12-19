@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Page Compiler
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,15 +19,17 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Base\Tool\Paging;
 
-class Compiler
+/**
+ * Provide a space to compile Facula page
+ */
+class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 {
     /*
         Format rules and parse priority:
@@ -87,15 +89,7 @@ class Compiler
 
     private $tagPositionMaps = array();
 
-    public function __construct(&$pool, &$sourceTpl)
-    {
-        $this->pool = $pool;
-        $this->sourceContent = $sourceTpl;
-
-        return true;
-    }
-
-    public function addTag($tag, $command)
+    public static function addTag($tag, $command)
     {
         foreach (self::$setting as $format) {
             if ($format['Tag'] == $tag) {
@@ -119,6 +113,14 @@ class Compiler
         }
 
         return false;
+    }
+
+    public function __construct(&$pool, &$sourceTpl)
+    {
+        $this->pool = $pool;
+        $this->sourceContent = $sourceTpl;
+
+        return true;
     }
 
     public function compile()

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Debug Core Prototype
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,14 +19,16 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Base\Prototype\Core;
 
+/**
+ * Prototype class for Debug core for make core remaking more easy
+ */
 abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Debug
 {
     public static $plate = array(

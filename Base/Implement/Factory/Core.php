@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Core Interface
+ * Core Factory Interface
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,14 +19,16 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Base\Implement\Factory;
 
+/**
+ * Interface for Core factory
+ */
 interface Core
 {
     public static function getInstance(array $cfg, array $common, \Facula\Framework $parent);

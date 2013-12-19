@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Object Core Prototype
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,14 +19,16 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Base\Prototype\Core;
 
+/**
+ * Prototype class for Object for make core remaking more easy
+ */
 abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Object
 {
     public static $plate = array(

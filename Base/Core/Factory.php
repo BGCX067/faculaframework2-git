@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Core Factory
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,14 +19,18 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Base\Core;
 
+/**
+ * Core Factory
+ *
+ * A base factory needs to be include by every core factories
+ */
 abstract class Factory implements \Facula\Base\Implement\Factory\Core
 {
     private static $instances = array();

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Plugin Interface
+ * Base Controller
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,14 +19,16 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\App;
 
+/**
+ * Base Controller
+ */
 abstract class Controller extends Setting
 {
     public function init()

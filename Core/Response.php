@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Response Function Core Factory
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,14 +19,16 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Core;
 
+/**
+ * A Factory to load Response function core
+ */
 class Response extends \Facula\Base\Core\Factory
 {
     public static $plate = array(
@@ -37,6 +39,9 @@ class Response extends \Facula\Base\Core\Factory
         'Version' => __FACULAVERSION__,
     );
 
+    /** Default class of the core */
     protected static $default = '\Facula\Base\Entity\Core\Response';
+
+    /** Default interface of the core */
     protected static $interface = '\Facula\Base\Entity\Core\Response';
 }

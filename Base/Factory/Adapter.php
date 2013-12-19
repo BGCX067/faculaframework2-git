@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Base Factory for factories which base on adapter registration
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,17 +19,15 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Base\Factory;
 
 /**
  * Extends by adapter based factory
- *
  */
 abstract class Adapter
 {

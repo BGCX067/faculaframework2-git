@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Template Core Prototype
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,14 +19,16 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Base\Prototype\Core;
 
+/**
+ * Prototype class for Template core for make core remaking more easy
+ */
 abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Template
 {
     public static $plate = array(
@@ -416,6 +418,12 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
         $render = new $this->configs['Render']($compiledTpl, $this->assigned);
 
+        if (!($render instanceof \Facula\Base\Implement\Core\Template\Render)) {
+            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_RENDER_INVALID_INTERFACE', 'template', true);
+
+            return false;
+        }
+
         return $render->getResult();
     }
 
@@ -433,6 +441,12 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
         if ($sourceContent = trim(file_get_contents($sourceTpl))) {
             $compiler = new $this->configs['Compiler']($this->pool, $sourceContent);
+
+            if (!($compiler instanceof \Facula\Base\Implement\Core\Template\Compiler)) {
+                \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_INVALID_INTERFACE', 'template', true);
+
+                return false;
+            }
 
             if ($compiledContent = $compiler->compile()) {
                 if ($this->configs['Compress']) {

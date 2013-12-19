@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Page Render
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -19,15 +19,17 @@
  *
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2013 Rain Lee
- * @package    FaculaFramework
+ * @package    Facula
  * @version    2.2 prototype
  * @see        https://github.com/raincious/facula FYI
- *
  */
 
 namespace Facula\Base\Tool\Paging;
 
-class Render
+/**
+ * Provide a space to render Facula pages
+ */
+class Render implements \Facula\Base\Implement\Core\Template\Render
 {
     private $content = '';
 

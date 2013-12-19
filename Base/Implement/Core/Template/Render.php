@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Actual core class of Template core
+ * Template Render Interface
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -25,18 +25,13 @@
  *
  */
 
-namespace Facula\Base\Entity\Core;
+namespace Facula\Base\Implement\Core\Template;
 
 /**
- * Default Template function core
+ * Interface that must be implemented by any Cache function core
  */
-class Template extends \Facula\Base\Prototype\Core\Template
+interface Render
 {
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
+    public function __construct(&$targetTpl, &$assigned = array());
+    public function getResult();
 }
