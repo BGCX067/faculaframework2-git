@@ -32,6 +32,6 @@ namespace Facula\Base\Implement\Core\Template;
  */
 interface Render
 {
-    public function __construct(&$targetTpl, &$assigned = array());
+    public function __construct(&$targetTpl, array &$assigned = array());
     public function getResult();
 }

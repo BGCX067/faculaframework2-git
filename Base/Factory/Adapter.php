@@ -31,8 +31,17 @@ namespace Facula\Base\Factory;
  */
 abstract class Adapter
 {
+    /** Default container for adapters if child classes not overwrite */
     protected static $adapters = array();
 
+    /**
+     * Register a adapter
+     *
+     * @param string $adapter The name of adapter
+     * @param string $adapterClass The Class name of adapter
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
     public static function registerAdapter($adapter, $adapterClass)
     {
         if (!isset(static::$adapters[$adapter]) && class_exists($adapterClass)) {
@@ -44,6 +53,13 @@ abstract class Adapter
         return false;
     }
 
+    /**
+     * Unregister a adapter
+     *
+     * @param string $adapter The name of adapter
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
     public static function unregisterAdapter($adapter)
     {
         if (isset(static::$adapters[$adapter])) {
@@ -55,12 +71,23 @@ abstract class Adapter
         return false;
     }
 
+    /**
+     * Get a adapter
+     *
+     * @param string $adapter The name of adapter
+     *
+     * @return bool Return the class name of adapter when succeed, false otherwise
+     */
     protected static function getAdapter($adapter)
     {
         if (isset(static::$adapters[$adapter])) {
             return static::$adapters[$adapter];
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_ADAPTERFACTORY_ADAPTER_NOT_FOUND|' . get_called_class() . '::' . $adapter, 'adapterfactory', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_ADAPTERFACTORY_ADAPTER_NOT_FOUND|' . get_called_class() . '::' . $adapter,
+                'adapterfactory',
+                true
+            );
         }
 
         return false;

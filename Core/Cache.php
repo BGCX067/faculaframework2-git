@@ -29,7 +29,7 @@ namespace Facula\Core;
 /**
  * A Factory to load Cache function core
  */
-class Cache extends \Facula\Base\Core\Factory
+class Cache extends \Facula\Base\Factory\Core
 {
     public static $plate = array(
         'Author' => 'Rain Lee',

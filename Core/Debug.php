@@ -29,7 +29,7 @@ namespace Facula\Core;
 /**
  * A Factory to load Debug function core
  */
-class Debug extends \Facula\Base\Core\Factory
+class Debug extends \Facula\Base\Factory\Core
 {
     public static $plate = array(
         'Author' => 'Rain Lee',

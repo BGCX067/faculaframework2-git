@@ -31,6 +31,13 @@ namespace Facula\App;
  */
 abstract class Controller extends Setting
 {
+    /**
+     * A initializer method that will be auto automatically call by Object core
+     *
+     * In this very case, it will load all Facula cores into current instance space
+     *
+     * @return bool Return true when initialize complete, false otherwise.
+     */
     public function init()
     {
         foreach (\Facula\Framework::getAllCores() as $coreName => $coreReference) {
@@ -40,6 +47,15 @@ abstract class Controller extends Setting
         return true;
     }
 
+    /**
+     * Default runner that will be automatically call by
+     * Object core if no runner specified.
+     *
+     * In this very case, it will get HTTP METHOD, and use that to call
+     * specific class method for request processing.
+     *
+     * @return mixed Return the result of the method when it's found, false otherwise.
+     */
     public function run()
     {
         $method = $this->request->getClientInfo('method');
@@ -53,31 +69,77 @@ abstract class Controller extends Setting
         }
     }
 
+    /**
+     * Get a parameter from GET request
+     *
+     * @param string $key The key name of GET parameter
+     *
+     * @return mixed Return the result of Request core::getGet
+     */
     protected function getGet($key)
     {
         return $this->request->getGet($key);
     }
 
+    /**
+     * Get a parameter from POST request
+     *
+     * @param string $key The key name of POST parameter
+     *
+     * @return mixed Return the result of Request core::getPost
+     */
     protected function getPost($key)
     {
         return $this->request->getPost($key);
     }
 
+    /**
+     * Get a parameter from COOKIE
+     *
+     * @param string $key The key name of COOKIE parameter
+     *
+     * @return mixed Return the result of Request core::getCookie
+     */
     protected function getCookie($key)
     {
         return $this->request->getCookie($key);
     }
 
+    /**
+     * Get parameters from GET request
+     *
+     * @param array $keys The key names of GET parameter
+     * @param array $errors A reference to catch failed parameters
+     *
+     * @return mixed Return the result of Request core::getGets
+     */
     protected function getGets(array $keys, array &$errors = array())
     {
         return $this->request->getGets($keys, $errors);
     }
 
+    /**
+     * Get parameters from POST request
+     *
+     * @param array $keys The key names of POST parameter
+     * @param array $errors A reference to catch failed parameters
+     *
+     * @return mixed Return the result of Request core::getPosts
+     */
     protected function getPosts(array $keys, array &$errors = array())
     {
         return $this->request->getPosts($keys, $errors);
     }
 
+    /**
+     * Redirect to other URL
+     *
+     * @param string $addr Address to redirect to
+     * @param integer $httpcode HTTP status code for this redirection
+     * @param bool $interior This is root based URL(or a full qualified address when set to false)
+     *
+     * @return mixed Return the result of Response core::setHeader
+     */
     protected function redirect($addr, $httpcode = 302, $interior = true)
     {
         $rootUrl = $interior ? $this->request->getClientInfo('rootURL') . '/' : '';
@@ -98,11 +160,26 @@ abstract class Controller extends Setting
         return $this->response->setHeader('Location: ' . $rootUrl . $addr) && $this->response->send() ? true : false;
     }
 
-    protected function header($code)
+    /**
+     * Set a new HTTP header
+     *
+     * @param string $header The header
+     *
+     * @return mixed Return the result of Response core::setHeader
+     */
+    protected function header($header)
     {
-        return $this->response->setHeader($code);
+        return $this->response->setHeader($header);
     }
 
+    /**
+     * Send content to client
+     *
+     * @param string $content The content to send
+     * @param string $type Type of the content
+     *
+     * @return mixed Return the result of Response core::send when success, false otherwise
+     */
     protected function send($content, $type)
     {
         if ($this->response->setContent($content)) {
@@ -112,6 +189,14 @@ abstract class Controller extends Setting
         return false;
     }
 
+    /**
+     * Assign variable into Template core
+     *
+     * @param string $key Key name of the variable
+     * @param string $val Value of the variable
+     *
+     * @return mixed Return the result of Template core::assign when success, false otherwise
+     */
     protected function assign($key, $val)
     {
         if (isset($this->template)) {
@@ -119,12 +204,23 @@ abstract class Controller extends Setting
                 return true;
             }
         } else {
-            $this->debug->exception('ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE', 'controller', true);
+            $this->debug->exception(
+                'ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE',
+                'controller',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Set a error message in Template core for render
+     *
+     * @param mixed $msg The message in string or array
+     *
+     * @return mixed Result from Template core::insertMessage when success, false otherwise
+     */
     protected function error($msg)
     {
         if ($this->template) {
@@ -136,18 +232,39 @@ abstract class Controller extends Setting
         return false;
     }
 
+    /**
+     * Display the template
+     *
+     * @param string $tplName Template name
+     * @param string $cacheExpired Cache time in second relative to current
+     * @param mixed $cacheExpiredCallback Callback function will be call when template need to render
+     * @param string $tplSet Name of a specified template from template series
+     * @param string $factor Factor name for template caching
+     *
+     * @return mixed Result from Response core::send when success, false otherwise
+     */
     protected function display($tplName, $cacheExpired = 0, $cacheExpiredCallback = null, $tplSet = '', $factor = '')
     {
         $content = '';
 
         if (isset($this->template)) {
-            if ($content = $this->template->render($tplName, $tplSet, $cacheExpired, $cacheExpiredCallback, $factor)) {
+            if ($content = $this->template->render(
+                $tplName,
+                $tplSet,
+                $cacheExpired,
+                $cacheExpiredCallback,
+                $factor
+            )) {
                 if ($this->response->setContent($content)) {
                     return $this->response->send();
                 }
             }
         } else {
-            $this->debug->exception('ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE', 'controller', true);
+            $this->debug->exception(
+                'ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE',
+                'controller',
+                true
+            );
         }
 
         return false;

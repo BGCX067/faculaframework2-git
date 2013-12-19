@@ -69,6 +69,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
         {^ EOF SwitcherName ^}
     */
 
+    /** Default setting of this class */
     private static $setting = array(
         'Delimiter' => '{}',
         'Formats' => array(
@@ -83,17 +84,32 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
         ),
     );
 
+    /** Assigned data */
     private $pool = array();
 
+    /** The content that will be compile */
     private $sourceContent = '';
 
+    /** Position map */
     private $tagPositionMaps = array();
 
+    /**
+     * Add a new tag into compiler
+     *
+     * @param char $tag The tag in single character
+     * @param mixed $command The tag processor
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
     public static function addTag($tag, $command)
     {
         foreach (self::$setting as $format) {
-            if ($format['Tag'] == $tag) {
-                \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_TAG_EXISTED|' . $tag, 'template', true);
+            if ($format['Tag'] == $tag[0]) {
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_TEMPLATE_COMPILER_TAG_EXISTED|' . $tag[0],
+                    'template',
+                    true
+                );
 
                 return false;
                 break;
@@ -102,20 +118,32 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
         if (is_callable($command)) {
             self::$setting[] = array(
-                'Tag' => $tag,
+                'Tag' => $tag[0],
                 'Command' => $command,
                 'IsExternal' => true,
             );
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_TAG_COMMAND_UNCALLABLE|' . $tag, 'template', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_TEMPLATE_COMPILER_TAG_COMMAND_UNCALLABLE|' . $tag,
+                'template',
+                true
+            );
         }
 
         return false;
     }
 
-    public function __construct(&$pool, &$sourceTpl)
+    /**
+     * Constructor of compiler
+     *
+     * @param array &$tag Assigned data
+     * @param string &$sourceTpl Content of the template file
+     *
+     * @return void
+     */
+    public function __construct(array &$pool, &$sourceTpl)
     {
         $this->pool = $pool;
         $this->sourceContent = $sourceTpl;
@@ -123,6 +151,11 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
         return true;
     }
 
+    /**
+     * Compile the template
+     *
+     * @return string Compiled template in PHP syntax.
+     */
     public function compile()
     {
         $matchedTags = array();
@@ -133,7 +166,17 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             $content = $this->sourceContent;
 
             foreach (self::$setting['Formats'] as $format) {
-                $format['Preg'] = '/' . preg_quote(self::$setting['Delimiter'][0] . $format['Tag'], '/') . '\s(.*)\s' . preg_quote($format['Tag'] .self::$setting['Delimiter'][1], '/') . '/sU';
+                $format['Preg'] = '/'
+                                . preg_quote(
+                                    self::$setting['Delimiter'][0]. $format['Tag'],
+                                    '/'
+                                )
+                                . '\s(.*)\s'
+                                . preg_quote(
+                                    $format['Tag'] . self::$setting['Delimiter'][1],
+                                    '/'
+                                )
+                                . '/sU';
 
                 if ($format['IsExternal']) {
                     $format['Function'] = $format['Command'];
@@ -144,13 +187,21 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                 while (preg_match($format['Preg'], $content, $matchedTags, PREG_OFFSET_CAPTURE)) {
 
                     // Get Original content info
-                    $tempResult['OriginalLen']        = strlen($matchedTags[0][0]);
-                    $tempResult['StartPos']            = $matchedTags[0][1];
-                    $tempResult['EndPos']            = $tempResult['StartPos'] + $tempResult['OriginalLen'];
+                    $tempResult['OriginalLen'] = strlen($matchedTags[0][0]);
+                    $tempResult['StartPos'] = $matchedTags[0][1];
+                    $tempResult['EndPos'] = $tempResult['StartPos'] + $tempResult['OriginalLen'];
 
                     // Generate replacement
-                    if (!$tempResult['Result'] = $format['Function']($matchedTags[1][0], $tempResult['StartPos'], $this->tagPositionMaps)) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_UNKNOWNERROR', 'template', true);
+                    if (!$tempResult['Result'] = $format['Function'](
+                        $matchedTags[1][0],
+                        $tempResult['StartPos'],
+                        $this->tagPositionMaps
+                    )) {
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_UNKNOWNERROR',
+                            'template',
+                            true
+                        );
                         return false;
 
                         break;
@@ -172,21 +223,35 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     $tempResult['LenDifference'] = $tempResult['ResultLen'] - $tempResult['OriginalLen'];
 
                     foreach ($this->tagPositionMaps as $tagKey => $tagPos) {
-                        // If target tag's start position after current tag's start position. increase the target tag's start position as move it back.
+                        // If target tag's start position after current tag's start position.
+                        // increase the target tag's start position as move it back.
                         if (isset($tagPos['Start']) && $tagPos['Start'] > $tempResult['StartPos']) {
                             $this->tagPositionMaps[$tagKey]['Start'] += $tempResult['LenDifference'];
                         }
 
-                        // If target tag's start position after current tag's start position. increase the target tag's end also
-                        // And if target tag's start position small than current tag and end position larget than current tag. The current tag must with in the target tag. So we need to move target tag's end position back.
-                        if (isset($tagPos['End']) && ($tagPos['Start'] > $tempResult['StartPos'] || ($tagPos['Start'] < $tempResult['StartPos'] && $tagPos['End'] > $tempResult['EndPos']))) {
+                        // If target tag's start position after current tag's start position.
+                        // increase the target tag's end also
+
+                        // And if target tag's start position small than current tag and end position
+                        // larget than current tag. The current tag must with in the target tag. So we
+                        // need to move target tag's end position back.
+                        if (isset($tagPos['End'])
+                            && (
+                                $tagPos['Start'] > $tempResult['StartPos']
+                                || (
+                                        $tagPos['Start'] < $tempResult['StartPos']
+                                        && $tagPos['End'] > $tempResult['EndPos']
+                                    )
+                            )
+                        ) {
                             $this->tagPositionMaps[$tagKey]['End'] += $tempResult['LenDifference'];
                         }
 
                         if (isset($tagPos['Middle'])) {
                             foreach ($tagPos['Middle'] as $tagMidKey => $tagMidVal) {
                                 if ($tagMidVal > $tempResult['StartPos']) {
-                                    $this->tagPositionMaps[$tagKey]['Middle'][$tagMidKey] += $tempResult['LenDifference'];
+                                    $this->tagPositionMaps[$tagKey]['Middle'][$tagMidKey] +=
+                                    $tempResult['LenDifference'];
                                 }
                             }
                         }
@@ -197,14 +262,22 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             if ((!$unclosedTag = $this->doCheckUnclosedTags())) {
                 return $content;
             } else {
-                \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_TAG_UNCLOSE|' . $unclosedTag, 'template', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_TEMPLATE_COMPILER_TAG_UNCLOSE|' . $unclosedTag,
+                    'template',
+                    true
+                );
             }
         }
 
         return false;
     }
 
-    /* Compile Tools */
+    /**
+     * Check unclosed tag
+     *
+     * @return mixed Return tag and tag name paired with ':' when found unclosed tag, or false otherwise.
+     */
     public function doCheckUnclosedTags()
     {
         foreach ($this->tagPositionMaps as $refKey => $refRecord) {
@@ -218,9 +291,13 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                         return $tagRecord['Name'];
                     }
 
-                    if ($refRecord['Start'] < $tagRecord['Start'] && $refRecord['End'] > $tagRecord['Start'] && $refRecord['End'] < $tagRecord['End']) {
+                    if ($refRecord['Start'] < $tagRecord['Start']
+                        && $refRecord['End'] > $tagRecord['Start']
+                        && $refRecord['End'] < $tagRecord['End']) {
                         return $refRecord['Name'] . ':' . $tagRecord['Name'];
-                    } elseif ($refRecord['Start'] < $tagRecord['End'] && $refRecord['End'] > $tagRecord['End'] && $refRecord['Start'] > $tagRecord['Start']) {
+                    } elseif ($refRecord['Start'] < $tagRecord['End']
+                        && $refRecord['End'] > $tagRecord['End']
+                        && $refRecord['Start'] > $tagRecord['Start']) {
                         return $refRecord['Name'] . ':' . $tagRecord['Name'];
                     } elseif (isset($tagRecord['Middle'])) {
                         array_unshift($tagRecord['Middle'], $tagRecord['Start']);
@@ -228,9 +305,13 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                         $tagRecord['Middles'] = count($tagRecord['Middle']);
 
                         for ($i = 1; $i < $tagRecord['Middles']; $i++) {
-                            if ($refRecord['Start'] < $tagRecord['Middle'][$i - 1] && $refRecord['End'] > $tagRecord['Middle'][$i - 1] && $refRecord['End'] < $tagRecord['Middle'][$i]) {
+                            if ($refRecord['Start'] < $tagRecord['Middle'][$i - 1]
+                                && $refRecord['End'] > $tagRecord['Middle'][$i - 1]
+                                && $refRecord['End'] < $tagRecord['Middle'][$i]) {
                                 return $refRecord['Name'] . ':' . $tagRecord['Name'];
-                            } elseif ($refRecord['Start'] < $tagRecord['Middle'][$i] && $refRecord['End'] > $tagRecord['Middle'][$i] && $refRecord['Start'] > $tagRecord['Middle'][$i - 1]) {
+                            } elseif ($refRecord['Start'] < $tagRecord['Middle'][$i]
+                                && $refRecord['End'] > $tagRecord['Middle'][$i]
+                                && $refRecord['Start'] > $tagRecord['Middle'][$i - 1]) {
                                 return $refRecord['Name'] . ':' . $tagRecord['Name'];
                             }
                         }
@@ -242,6 +323,13 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
         return false;
     }
 
+    /**
+     * Check if variable name is valid
+     *
+     * @param string $name Variable name
+     *
+     * @return mixed Return true if it's valid, false otherwise
+     */
     public function doCheckVariableName($name)
     {
         if (preg_match('/^(\$[A-Za-z0-9\_\'\"\[\]]+)$/', $name)) {
@@ -251,7 +339,14 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
         return false;
     }
 
-    /* Compile functions */
+    /**
+     * Parser: Include another template
+     *
+     * @param string $format Format string from template file
+     * @param integer $pos Current position of tag
+     *
+     * @return mixed Return true when succeed, false otherwise
+     */
     private function doInclude($format, $pos)
     {
         $param = explode(' ', $format, 2);
@@ -268,13 +363,18 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                 foreach ($temprepleaces['Items'] as $replace) {
                     $temprepleaces['Thing'] = explode('=', $replace);
 
-                    if (isset($temprepleaces['Thing'][0][0]) && isset($temprepleaces['Thing'][1][0])) {
+                    if (isset($temprepleaces['Thing'][0][0])
+                        && isset($temprepleaces['Thing'][1][0])) {
                         $replaces['Search'][] = trim($temprepleaces['Thing'][0]);
                         $replaces['Replace'][] = trim($temprepleaces['Thing'][1]);
                     }
                 }
 
-                $tplFileContent = str_replace($replaces['Search'], $replaces['Replace'], $tplFileContent);
+                $tplFileContent = str_replace(
+                    $replaces['Search'],
+                    $replaces['Replace'],
+                    $tplFileContent
+                );
             }
 
             $newCompiler = new self($this->pool, $tplFileContent);
@@ -282,15 +382,31 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             if ($tplContent = $newCompiler->compile()) {
                 return $tplContent;
             } else {
-                \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_EMPTY|' . $param[0], 'template', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_EMPTY|' . $param[0],
+                    'template',
+                    true
+                );
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_NOTFOUND|' . $param[0], 'template', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_NOTFOUND|' . $param[0],
+                'template',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Parser: Inject template content
+     *
+     * @param string $format Format string from template file
+     * @param integer $pos Current position of tag
+     *
+     * @return mixed Return true when succeed, false otherwise
+     */
     private function doInjectArea($format, $pos)
     {
         $phpcode = '';
@@ -306,17 +422,37 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
         return false;
     }
 
+    /**
+     * Parser: Fill language string into template
+     *
+     * @param string $format Format string from template file
+     * @param integer $pos Current position of tag
+     *
+     * @return mixed Return true when succeed, false otherwise
+     */
     private function doLanguage($format, $pos)
     {
         if (isset($this->pool['LanguageMap'][$format][0])) {
             return $this->pool['LanguageMap'][$format];
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LANGUAGE_NOTFOUND|' . $format, 'template', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_TEMPLATE_COMPILER_LANGUAGE_NOTFOUND|' . $format,
+                'template',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Parser: Set variable into template
+     *
+     * @param string $format Format string from template file
+     * @param integer $pos Current position of tag
+     *
+     * @return mixed Return true when succeed, false otherwise
+     */
     private function doVariable($format, $pos)
     {
         $param = explode('|', $format);
@@ -324,7 +460,12 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
         if (isset($param[0])) {
             if (!$this->doCheckVariableName($param[0])) {
-                \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_NAME_INVALID|' . $param[0], 'template', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_TEMPLATE_COMPILER_VARIABLE_NAME_INVALID|' . $param[0],
+                    'template',
+                    true
+                );
+
                 return false;
             }
 
@@ -335,10 +476,20 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             } else {
                 switch ($param[1]) {
                     case 'date':
-                        if (isset($param[2]) && isset($this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]])) {
-                            $phpcode .= 'echo(date(\'' . $this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]] . '\', (int)(' . $param[0] . ')));';
+                        if (isset($param[2])
+                            && isset($this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]])) {
+                            $phpcode .= 'echo(date(\''
+                                    . $this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]]
+                                    . '\', (int)('
+                                    . $param[0]
+                                    . ')));';
                         } else {
-                            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_DATE_LANG_MISSED', 'template', true);
+                            \Facula\Framework::core('debug')->exception(
+                                'ERROR_TEMPLATE_COMPILER_VARIABLE_DATE_LANG_MISSED',
+                                'template',
+                                true
+                            );
+
                             return false;
                         }
                         break;
@@ -349,9 +500,31 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                             isset($this->pool['LanguageMap']['FORMAT_TIME_HRBEFORE']) &&
                             isset($this->pool['LanguageMap']['FORMAT_TIME_DAYBEFORE']) &&
                             isset($this->pool['LanguageMap']['FORMAT_TIME_MOREBEFORE'])) {
-                            $phpcode .= '$temptime = $Time - (' . $param[0] . '); if ($temptime < 60) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_SNDBEFORE'] . '\', $temptime); } elseif ($temptime < 3600) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_MINBEFORE'] . '\', (int)($temptime / 60)); } elseif ($temptime < 86400) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_HRBEFORE'] . '\', (int)($temptime / 3600)); } elseif ($temptime < 604800) { printf(\'' . $this->pool['LanguageMap']['FORMAT_TIME_DAYBEFORE'] . '\', (int)($temptime / 86400)); } elseif ($temptime) { echo(date(\'' . $this->pool['LanguageMap']['FORMAT_TIME_MOREBEFORE'] . '\', (int)(' . $param[0] . '))); } $temptime = 0;';
+                            $phpcode .= '$temptime = $Time - ('
+                                    . $param[0]
+                                    . '); if ($temptime < 60) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_SNDBEFORE']
+                                    . '\', $temptime); } elseif ($temptime < 3600) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_MINBEFORE']
+                                    . '\', (int)($temptime / 60)); }'
+                                    . ' elseif ($temptime < 86400) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_HRBEFORE']
+                                    . '\', (int)($temptime / 3600)); }'
+                                    . ' elseif ($temptime < 604800) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_DAYBEFORE']
+                                    . '\', (int)($temptime / 86400)); }'
+                                    . ' elseif ($temptime) { echo(date(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_MOREBEFORE']
+                                    . '\', (int)('
+                                    . $param[0]
+                                    . '))); } $temptime = 0;';
                         } else {
-                            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYTIME_LANG_MISSED', 'template', true);
+                            \Facula\Framework::core('debug')->exception(
+                                'ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYTIME_LANG_MISSED',
+                                'template',
+                                true
+                            );
+
                             return false;
                         }
                         break;
@@ -362,15 +535,39 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                             isset($this->pool['LanguageMap']['FORMAT_FILESIZE_MEGABYTES']) &&
                             isset($this->pool['LanguageMap']['FORMAT_FILESIZE_GIGABYTES']) &&
                             isset($this->pool['LanguageMap']['FORMAT_FILESIZE_TRILLIONBYTES'])) {
-                            $phpcode .= '$tempsize = ' . $param[0] . '; if ($tempsize < 1024) { echo (($tempsize).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_BYTES'] . '\'); } elseif ($tempsize < 1048576) { echo ((int)($tempsize / 1024).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_KILOBYTES'] . '\'); } elseif ($tempsize < 1073741824) { echo (round($tempsize / 1048576, 1).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_MEGABYTES'] . '\'); } elseif ($tempsize < 1099511627776) { echo (round($tempsize / 1073741824, 2).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_GIGABYTES'] . '\'); } elseif ($tempsize < 1125899906842624) { echo (round($tempsize / 1099511627776, 3).\'' . $this->pool['LanguageMap']['FORMAT_FILESIZE_TRILLIONBYTES'] . '\'); } $tempsize = 0;';
+                            $phpcode .= '$tempsize = '
+                                    . $param[0]
+                                    . '; if ($tempsize < 1024) { echo (($tempsize).\''
+                                    . $this->pool['LanguageMap']['FORMAT_FILESIZE_BYTES']
+                                    . '\'); } elseif ($tempsize < 1048576) {'
+                                    . ' echo ((int)($tempsize / 1024).\''
+                                    . $this->pool['LanguageMap']['FORMAT_FILESIZE_KILOBYTES']
+                                    . '\'); } elseif ($tempsize < 1073741824) {'
+                                    . ' echo (round($tempsize / 1048576, 1).\''
+                                    . $this->pool['LanguageMap']['FORMAT_FILESIZE_MEGABYTES']
+                                    . '\'); } elseif ($tempsize < 1099511627776) {'
+                                    . ' echo (round($tempsize / 1073741824, 2).\''
+                                    . $this->pool['LanguageMap']['FORMAT_FILESIZE_GIGABYTES']
+                                    . '\'); } elseif ($tempsize < 1125899906842624) {'
+                                    . ' echo (round($tempsize / 1099511627776, 3).\''
+                                    . $this->pool['LanguageMap']['FORMAT_FILESIZE_TRILLIONBYTES']
+                                    . '\'); } $tempsize = 0;';
                         } else {
-                            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_BYTE_LANG_MISSED', 'template', true);
+                            \Facula\Framework::core('debug')->exception(
+                                'ERROR_TEMPLATE_COMPILER_VARIABLE_BYTE_LANG_MISSED',
+                                'template',
+                                true
+                            );
+
                             return false;
                         }
                         break;
 
                     case 'json':
-                        $phpcode .= 'echo(json_encode(' . $param[0] . ', JSON_HEX_QUOT | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_TAG));';
+                        $phpcode .= 'echo(json_encode('
+                                . $param[0]
+                                . ', JSON_HEX_QUOT | JSON_HEX_APOS'
+                                . '| JSON_HEX_AMP | JSON_HEX_TAG));';
                         break;
 
                     case 'jsonData':
@@ -410,20 +607,83 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                             isset($this->pool['LanguageMap']['FORMAT_NUMBER_QUADRILLION']) &&
                             isset($this->pool['LanguageMap']['FORMAT_NUMBER_QUINTILLION']) &&
                             isset($this->pool['LanguageMap']['FORMAT_NUMBER_SEXTILLION'])) {
-                            $phpcode .= 'if (' . $param[0] . ' > 1000000000000000000000) { echo(round((' . $param[0] . ' / 1000000000000000000000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_SEXTILLION'] . '\'); } elseif (' . $param[0] . ' > 1000000000000000000) { echo(round((' . $param[0] . ' / 1000000000000000000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_QUINTILLION'] . '\'); } elseif (' . $param[0] . ' > 1000000000000000) { echo(round((' . $param[0] . ' / 1000000000000000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_QUADRILLION'] . '\'); } elseif (' . $param[0] . ' > 1000000000000) { echo(round((' . $param[0] . ' / 1000000000000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_TRILLION'] . '\'); } elseif (' . $param[0] . ' > 1000000000) { echo(round((' . $param[0] . ' / 1000000000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_BILLION'] . '\'); } elseif (' . $param[0] . ' > 1000000) { echo(round((' . $param[0] . ' / 1000000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_MILLION'] . '\'); } elseif (' . $param[0] . ' > 1000) { echo(round((' . $param[0] . ' / 1000) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_THOURSAND'] . '\'); } elseif (' . $param[0] . ' > 100) { echo(round((' . $param[0] . ' / 100) , 2) . \'' . $this->pool['LanguageMap']['FORMAT_NUMBER_HUNDRED'] . '\'); } else { echo(' . $param[0] . '); }';
+                            $phpcode .= 'if ('
+                                    . $param[0]
+                                    . ' > 1000000000000000000000) { echo(round(('
+                                    . $param[0]
+                                    . ' / 1000000000000000000000) , 2) . \''
+                                    . $this->pool['LanguageMap']['FORMAT_NUMBER_SEXTILLION']
+                                    . '\'); } elseif ('
+                                    . $param[0]
+                                    . ' > 1000000000000000000) { echo(round(('
+                                    . $param[0]
+                                    . ' / 1000000000000000000) , 2) . \''
+                                    . $this->pool['LanguageMap']['FORMAT_NUMBER_QUINTILLION']
+                                    . '\'); } elseif ('
+                                    . $param[0]
+                                    . ' > 1000000000000000) { echo(round(('
+                                    . $param[0]
+                                    . ' / 1000000000000000) , 2) . \''
+                                    . $this->pool['LanguageMap']['FORMAT_NUMBER_QUADRILLION']
+                                    . '\'); } elseif ('
+                                    . $param[0]
+                                    . ' > 1000000000000) { echo(round(('
+                                    . $param[0]
+                                    . ' / 1000000000000) , 2) . \''
+                                    . $this->pool['LanguageMap']['FORMAT_NUMBER_TRILLION']
+                                    . '\'); } elseif ('
+                                    . $param[0]
+                                    . ' > 1000000000) { echo(round(('
+                                    . $param[0]
+                                    . ' / 1000000000) , 2) . \''
+                                    . $this->pool['LanguageMap']['FORMAT_NUMBER_BILLION']
+                                    . '\'); } elseif ('
+                                    . $param[0]
+                                    . ' > 1000000) { echo(round(('
+                                    . $param[0]
+                                    . ' / 1000000) , 2) . \''
+                                    . $this->pool['LanguageMap']['FORMAT_NUMBER_MILLION']
+                                    . '\'); } elseif ('
+                                    . $param[0]
+                                    . ' > 1000) { echo(round(('
+                                    . $param[0]
+                                    . ' / 1000) , 2) . \''
+                                    . $this->pool['LanguageMap']['FORMAT_NUMBER_THOURSAND']
+                                    . '\'); } elseif ('
+                                    . $param[0]
+                                    . ' > 100) { echo(round(('
+                                    . $param[0]
+                                    . ' / 100) , 2) . \''
+                                    . $this->pool['LanguageMap']['FORMAT_NUMBER_HUNDRED']
+                                    . '\'); } else { echo('
+                                    . $param[0]
+                                    . '); }';
                         } else {
-                            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYNUMBER_LANG_MISSED', 'template', true);
+                            \Facula\Framework::core('debug')->exception(
+                                'ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYNUMBER_LANG_MISSED',
+                                'template',
+                                true
+                            );
+
                             return false;
                         }
                         break;
 
                     case 'floatNumber':
-                        $phpcode .= 'echo(number_format(' . $param[0] . ', ' . (isset($param[2]) ? (int)($param[2]) : 2) . '));';
+                        $phpcode .= 'echo(number_format('
+                                . $param[0]
+                                . ', '
+                                . (isset($param[2]) ? (int)($param[2]) : 2)
+                                . '));';
                         break;
 
                     default:
                         $variableName = array_shift($param);
-                        $phpcode .= 'printf(' . $variableName . ', ' . implode(', ', $param) . ');';
+                        $phpcode .= 'printf('
+                                . $variableName
+                                . ', '
+                                . implode(', ', $param)
+                                . ');';
                         break;
                 }
             }
@@ -432,12 +692,24 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
             return $phpcode;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_VARIABLE_MUST_DEFINED', 'template', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_TEMPLATE_COMPILER_VARIABLE_MUST_DEFINED',
+                'template',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Parser: Set page switcher into template
+     *
+     * @param string $format Format string from template file
+     * @param integer $pos Current position of tag
+     *
+     * @return mixed Return true when succeed, false otherwise
+     */
     private function doPageSwitcher($format)
     {
         $maxpage = 20;
@@ -446,8 +718,25 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
         $phpcode = '<?php ';
 
-        if (preg_match('/^([A-Za-z0-9_-]+) \(([A-Za-z0-9_-\s]+)\) (\$[A-Za-z0-9\_\'\"\[\]]+) (\$[A-Za-z0-9\_\'\"\[\]]+) (\$[A-Za-z0-9\_\'\"\[\]]+) \((.*)\)$/', $format, $matched)) {
-            list($org, $name, $classname, $currentpage, $totalpage, $maxdisplay, $format) = $matched;
+        if (preg_match(
+            '/^([A-Za-z0-9_-]+)'
+            . ' \(([A-Za-z0-9_-\s]+)\)'
+            . ' (\$[A-Za-z0-9\_\'\"\[\]]+)'
+            . ' (\$[A-Za-z0-9\_\'\"\[\]]+)'
+            . ' (\$[A-Za-z0-9\_\'\"\[\]]+)'
+            . ' \((.*)\)$/',
+            $format,
+            $matched
+        )) {
+            list(
+                $org,
+                $name,
+                $classname,
+                $currentpage,
+                $totalpage,
+                $maxdisplay,
+                $format
+            ) = $matched;
 
             $name = htmlspecialchars($name, ENT_QUOTES);
             $classname = htmlspecialchars($classname, ENT_QUOTES);
@@ -462,60 +751,69 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             }
 
             // Urlencode the format but replace some string back for url params
-            $format = str_replace(array('%3A', '%2F', '%3F', '%3D', '%26', '%25PAGE%25'), array(':', '/', '?', '=', '&', '%PAGE%'), urlencode($format));
+            $format = str_replace(
+                array('%3A', '%2F', '%3F', '%3D', '%26', '%25PAGE%25'),
+                array(':', '/', '?', '=', '&', '%PAGE%'),
+                urlencode($format)
+            );
 
             // Replace variables string to variables
-            $format = str_replace($formatVariables['Search'], $formatVariables['Replace'], $format);
+            $format = str_replace(
+                $formatVariables['Search'],
+                $formatVariables['Replace'],
+                $format
+            );
 
-            $phpcode = '
-            <?php
-                if (' . $totalpage . ' > 1) {
-                    echo(\'<ul id="' . $name . '" class="' . $classname . '">\');
+            $phpcode = '<?php if (' . $totalpage. ' > 1) { echo(\'<ul id="'
+                    . $name . '" class="' . $classname . '">\'); if ('
+                    . $totalpage . ' > 0 && ' . $currentpage . ' <= ' . $totalpage . ') { if ('
+                    . $currentpage . ' > 1) echo(\'<li><a href="'
+                    . str_replace('%PAGE%', '1', $format)
+                    . '">&laquo;</a></li><li><a href="\' . str_replace(\'%PAGE%\', ('
+                    . $currentpage . ' - 1), \'' . $format
+                    . '\') . \'">&lsaquo;</a></li>\'); $loop = (int)(' . $maxdisplay
+                    . ' / 2); if (' . $currentpage . ' - $loop > 0) { for ($i = '
+                    . $currentpage . ' - $loop; $i <= ' . $totalpage . ' && $i <= '
+                    . $currentpage . ' + $loop; $i++) { if ($i == ' . $currentpage
+                    . ') { echo(\'<li class="this"><a href="\' . str_replace(\'%PAGE%\', $i, \''
+                    . $format . '\'). \'">\' . $i . \'</a></li>\'); } '
+                    . ' else { echo(\'<li><a href="\' . str_replace(\'%PAGE%\', $i, \''
+                    . $format . '\') . \'">\' . $i . \'</a></li>\'); } } } else '
+                    . '{ for ($i = 1; $i <= ' . $totalpage . ' && $i <= ' . $maxdisplay
+                    . '; $i++) { if ($i == ' . $currentpage
+                    . ') { echo(\'<li class="this"><a href="\' . str_replace(\'%PAGE%\', $i, \''
+                    . $format . '\'). \'">\' . $i . \'</a></li>\'); } else'
+                    . ' { echo(\'<li><a href="\' . str_replace(\'%PAGE%\', $i, \''
+                    . $format . '\') . \'">\' . $i . \'</a></li>\'); } } } unset($loop); if ('
+                    . $totalpage . ' > ' . $currentpage
+                    . ') echo(\'<li><a href="\' . str_replace(\'%PAGE%\', ('
+                    . $currentpage . ' + 1), \'' . $format
+                    . '\') . \'">&rsaquo;</a></li><li><a href="\' . str_replace(\'%PAGE%\', ('
+                    . $totalpage . '), \'' . $format
+                    . '\') . \'">&raquo;</a></li>\'); } echo(\'</ul>\'); } ?>';
 
-                    if (' . $totalpage . ' > 0 && ' . $currentpage . ' <= ' . $totalpage . ') {
-                        if (' . $currentpage . ' > 1)
-                            echo(\'<li><a href="' . str_replace('%PAGE%', '1', $format) . '">&laquo;</a></li><li><a href="\' . str_replace(\'%PAGE%\', (' . $currentpage . ' - 1), \'' . $format . '\') . \'">&lsaquo;</a></li>\');
-
-                        $loop = (int)(' . $maxdisplay . ' / 2);
-
-                        if (' . $currentpage . ' - $loop > 0) {
-                            for ($i = ' . $currentpage . ' - $loop; $i <= ' . $totalpage . ' && $i <= ' . $currentpage . ' + $loop; $i++) {
-                                if ($i == ' . $currentpage . ') {
-                                    echo(\'<li class="this"><a href="\' . str_replace(\'%PAGE%\', $i, \'' . $format . '\'). \'">\' . $i . \'</a></li>\');
-                                } else {
-                                    echo(\'<li><a href="\' . str_replace(\'%PAGE%\', $i, \'' . $format . '\') . \'">\' . $i . \'</a></li>\');
-                                }
-                            }
-                        } else {
-                            for ($i = 1; $i <= ' . $totalpage . ' && $i <= ' . $maxdisplay . '; $i++) {
-                                if ($i == ' . $currentpage . ') {
-                                    echo(\'<li class="this"><a href="\' . str_replace(\'%PAGE%\', $i, \'' . $format . '\'). \'">\' . $i . \'</a></li>\');
-                                } else {
-                                    echo(\'<li><a href="\' . str_replace(\'%PAGE%\', $i, \'' . $format . '\') . \'">\' . $i . \'</a></li>\');
-                                }
-                            }
-                        }
-
-                        unset($loop);
-
-                        if (' . $totalpage . ' > ' . $currentpage . ')
-                            echo(\'<li><a href="\' . str_replace(\'%PAGE%\', (' . $currentpage . ' + 1), \'' . $format . '\') . \'">&rsaquo;</a></li><li><a href="\' . str_replace(\'%PAGE%\', (' . $totalpage . '), \'' . $format . '\') . \'">&raquo;</a></li>\');
-                    }
-
-                    echo(\'</ul>\');
-                }
-            ?>';
-
-            $phpcode = str_replace(array("\r", "\n", "\t",'  '), '', $phpcode);
+            $phpcode = str_replace(array("\r", "\r\n", "\t",'  '), '', $phpcode);
 
             return $phpcode;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_PAGER_FORMAT_INVALID|' . $format, 'template', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_TEMPLATE_COMPILER_PAGER_FORMAT_INVALID|' . $format,
+                'template',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Parser: Set loop into template
+     *
+     * @param string $format Format string from template file
+     * @param integer $pos Current position of tag
+     *
+     * @return mixed Return true when succeed, false otherwise
+     */
     private function doLoop($format, $pos)
     {
         $params = explode(' ', $format);
@@ -528,19 +826,35 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     // Check if we already opened the tag
                     if (!isset($this->tagPositionMaps['Loop:' . $params[1]]['Start'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_NOT_OPEN|' . $params[1], 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOOP_NOT_OPEN|' . $params[1],
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
                     // Check if we already closed this loop
                     if (isset($this->tagPositionMaps['Loop:' . $params[1]]['End'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_CLOSED|' . $params[1], 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_CLOSED|' . $params[1],
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
                     // Check if we already emptied this foreach
-                    if (isset($this->tagPositionMaps['Loop:' . $params[1]]['Emptied']) && $this->tagPositionMaps['Loop:' . $params[1]]['Emptied']) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_EMPTY|' . $params[1], 'template', true);
+                    if (isset($this->tagPositionMaps['Loop:' . $params[1]]['Emptied'])
+                        && $this->tagPositionMaps['Loop:' . $params[1]]['Emptied']) {
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_EMPTY|' . $params[1],
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
@@ -555,23 +869,38 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_INVALID|' . $format, 'template', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_INVALID|' . $format,
+                        'template',
+                        true
+                    );
                 }
                 break;
 
             case 'EOF':
                 if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+)$/', $params[1], $matched)) {
                     if (!isset($this->tagPositionMaps['Loop:' . $params[1]]['Start'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_NOT_OPEN|' . $params[1], 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOOP_NOT_OPEN|' . $params[1],
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Loop:' . $params[1]]['End'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_CLOSED|' . $params[1], 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_CLOSED|' . $params[1],
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
-                    if (isset($this->tagPositionMaps['Loop:' . $params[1]]['Emptied']) && $this->tagPositionMaps['Loop:' . $params[1]]['Emptied']) {
+                    if (isset($this->tagPositionMaps['Loop:' . $params[1]]['Emptied'])
+                        && $this->tagPositionMaps['Loop:' . $params[1]]['Emptied']) {
                         // If we have empty section in this loop
 
                         $phpcode .= '<?php } ?>'; // We just need to close empty one (The first if)
@@ -584,7 +913,11 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_INVALID|' . $format, 'template', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_INVALID|' . $format,
+                        'template',
+                        true
+                    );
                 }
                 break;
 
@@ -593,8 +926,11 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     list($org, $name, $valuename) = $matched;
 
                     if (!isset($this->tagPositionMaps['Loop:' . $name])) {
-                        $phpcode .= '<?php if (isset(' . $valuename . ') && is_array(' . $valuename . ') && !empty(' . $valuename . ')) { ';
-                        $phpcode .= 'foreach (' . $valuename . ' as $no => $' . $name . ') { ?>';
+                        $phpcode .= '<?php if (isset(' . $valuename
+                                . ') &&'. ' is_array(' . $valuename . ') && !empty('
+                                . $valuename . ')) { ';
+                        $phpcode .= 'foreach (' . $valuename
+                                . ' as $no => $' . $name . ') { ?>';
 
                         $this->tagPositionMaps['Loop:' . $name] = array(
                             'Start' => $pos,
@@ -603,11 +939,19 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                         return $phpcode;
                     } else {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_EXISTED|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_EXISTED|' . $name,
+                            'template',
+                            true
+                        );
                     }
 
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_INVALID|' . $format, 'template', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_INVALID|' . $format,
+                        'template',
+                        true
+                    );
                 }
                 break;
         }
@@ -615,6 +959,14 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
         return false;
     }
 
+    /**
+     * Parser: Set logic into template
+     *
+     * @param string $format Format string from template file
+     * @param integer $pos Current position of tag
+     *
+     * @return mixed Return true when succeed, false otherwise
+     */
     private function doLogic($format, $pos)
     {
         $params = explode(' ', $format, 2);
@@ -623,21 +975,42 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
         switch ($params[0]) {
             case 'ELSEIF':
-                if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+) (.*)$/', $params[1], $matched)) {
+                if (isset($params[1])
+                    && preg_match(
+                        '/^([A-Za-z0-9]+) (.*)$/',
+                        $params[1],
+                        $matched
+                    )) {
                     list($org, $name, $condition) = $matched;
 
                     if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name,
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
-                    if (isset($this->tagPositionMaps['Logic:' . $name]['Elsed']) && $this->tagPositionMaps['Logic:' . $name]['Elsed']) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_ELSED|' . $name, 'template', true);
+                    if (isset($this->tagPositionMaps['Logic:' . $name]['Elsed'])
+                        && $this->tagPositionMaps['Logic:' . $name]['Elsed']) {
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_ELSED|' . $name,
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Logic:' . $name]['End'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name,
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
@@ -647,26 +1020,51 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format, 'template', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format,
+                        'template',
+                        true
+                    );
                 }
                 break;
 
             case 'ELSE':
-                if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+)$/', $params[1], $matched)) {
+                if (isset($params[1])
+                    && preg_match(
+                        '/^([A-Za-z0-9]+)$/',
+                        $params[1],
+                        $matched
+                    )) {
                     list($org, $name) = $matched;
 
                     if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name,
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
-                    if (isset($this->tagPositionMaps['Logic:' . $name]['Elsed']) && $this->tagPositionMaps['Logic:' . $name]['Elsed']) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_ELSED|' . $name, 'template', true);
+                    if (isset($this->tagPositionMaps['Logic:' . $name]['Elsed'])
+                        && $this->tagPositionMaps['Logic:' . $name]['Elsed']) {
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_ELSED|' . $name,
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Logic:' . $name]['End'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name,
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
@@ -677,7 +1075,11 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format, 'template', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format,
+                        'template',
+                        true
+                    );
                 }
                 break;
 
@@ -686,12 +1088,21 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     list($org, $name) = $matched;
 
                     if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name,
+                            'template',
+                            true
+                        );
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Logic:' . $name]['End'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name,
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
@@ -701,7 +1112,11 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format, 'template', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format,
+                        'template',
+                        true
+                    );
                 }
                 break;
 
@@ -719,11 +1134,19 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                         return $phpcode;
                     } else {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_EXISTED|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_EXISTED|' . $name,
+                            'template',
+                            true
+                        );
                     }
 
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format, 'template', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format,
+                        'template',
+                        true
+                    );
                 }
                 break;
         }
@@ -731,6 +1154,14 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
         return false;
     }
 
+    /**
+     * Parser: Set case into template
+     *
+     * @param string $format Format string from template file
+     * @param integer $pos Current position of tag
+     *
+     * @return mixed Return true when succeed, false otherwise
+     */
     private function doCase($format, $pos)
     {
         $params = explode(' ', $format, 2);
@@ -739,16 +1170,30 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
         switch ($params[0]) {
             case 'CASE':
-                if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+) (.*)$/', $params[1], $matched)) {
+                if (isset($params[1]) && preg_match(
+                    '/^([A-Za-z0-9]+) (.*)$/',
+                    $params[1],
+                    $matched
+                )) {
                     list($org, $name, $value) = $matched;
 
                     if (!isset($this->tagPositionMaps['Case:' . $name]['Start'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_NOT_OPEN|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_CASE_NOT_OPEN|' . $name,
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Case:' . $name]['End'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_ALREADY_CLOSED|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_CASE_ALREADY_CLOSED|' . $name,
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
@@ -758,7 +1203,11 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_FORMAT_INVALID|' . $format, 'template', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_TEMPLATE_COMPILER_CASE_FORMAT_INVALID|' . $format,
+                        'template',
+                        true
+                    );
                 }
                 break;
 
@@ -767,12 +1216,22 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     list($org, $name) = $matched;
 
                     if (!isset($this->tagPositionMaps['Case:' . $name]['Start'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_NOT_OPEN|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_CASE_NOT_OPEN|' . $name,
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Case:' . $name]['End'])) {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_ALREADY_CLOSED|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_CASE_ALREADY_CLOSED|' . $name,
+                            'template',
+                            true
+                        );
+
                         return false;
                     }
 
@@ -782,7 +1241,11 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_FORMAT_INVALID|' . $format, 'template', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_TEMPLATE_COMPILER_CASE_FORMAT_INVALID|' . $format,
+                        'template',
+                        true
+                    );
                 }
                 break;
 
@@ -791,7 +1254,8 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     list($org, $name, $variable) = $matched;
 
                     if (!isset($this->tagPositionMaps['Case:' . $name])) {
-                        $phpcode .= '<?php if (isset(' . $variable . ')) { switch (' . $variable . ') { default: ?>';
+                        $phpcode .= '<?php if (isset(' . $variable . ')) { switch ('
+                                . $variable . ') { default: ?>';
 
                         $this->tagPositionMaps['Case:' . $name] = array(
                             'Start' => $pos,
@@ -800,11 +1264,19 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                         return $phpcode;
                     } else {
-                        \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_FORMAT_EXISTED|' . $name, 'template', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_TEMPLATE_COMPILER_CASE_FORMAT_EXISTED|' . $name,
+                            'template',
+                            true
+                        );
                     }
 
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_COMPILER_CASE_FORMAT_INVALID|' . $format, 'template', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_TEMPLATE_COMPILER_CASE_FORMAT_INVALID|' . $format,
+                        'template',
+                        true
+                    );
                 }
                 break;
         }

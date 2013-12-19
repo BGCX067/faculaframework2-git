@@ -53,6 +53,15 @@ class Framework
         'MemoryPeak' => 0,
     );
 
+    /** Declare maintainer information */
+    public static $plate = array(
+        'Author' => 'Rain Lee',
+        'Reviser' => '',
+        'Updated' => '2013',
+        'Contact' => 'raincious@gmail.com',
+        'Version' => __FACULAVERSION__,
+    );
+
     /** Config container */
     protected static $cfg = array(
         // The start and end tag for framework cache
@@ -60,9 +69,6 @@ class Framework
             '<?php if (!defined(\'IN_FACULA\')) {exit(\'Access Denied\');} ',
             '',
         ),
-
-        // Framework cache file name
-        'CacheFilename' => 'CoreCache.php',
 
         // File extension for PHP script files
         'PHPExt' => 'php',
@@ -682,9 +688,15 @@ class Framework
         if (isset(static::$instance)) {
             return array(
                 'Base' => 'Facula Framework ' . __FACULAVERSION__,
-                'App' => isset(static::$instance->setting['AppName']) ? static::$instance->setting['AppName'] : 'Facula App',
-                'Ver' => isset(static::$instance->setting['AppVersion']) ? static::$instance->setting['AppVersion'] : '0.0',
-                'Boot' => isset(static::$instance->setting['Common']['BootVersion']) ? static::$instance->setting['Common']['BootVersion'] : '0',
+
+                'App' => isset(static::$instance->setting['AppName'])
+                        ? static::$instance->setting['AppName'] : 'Facula App',
+
+                'Ver' => isset(static::$instance->setting['AppVersion'])
+                        ? static::$instance->setting['AppVersion'] : '0.0',
+
+                'Boot' => isset(static::$instance->setting['Common']['BootVersion'])
+                        ? static::$instance->setting['Common']['BootVersion'] : '0',
             );
         }
 
@@ -729,7 +741,8 @@ class Framework
      *
      * @return mixed array of cores, or false when failed.
      */
-    public static function getAllCores() {
+    public static function getAllCores()
+    {
         if (static::$instance && !empty(static::$instance->cores)) {
             return static::$instance->cores;
         }

@@ -31,5 +31,10 @@ namespace Facula\Base\Prototype;
  */
 abstract class Core
 {
+    /**
+     * Initializer of cores. All core must implement their own one.
+     *
+     * @return bool Return true when success, false otherwise. Mind if return false, will cause Exception
+     */
     abstract public function inited();
 }

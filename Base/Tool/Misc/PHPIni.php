@@ -31,6 +31,11 @@ namespace Facula\Base\Tool\Misc;
  */
 abstract class PHPIni
 {
+    /**
+     * Convert ini data size in to bytes that PHP uses
+     *
+     * @param string $str The setting value
+     */
     public static function convertIniUnit($str)
     {
         $strLen = 0;

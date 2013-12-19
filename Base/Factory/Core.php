@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Core Base Factory
+ * Core Factory
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -27,12 +27,24 @@
 namespace Facula\Base\Factory;
 
 /**
- * Base factory for all built-in cores
+ * Core Factory
+ *
+ * A base factory needs to be include by every core factories
  */
 abstract class Core implements \Facula\Base\Implement\Factory\Core
 {
+    /** Instances of function cores */
     private static $instances = array();
 
+    /**
+     * Get a new function core instance
+     *
+     * @param array $cfg Function core configuration for initialization
+     * @param array $common Common configuration for initialization
+     * @param \Facula\Framework $parent Instance of Facula Framework itself.
+     *
+     * @return mixed Return a instance of function core when success, false otherwise
+     */
     final public static function getInstance(array $cfg, array $common, \Facula\Framework $parent)
     {
         $caller = get_called_class();
@@ -55,14 +67,17 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
                 throw new \Exception(
                     'Facula core '
                     . $class
-                    . ' is not loadable. Please make sure object file has been included before preform this task.'
+                    . ' is not loadable.'
+                    . 'Please make sure object file has been included before preform this task.'
                 );
 
                 return false;
             }
 
             // Create and check new instance
-            if ($caller::checkInstance(self::$instances[$class] = new $class($cfg, $common, $parent))) {
+            if ($caller::checkInstance(
+                self::$instances[$class] = new $class($cfg, $common, $parent)
+            )) {
                 return self::$instances[$class];
             } else {
                 throw new Exception(
@@ -78,6 +93,13 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
         return self::$instances[$class];
     }
 
+    /**
+     * Check if the instance is valid
+     *
+     * @param object $instance The function core instance
+     *
+     * @return bool Return true when the core is valid, false otherwise
+     */
     final protected static function checkInstance($instance)
     {
         $classInstance = get_class($instance);

@@ -35,7 +35,13 @@ interface Template
     public function inited();
     public function assign($key, $val);
     public function inject($key, $templatecontent);
-    public function render($templateName, $templateSet = '', $expire = null, $expiredCallback = null, $cacheFactor = '');
+    public function render(
+        $templateName,
+        $templateSet = '',
+        $expire = null,
+        $expiredCallback = null,
+        $cacheFactor = ''
+    );
     public function insertMessage($message);
     public function importTemplateFile($name, $path);
     public function importLanguageFile($languageCode, $path);

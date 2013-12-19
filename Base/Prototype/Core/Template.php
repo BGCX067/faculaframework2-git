@@ -450,7 +450,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
             if ($compiledContent = $compiler->compile()) {
                 if ($this->configs['Compress']) {
-                    $compiledContent = str_replace(array('  ', "\r", "\n", "\t"), '', $compiledContent);
+                    $compiledContent = str_replace(array('  ', "\r", "\r\n", "\t"), '', $compiledContent);
                 }
 
                 return file_put_contents($resultTpl, self::$setting['TemplateFileSafeCode'][0] . self::$setting['TemplateFileSafeCode'][1] . $compiledContent);
@@ -494,7 +494,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                 }
             }
 
-            $langMapPre = explode("\n", $langContent);
+            $langMapPre = explode("\r\n", $langContent);
 
             foreach ($langMapPre as $lang) {
                 $langMapTemp = explode('=', $lang, 2);

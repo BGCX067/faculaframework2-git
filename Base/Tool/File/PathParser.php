@@ -31,6 +31,7 @@ namespace Facula\Base\Tool\File;
  */
 class PathParser
 {
+    /** Configuration of this class */
     protected static $config = array(
         'Separators' => array(
             '\\', '/'
@@ -38,6 +39,13 @@ class PathParser
         'NoEnding' => true,
     );
 
+    /**
+    * Get the valid path
+    *
+    * @param string $path The path to get
+    *
+    * @return string Valid path
+    */
     public static function get($path)
     {
         $rightPath = rtrim(

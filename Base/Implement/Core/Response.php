@@ -36,6 +36,14 @@ interface Response
     public function setHeader($header);
     public function setContent($content, $forceRaw = false);
     public function send($type = 'htm', $persistConn = false);
-    public function setCookie($key, $val = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false);
+    public function setCookie(
+        $key,
+        $val = '',
+        $expire = 0,
+        $path = '/',
+        $domain = '',
+        $secure = false,
+        $httponly = false
+    );
     public function unsetCookie($key);
 }

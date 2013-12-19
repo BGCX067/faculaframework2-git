@@ -31,8 +31,40 @@ namespace Facula\App;
  */
 abstract class Model
 {
+    /**
+     * Abstract method: Insert the data
+     *
+     * @param array $data The data with key => val pair
+     *
+     * @return mixed Return the value of primary key when succeed, false otherwise
+     */
     abstract public function create(array $data);
+
+    /**
+     * Abstract method: Update the data
+     *
+     * @param mixed $primaryKey Primary key of the data
+     * @param array $data The data with key => val pair
+     *
+     * @return mixed Return the value of primary key when succeed, false otherwise
+     */
     abstract public function update($primaryKey, array $data);
+
+    /**
+     * Abstract method: Get data
+     *
+     * @param mixed $primaryKey Primary key of the data
+     *
+     * @return mixed return the data when succeed, false otherwise
+     */
     abstract public function read($primaryKey);
+
+    /**
+     * Abstract method: Get data
+     *
+     * @param mixed $primaryKey Primary key of the data
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
     abstract public function delete($primaryKey);
 }

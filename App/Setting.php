@@ -31,12 +31,20 @@ namespace Facula\App;
  */
 abstract class Setting
 {
+    /** Registered setting methods or datas */
     private static $registered = array();
 
+    /**
+     * Get who is calling
+     *
+     * @return mixed Return caller name when succeeded, null otherwise.
+     */
     private static function getCallerClass()
     {
         $debug = array();
-        $btResult = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT + DEBUG_BACKTRACE_IGNORE_ARGS);
+        $btResult = debug_backtrace(
+            DEBUG_BACKTRACE_PROVIDE_OBJECT + DEBUG_BACKTRACE_IGNORE_ARGS
+        );
 
         $debug[] = array_shift($btResult); // Shift the back trace of this method
         $debug[] = array_shift($btResult); // Shift next, which must be the call to this method
@@ -55,29 +63,30 @@ abstract class Setting
         return null;
     }
 
+    /**
+     * Register a new setting
+     *
+     * @param string $settingName Name of the setting
+     * @param mixed $operator Setting data or operator, can be any data type. But it will be call when callable.
+     * @param mixed $accesser Permitted accesser(s)
+     *
+     * @return bool Return true when succeeded
+     */
     public static function registerSetting($settingName, $operator, $accesser = false)
     {
         $accessers = array();
 
-        switch (gettype($accesser)) {
-            case 'array':
-                // If $accessers is an array, means we need to specify who can access this setting manually.
-                $accessers = $accesser;
-                break;
-
-            case 'string':
-                // If $accessers is a string, You means can set one accesser manually .
-                $accessers = $accesser ? array($accesser) : array();
-                break;
-
-            default:
-                // If $accessers is a bool or other type, when it set to true, means setting can be access from public, other wise, only caller class can access
-                if ($accesser) {
-                    $accessers = array('!PUBLIC!');
-                } elseif ((($accesser = get_called_class()) != __CLASS__) || ($accesser = self::getCallerClass())) {
-                    $accessers = array($accesser);
-                }
-                break;
+        if (is_array($accesser)) {
+            $accessers = $accesser;
+        } elseif (is_string($accesser)) {
+            $accessers = $accesser ? array($accesser) : array();
+        } elseif (is_bool($accesser)) {
+            if ($accesser) {
+                $accessers = array('!PUBLIC!');
+            } elseif ((($accesser = get_called_class()) != __CLASS__)
+                    || ($accesser = self::getCallerClass())) {
+                $accessers = array($accesser);
+            }
         }
 
         if (!isset(self::$registered[$settingName])) {
@@ -97,18 +106,39 @@ abstract class Setting
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_SETTING_NAME_ALREADY_EXISTED|' . $settingName, 'setting', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_SETTING_NAME_ALREADY_EXISTED|' . $settingName,
+                'setting',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Get a setting
+     *
+     * @param string $settingName Name of the setting
+     * @param mixed $operator Setting data or operator, can be any data type. But it will be call when callable.
+     * @param mixed $accesser Permitted accesser(s)
+     *
+     * @return bool Return true when succeeded
+     */
     public static function getSetting($settingName)
     {
         $accesser = '';
 
         if (isset(self::$registered[$settingName])) {
-            if (isset(self::$registered[$settingName]['Accesser']['!PUBLIC!']) || (((($accesser = get_called_class()) != __CLASS__) || ($accesser = self::getCallerClass())) && isset(self::$registered[$settingName]['Accesser'][$accesser]))) {
+            if (isset(self::$registered[$settingName]['Accesser']['!PUBLIC!'])
+                || (
+                        (
+                            (($accesser = get_called_class()) != __CLASS__)
+                            || ($accesser = self::getCallerClass())
+                        )
+                        && isset(self::$registered[$settingName]['Accesser'][$accesser])
+                    )
+                ) {
 
                 switch (self::$registered[$settingName]['Type']) {
                     case 'Operator':
@@ -130,7 +160,11 @@ abstract class Setting
                 }
 
             } else {
-                \Facula\Framework::core('debug')->exception('ERROR_SETTING_ACCESS_DENIED|' . $accesser . ' -> ' . $settingName, 'setting', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_SETTING_ACCESS_DENIED|' . $accesser . ' -> ' . $settingName,
+                    'setting',
+                    true
+                );
             }
         }
 

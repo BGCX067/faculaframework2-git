@@ -31,6 +31,7 @@ namespace Facula\Base\Prototype\Core;
  */
 abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Cache
 {
+    /** Declare maintainer information */
     public static $plate = array(
         'Author' => 'Rain Lee',
         'Reviser' => '',
@@ -39,6 +40,7 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
         'Version' => __FACULAVERSION__,
     );
 
+    /** Default settings */
     protected static $setting = array(
         'CacheFileSafeCode' => array(
             '<?php if (!defined(\'IN_FACULA\')) {exit(\'Access Denied\');} ',
@@ -46,8 +48,18 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
         )
     );
 
+    /** Instance setting for caching */
     protected $configs = array();
 
+    /**
+     * Constructor
+     *
+     * @param array &$cfg Array of core configuration
+     * @param array $common Array of common configuration
+     * @param \Facula\Framework $facula The framework itself
+     *
+     * @return void
+     */
     public function __construct(&$cfg, $common)
     {
         if (isset($cfg['CacheRoot'][0]) && is_dir($cfg['CacheRoot'])) {
@@ -56,17 +68,27 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
             throw new Exception('Cache root must be set and existed.');
         }
 
-        $cfg = null;
-        unset($cfg);
-
         return true;
     }
 
+    /**
+     * Warm up initializer
+     *
+     * @return bool Return true when initialization complete, false otherwise
+     */
     public function inited()
     {
         return true;
     }
 
+    /**
+     * Load data from cache
+     *
+     * @param string $cacheName Cache name
+     * @param string $expire How long (in second) the cache will expired after saving
+     *
+     * @return bool Return true success, false otherwise
+     */
     public function load($cacheName, $expire = 0)
     {
         $path = $file = '';
@@ -93,6 +115,14 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
         return false;
     }
 
+    /**
+     * Save data to cache
+     *
+     * @param string $cacheName Cache name
+     * @param string $data Data will be saved in cache
+     *
+     * @return bool Return true success, false otherwise
+     */
     public function save($cacheName, $data)
     {
         $cacheData = array();
@@ -106,13 +136,27 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
                     'Data' => $data ? $data : null,
                 );
 
-                return file_put_contents($file, self::$setting['CacheFileSafeCode'][0] . ' $cache = ' . var_export($cacheData, true) . '; ' . self::$setting['CacheFileSafeCode'][1]);
+                return file_put_contents(
+                    $file,
+                    self::$setting['CacheFileSafeCode'][0]
+                    . ' $cache = '
+                    . var_export($cacheData, true)
+                    . '; '
+                    . self::$setting['CacheFileSafeCode'][1]
+                );
             }
         }
 
         return false;
     }
 
+    /**
+     * Get cache path from cache name
+     *
+     * @param string $cacheName Cache name
+     *
+     * @return string Return cache path
+     */
     protected function getCacheFileByName($cacheName)
     {
         $pathArray = array();
@@ -130,24 +174,40 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
 
         if ($pathArray[0][0]) {
             $result['Path'] = implode(DIRECTORY_SEPARATOR, array_reverse($pathArray));
-            $result['File'] = $result['Path'] . DIRECTORY_SEPARATOR . 'CacheFile.'. $cacheName . '.php';
+            $result['File'] = $result['Path']
+                            . DIRECTORY_SEPARATOR
+                            . 'CacheFile.'
+                            . $cacheName
+                            . '.php';
 
             return $result;
         } else {
-            $result['File'] = $result['Path'] . DIRECTORY_SEPARATOR . 'CacheFile.'. $cacheName . '.php';
+            $result['File'] = $result['Path']
+                            . DIRECTORY_SEPARATOR
+                            . 'CacheFile.'
+                            . $cacheName
+                            . '.php';
 
             return $result;
         }
     }
 
-    protected function makeCacheDir($dirName)
+    /**
+     * Make directory for cache
+     *
+     * @param string $dirName Path name
+     *
+     * @return string Return cache path
+     */
+    protected function makeCacheDir($pathName)
     {
-        $fullPath = $this->configs['Root'] . DIRECTORY_SEPARATOR . $dirName;
+        $fullPath = $this->configs['Root'] . DIRECTORY_SEPARATOR . $pathName;
         $currentPath = $this->configs['Root'] . DIRECTORY_SEPARATOR;
 
         if (!file_exists($fullPath)) {
-            foreach (explode(DIRECTORY_SEPARATOR, $dirName) as $path) {
-                if (!file_exists($currentPath . $path) && mkdir($currentPath . $path, 0744)) {
+            foreach (explode(DIRECTORY_SEPARATOR, $pathName) as $path) {
+                if (!file_exists($currentPath . $path)
+                    && mkdir($currentPath . $path, 0744)) {
                     file_put_contents($currentPath . 'index.htm', 'Access Denied');
                 }
 

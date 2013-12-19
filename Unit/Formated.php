@@ -471,12 +471,12 @@ class Formated
                     default:
                         if (isset($this->tags[$this->content[$charOffset]]) && $this->content[$nextCharOffset] == self::$delimiters['Tag']['Start']) {
                             if (--$remainTags < 0) {
-                                $splitPrvContent = explode("\n", substr($this->content, 0, $charOffset));
+                                $splitPrvContent = explode("\r\n", substr($this->content, 0, $charOffset));
                                 $splitPrvTotalLines = count($splitPrvContent);
 
                                 unset($splitPrvContent[$splitPrvTotalLines - 1]);
 
-                                $prvContentlastLen = $charOffset - strlen(implode("\n", $splitPrvContent));
+                                $prvContentlastLen = $charOffset - strlen(implode("\r\n", $splitPrvContent));
 
                                 $error = array(
                                             'Tag' => $this->content[$charOffset],
@@ -556,13 +556,13 @@ class Formated
                         );
                     }
 
-                    $splitedContent = explode("\n", substr($this->content, 0, $errorOffset));
+                    $splitedContent = explode("\r\n", substr($this->content, 0, $errorOffset));
                     $splitedContentLens = count($splitedContent);
 
                     $error['Arg']['Line'] = $splitedContentLens;
 
                     unset($splitedContent[$splitedContentLens - 1]);
-                    $error['Arg']['Char'] = $errorOffset - strlen(implode("\n", $splitedContent));
+                    $error['Arg']['Char'] = $errorOffset - strlen(implode("\r\n", $splitedContent));
 
                     return false;
                 }

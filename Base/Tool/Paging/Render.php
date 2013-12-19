@@ -31,12 +31,25 @@ namespace Facula\Base\Tool\Paging;
  */
 class Render implements \Facula\Base\Implement\Core\Template\Render
 {
+    /** Rendered content */
     private $content = '';
 
-    public function __construct(&$targetTpl, &$assigned = array())
+    /**
+     * Constructor of Render
+     *
+     * @param string &$targetTpl File path to the PHP script file (Compiled template)
+     * @param array &$assigned Assigned data
+     *
+     * @return void
+     */
+    public function __construct(&$targetTpl, array &$assigned = array())
     {
         if ($oldContent = ob_get_clean()) {
-            \Facula\Framework::core('debug')->exception('ERROR_TEMPLATE_RENDER_BUFFER_POLLUTED|' . htmlspecialchars($oldContent), 'template', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_TEMPLATE_RENDER_BUFFER_POLLUTED|' . htmlspecialchars($oldContent),
+                'template',
+                true
+            );
 
             return false;
         }
@@ -56,6 +69,11 @@ class Render implements \Facula\Base\Implement\Core\Template\Render
         return true;
     }
 
+    /**
+     * Get render result
+     *
+     * @return string Rendered content
+     */
     public function getResult()
     {
         return $this->content;

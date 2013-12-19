@@ -29,7 +29,7 @@ namespace Facula\Core;
 /**
  * A Factory to load PDO function core
  */
-class PDO extends \Facula\Base\Core\Factory
+class PDO extends \Facula\Base\Factory\Core
 {
     public static $plate = array(
         'Author' => 'Rain Lee',

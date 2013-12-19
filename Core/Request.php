@@ -29,7 +29,7 @@ namespace Facula\Core;
 /**
  * A Factory to load Request function core
  */
-class Request extends \Facula\Base\Core\Factory
+class Request extends \Facula\Base\Factory\Core
 {
     public static $plate = array(
         'Author' => 'Rain Lee',

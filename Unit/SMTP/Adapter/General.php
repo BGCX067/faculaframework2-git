@@ -165,7 +165,7 @@ class General extends \Facula\Unit\SMTP\Base
             }
 
             if ($this->socket->put('DATA', 'one') == 354) {
-                foreach (explode("\n", $mailContent) as $line) {
+                foreach (explode("\r\n", $mailContent) as $line) {
                     if ($line == '.') {
                         $line = '. ';
                     }

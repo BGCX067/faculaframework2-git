@@ -31,31 +31,59 @@ namespace Facula\App;
  */
 abstract class View
 {
+    /** Assigned variable for templating */
     private static $assigned = array();
 
+    /**
+     * Assign a variable into template
+     *
+     * @param string $key Key name for the variable
+     * @param string $val Value of the variable
+     *
+     * @return mixed The assigned value
+     */
     public static function assign($key, $val)
     {
         return self::$assigned[$key] = $val;
     }
 
-    public static function display($file)
+    /**
+     * Render and display the page
+     *
+     * @param string $path The path to template file
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    public static function display($path)
     {
-        $file = \Facula\Framework::core('object')->getFileByNamespace($file);
         $content = '';
 
-        if ($content = self::render($file)) {
+        if ($content = self::render($path)) {
             \Facula\Framework::core('response')->setContent($content);
             \Facula\Framework::core('response')->send();
+
+            return true;
         }
 
         return false;
     }
 
+    /**
+     * Render the page
+     *
+     * @param string $targetTpl The path to template file
+     *
+     * @return mixed Return the rendered content when succeed, false otherwise
+     */
     private static function render($targetTpl)
     {
         if (is_readable($targetTpl)) {
             if ($oldContent = ob_get_clean()) {
-                \Facula\Framework::core('debug')->exception('ERROR_VIEW_BUFFER_POLLUTED|' . htmlspecialchars($oldContent), 'template', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_VIEW_BUFFER_POLLUTED|' . htmlspecialchars($oldContent),
+                    'template',
+                    true
+                );
 
                 return false;
             }
@@ -72,7 +100,11 @@ abstract class View
 
             return ob_get_clean();
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_VIEW_TEMPLATE_FILENOTFOUND|' . $file, 'data', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_VIEW_TEMPLATE_FILENOTFOUND|' . $file,
+                'data',
+                true
+            );
         }
 
         return false;

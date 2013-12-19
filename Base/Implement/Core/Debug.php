@@ -37,6 +37,4 @@ interface Debug
     public function exception($info, $type = '', $exit = false, \Exception $e = null);
     public function criticalSection($enter, $fullEnter = false);
     public function addLog($type, $errorcode, $content, &$backtraces = array());
-
-    public function errorHandler($errno, $errstr, $errfile, $errline, $errcontext);
 }

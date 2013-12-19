@@ -48,8 +48,8 @@ class Datar
 
         // Parse mail body
         $mail['Subject'] = '=?UTF-8?B?' . rtrim(base64_encode($mailContent['Title'] ? $mailContent['Title'] : 'Untitled'), '=') . '?=';
-        $mail['Body'] = chunk_split(base64_encode($mailContent['Message']) . '?=', 76, "\n");
-        $mail['AltBody'] = chunk_split(base64_encode(strip_tags(str_replace('</', "\r\n</", $mailContent['Message']))) . '?=', 76, "\n");
+        $mail['Body'] = chunk_split(base64_encode($mailContent['Message']) . '?=', 76, "\r\n");
+        $mail['AltBody'] = chunk_split(base64_encode(strip_tags(str_replace('</', "\r\n</", $mailContent['Message']))) . '?=', 76, "\r\n");
 
         // Make mail header
         $this->addLine('MIME-Version', '1.0');
@@ -122,7 +122,7 @@ class Datar
 
     public function get()
     {
-        return implode("\n", $this->mailContent);
+        return implode("\r\n", $this->mailContent);
     }
 
     private function addLine($head, $content)

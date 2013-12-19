@@ -34,6 +34,6 @@ interface Compiler
 {
     public static function addTag($tag, $command);
 
-    public function __construct(&$pool, &$sourceTpl);
+    public function __construct(array &$pool, &$sourceTpl);
     public function compile();
 }
