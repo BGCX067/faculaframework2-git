@@ -55,7 +55,7 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
         $paths = array();
 
         $this->configs = array(
-            'OCRoot' => isset($cfg['ObjectCacheRoot']) && is_dir($cfg['ObjectCacheRoot']) ? $cfg['ObjectCacheRoot'] : '',
+            'OCRoot' => isset($cfg['ObjectCacheRoot']) && is_dir($cfg['ObjectCacheRoot']) ? \Facula\Base\Tool\File\PathParser::get($cfg['ObjectCacheRoot']) : '',
             'OCExpire' => isset($cfg['ObjectCacheExpire']) && $cfg['ObjectCacheExpire'] ? (int)($cfg['ObjectCacheExpire']) : 604800,
             'CacheTime' => $common['BootVersion']
         );
@@ -270,7 +270,7 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
 
         return false;
     }
-    
+
     public function run($app, $args = array(), $cache = false)
     {
         $handler = $hookResult = $callResult = null;
@@ -287,10 +287,10 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                     'Call' => $callResult,
                     'Hook' => $hookResult,
                 ), $errors);
-            } elseif (method_exists($handler, '_run')) {
+            } elseif (method_exists($handler, 'run')) {
                 $hookResult = \Facula\Framework::summonHook('call_' . $appParam[0] . '_before', $args, $errors);
 
-                $callResult = $this->callFunction(array($handler, '_run'), $args);
+                $callResult = $this->callFunction(array($handler, 'run'), $args);
 
                 \Facula\Framework::summonHook('call_' . $appParam[0] . '_after', array(
                     'Call' => $callResult,

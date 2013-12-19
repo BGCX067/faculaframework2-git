@@ -50,7 +50,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     {
         $this->configs = array(
             'ExitOnAnyError' => isset($cfg['ExitOnAnyError']) ? $cfg['ExitOnAnyError'] : false,
-            'LogRoot' => isset($cfg['LogRoot']) && is_dir($cfg['LogRoot']) ? $cfg['LogRoot'] : '',
+            'LogRoot' => isset($cfg['LogRoot']) && is_dir($cfg['LogRoot']) ? \Facula\Base\Tool\File\PathParser::get($cfg['LogRoot']) : '',
             'LogServer' => array(
                 'Addr' => isset($cfg['LogServerInterface'][0]) ? $cfg['LogServerInterface'] : '',
                 'Key' => isset($cfg['LogServerKey'][0]) ? $cfg['LogServerKey'] : '',
@@ -69,7 +69,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
         register_shutdown_function(function () {
             $this->shutdownTask();
         }); // Experimentally use our own fatal reporter
-        
+
         set_error_handler(function ($errno, $errstr, $errfile, $errline, $errcontext) {
             $this->errorHandler($errno, $errstr, $errfile, $errline, $errcontext);
         }, E_ALL); // Use our own error reporter, just like PHP's E_ALL
@@ -77,7 +77,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
         set_exception_handler(function ($exception) {
             $this->exceptionHandler($exception);
         }); // Use our own exception reporter
-        
+
         if (isset($this->configs['LogServer']['Addr'][0])) {
             $this->configs['LogServer']['Enabled'] = true;
         } else {

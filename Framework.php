@@ -85,15 +85,6 @@ class Framework
         ),
     );
 
-    /** Config container */
-    protected static $nsMap = array();
-
-    /** Class and other files that will be use by Facula */
-    protected static $scopeMap = array();
-
-    /** Hooks will be use by Facula */
-    protected static $hookMap = array();
-
     /** Mirror of Components information container */
     protected static $components = array();
 
@@ -116,11 +107,18 @@ class Framework
     public static function run(array &$cfg)
     {
         if (!static::$instance) {
-            static::$profile['StartTime'] = microtime(true);
+            spl_autoload_register(function ($className) {
+                // Check if this is a namespace calling
+                if (strpos($className, static::$cfg['NSSplitter'])) {
+                    return static::loadNamespace($className);
+                } else {
+                    return static::loadScope($className);
+                }
 
-            spl_autoload_register(function ($class) {
-                return static::loadClass($class);
+                return false;
             });
+
+            static::$profile['StartTime'] = microtime(true);
 
             if (isset($cfg['StateCache'][0])) {
                 if (!static::$instance = static::initFromStateCache($cfg['StateCache'])) {
@@ -210,25 +208,6 @@ class Framework
     {
         if (static::$instance && isset(static::$instance->setting['StateCache'])) {
             return unlink(static::$instance->setting['StateCache']);
-        }
-
-        return false;
-    }
-
-    /**
-     * Global class autoloader
-     *
-     * @param string $className Fully qualified class name
-     *
-     * @return bool Return true when success, false otherwise.
-     */
-    protected static function loadClass($className)
-    {
-        // Check if this is a namespace calling
-        if (strpos($className, static::$cfg['NSSplitter'])) {
-            return static::loadNamespace($className);
-        } else {
-            return static::loadScope($className);
         }
 
         return false;
@@ -366,7 +345,7 @@ class Framework
             $map = self::locateNamespace(self::splitNamespace($nsPrefix), true);
 
             if (!isset($map['Ref']['P']) || !$map['Ref']['P']) {
-                $map['Ref']['P'] = $path;
+                $map['Ref']['P'] = rtrim($path, DIRECTORY_SEPARATOR);
 
                 return true;
             } else {
@@ -459,7 +438,7 @@ class Framework
         // Set a reference that point to the root Mapping container
         $mapParentRef = $mapCurrentRef = $mapActiveRef = & static::$components['NSMap'];
 
-        foreach ($splitedNS as $ns) {
+        foreach ($splitedNS as $nsk => $ns) {
             $mapParentRef = & $mapActiveRef;
 
             // Repoint the Namespace reference if namespace already existed
@@ -479,7 +458,7 @@ class Framework
                 break;
             }
 
-            array_shift($splitedRemainNS);
+            unset($splitedRemainNS[$nsk]);
         }
 
         return array(
@@ -960,7 +939,7 @@ class Framework
         if (isset($this->setting['Paths']) && is_array($this->setting['Paths'])) {
 
             foreach ($this->setting['Paths'] as $path) {
-                $scanner = new Base\Tool\File\ModuleScanner($path);
+                $scanner = new \Facula\Base\Tool\File\ModuleScanner($path);
 
                 // Must use array_merge. Yes, it's slow but it can auto resolve reindex problem
                 $modules = array_merge($modules, $scanner->scan());

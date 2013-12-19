@@ -58,8 +58,8 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
         // General settings
 
         $this->configs = array(
-            'Cache' => isset($cfg['CacheTemplate']) && $cfg['CacheTemplate'] ? true : false,
-            'Compress' => isset($cfg['CompressOutput']) && $cfg['CompressOutput'] ? true : false,
+            'Cache' => isset($cfg['CacheTemplate']) && \Facula\Base\Tool\File\PathParser::get($cfg['CacheTemplate']) ? true : false,
+            'Compress' => isset($cfg['CompressOutput']) && \Facula\Base\Tool\File\PathParser::get($cfg['CompressOutput']) ? true : false,
             'Renew' => isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ? true : false,
             'Render' => isset($cfg['Render'][0]) && class_exists($cfg['Render']) ? $cfg['Render'] : '\Facula\Base\Tool\Paging\Render',
             'Compiler' => isset($cfg['Compiler'][0]) && class_exists($cfg['Compiler']) ? $cfg['Compiler'] : '\Facula\Base\Tool\Paging\Compiler',
@@ -69,14 +69,14 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
         // TemplatePool
         if (isset($cfg['TemplatePool'][0]) && is_dir($cfg['TemplatePool'])) {
-            $this->configs['TplPool'] = $cfg['TemplatePool'];
+            $this->configs['TplPool'] = \Facula\Base\Tool\File\PathParser::get($cfg['TemplatePool']);
         } else {
             throw new Exception('TemplatePool must be defined and existed.');
         }
 
         // CompiledTemplate
         if (isset($cfg['CompiledTemplate'][0]) && is_dir($cfg['CompiledTemplate'])) {
-            $this->configs['Compiled'] = $cfg['CompiledTemplate'];
+            $this->configs['Compiled'] = \Facula\Base\Tool\File\PathParser::get($cfg['CompiledTemplate']);
         } else {
             throw new Exception('CompiledTemplate must be defined and existed.');
         }
@@ -214,7 +214,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
     public function render($templateName, $templateSet = '', $expire = 0, $expiredCallback = null, $cacheFactor = '')
     {
         $templatePath = $content = '';
-        
+
         if (!is_null($expire)) {
             if ($templatePath = $this->getCacheTemplate($templateName, $templateSet, $expire, $expiredCallback, $cacheFactor)) {
                 return $this->doRender($templateName, $templatePath);

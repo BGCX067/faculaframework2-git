@@ -87,13 +87,13 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
         if (isset($cfg['MaxDataSize'])) { // give memory_limit * 0.8 because our app needs memory to run, so memory cannot be 100%ly use for save request data;
             $this->configs['MaxDataSize'] = min(
                 (int)($cfg['MaxDataSize']),
-                $this->convertIniUnit(ini_get('post_max_size')),
-                $this->convertIniUnit(ini_get('memory_limit')) * 0.8
+                \Facula\Base\Tool\Misc\PHPIni::convertIniUnit(ini_get('post_max_size')),
+                \Facula\Base\Tool\Misc\PHPIni::convertIniUnit(ini_get('memory_limit')) * 0.8
             );
         } else {
             $this->configs['MaxDataSize'] = min(
-                $this->convertIniUnit(ini_get('post_max_size')),
-                $this->convertIniUnit(ini_get('memory_limit')) * 0.8
+                \Facula\Base\Tool\Misc\PHPIni::convertIniUnit(ini_get('post_max_size')),
+                \Facula\Base\Tool\Misc\PHPIni::convertIniUnit(ini_get('memory_limit')) * 0.8
             );
         }
 
@@ -402,37 +402,5 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
         }
 
         return false;
-    }
-
-    protected function convertIniUnit($str)
-    {
-        $strLen = 0;
-        $lastChar = '';
-
-        if (is_numeric($str)) {
-            return (int)($str);
-        } else {
-            $strLen = strlen($str);
-
-            if ($lastChar = $str[$strLen - 1]) {
-                $strSelected = substr($str, 0, $strLen - 1);
-
-                switch (strtolower($lastChar)) {
-                    case 'k':
-                        return (int)($strSelected) * 1024;
-                        break;
-
-                    case 'm':
-                        return (int)($strSelected) * 1048576;
-                        break;
-
-                    case 'g':
-                        return (int)($strSelected) * 1073741824;
-                        break;
-                }
-            }
-        }
-
-        return 0;
     }
 }

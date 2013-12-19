@@ -249,7 +249,7 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
             'PSignal' => isset($cfg['PostProfileSignal']) && $cfg['PostProfileSignal'] ? true : false,
             'Encoding' => isset($cfg['Encoding']) ? $cfg['Encoding'] : 'utf-8',
             'UseFFR' => function_exists('fastcgi_finish_request') ? true : false,
-            'AppVersion' => $common['AppVersion'],
+            'AppVersion' => $common['AppName'] . ' (' . $common['AppVersion'] . ')',
         );
 
         $cfg = null;
