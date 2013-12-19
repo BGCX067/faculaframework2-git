@@ -43,10 +43,14 @@ $cfg = array(
 );
 */
 
-class Factory
+class Factory extends \Facula\Base\Factory\Adapter
 {
     private static $config = array();
     private static $emails = array();
+
+    protected static $adapters = array(
+        'general' => '\Facula\Unit\SMTP\Adapter\General',
+    );
 
     public static function init($cfg = array())
     {
@@ -68,20 +72,13 @@ class Factory
                     self::$config['Servers'][$key] = array(
                         'Host' => isset($val['Host']) ? $val['Host'] : 'localhost',
                         'Port' => isset($val['Port']) ? $val['Port'] : 25,
+                        'Type' => isset($val['Type']) ? $val['Type'] : 'general',
                         'Timeout' => isset($val['Timeout']) ? $val['Timeout'] : 1,
                         'Username' => isset($val['Username']) ? $val['Username'] : '',
                         'Password' => isset($val['Password']) ? $val['Password'] : '',
                         'Handler' => self::$config['Handler'],
                         'SenderIP' => $senderIP,
                     );
-
-                    if (isset($val['Type'])) {
-                        $val['Type'][0] = strtoupper($val['Type'][0]);
-
-                        self::$config['Servers'][$key]['Type'] = $val['Type'];
-                    } else {
-                        self::$config['Servers'][$key]['Type'] = 'General';
-                    }
 
                     // Set poster screen name, this will be display on the receiver's list
                     if (isset($val['Screenname'])) {
@@ -178,7 +175,7 @@ class Factory
             try {
                 while (!empty($currentServers) && !empty(self::$emails) && $retryLimit > 0) {
                     foreach ($currentServers as $serverkey => $server) {
-                        $operaterClassName = __NAMESPACE__ . NAMESPACE_SEPARATER . 'Handler' . $server['Type'];
+                        $operaterClassName = static::getAdapter($server['Type']);
 
                         if (class_exists($operaterClassName, true)) {
                             $operater = new $operaterClassName($server);

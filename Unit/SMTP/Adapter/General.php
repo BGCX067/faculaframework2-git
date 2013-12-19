@@ -25,9 +25,9 @@
  *
  */
 
-namespace Facula\Unit\SMTP;
+namespace Facula\Unit\SMTP\Adapter;
 
-class HandlerGeneral extends Base
+class General extends \Facula\Unit\SMTP\Base
 {
     protected $server = '';
 

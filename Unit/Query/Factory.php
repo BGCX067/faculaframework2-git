@@ -27,9 +27,14 @@
 
 namespace Facula\Unit\Query;
 
-class Factory implements Impl
+class Factory extends \Facula\Base\Factory\Adapter implements Implement
 {
     private static $inited = false;
+
+    protected static $adapters = array(
+        'mysql' => 'Facula\Unit\Query\Adapter\Mysql',
+        'pgsql' => 'Facula\Unit\Query\Adapter\Pgsql',
+    );
 
     private static $pdoDataTypes = array(
         'BOOL' => \PDO::PARAM_BOOL,
@@ -104,7 +109,37 @@ class Factory implements Impl
     private $dataIndex = 0;
     protected $dataMap = array();
 
-    public static function init()
+    public static function from($tableName, $autoParse = false)
+    {
+        return new self($tableName, $autoParse);
+    }
+
+    public static function addAutoParser($name, $type, \Closure $parser)
+    {
+        if (!isset(static::$parsers[$name][$type])) {
+            switch ($type) {
+                case 'Reader':
+                    static::$parsers[$name]['Reader'] = $parser;
+
+                    return true;
+                    break;
+
+                case 'Writer':
+                    static::$parsers[$name]['Writer'] = $parser;
+
+                    return true;
+                    break;
+
+                default:
+                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_PARSER_TYPE_INVALID|' . $type, 'query', true);
+                    break;
+            }
+        }
+
+        return false;
+    }
+
+    private static function selfInit()
     {
         if (self::$inited) {
             return true;
@@ -147,42 +182,12 @@ class Factory implements Impl
         return true;
     }
 
-    public static function from($tableName, $autoParse = false)
-    {
-        return new self($tableName, $autoParse);
-    }
-
-    public static function addAutoParser($name, $type, \Closure $parser)
-    {
-        if (!isset(static::$parsers[$name][$type])) {
-            switch ($type) {
-                case 'Reader':
-                    static::$parsers[$name]['Reader'] = $parser;
-
-                    return true;
-                    break;
-
-                case 'Writer':
-                    static::$parsers[$name]['Writer'] = $parser;
-
-                    return true;
-                    break;
-
-                default:
-                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_PARSER_TYPE_INVALID|' . $type, 'query', true);
-                    break;
-            }
-        }
-
-        return false;
-    }
-
     private function __construct($tableName, $autoParse = false)
     {
         $this->query['From'] = $tableName;
         $this->query['Parser'] = $autoParse ? true : false;
 
-        self::init();
+        self::selfInit();
 
         return true;
     }
@@ -722,20 +727,17 @@ class Factory implements Impl
 
     private function getDBAdapter()
     {
-        $builderName =  $adapterName = '';
+        $adapterName = '';
         $adapter = null;
 
         if (!$this->adapter) {
             if (isset($this->connection->_connection['Driver'])) {
-                $adapterName = $this->connection->_connection['Driver'];
-                $adapterName[0] = strtoupper($adapterName[0]);
+                $adapterName = static::getAdapter($this->connection->_connection['Driver']);
 
-                $builderName = __NAMESPACE__ . NAMESPACE_SEPARATER . 'Query' . $adapterName;
+                if (class_exists($adapterName)) {
+                    $adapter = new $adapterName($this->connection->_connection['Prefix'] . $this->query['From'], $this->query);
 
-                if (class_exists($builderName)) {
-                    $adapter = new $builderName($this->connection->_connection['Prefix'] . $this->query['From'], $this->query);
-
-                    if ($adapter instanceof AdapterImpl) {
+                    if ($adapter instanceof AdapterImplement) {
                         return ($this->adapter = $adapter);
                     } else {
                         \Facula\Framework::core('debug')->exception('ERROR_QUERY_BUILDER_INTERFACE_INVALID', 'query', true);

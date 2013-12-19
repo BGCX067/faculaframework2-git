@@ -27,7 +27,7 @@
 
 namespace Facula\Core;
 
-class Debug extends \Facula\Base\Factory\Core
+class Debug extends \Facula\Base\Core\Factory
 {
     public static $plate = array(
         'Author' => 'Rain Lee',

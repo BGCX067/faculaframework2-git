@@ -32,7 +32,7 @@ define('__FACULAVERSION__', '2 Prototype 0.2');
 define('FACULA_ROOT', dirname(__FILE__));
 define('PROJECT_ROOT', realpath('.'));
 
-define(NAMESPACE_SEPARATER, '\\');
+define('NAMESPACE_SEPARATER', '\\');
 
 define('IN_FACULA', true);
 define('FACULA_TIME', isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time());
@@ -44,7 +44,7 @@ class Framework
 {
     /** Singleton instance container */
     protected static $instance = null;
-    
+
     /** Performance and running counter */
     public static $profile = array(
         'StartTime' => 0,
@@ -117,7 +117,7 @@ class Framework
     {
         if (!static::$instance) {
             static::$profile['StartTime'] = microtime(true);
-        
+
             spl_autoload_register(function ($class) {
                 return static::loadClass($class);
             });
@@ -677,7 +677,7 @@ class Framework
 
         return $results;
     }
-    
+
     /**
      * Get size of specified hook
      *
@@ -690,10 +690,10 @@ class Framework
         if (isset(static::$components['Hooks'][$hook])) {
             return count(static::$components['Hooks'][$hook]);
         }
-        
+
         return 0;
     }
-    
+
     /**
      * Get application info
      *
@@ -742,7 +742,7 @@ class Framework
                 . ' to work.'
             );
         }
-        
+
         return false;
     }
 
@@ -810,7 +810,7 @@ class Framework
         // Then, load routines and clear the routines array for release memory
         $this->includeComponents('Routine');
         static::$components['Routine'] = array();
-        
+
         static::summonHook('ready');
 
         return true;

@@ -25,7 +25,7 @@
  *
  */
 
-namespace \Facula\Base\Tool\Misc;
+namespace Facula\Base\Tool\Misc;
 
 abstract class PHPIni
 {

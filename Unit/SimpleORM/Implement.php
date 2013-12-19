@@ -27,7 +27,7 @@
 
 namespace Facula\Unit\SimpleORM;
 
-interface Impl
+interface Implement
 {
     public function __set($key, $val);
     public function __get($key);

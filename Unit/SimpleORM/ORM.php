@@ -27,7 +27,7 @@
 
 namespace Facula\Unit\SimpleORM;
 
-abstract class ORM implements Impl, \ArrayAccess
+abstract class ORM implements Implement, \ArrayAccess
 {
     protected $table = '';
     protected $fields = array();

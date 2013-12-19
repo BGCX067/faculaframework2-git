@@ -69,9 +69,13 @@ $setting = array {
 
 */
 
-class Factory
+class Factory extends \Facula\Base\Factory\Adapter
 {
     private static $handler = null;
+
+    protected static $adapters = array(
+        'ftp' => 'Facula\Unit\RemoteStorage\Adapter\FTP',
+    );
 
     private static $servers = array();
 
@@ -100,7 +104,7 @@ class Factory
     public static function upload($localFile, &$error = '')
     {
         $handler = null;
-        $handlerName = $adapterName = '';
+        $adapterName = '';
         $result = '';
 
         if (is_readable($localFile)) {
@@ -108,15 +112,12 @@ class Factory
             if (!self::$handler) {
                 foreach (self::$servers as $server) {
                     if (isset($server['Type'][0])) {
-                        $adapterName = $server['Type'];
-                        $adapterName[0] = strtoupper($adapterName[0]);
+                        $adapterName = static::getAdapter($server['Type']);
 
-                        $handlerName = __NAMESPACE__ . NAMESPACE_SEPARATER . 'Handler' . $adapterName;
+                        if (class_exists($adapterName)) {
+                            $handler = new $adapterName(isset($server['Option']) ? $server['Option'] : array());
 
-                        if (class_exists($handlerName)) {
-                            $handler = new $handlerName(isset($server['Option']) ? $server['Option'] : array());
-
-                            if ($handler instanceof RemoteStorageInterface) {
+                            if ($handler instanceof \Facula\Unit\RemoteStorage\AdapterImplement) {
                                 if ($result = $handler->upload($localFile, $error)) {
                                     self::$handler = $handler;
 

@@ -25,10 +25,15 @@
  *
  */
 
-namespace Facula\Unit\RemoteStorage;
+namespace Facula\Unit\Query;
 
-interface Impl
+interface AdapterImplement
 {
-    public function __construct($setting);
-    public function upload($localFile, &$error = '');
+    public function __construct($tableName, &$querySet);
+    public function build();
+
+    public function fetch($statement);
+    public function update($statement);
+    public function insert($statement, $primaryKey);
+    public function delete($statement);
 }

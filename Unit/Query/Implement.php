@@ -27,13 +27,29 @@
 
 namespace Facula\Unit\Query;
 
-interface AdapterImpl
+interface Implement
 {
-    public function __construct($tableName, &$querySet);
-    public function build();
+    public static function from($tableName, $autoParse = false);
+    public static function addAutoParser($name, $type, \Closure $parser);
+    public static function registerAdapter($driver, $adapterClass);
 
-    public function fetch($statement);
-    public function update($statement);
-    public function insert($statement, $primaryKey);
-    public function delete($statement);
+    public function select($fields);
+    public function insert($fields);
+    public function update($fields);
+    public function delete($fields);
+
+    public function where($logic, $fieldName, $operator, $value);
+    public function having($logic, $fieldName, $operator, $value);
+
+    public function group($fieldName);
+    public function order($fieldName, $sort);
+
+    public function value($value);
+    public function set($values);
+
+    public function limit($offset, $distance);
+
+    public function get();
+    public function fetch();
+    public function save();
 }

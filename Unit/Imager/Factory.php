@@ -27,7 +27,7 @@
 
 namespace Facula\Unit\Imager;
 
-class Factory
+class Factory extends \Facula\Base\Factory\Adapter
 {
     private static $handlerClassName = '';
 
@@ -36,6 +36,12 @@ class Factory
         'Font' => '',
         'FontSize' => 12,
         'MemoryLimit' => 0,
+    );
+
+    protected static $adapters = array(
+        'GD' => 'Facula\Unit\Imager\Adapter\GD',
+        'Gmagick' => 'Facula\Unit\Imager\Adapter\Gmagick',
+        'Imagick' => 'Facula\Unit\Imager\Adapter\Imagick',
     );
 
     public static function setup($setting, $type = '')
@@ -54,7 +60,7 @@ class Factory
             }
         }
 
-        $className = __NAMESPACE__ . NAMESPACE_SEPARATER . 'Handler' . $type;
+        $className = static::getAdapter($type);
 
         if (class_exists($className)) {
             self::$handlerClassName = $className;
@@ -77,10 +83,10 @@ class Factory
     {
         $handler = null;
 
-        if (self::$handlerclassName) {
+        if (self::$handlerClassName) {
             $handler = new self::$handlerClassName($file, self::$setting);
 
-            if ($handler instanceof HandlerImpl) {
+            if ($handler instanceof AdapterImplement) {
                 if ($handler->getImageRes()) {
                     return $handler;
                 }

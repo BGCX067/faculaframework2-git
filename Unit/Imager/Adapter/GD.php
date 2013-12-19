@@ -25,9 +25,9 @@
  *
  */
 
-namespace Facula\Unit\Imager;
+namespace Facula\Unit\Imager\Adapter;
 
-class ImageGD extends Common implements HandlerImpl
+class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\AdapterImplement
 {
     private $imageRes = null;
 

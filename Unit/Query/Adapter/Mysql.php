@@ -25,9 +25,9 @@
  *
  */
 
-namespace Facula\Unit\Query;
+namespace Facula\Unit\Query\Adapter;
 
-class QueryMysql implements AdapterImpl
+class Mysql implements \Facula\Unit\Query\AdapterImplement
 {
     private $table = '';
     private $query = array();

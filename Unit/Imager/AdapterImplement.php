@@ -27,7 +27,7 @@
 
 namespace Facula\Unit\Imager;
 
-interface HandlerImpl
+interface AdapterImplement
 {
     public function __construct($file, &$config = array());
 

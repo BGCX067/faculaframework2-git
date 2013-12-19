@@ -25,9 +25,9 @@
  *
  */
 
-namespace Facula\Unit\RemoteStorage;
+namespace Facula\Unit\RemoteStorage\Adapter;
 
-class HandlerFtp implements Impl
+class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
 {
     private $connection = null;
 

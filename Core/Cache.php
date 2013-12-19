@@ -27,7 +27,7 @@
 
 namespace Facula\Core;
 
-class Cache extends \Facula\Base\Factory\Core
+class Cache extends \Facula\Base\Core\Factory
 {
     public static $plate = array(
         'Author' => 'Rain Lee',

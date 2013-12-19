@@ -25,9 +25,9 @@
  *
  */
 
-namespace Facula\Base\Factory;
+namespace Facula\Base\Core;
 
-abstract class Core implements \Facula\Base\Implement\Factory\Core
+abstract class Factory implements \Facula\Base\Implement\Factory\Core
 {
     private static $instances = array();
 

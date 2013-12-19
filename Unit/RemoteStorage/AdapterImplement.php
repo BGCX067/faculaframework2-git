@@ -25,29 +25,10 @@
  *
  */
 
-namespace Facula\Unit\Query;
+namespace Facula\Unit\RemoteStorage;
 
-interface Impl
+interface AdapterImplement
 {
-    public static function from($tableName, $autoParse = false);
-
-    public function select($fields);
-    public function insert($fields);
-    public function update($fields);
-    public function delete($fields);
-
-    public function where($logic, $fieldName, $operator, $value);
-    public function having($logic, $fieldName, $operator, $value);
-
-    public function group($fieldName);
-    public function order($fieldName, $sort);
-
-    public function value($value);
-    public function set($values);
-
-    public function limit($offset, $distance);
-
-    public function get();
-    public function fetch();
-    public function save();
+    public function __construct($setting);
+    public function upload($localFile, &$error = '');
 }

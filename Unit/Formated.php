@@ -30,7 +30,7 @@ namespace Facula\Unit;
 class Formated
 {
     private static $inited = false;
-    
+
     private static $delimiters = array(
         'Tag' => array(
             'Start' => '(',
@@ -57,7 +57,7 @@ class Formated
 
     private $content = '';
     private $tagMap = array();
-    
+
     public static function get($textContent, $setting = array())
     {
         return new self($textContent, $setting);
@@ -91,15 +91,15 @@ class Formated
 
         return false;
     }
-    
-    private static function assignBuiltinTags()
+
+    private static function selfInit()
     {
         if (static::$inited) {
             return true;
         } else {
             static::$inited = true;
         }
-        
+
         static::newTag(
             '%',
             function ($value, $selected, $param, $pool) {
@@ -211,14 +211,14 @@ class Formated
                 return $value;
             }
         );
-        
+
         return true;
     }
 
     protected function __construct(&$text, &$setting)
     {
-        static::assignBuiltinTags();
-        
+        static::selfInit();
+
         $this->content = $text;
         $this->tags = self::$defaults['Tag'];
 
@@ -226,7 +226,7 @@ class Formated
             'MaxNests' => isset($setting['MaxNests']) ? (int)($setting['MaxNests']) : self::$defaults['Setting']['MaxNests'],
             'MaxTags' => isset($setting['MaxTags']) ? (int)($setting['MaxTags']) : self::$defaults['Setting']['MaxTags'],
         );
-        
+
         return true;
     }
 

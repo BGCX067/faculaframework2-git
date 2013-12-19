@@ -27,7 +27,7 @@
 
 namespace Facula\Unit\Imager;
 
-class Common
+class Base
 {
     protected function getAlignPos($alignType, $imageWidth, $imageHeight, $subjectWidth, $subjectHeight, $margin = 0)
     {
