@@ -164,7 +164,7 @@ class FTP
 
                 $successed = true;
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             self::$error = $e->getMessage();
         }
 
@@ -235,7 +235,7 @@ class FTP
                         } else {
                             self::$currentPath[] = $folder;
                         }
-                    } catch (Exception $e) {
+                    } catch (\Exception $e) {
                         $error = $e->getMessage();
                     }
                 }

@@ -473,7 +473,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                 } elseif (is_float($val)) {
                     $tmpstr .= 'float ' . $val;
                 } elseif (is_array($val)) {
-                    $tmpstr .= var_export(array_keys($val), true);
+                    $tmpstr .= 'array(' . implode(', ', array_keys($val)) . ')';
                 } elseif (is_resource($val)) {
                     $tmpstr .= 'resource ' . get_resource_type($val);
                 } elseif (is_string($val)) {

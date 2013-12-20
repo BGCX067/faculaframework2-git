@@ -212,7 +212,7 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
                         } else {
                             $this->currentPath[] = $folder;
                         }
-                    } catch (Exception $e) {
+                    } catch (\Exception $e) {
                         $error = $e->getMessage();
                     }
                 }

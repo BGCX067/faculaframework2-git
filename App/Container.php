@@ -50,7 +50,8 @@ abstract class Container
         $debug[] = array_shift($btResult);
 
         foreach ($btResult as $bt) {
-            if (isset($bt['function']) && $bt['function'] == '{Closure}') {
+            if (isset($bt['function'])
+                && strpos(strtolower($bt['function']), '{closure') !== false) {
                 continue;
             }
 

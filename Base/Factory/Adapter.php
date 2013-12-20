@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Base Factory for factories which base on adapter registration
+ * Base Factory for factories which based on adapter registration
  *
  * Facula Framework 2013 (C) Rain Lee
  *

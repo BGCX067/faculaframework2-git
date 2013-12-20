@@ -50,7 +50,8 @@ abstract class Setting
         $debug[] = array_shift($btResult); // Shift next, which must be the call to this method
 
         foreach ($btResult as $bt) {
-            if (isset($bt['function']) && $bt['function'] == '{Closure}') {
+            if (isset($bt['function'])
+                && strpos(strtolower($bt['function']), '{closure') !== false) {
                 continue;
             }
 

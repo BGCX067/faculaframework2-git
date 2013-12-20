@@ -80,7 +80,7 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
             )) {
                 return self::$instances[$class];
             } else {
-                throw new Exception(
+                throw new \Exception(
                     'An error happened when facula creating core '
                     . $class
                     . '.'

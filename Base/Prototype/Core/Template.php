@@ -73,21 +73,21 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
         if (isset($cfg['TemplatePool'][0]) && is_dir($cfg['TemplatePool'])) {
             $this->configs['TplPool'] = \Facula\Base\Tool\File\PathParser::get($cfg['TemplatePool']);
         } else {
-            throw new Exception('TemplatePool must be defined and existed.');
+            throw new \Exception('TemplatePool must be defined and existed.');
         }
 
         // CompiledTemplate
         if (isset($cfg['CompiledTemplate'][0]) && is_dir($cfg['CompiledTemplate'])) {
             $this->configs['Compiled'] = \Facula\Base\Tool\File\PathParser::get($cfg['CompiledTemplate']);
         } else {
-            throw new Exception('CompiledTemplate must be defined and existed.');
+            throw new \Exception('CompiledTemplate must be defined and existed.');
         }
 
         if ($this->configs['Cache']) {
             if (isset($cfg['CachePath']) && is_dir($cfg['CachePath'])) {
                 $this->configs['Cached'] = $cfg['CachePath'];
             } else {
-                throw new Exception('CachePath must be defined and existed.');
+                throw new \Exception('CachePath must be defined and existed.');
             }
         }
 
@@ -107,13 +107,13 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                             if (!isset($this->pool['File']['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]])) {
                                 $this->pool['File']['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]] = $file['Path'];
                             } else {
-                                throw new Exception('Template file ' . $this->pool['File']['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]] . ' conflicted with ' . $file['Path'] . '.');
+                                throw new \Exception('Template file ' . $this->pool['File']['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]] . ' conflicted with ' . $file['Path'] . '.');
                                 return false;
                             }
                         } elseif (!isset($this->pool['File']['Tpl'][$file['Name']]['default'])) { // If not, save current file to the default
                             $this->pool['File']['Tpl'][$file['Name']]['default'] = $file['Path'];
                         } else {
-                            throw new Exception('Template file ' . $this->pool['File']['Tpl'][$file['Name']]['default'] . ' conflicted with ' . $file['Path'] . '.');
+                            throw new \Exception('Template file ' . $this->pool['File']['Tpl'][$file['Name']]['default'] . ' conflicted with ' . $file['Path'] . '.');
                             return false;
                         }
                         break;
@@ -121,7 +121,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             }
 
             if (!isset($this->pool['File']['Lang']['default'])) {
-                throw new Exception('Default file for language (language.default.txt) must be defined.');
+                throw new \Exception('Default file for language (language.default.txt) must be defined.');
             }
         }
 

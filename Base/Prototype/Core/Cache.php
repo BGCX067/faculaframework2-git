@@ -65,7 +65,7 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
         if (isset($cfg['CacheRoot'][0]) && is_dir($cfg['CacheRoot'])) {
             $this->configs['Root'] = \Facula\Base\Tool\File\PathParser::get($cfg['CacheRoot']);
         } else {
-            throw new Exception('Cache root must be set and existed.');
+            throw new \Exception('Cache root must be set and existed.');
         }
 
         return true;

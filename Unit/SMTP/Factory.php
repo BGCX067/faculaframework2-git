@@ -204,7 +204,7 @@ class Factory extends \Facula\Base\Factory\Adapter
                         }
                     }
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $error = $e->getMessage();
             }
 
