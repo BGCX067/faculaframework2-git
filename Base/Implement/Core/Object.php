@@ -32,7 +32,7 @@ namespace Facula\Base\Implement\Core;
 interface Object
 {
     public function inited();
-    public function getInstance($object, $args, $cache = false);
-    public function callFunction($function, $args = array());
-    public function run($app, $args = array(), $cache = false);
+    public function getInstance($object, array $args = array(), $cache = false);
+    public function callFunction($function, array $args = array());
+    public function run($app, array $args = array(), $cache = false);
 }
