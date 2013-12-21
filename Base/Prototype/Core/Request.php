@@ -295,7 +295,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
                     case 'HTTP_X_FORWARDED':
                     case 'HTTP_FORWARDED_FOR':
                     case 'HTTP_FORWARDED':
-                        if ($this->requestInfo['xForwardedName']
+                        if (!$this->requestInfo['xForwardedName']
                             || static::$xForwardPriority[$this->requestInfo['xForwardedName']] > $curXForwdPri) {
                             $this->requestInfo['xForwardedName'] = $key;
                             $curXForwdPri = static::$xForwardPriority[$this->requestInfo['xForwardedName']];
