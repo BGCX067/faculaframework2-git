@@ -79,8 +79,6 @@ abstract class Object extends Prototype\Core implements CoreInterfaces\Object
 
             'CacheTime' => $common['BootVersion']
         );
-
-        return true;
     }
 
     /**

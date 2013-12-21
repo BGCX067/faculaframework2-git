@@ -31,6 +31,7 @@ namespace Facula\Base\Prototype\Core;
  */
 abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Response
 {
+    /** Declare maintainer information */
     public static $plate = array(
         'Author' => 'Rain Lee',
         'Reviser' => '',
@@ -39,11 +40,16 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
         'Version' => __FACULAVERSION__,
     );
 
+    /** Globally container for headers */
     protected static $headers = array();
+
+    /** Globally container for cookies */
     protected static $cookies = array();
 
+    /** Content will be send */
     protected static $content = '';
 
+    /** Frequently-used content types for short cut */
     protected static $httpContentTypes = array(
         'evy' => 'application/envoy',
         'fif' => 'application/fractals',
@@ -239,27 +245,47 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
         'xof' => 'x-world/x-vrml',
     );
 
+    /** Instance configuration for caching */
     public $configs = array();
 
-    public function __construct(&$cfg, &$common, $facula)
+    /**
+     * Constructor
+     *
+     * @param array &$cfg Array of core configuration
+     * @param array $common Array of common configuration
+     * @param \Facula\Framework $facula The framework itself
+     *
+     * @return void
+     */
+    public function __construct(&$cfg, $common)
     {
         $setting = array();
 
         $this->configs = array(
-            'CookiePrefix' => isset($common['CookiePrefix'][0]) ? $common['CookiePrefix'] : 'facula_',
-            'GZIPEnabled' => isset($cfg['UseGZIP']) && $cfg['UseGZIP'] && function_exists('gzcompress') ? true : false,
-            'PSignal' => isset($cfg['PostProfileSignal']) && $cfg['PostProfileSignal'] ? true : false,
-            'Encoding' => isset($cfg['Encoding']) ? $cfg['Encoding'] : 'utf-8',
-            'UseFFR' => function_exists('fastcgi_finish_request') ? true : false,
+            'CookiePrefix' => isset($common['CookiePrefix'][0])
+                                ? $common['CookiePrefix'] : 'facula_',
+
+            'GZIPEnabled' => isset($cfg['UseGZIP']) && $cfg['UseGZIP'] && function_exists('gzcompress')
+                                ? true : false,
+
+            'PSignal' => isset($cfg['PostProfileSignal']) && $cfg['PostProfileSignal']
+                                ? true : false,
+
+            'Encoding' => isset($cfg['Encoding'])
+                                ? $cfg['Encoding'] : 'utf-8',
+
+            'UseFFR' => function_exists('fastcgi_finish_request')
+                                ? true : false,
+
             'AppVersion' => $common['AppName'] . ' (' . $common['AppVersion'] . ')',
         );
-
-        $cfg = null;
-        unset($cfg);
-
-        return true;
     }
 
+    /**
+     * Warm up initializer
+     *
+     * @return bool Return true when initialization complete, false otherwise
+     */
     public function inited()
     {
         self::$headers[] = 'Server: Facula Framework';
@@ -275,6 +301,14 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
         return true;
     }
 
+    /**
+     * Send content to client
+     *
+     * @param string $type Content type
+     * @param bool $persistConn Set if let keep connection alive after sent
+     *
+     * @return bool Return true when content sent, false otherwise
+     */
     public function send($type = 'htm', $persistConn = false)
     {
         $file = $line = $oldBufferContent = $finalContent = '';
@@ -293,7 +327,8 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
             \Facula\Framework::$profile['MemoryPeak'] = memory_get_peak_usage(true);
 
             \Facula\Framework::$profile['OutputTime'] = microtime(true);
-            \Facula\Framework::$profile['ProductionTime'] = \Facula\Framework::$profile['OutputTime'] - \Facula\Framework::$profile['StartTime'];
+            \Facula\Framework::$profile['ProductionTime'] =
+                \Facula\Framework::$profile['OutputTime'] - \Facula\Framework::$profile['StartTime'];
 
             // Check size of response_finished hook queue
             if (\Facula\Framework::getHookSize('response_finished') > 0) {
@@ -302,25 +337,49 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
                 $thereIndiscernible = true;
             }
 
+            // Safely shutdown early output (May set by PHP itself when output_buffering = On)
+            $oldBufferContent = ob_get_clean();
+
             // Start buffer to output
-            $oldBufferContent = ob_get_clean(); // Safely shutdown early output (May set by PHP itself when output_buffering = On)
             ob_start();
 
             $finalContent = $oldBufferContent . self::$content;
 
             if (isset(self::$httpContentTypes[$type])) {
-                header('Content-Type: ' . self::$httpContentTypes[$type] . '; charset=' . $this->configs['Encoding']);
+                header(
+                    'Content-Type: '
+                    . self::$httpContentTypes[$type]
+                    . '; charset='
+                    . $this->configs['Encoding']
+                );
             } else {
                 header('Content-Type: ' . $type);
             }
 
             if ($this->configs['PSignal']) {
-                header('X-Runtime: ' . round(\Facula\Framework::$profile['ProductionTime']  * 1000, 2) . 'ms (' . \Facula\Framework::$profile['ProductionTime'] . 's)');
-                header('X-Memory: ' . (\Facula\Framework::$profile['MemoryUsage'] / 1024) . 'kb / ' . (\Facula\Framework::$profile['MemoryPeak'] / 1024) . 'kb');
+                header(
+                    'X-Runtime: '
+                    . round(\Facula\Framework::$profile['ProductionTime']  * 1000, 2)
+                    . 'ms (' . \Facula\Framework::$profile['ProductionTime'] . 's)'
+                );
+
+                header(
+                    'X-Memory: '
+                    . (\Facula\Framework::$profile['MemoryUsage'] / 1024)
+                    . 'kb / ' . (\Facula\Framework::$profile['MemoryPeak'] / 1024) . 'kb'
+                );
             }
 
             foreach (self::$cookies as $cookie) {
-                setcookie($cookie['Key'], $cookie['Val'], $cookie['Expire'], $cookie['Path'], $cookie['Domain'], $cookie['Secure'], $cookie['HttpOnly']);
+                setcookie(
+                    $cookie['Key'],
+                    $cookie['Val'],
+                    $cookie['Expire'],
+                    $cookie['Path'],
+                    $cookie['Domain'],
+                    $cookie['Secure'],
+                    $cookie['HttpOnly']
+                );
             }
 
             foreach (self::$headers as $header) {
@@ -333,7 +392,11 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
                 header('Connection: Close');
             }
 
-            $hookResult = \Facula\Framework::summonHook('response_sending', array($finalContent), $errors);
+            $hookResult = \Facula\Framework::summonHook(
+                'response_sending',
+                array($finalContent),
+                $errors
+            );
 
             header('Content-Length: ' . strlen($finalContent));
 
@@ -348,17 +411,36 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
             flush();
 
             if ($thereIndiscernible) {
-                \Facula\Framework::summonHook('response_finished', $hookResult, $errors);
+                \Facula\Framework::summonHook(
+                    'response_finished',
+                    $hookResult,
+                    $errors
+                );
             }
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_RESPONSE_ALREADY_RESPONSED|File: ' . $file . ' Line: ' . $line . ' Content: ' . substr(self::$content, 0, 32), 'data', false);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_RESPONSE_ALREADY_RESPONSED|File: '
+                . $file
+                . ' Line: '
+                . $line
+                . ' Content: ' . substr(self::$content, 0, 32),
+                'data',
+                false
+            );
         }
 
         return false;
     }
 
+    /**
+     * Set HTTP header without poison the output buffer
+     *
+     * @param string $header The header content
+     *
+     * @return bool Always true
+     */
     public function setHeader($header)
     {
         self::$headers[] = $header;
@@ -366,6 +448,14 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
         return true;
     }
 
+    /**
+     * Set content that will be send
+     *
+     * @param string $content The content that wait to be send
+     * @param string $forceRaw Forcibly set the content without been zipped
+     *
+     * @return bool Always true
+     */
     public function setContent($content, $forceRaw = false)
     {
         $orgSize = $gzSize = 0;
@@ -377,15 +467,22 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
             $gzContent = gzcompress($content, 2);
             $gzSize = strlen($gzContent);
 
-            self::$content = "\x1f\x8b\x08\x00\x00\x00\x00\x00" . substr($gzContent, 0, $gzSize - 4);
+            self::$content = "\x1f\x8b\x08\x00\x00\x00\x00\x00"
+                . substr($gzContent, 0, $gzSize - 4);
 
             self::$headers['Vary'] = 'Vary: Accept-Encoding';
             self::$headers['Content-Encoding'] = 'Content-Encoding: gzip';
-            self::$headers['X-Length'] = 'X-Length: ' . $gzSize . ' bytes / ' . $orgSize . ' bytes';
+            self::$headers['X-Length'] = 'X-Length: '
+                                        . $gzSize
+                                        . ' bytes / '
+                                        . $orgSize
+                                        . ' bytes';
         } else {
             self::$content = $content;
 
-            self::$headers['X-Length'] = 'X-Length: ' . $orgSize . ' bytes';
+            self::$headers['X-Length'] = 'X-Length: '
+                                        . $orgSize
+                                        . ' bytes';
 
             if (isset(self::$headers['Vary'])) {
                 unset(self::$headers['Vary']);
@@ -399,17 +496,43 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
         return true;
     }
 
-    public function setCookie($key, $val = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false)
-    {
+    /**
+     * Set cookie without poison the output buffer
+     *
+     * @param string $k Cookie key
+     * @param string $v Value that will be set
+     * @param string $e Expire time
+     * @param string $p Path
+     * @param string $d Domain
+     * @param bool $s For HTTPS
+     * @param bool $http For HTTP Only
+     *
+     * @return bool Always true
+     */
+    public function setCookie(
+        $key,
+        $value = '',
+        $expire = 0,
+        $path = '/',
+        $domain = '',
+        $secure = false,
+        $httpOnly = false
+    ) {
         global $_COOKIE;
 
-        $cKey            =         $this->configs['CookiePrefix'] . $key;
-        $cVal            =         $val !== null ? $val : null;
-        $cExpire        =         $expire ? FACULA_TIME + (int)($expire) : 0;
-        $cPath            =         $path;
-        $cDomain        =         $domain ? $domain : (strpos($_SERVER['HTTP_HOST'], '.') != -1 ? $_SERVER['HTTP_HOST'] : '');
-        $cSecure        =         $secure ? true : false;
-        $cHttpOnly        =         $httponly ? true : false;
+        $cKey = $this->configs['CookiePrefix'] . $key;
+
+        $cVal = $value !== null ? $value : null;
+
+        $cExpire = $expire ? FACULA_TIME + (int)($expire) : 0;
+        $cPath = $path;
+
+        $cDomain = $domain ?
+                    $domain : (strpos($_SERVER['HTTP_HOST'], '.') != -1 ? $_SERVER['HTTP_HOST'] : '');
+
+        $cSecure = $secure ? true : false;
+
+        $cHttpOnly = $httpOnly ? true : false;
 
         if ($cDomain == '127.0.0.1' || $cDomain == 'localhost') {
             $cDomain = '';
@@ -425,8 +548,9 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
             'HttpOnly' => $cHttpOnly,
         );
 
-        if ($val) {
-            $_COOKIE[$this->configs['CookiePrefix'] . $key] = $val; // Assume we already successed. The value can be read immediately, no need to reload page.
+        if (is_null($cVal)) {
+            // Assume we already successed. The value can be read immediately, no need to reload page.
+            $_COOKIE[$this->configs['CookiePrefix'] . $key] = $value;
         } elseif (isset($_COOKIE[$this->configs['CookiePrefix'] . $key])) {
             unset($_COOKIE[$this->configs['CookiePrefix'] . $key]);
         }
@@ -434,6 +558,13 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
         return true;
     }
 
+    /**
+     * Unset the cookie
+     *
+     * @param string $k Cookie key
+     *
+     * @return bool Always true
+     */
     public function unsetCookie($key)
     {
         if ($this->setCookie($key, null, -FACULA_TIME - 1)) {

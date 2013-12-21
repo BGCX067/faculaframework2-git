@@ -33,7 +33,5 @@ namespace Facula\Base\Implement\Core;
 interface PDO
 {
     public function inited();
-    public function getConnection($setting = array());
-    public function doPDOConnect($dbIndex, &$error);
-    public function doPDOReconnect(&$dbh, &$error);
+    public function getConnection(array $setting = array());
 }

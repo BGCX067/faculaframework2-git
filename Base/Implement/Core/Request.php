@@ -34,11 +34,11 @@ interface Request
 {
     public function inited();
     public function get($type, $key, &$errored = false);
-    public function gets($type, $keys, &$errors = array(), $failfalse = false);
+    public function gets($type, array $keys, &$errors = array(), $failfalse = false);
     public function getCookie($key);
     public function getPost($key);
     public function getGet($key);
-    public function getPosts($keys, &$errors = array());
-    public function getGets($keys, &$errors = array());
+    public function getPosts(array $keys, &$errors = array());
+    public function getGets(array $keys, &$errors = array());
     public function getClientInfo($key);
 }

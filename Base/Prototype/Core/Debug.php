@@ -64,7 +64,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      *
      * @return void
      */
-    public function __construct(&$cfg, &$common)
+    public function __construct(&$cfg, $common)
     {
         $this->configs = array(
             'ExitOnAnyError' => isset($cfg['ExitOnAnyError'])
@@ -81,8 +81,6 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
 
             'Debug' => !isset($cfg['Debug']) || $cfg['Debug'] ? true : false,
         );
-
-        return true;
     }
 
     /**

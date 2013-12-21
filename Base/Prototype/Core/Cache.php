@@ -67,8 +67,6 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
         } else {
             throw new \Exception('Cache root must be set and existed.');
         }
-
-        return true;
     }
 
     /**
