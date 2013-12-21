@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Text Formater
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,10 +26,15 @@
 
 namespace Facula\Unit;
 
+/**
+ * Text Formater
+ */
 class Formated
 {
+    /** Anit-reinit Tag */
     private static $inited = false;
 
+    /** Declaration of default delimiters */
     private static $delimiters = array(
         'Tag' => array(
             'Start' => '(',
@@ -41,6 +46,7 @@ class Formated
         )
     );
 
+    /** Declaration of default settings */
     private static $defaults = array(
         'Tag' => array(),
         'Setting' => array(
@@ -49,20 +55,43 @@ class Formated
         ),
     );
 
+    /** Declared tags */
     private $tags = array();
+
+    /** Assigned datas */
     private $assign = array();
 
+    /** Setting for current instance */
     private $setting = array();
 
+    /** Contents that will be render */
     private $content = '';
+
+    /** Scanned tags */
     private $tagMap = array();
 
-    public static function get($textContent, $setting = array())
+    /**
+     * Create instance by string
+     *
+     * @param string $textContent Content to be formated
+     * @param array $setting Array of setting
+     *
+     * @return object A new object instance of this class
+     */
+    public static function get($textContent, array $setting = array())
     {
         return new self($textContent, $setting);
     }
 
-    public static function getFromFile($file, $setting = array())
+    /**
+     * Create instance by string
+     *
+     * @param string $file Path to file that will be rendered
+     * @param array $setting Array of setting
+     *
+     * @return object A new object instance of this class
+     */
+    public static function getFromFile($file, array $setting = array())
     {
         $fileContent = '';
 
@@ -75,6 +104,15 @@ class Formated
         return false;
     }
 
+    /**
+     * Add new tag in to format
+     *
+     * @param string $processerType The tag type by one character
+     * @param closure $processer Processor that will be use to process the tag on content parsing
+     * @param closure $assigner Assigner that will be use to parse data when assigning
+     *
+     * @return object A new object instance of this class
+     */
     public static function newTag($processerType, \Closure $processer, \Closure $assigner)
     {
         if (!isset(self::$defaults['Tag'][$processerType[0]])) {
@@ -85,12 +123,21 @@ class Formated
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_FORMATED_DEFAULT_TAG_EXISTED|' . $processerType[0], 'formated', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_FORMATED_DEFAULT_TAG_EXISTED|' . $processerType[0],
+                'formated',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Preparing the class
+     *
+     * @return bool Return true when success, false on fail (For exp when class already inited)
+     */
     private static function selfInit()
     {
         if (static::$inited) {
@@ -121,44 +168,68 @@ class Formated
                     foreach (explode(' ', $param) as $currentParam) {
                         switch (trim($currentParam)) {
                             case 'Lower':
-                                $result = strtolower($result);
+                                $result = strtolower(
+                                    $result
+                                );
                                 break;
 
                             case 'Upper':
-                                $result = strtoupper($result);
+                                $result = strtoupper(
+                                    $result
+                                );
                                 break;
 
                             case 'Uppercase':
-                                $result = ucfirst($result);
+                                $result = ucfirst(
+                                    $result
+                                );
                                 break;
 
                             case 'Lowercase':
-                                $result = lcfirst($result);
+                                $result = lcfirst(
+                                    $result
+                                );
                                 break;
 
                             case 'Number':
-                                $result = number_format((int)($result), 2, '.', ',');
+                                $result = number_format(
+                                    (int)($result),
+                                    2,
+                                    '.',
+                                    ','
+                                );
                                 break;
 
                             case 'Html':
-                                $result = htmlspecialchars($result);
+                                $result = htmlspecialchars(
+                                    $result
+                                );
                                 break;
 
                             case 'URL':
-                                $result = urlencode($result);
+                                $result = urlencode(
+                                    $result
+                                );
                                 break;
 
                             case 'Slashes':
-                                $result = addslashes($result);
+                                $result = addslashes(
+                                    $result
+                                );
                                 break;
 
                             case 'Br':
-                                $result = nl2br($result);
+                                $result = nl2br(
+                                    $result
+                                );
                                 break;
 
                             default:
                                 if (isset($pool['!'][$param])) {
-                                    $result = sprintf($pool['!'][$param], $result);
+                                    $result = sprintf(
+                                        $pool['!'][$param],
+                                        $result
+                                    );
                                 }
                                 break;
                         }
@@ -214,6 +285,14 @@ class Formated
         return true;
     }
 
+    /**
+     * Constructor
+     *
+     * @param string $text The content will be formated
+     * @param array $setting setting for this instance
+     *
+     * @return void
+     */
     protected function __construct(&$text, &$setting)
     {
         static::selfInit();
@@ -222,13 +301,23 @@ class Formated
         $this->tags = self::$defaults['Tag'];
 
         $this->setting = array(
-            'MaxNests' => isset($setting['MaxNests']) ? (int)($setting['MaxNests']) : self::$defaults['Setting']['MaxNests'],
-            'MaxTags' => isset($setting['MaxTags']) ? (int)($setting['MaxTags']) : self::$defaults['Setting']['MaxTags'],
-        );
+            'MaxNests' => isset($setting['MaxNests'])
+                ? (int)($setting['MaxNests']) : self::$defaults['Setting']['MaxNests'],
 
-        return true;
+            'MaxTags' => isset($setting['MaxTags'])
+                ? (int)($setting['MaxTags']) : self::$defaults['Setting']['MaxTags'],
+        );
     }
 
+    /**
+     * Assign a variable into current instance
+     *
+     * @param string $processerType Type of the tag in one character
+     * @param string $name Name of the tag
+     * @param string $value Value of the tag
+     *
+     * @return bool return true when success, false on fail
+     */
     public function assign($processerType, $name, $value)
     {
         $assigner = $result = null;
@@ -242,12 +331,25 @@ class Formated
                 return true;
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_FORMATED_TAG_NOT_EXISTE|' . $processerType[0], 'formated', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_FORMATED_TAG_NOT_EXISTE|' . $processerType[0],
+                'formated',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Add a new tag into current instance
+     *
+     * @param string $processerType The tag type by one character
+     * @param closure $processer Processor that will be use to process the tag on content parsing
+     * @param closure $assigner Assigner that will be use to parse data when assigning
+     *
+     * @return bool return true when success, false on fail
+     */
     public function addTag($processerType, \Closure $processer, \Closure $assigner)
     {
         $this->tags[$processerType[0]] = array(
@@ -258,7 +360,14 @@ class Formated
         return true;
     }
 
-    public function render(&$error = array())
+    /**
+     * Add a new tag into current instance
+     *
+     * @param array &$error A reference to get detailed error report
+     *
+     * @return mixed return true when rendered, or false otherwise
+     */
+    public function render(array &$error = array())
     {
         if ($rendered = $this->parseTags($error)) {
             return $rendered;
@@ -267,7 +376,14 @@ class Formated
         return false;
     }
 
-    protected function parseTags(&$error)
+    /**
+     * Parse all tags
+     *
+     * @param array &$error A reference to get detailed error report
+     *
+     * @return mixed return true when rendered, or false otherwise
+     */
+    protected function parseTags(array &$error)
     {
         $newValue = $processer = $tempValue = null;
         $tagPos = $tempData = array();
@@ -288,7 +404,8 @@ class Formated
                     $tagPos['TagStart'] = $tagMap[$key]['TagStart'];
                     $tagPos['FullStart'] = $tagPos['TagStart'] - 1;
 
-                    if ($tagMap[$key]['PropertyStart'] && $tagMap[$key]['PropertyEnd']) {
+                    if ($tagMap[$key]['PropertyStart']
+                        && $tagMap[$key]['PropertyEnd']) {
                         $tagPos['TagEnd'] = $tagMap[$key]['TagEnd'];
 
                         $tagPos['PropertyStart'] = $tagMap[$key]['PropertyStart'];
@@ -296,7 +413,11 @@ class Formated
 
                         $tagPos['PropertyLen'] = $tagPos['PropertyEnd'] - $tagPos['PropertyStart'];
 
-                        $tagPos['Param'] = substr($rendered, $tagPos['PropertyStart'] + 1, $tagPos['PropertyLen'] - 1);
+                        $tagPos['Param'] = substr(
+                            $rendered,
+                            $tagPos['PropertyStart'] + 1,
+                            $tagPos['PropertyLen'] - 1
+                        );
                     } else {
                         $tagPos['FullEnd'] = ($tagPos['TagEnd'] = $tagMap[$key]['TagEnd']) + 1;
 
@@ -306,7 +427,11 @@ class Formated
 
                     $tagPos['TagLen'] = $tagPos['TagEnd'] - $tagPos['TagStart'];
                     $tagPos['FullLen'] = $tagPos['FullEnd'] - $tagPos['FullStart'];
-                    $tagPos['Value'] = substr($rendered, $tagPos['TagStart'] + 1, $tagPos['TagLen'] - 1);
+                    $tagPos['Value'] = substr(
+                        $rendered,
+                        $tagPos['TagStart'] + 1,
+                        $tagPos['TagLen'] - 1
+                    );
 
                     $processer = $this->tags[$val['Tag']]['Processer'];
 
@@ -316,8 +441,19 @@ class Formated
                         $tempValue = null;
                     }
 
-                    if (($newValue = $processer($tempValue, $tagPos['Value'], $tagPos['Param'], $this->assign)) && (is_string($newValue) || is_numeric($newValue))) {
-                        $rendered = substr($rendered, 0, $tagPos['FullStart']) . $newValue . substr($rendered, $tagPos['FullEnd'], strlen($rendered));
+                    if (($newValue = $processer(
+                        $tempValue,
+                        $tagPos['Value'],
+                        $tagPos['Param'],
+                        $this->assign))
+                        && (is_string($newValue) || is_numeric($newValue))) {
+                        $rendered = substr($rendered, 0, $tagPos['FullStart'])
+                                    . $newValue
+                                    . substr(
+                                        $rendered,
+                                        $tagPos['FullEnd'],
+                                        strlen($rendered)
+                                    );
 
                         $newLen = strlen($newValue);
 
@@ -354,10 +490,20 @@ class Formated
         return false;
     }
 
-    private function scanTags(&$error)
+    /**
+     * Scan tags for parse
+     *
+     * @param array &$error A reference to get detailed error report
+     *
+     * @return mixed return true when scan complete, or false otherwise
+     */
+    private function scanTags(array &$error)
     {
         $lastCharOffset = $nextCharOffset = $tagID = $contentLen = $contentMaxPos = 0;
-        $lastNests = $tagInfos = $tagInfoMap = $tagTempInfo = $keyPosMarks = $scannedTags = $keyChars = array();
+
+        $lastNests = $tagInfos = $tagInfoMap = $tagTempInfo =
+        $keyPosMarks = $scannedTags = $keyChars = array();
+
         $lastNested = null;
         $remainTags = $this->setting['MaxTags'];
 
@@ -376,7 +522,11 @@ class Formated
             foreach ($keyChars as $keyChar) {
                 $lastKeyPos = $lastPickUpKeyPos = 0;
 
-                while (($lastKeyPos = strpos($this->content, $keyChar, $lastPickUpKeyPos)) !== false) {
+                while (($lastKeyPos = strpos(
+                    $this->content,
+                    $keyChar,
+                    $lastPickUpKeyPos
+                )) !== false) {
                     $keyPosMarks[] = $lastKeyPos;
                     $lastPickUpKeyPos = $lastKeyPos + 1;
                 }
@@ -417,7 +567,9 @@ class Formated
 
                                 $lastNested['Data']['T.T.End'] = false;
 
-                                if ($nextCharOffset != $charOffset && $this->content[$nextCharOffset] == self::$delimiters['Property']['Start']) {
+                                if ($nextCharOffset != $charOffset
+                                    && $this->content[$nextCharOffset] ==
+                                    self::$delimiters['Property']['Start']) {
                                     $lastNested['Data']['T.P.Start'] = true;
                                 } else {
                                     unset($lastNested['Data'], $lastNests[$tagID--]);
@@ -446,7 +598,8 @@ class Formated
 
                                     unset($lastNested['Data'], $lastNests[$tagID--]);
 
-                                    $scannedTags[] = $lastNested; // Add tag information to result array
+                                    // Add tag information to result array
+                                    $scannedTags[] = $lastNested;
                                     $lastNested = &$lastNests[$tagID];
                                 }
                             }
@@ -462,21 +615,23 @@ class Formated
 
                                 unset($lastNested['Data'], $lastNests[$tagID--]);
 
-                                $scannedTags[] = $lastNested; // Add tag information to result array
+                                // Add tag information to result array
+                                $scannedTags[] = $lastNested;
                                 $lastNested = &$lastNests[$tagID];
                             }
                         }
                         break;
 
                     default:
-                        if (isset($this->tags[$this->content[$charOffset]]) && $this->content[$nextCharOffset] == self::$delimiters['Tag']['Start']) {
+                        if (isset($this->tags[$this->content[$charOffset]])
+                            && $this->content[$nextCharOffset] == self::$delimiters['Tag']['Start']) {
                             if (--$remainTags < 0) {
-                                $splitPrvContent = explode("\r\n", substr($this->content, 0, $charOffset));
+                                $splitPrvContent = explode("\n", substr($this->content, 0, $charOffset));
                                 $splitPrvTotalLines = count($splitPrvContent);
 
                                 unset($splitPrvContent[$splitPrvTotalLines - 1]);
 
-                                $prvContentlastLen = $charOffset - strlen(implode("\r\n", $splitPrvContent));
+                                $prvContentlastLen = $charOffset - strlen(implode("\n", $splitPrvContent));
 
                                 $error = array(
                                             'Tag' => $this->content[$charOffset],
@@ -562,7 +717,10 @@ class Formated
                     $error['Arg']['Line'] = $splitedContentLens;
 
                     unset($splitedContent[$splitedContentLens - 1]);
-                    $error['Arg']['Char'] = $errorOffset - strlen(implode("\r\n", $splitedContent));
+
+                    $error['Arg']['Char'] = $errorOffset - strlen(
+                        implode("\r\n", $splitedContent)
+                    );
 
                     return false;
                 }

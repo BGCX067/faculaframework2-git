@@ -288,9 +288,9 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
      */
     public function inited()
     {
-        self::$headers[] = 'Server: Facula Framework';
-        self::$headers[] = 'X-Powered-By: Facula Framework ' . __FACULAVERSION__;
-        self::$headers[] = 'X-Powered-For: ' . $this->configs['AppVersion'];
+        static::$headers[] = 'Server: Facula Framework';
+        static::$headers[] = 'X-Powered-By: Facula Framework ' . __FACULAVERSION__;
+        static::$headers[] = 'X-Powered-For: ' . $this->configs['AppVersion'];
 
         if (\Facula\Framework::core('request')->getClientInfo('gzip') && $this->configs['GZIPEnabled']) {
             $this->configs['UseGZIP'] = true;
@@ -343,12 +343,12 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
             // Start buffer to output
             ob_start();
 
-            $finalContent = $oldBufferContent . self::$content;
+            $finalContent = $oldBufferContent . static::$content;
 
-            if (isset(self::$httpContentTypes[$type])) {
+            if (isset(static::$httpContentTypes[$type])) {
                 header(
                     'Content-Type: '
-                    . self::$httpContentTypes[$type]
+                    . static::$httpContentTypes[$type]
                     . '; charset='
                     . $this->configs['Encoding']
                 );
@@ -370,7 +370,7 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
                 );
             }
 
-            foreach (self::$cookies as $cookie) {
+            foreach (static::$cookies as $cookie) {
                 setcookie(
                     $cookie['Key'],
                     $cookie['Val'],
@@ -382,7 +382,7 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
                 );
             }
 
-            foreach (self::$headers as $header) {
+            foreach (static::$headers as $header) {
                 header($header);
             }
 
@@ -425,7 +425,7 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
                 . $file
                 . ' Line: '
                 . $line
-                . ' Content: ' . substr(self::$content, 0, 32),
+                . ' Content: ' . substr(static::$content, 0, 32),
                 'data',
                 false
             );
@@ -443,7 +443,7 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
      */
     public function setHeader($header)
     {
-        self::$headers[] = $header;
+        static::$headers[] = $header;
 
         return true;
     }
@@ -467,29 +467,29 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
             $gzContent = gzcompress($content, 2);
             $gzSize = strlen($gzContent);
 
-            self::$content = "\x1f\x8b\x08\x00\x00\x00\x00\x00"
+            static::$content = "\x1f\x8b\x08\x00\x00\x00\x00\x00"
                 . substr($gzContent, 0, $gzSize - 4);
 
-            self::$headers['Vary'] = 'Vary: Accept-Encoding';
-            self::$headers['Content-Encoding'] = 'Content-Encoding: gzip';
-            self::$headers['X-Length'] = 'X-Length: '
+            static::$headers['Vary'] = 'Vary: Accept-Encoding';
+            static::$headers['Content-Encoding'] = 'Content-Encoding: gzip';
+            static::$headers['X-Length'] = 'X-Length: '
                                         . $gzSize
                                         . ' bytes / '
                                         . $orgSize
                                         . ' bytes';
         } else {
-            self::$content = $content;
+            static::$content = $content;
 
-            self::$headers['X-Length'] = 'X-Length: '
+            static::$headers['X-Length'] = 'X-Length: '
                                         . $orgSize
                                         . ' bytes';
 
-            if (isset(self::$headers['Vary'])) {
-                unset(self::$headers['Vary']);
+            if (isset(static::$headers['Vary'])) {
+                unset(static::$headers['Vary']);
             }
 
-            if (isset(self::$headers['Content-Encoding'])) {
-                unset(self::$headers['Content-Encoding']);
+            if (isset(static::$headers['Content-Encoding'])) {
+                unset(static::$headers['Content-Encoding']);
             }
         }
 
@@ -538,7 +538,7 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
             $cDomain = '';
         }
 
-        self::$cookies[] = array(
+        static::$cookies[] = array(
             'Key' => $cKey,
             'Val' => $cVal,
             'Expire' => $cExpire,

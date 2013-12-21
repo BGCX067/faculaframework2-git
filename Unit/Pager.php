@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Pager Unit
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,26 +26,43 @@
 
 namespace Facula\Unit;
 
+/**
+ * Get arguments for page switching
+ */
 abstract class Pager
 {
-    public static function get($itemprepage, $current, $totalitems = 0, $maxpages = 6000)
-    {
+    /**
+     * Get the page switch arguments for number-list page switcher
+     *
+     * @param integer $itemPerPage Item per page
+     * @param integer $current Current page
+     * @param integer $totalItems How many items totally
+     * @param integer $maxPages Max items of number-list page switcher
+     *
+     * @return array Page switch arguments
+     */
+    public static function get(
+        $itemPerPage,
+        $current,
+        $totalItems = 0,
+        $maxPages = 6000
+    ) {
         $tp = $p = 0;
         $vip = $vc = $vti = 0;
 
         $vc = (int)($current) - 1;
-        $vip = (int)($itemprepage);
-        $vti = (int)($totalitems);
+        $vip = (int)($itemPerPage);
+        $vti = (int)($totalItems);
 
         if ($vc < 0) {
             $vc = 0;
-        } elseif ($vc > ($maxpages ? $maxpages : 5000)) {
-            $vc = $maxpages;
+        } elseif ($vc > ($maxPages ? $maxPages : 5000)) {
+            $vc = $maxPages;
         }
 
         if ($vti) {
             $tp = ceil($vti > $vip ? $vti / $vip : 1);
-            $tp = $tp > $maxpages ? $maxpages : $tp;
+            $tp = $tp > $maxPages ? $maxPages : $tp;
 
             if ($vc >= $tp) {
                 $vc = $tp - 1;
@@ -54,9 +71,23 @@ abstract class Pager
 
         $p = $vip * $vc;
 
-        return array('Offset' => $p, 'Distance' => $vip, 'Current' => $vc ? $vc + 1 : 1, 'TotalPages' => $tp, 'MaxPagesDisplay' => $maxpages);
+        return array(
+            'Offset' => $p,
+            'Distance' => $vip,
+            'Current' => $vc ? $vc + 1 : 1,
+            'TotalPages' => $tp,
+            'MaxPagesDisplay' => $maxPages
+        );
     }
 
+    /**
+     * Get the page switch arguments for previous-next page switcher
+     *
+     * @param integer $current Current page
+     * @param bool $hasNext Is there content for next page?
+     *
+     * @return array Page switch arguments
+     */
     public static function getSwitch($current, $hasNext = false)
     {
         $currentPage = $current > 0 ? (int)($current) : 1;

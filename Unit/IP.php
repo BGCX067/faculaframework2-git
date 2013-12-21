@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * IP Unit
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,19 +26,40 @@
 
 namespace Facula\Unit;
 
+/**
+ * IP Unit
+ */
 abstract class IP
 {
+    /**
+     * Split IP address into array
+     *
+     * @param string $ip The IP that will be splited
+     *
+     * @return array Spilted IP address
+     */
     private static function splitIP($ip)
     {
-        return explode(':', str_replace('.', ':', $ip), 8); // Max is 8 for a IP addr
+        // Max is 8 for a IP addr
+        return explode(':', str_replace('.', ':', $ip), 8);
     }
 
-    public static function joinIP($ip, $mask = false)
+    /**
+     * Join spilted IP address in to string
+     *
+     * @param array $ip The IP that will be joined
+     * @param array $mask Mask the ending address
+     *
+     * @return string Joined IP address
+     */
+    public static function joinIP(array $ip, $mask = false)
     {
         $input = array();
         $ips = '';
 
-        if (!is_array($ip)) return '0.0.0.0';
+        if (!is_array($ip)) {
+            return '0.0.0.0';
+        }
 
         foreach ($ip as $k => $v) {
             if ($ip[$k]) {
@@ -60,7 +81,15 @@ abstract class IP
 
         switch ($iplen) {
             case 4:
-                return implode('.', array($input[0], $input[1], $input[2], $input[3]));
+                return implode(
+                    '.',
+                    array(
+                        $input[0],
+                        $input[1],
+                        $input[2],
+                        $input[3]
+                    )
+                );
                 break;
 
             default:

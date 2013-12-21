@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Route Selector
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -37,17 +37,36 @@ namespace Facula\Unit;
     );
 */
 
+/**
+ * Route Selector
+ */
 abstract class Route
 {
+    /** Character will be use to split the route */
     public static $routeSplit = '/';
+
+    /** Route Map */
     private static $routeMap = array();
 
+    /** Handler that will be use when no route specified */
     private static $defaultHandler = null;
+
+    /** Handler that will be use when the route not be found */
     private static $errorHandler = null;
 
+    /** Requested path */
     private static $pathParams = array();
+
+    /** Handlers that will be executed when path is matched */
     private static $operatorParams = array();
 
+    /**
+     * Set up the route
+     *
+     * @param array $paths Paths with Path => Operator pair
+     *
+     * @return bool Always return true
+     */
     public static function setup(array $paths)
     {
         $tempLastRef = $tempLastUsedRef = null;
@@ -55,7 +74,10 @@ abstract class Route
         foreach ($paths as $path => $operator) {
             $tempLastRef = &self::$routeMap;
 
-            foreach (explode(self::$routeSplit, trim($path, self::$routeSplit)) as $key => $val) {
+            foreach (explode(
+                self::$routeSplit,
+                trim($path, self::$routeSplit)
+            ) as $key => $val) {
                 $val = $val ? $val : '?';
 
                 $tempLastUsedRef = &$tempLastRef[$val];
@@ -74,16 +96,34 @@ abstract class Route
         return true;
     }
 
+    /**
+     * Export route map
+     *
+     * @return array The route map
+     */
     public static function exportMap()
     {
         return self::$routeMap;
     }
 
+    /**
+     * Import route map
+     *
+     * @param array $maps The route map in valid format
+     *
+     * @return array The new route map
+     */
     public static function importMap(array $maps)
     {
         return (self::$routeMap = $maps);
     }
 
+    /**
+     * Run the router
+     *
+     * @return mixed Return the result of respective path
+     *         handlers or false of totally failed
+     */
     public static function run()
     {
         $usedParams = self::$operatorParams = array();
@@ -98,9 +138,7 @@ abstract class Route
                     $lastPathRef = &$lastPathRef['?'];
                     $usedParams[] = $param;
                 } else {
-                    self::execErrorHandler('PATH_NOT_FOUND');
-
-                    return false;
+                    return self::execErrorHandler('PATH_NOT_FOUND');
                     break;
                 }
 
@@ -123,39 +161,71 @@ abstract class Route
                         }
                     }
 
-                    return \Facula\Framework::core('object')->run($lastPathOperator[0], self::$operatorParams, true);
+                    return \Facula\Framework::core('object')->run(
+                        $lastPathOperator[0],
+                        self::$operatorParams,
+                        true
+                    );
                 } else {
                     return self::execErrorHandler('PATH_NO_OPERATOR_SPECIFIED');
                 }
             } else {
-                self::execErrorHandler('PATH_NO_OPERATOR');
+                return self::execErrorHandler('PATH_NO_OPERATOR');
             }
         } else {
-            self::execDefaultHandler();
+            return self::execDefaultHandler();
         }
 
         return false;
     }
 
+    /**
+     * Get path parameters currently using
+     *
+     * @return array Path parameters
+     */
     public static function getPath()
     {
         return self::$pathParams;
     }
 
+    /**
+     * Set the path parameters of the request
+     *
+     * @return bool Return true when successfully set, false otherwise
+     */
     public static function setPath($path)
     {
-        if ($path !== null && (self::$pathParams = explode(self::$routeSplit, trim($path, self::$routeSplit), 256))) {
+        if ($path !== null
+            && (self::$pathParams = explode(
+                self::$routeSplit,
+                trim($path, self::$routeSplit),
+                256
+            ))) {
             return true;
         }
 
         return false;
     }
 
-    public static function getParam()
+    /**
+     * Get parameters of the operators
+     *
+     * @return array Operator parameters
+     */
+    public static function getOperatorParam()
     {
         return self::$operatorParams;
     }
 
+    /**
+     * Set default handler
+     *
+     * @param closure $handler Handler that will handle
+     *                         the request if pathParams is empty
+     *
+     * @return bool When set succeed, return true, or false for otherwise
+     */
     public static function setDefaultHandler(\Closure $handler)
     {
         if (!self::$defaultHandler) {
@@ -163,12 +233,22 @@ abstract class Route
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_ROUTER_DEFAULT_HANDLER_EXISTED', 'router', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_ROUTER_DEFAULT_HANDLER_EXISTED',
+                'router',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Execute the default handler
+     *
+     * @return mixed Return the result of handler,
+     *               or false when no handler has set
+     */
     public static function execDefaultHandler()
     {
         $handler = null;
@@ -178,13 +258,26 @@ abstract class Route
 
             return $handler();
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_ROUTER_DEFAULT_HANDLER_UNCALLABLE', 'router', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_ROUTER_DEFAULT_HANDLER_UNCALLABLE',
+                'router',
+                true
+            );
+
             return false;
         }
 
         return false;
     }
 
+    /**
+     * Set error handler
+     *
+     * @param closure $handler Handler that will handle the request if
+     *                         requested path not found in pathParams
+     *
+     * @return bool true when succeed, or false for otherwise
+     */
     public static function setErrorHandler(\Closure $handler)
     {
         if (!self::$errorHandler) {
@@ -192,12 +285,24 @@ abstract class Route
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_ROUTER_ERROR_HANDLER_EXISTED', 'router', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_ROUTER_ERROR_HANDLER_EXISTED',
+                'router',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Execute the error handler
+     *
+     * @param string $type Type of the error
+     *
+     * @return bool Return the result of the handler,
+     *              or false for when handler not set
+     */
     private static function execErrorHandler($type)
     {
         $handler = null;
@@ -207,7 +312,12 @@ abstract class Route
 
             return $handler($type);
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_ROUTER_ERROR_HANDLER_UNCALLABLE', 'router', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_ROUTER_ERROR_HANDLER_UNCALLABLE',
+                'router',
+                true
+            );
+
             return false;
         }
 

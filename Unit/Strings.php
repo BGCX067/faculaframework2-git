@@ -26,10 +26,52 @@
 
 namespace Facula\Unit;
 
+/**
+ * The hasher particularly for password
+ */
 abstract class Strings
 {
-    public static function substr($string, $start, $len, $apostrophe = false)
+    /** Tag to anti-reinitialize */
+    protected static $inited = false;
+    protected static $default_encode = 'utf-8';
+
+    /**
+     * Initialize the class
+     *
+     * @return bool Return true when initialized, false when initialize failed
+     */
+    protected static function selfInit()
     {
+        if (static::$inited) {
+            return true;
+        }
+
+        if (mb_internal_encoding(static::$default_encode)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Wrapped version of substr but with mb_substr
+     *
+     * @param string $string The string to operate
+     * @param string $start Start position to get substring
+     * @param string $len Length of result string
+     * @param string $apostrophe Will we display apostrophe at end when for
+     *                           indicate there some content been cut out
+     *
+     * @return bool Return result of mb_substr
+     */
+    public static function substr(
+        $string,
+        $start,
+        $len,
+        $apostrophe = false
+    ) {
+        static::selfInit();
+
         if ($len > mb_strlen($string)) {
             return $string;
         } else {
@@ -44,13 +86,36 @@ abstract class Strings
         return false;
     }
 
+    /**
+     * Wrapped version of strlen but with mb_strlen
+     *
+     * @param string $string The string to operate
+     *
+     * @return bool Return result of mb_strlen
+     */
     public static function strlen($string)
     {
+        static::selfInit();
+
         return mb_strlen($string);
     }
 
-    public static function strpos($haystack, $needle, $offset = 0)
-    {
+    /**
+     * Wrapped version of strpos but with mb_strpos
+     *
+     * @param string $haystack The string for search
+     * @param string $needle Search this in the string
+     * @param string $offset Start position for search
+     *
+     * @return bool Return result of mb_strpos
+     */
+    public static function strpos(
+        $haystack,
+        $needle,
+        $offset = 0
+    ) {
+        static::selfInit();
+
         return mb_strpos($haystack, $needle, $offset);
     }
 }

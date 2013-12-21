@@ -26,14 +26,10 @@
 
 namespace Facula\Base\Prototype\Core;
 
-use \Facula\Base\Prototype as Prototype;
-
-use \Facula\Base\Implement\Core as CoreInterfaces;
-
 /**
  * Prototype class for Object for make core remaking more easy
  */
-abstract class Object extends Prototype\Core implements CoreInterfaces\Object
+abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Object
 {
     /** Declare maintainer information */
     public static $plate = array(
@@ -170,11 +166,11 @@ abstract class Object extends Prototype\Core implements CoreInterfaces\Object
 
             return file_put_contents(
                 $instance->cachedObjectFilePath,
-                self::$config['CacheSafeCode'][0]
+                static::$config['CacheSafeCode'][0]
                 . '$obj = '
                 . var_export(serialize($instance), true)
                 . ';'
-                . self::$config['CacheSafeCode'][1]
+                . static::$config['CacheSafeCode'][1]
             );
         }
 

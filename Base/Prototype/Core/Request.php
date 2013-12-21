@@ -358,7 +358,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
      *
      * @param string $key The key name of cookie
      *
-     * @return mixed Return the result of self::get
+     * @return mixed Return the result of static::get
      */
     public function getCookie($key)
     {
@@ -370,7 +370,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
      *
      * @param string $key The key name of post
      *
-     * @return mixed Return the result of self::get
+     * @return mixed Return the result of static::get
      */
     public function getPost($key)
     {
@@ -382,7 +382,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
      *
      * @param string $key The key name of get
      *
-     * @return mixed Return the result of self::get
+     * @return mixed Return the result of static::get
      */
     public function getGet($key)
     {
@@ -394,7 +394,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
      *
      * @param array $keys The key names of post
      *
-     * @return mixed Return the result of self::gets
+     * @return mixed Return the result of static::gets
      */
     public function getPosts(array $keys, &$errors = array())
     {
@@ -406,7 +406,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
      *
      * @param array $keys The key names of get
      *
-     * @return mixed Return the result of self::gets
+     * @return mixed Return the result of static::gets
      */
     public function getGets(array $keys, &$errors = array())
     {

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * String Hasher
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,13 +26,28 @@
 
 namespace Facula\Unit;
 
+/**
+ * String Hasher
+ */
 class Hasher
 {
+    /** Salt that will be use to obscure the string */
     protected $salt = '';
+
+    /** Length of salt string */
     protected $saltLen = 0;
 
+    /** Times of hashing */
     private $loopPeriod = 1;
 
+    /**
+     * Constructor
+     *
+     * @param string $salt Salt used for hashing
+     * @param integer $loop Repeat times for string hashing
+     *
+     * @return void
+     */
     public function __construct($salt = '', $loop = 1)
     {
         if ($salt) {
@@ -41,10 +56,15 @@ class Hasher
         }
 
         $this->loopPeriod = $loop > 0 ? $loop : 1;
-
-        return true;
     }
 
+    /**
+     * Obscure the hashed value
+     *
+     * @param string $str Hashed value
+     *
+     * @return string Obscured string
+     */
     protected function obscure($str)
     {
         $strlen = strlen($str);
@@ -84,106 +104,220 @@ class Hasher
         return false;
     }
 
+    /**
+     * Output obscured MD5
+     *
+     * @param string $str String that will be hashed
+     *
+     * @return string Obscured string
+     */
     public function obscuredMD5($str)
     {
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash('md5', $this->obscure(hash('md5', $str)));
+            $str = hash(
+                'md5',
+                $this->obscure(hash('md5', $str))
+            );
         }
 
         return $str;
     }
 
+    /**
+     * Output obscured SHA1
+     *
+     * @param string $str String that will be hashed
+     *
+     * @return string Obscured string
+     */
     public function obscuredSHA1($str)
     {
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash('sha1', $this->obscure(hash('sha1', $str)));
+            $str = hash(
+                'sha1',
+                $this->obscure(hash('sha1', $str))
+            );
         }
 
         return $str;
     }
 
+    /**
+     * Output obscured SHA256
+     *
+     * @param string $str String that will be hashed
+     *
+     * @return string Obscured string
+     */
     public function obscuredSHA256($str)
     {
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash('sha256', $this->obscure(hash('sha256', $str . $this->obscure(hash('sha256', $str)))));
+            $str = hash(
+                'sha256',
+                $this->obscure(hash('sha256', $str . $this->obscure(hash('sha256', $str))))
+            );
         }
 
         return $str;
     }
 
+    /**
+     * Output obscured SHA512
+     *
+     * @param string $str String that will be hashed
+     *
+     * @return string Obscured string
+     */
     public function obscuredSHA512($str)
     {
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash('sha512', $this->obscure(hash('sha512', $str . $this->obscure(hash('sha512', $str)))));
+            $str = hash(
+                'sha512',
+                $this->obscure(hash('sha512', $str . $this->obscure(hash('sha512', $str))))
+            );
         }
 
         return $str;
     }
 
+    /**
+     * Output obscured RIPEMD160
+     *
+     * @param string $str String that will be hashed
+     *
+     * @return string Obscured string
+     */
     public function obscuredRIPEMD160($str)
     {
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash('ripemd160', $this->obscure(hash('ripemd160', $str . $this->obscure(hash('ripemd160', $str)))));
+            $str = hash(
+                'ripemd160',
+                $this->obscure(
+                    hash('ripemd160', $str . $this->obscure(hash('ripemd160', $str)))
+                )
+            );
         }
 
         return $str;
     }
 
+    /**
+     * Output obscured RIPEMD320
+     *
+     * @param string $str String that will be hashed
+     *
+     * @return string Obscured string
+     */
     public function obscuredRIPEMD320($str)
     {
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash('ripemd320', $this->obscure(hash('ripemd320', $str . $this->obscure(hash('ripemd320', $str)))));
+            $str = hash(
+                'ripemd320',
+                $this->obscure(
+                    hash('ripemd320', $str . $this->obscure(hash('ripemd320', $str)))
+                )
+            );
         }
 
         return $str;
     }
 
+    /**
+     * Output obscured WHIRLPOOL
+     *
+     * @param string $str String that will be hashed
+     *
+     * @return string Obscured string
+     */
     public function obscuredWHIRLPOOL($str)
     {
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash('whirlpool', $this->obscure(hash('whirlpool', $str . $this->obscure(hash('whirlpool', $str)))));
+            $str = hash(
+                'whirlpool',
+                $this->obscure(
+                    hash('whirlpool', $str . $this->obscure(hash('whirlpool', $str)))
+                )
+            );
         }
 
         return $str;
     }
 
+    /**
+     * Output obscured SALSA10
+     *
+     * @param string $str String that will be hashed
+     *
+     * @return string Obscured string
+     */
     public function obscuredSALSA10($str)
     {
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash('salsa10', $this->obscure(hash('salsa10', $str . $this->obscure(hash('salsa10', $str)))));
+            $str = hash(
+                'salsa10',
+                $this->obscure(
+                    hash('salsa10', $str . $this->obscure(hash('salsa10', $str)))
+                )
+            );
         }
 
         return $str;
     }
 
+    /**
+     * Output obscured SALSA20
+     *
+     * @param string $str String that will be hashed
+     *
+     * @return string Obscured string
+     */
     public function obscuredSALSA20($str)
     {
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash('salsa20', $this->obscure(hash('salsa20', $str . $this->obscure(hash('salsa20', $str)))));
+            $str = hash(
+                'salsa20',
+                $this->obscure(
+                    hash('salsa20', $str . $this->obscure(hash('salsa20', $str)))
+                )
+            );
         }
 
         return $str;
     }
 
+    /**
+     * Short cut for self::obscuredMD5
+     *
+     * @param string $str String that will be hashed
+     *
+     * @return string Obscured string
+     */
     public function obscuredVerify($str)
     {
         return $this->obscuredMD5($str);
     }
 
+    /**
+     * Short cut for self::obscuredSHA512
+     *
+     * @param string $str String that will be hashed
+     *
+     * @return string Obscured string
+     */
     public function obscuredSafe($str)
     {
         return $this->obscuredSHA512($str);

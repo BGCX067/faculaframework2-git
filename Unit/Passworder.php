@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Password Hasher
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,13 +26,30 @@
 
 namespace Facula\Unit;
 
+/**
+ * The hasher particularly for password
+ */
 class Passworder
 {
+    /** Cost for algorithm */
     protected $cost = 12;
+
+    /** Salt for obscure */
     protected $salt = '';
 
+    /** Instance of hasher object */
     protected $hasher = null;
 
+    /**
+     * Constructor
+     *
+     * @param string $salt Salt used for hashing
+     * @param integer $loop Repeat times for string hashing
+     * @param integer $cost Repeat times for password crypting
+     *                      (Not the cost of algorithm itself)
+     *
+     * @return void
+     */
     public function __construct($salt = '', $loop = 200, $cost = 10)
     {
         $tempSalt = '';
@@ -55,10 +72,16 @@ class Passworder
         } else {
             $this->salt = crypt($this->getRandomSalt(16));
         }
-
-        return true;
     }
 
+    /**
+     * Get password hashed
+     *
+     * @param string $string Salt used for hashing
+     * @param string $salt Repeat times for string hashing
+     *
+     * @return string Hashed password
+     */
     public function hash($string, $salt = '')
     {
         $passwordSalt = $salt ? $salt : $this->salt;
@@ -71,17 +94,35 @@ class Passworder
         return base64_encode($passwordHash . chr(0) . $passwordSalt);
     }
 
+    /**
+     * Verify the password
+     *
+     * @param string $string String to compare
+     * @param string $hashed The hash for compare
+     *
+     * @return bool Return true if password is the same, false otherwise
+     */
     public function verify($string, $hashed)
     {
         $spiltedHash = explode(chr(0), base64_decode($hashed), 2);
 
-        if ($this->hash($string, isset($spiltedHash[1]) ? $spiltedHash[1] : '') === $hashed) {
+        if ($this->hash(
+            $string,
+            isset($spiltedHash[1]) ? $spiltedHash[1] : ''
+        ) === $hashed) {
             return true;
         }
 
         return false;
     }
 
+    /**
+     * Get a random string for salting
+     *
+     * @param string $num Length if the output string
+     *
+     * @return string The string
+     */
     protected function getRandomSalt($num)
     {
         $salt = '';

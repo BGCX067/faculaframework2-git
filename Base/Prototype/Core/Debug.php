@@ -309,7 +309,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      * @param bool $errno Line of that code trigger the error
      * @param bool $errcontext Dump information
      *
-     * @return mixed Return the result of self::exception
+     * @return mixed Return the result of static::exception
      */
     protected function errorHandler($errno, $errstr, $errfile, $errline, $errcontext)
     {
@@ -364,7 +364,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      *
      * @param object $exception The instance of exception object
      *
-     * @return mixed Return the result of self::exception
+     * @return mixed Return the result of static::exception
      */
     protected function exceptionHandler($exception)
     {
@@ -380,7 +380,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     /**
      * Fatal Handler
      *
-     * @return mixed Return false when no error picked up, otherwise, return the result of self::errorHandler
+     * @return mixed Return false when no error picked up, otherwise, return the result of static::errorHandler
      */
     protected function fatalHandler()
     {

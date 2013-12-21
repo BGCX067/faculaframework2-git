@@ -136,11 +136,11 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
 
                 return file_put_contents(
                     $file,
-                    self::$setting['CacheFileSafeCode'][0]
+                    static::$setting['CacheFileSafeCode'][0]
                     . ' $cache = '
                     . var_export($cacheData, true)
                     . '; '
-                    . self::$setting['CacheFileSafeCode'][1]
+                    . static::$setting['CacheFileSafeCode'][1]
                 );
             }
         }

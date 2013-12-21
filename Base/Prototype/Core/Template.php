@@ -522,8 +522,8 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                                         }
                                     }
 
-                                    $renderCachedOutputContent = self::$setting['TemplateFileSafeCode'][0]
-                                                                . self::$setting['TemplateFileSafeCode'][1]
+                                    $renderCachedOutputContent = static::$setting['TemplateFileSafeCode'][0]
+                                                                . static::$setting['TemplateFileSafeCode'][1]
                                                                 . implode('', $splitedRenderedContent);
 
                                     unset($splitedRenderedContent, $splitedRenderedContentLen);
@@ -789,8 +789,8 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
                 return file_put_contents(
                     $resultTpl,
-                    self::$setting['TemplateFileSafeCode'][0]
-                    . self::$setting['TemplateFileSafeCode'][1]
+                    static::$setting['TemplateFileSafeCode'][0]
+                    . static::$setting['TemplateFileSafeCode'][1]
                     . $compiledContent
                 );
             } else {
@@ -872,11 +872,11 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
             if (file_put_contents(
                 $compiledLangFile,
-                self::$setting['TemplateFileSafeCode'][0]
+                static::$setting['TemplateFileSafeCode'][0]
                 . ' $langMap = '
                 . var_export($this->pool['LanguageMap'], true)
                 . '; '
-                . self::$setting['TemplateFileSafeCode'][1]
+                . static::$setting['TemplateFileSafeCode'][1]
             )) {
                 return true;
             }

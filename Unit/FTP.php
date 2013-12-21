@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * FTP Operator
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -54,21 +54,34 @@ namespace Facula\Unit;
     );
 */
 
+/**
+ * FTP Operator
+ */
 class FTP
 {
+    /** Instance of this singleton */
     private static $instance = null;
+
+    /** Handler of the connection */
     private static $connection = null;
 
+    /** Setting of this class */
     private static $setting = array();
 
-    private static $error = '';
-
+    /** Information for currently connected server */
     private static $currentServer = array();
+
+    /** Information for currently path this handler accessed */
     private static $currentPath = array();
 
-    private $config = array();
-
-    public static function setup($setting)
+    /**
+     * Setup for this class
+     *
+     * @param array $setting Configuration of this class
+     *
+     * @return bool true when setup succeed, false when fail
+     */
+    public static function setup(array $setting)
     {
         if (self::$setting = $setting) {
             return true;
@@ -77,6 +90,11 @@ class FTP
         return false;
     }
 
+    /**
+     * Connect to a FTP server
+     *
+     * @return mixed A instance if this object when succeed, false when false
+     */
     public static function connect()
     {
         if (self::$instance) {
@@ -87,13 +105,25 @@ class FTP
             if (self::$connection) {
                 return self::$instance;
             } else {
-                \Facula\Framework::core('debug')->exception('ERROR_FTP_NO_SERVER_AVAILABLE|' . self::$error, 'ftp', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_FTP_NO_SERVER_AVAILABLE|' . self::$error,
+                    'ftp',
+                    true
+                );
             }
         }
 
         return false;
     }
 
+    /**
+     * Constructor. Build a link to FTP server.
+     *
+     * Notice that: The connection may silently fail, do check on the return value of
+     * operator methods by your own to knowing that.
+     *
+     * @return bool true when succeed, false when fail
+     */
     private function __construct()
     {
         $successed = false;
@@ -105,7 +135,12 @@ class FTP
         );
 
         if (!isset(self::$setting['Servers']) || !count(self::$setting['Servers'])) {
-            \Facula\Framework::core('debug')->exception('ERROR_FTP_NO_SERVER', 'ftp', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_FTP_NO_SERVER',
+                'ftp',
+                true
+            );
+
             return false;
         }
 
@@ -144,7 +179,11 @@ class FTP
 
                     if ($conn) {
                         if (isset($server['Username'][0])) {
-                            if (ftp_login($conn, $server['Username'], isset($server['Password'][0]) ? $server['Password'] : '')) {
+                            if (ftp_login(
+                                $conn,
+                                $server['Username'],
+                                isset($server['Password'][0]) ? $server['Password'] : ''
+                            )) {
                                 self::$currentServer = $server;
                                 break;
                             } else {
@@ -171,7 +210,10 @@ class FTP
         // Exit critical section
         \Facula\Framework::core('debug')->criticalSection(false);
 
-        if ($successed && (self::$connection = $conn) && (!isset(self::$currentServer['Path']) || $this->doEnterPath(self::$currentServer['Path']))) {
+        if ($successed
+            && (self::$connection = $conn)
+            && (!isset(self::$currentServer['Path'])
+            || $this->doEnterPath(self::$currentServer['Path']))) {
             return true;
         } else {
             ftp_close($conn);
@@ -180,9 +222,35 @@ class FTP
         return false;
     }
 
+    /**
+     * Destructor. Say good bye to the FTP server
+     *
+     * @return bool true when succeed, false when fail
+     */
+    public function __destruct()
+    {
+        if (self::$connection) {
+            return ftp_close(self::$connection);
+        }
+
+        return true;
+    }
+
+    /**
+     * Enter a path on FTP server
+     *
+     * @param string $remotePath Path on server to enter
+     * @param string &$enteredRemotePath A reference to get entered path
+     *                                   (For half enter check and safely get entered path)
+     *
+     * @return bool true when succeed, false when fail
+     */
     private function doEnterPath($remotePath, &$enteredRemotePath = '')
     {
-        $folders = explode('/', str_replace(array('/', '\\'), '/', $remotePath));
+        $folders = explode(
+            '/',
+            str_replace(array('/', '\\'), '/', $remotePath)
+        );
 
         $chdirFailed = false;
         $error = '';
@@ -194,11 +262,13 @@ class FTP
 
             \Facula\Framework::core('debug')->criticalSection(true);
 
-            // If the path include / var as beginning, we need to refresh the refer path to the root
+            // If the path include / var as beginning,
+            // we need to refresh the refer path to the root
             if (isset($folders[0]) && !$folders[0]) {
                 // current vs new path, find out relative path
                 foreach ($validFolders as $key => $folder) {
-                    if (isset(self::$currentPath[$key]) && ($folder == self::$currentPath[$key])) {
+                    if (isset(self::$currentPath[$key])
+                        && ($folder == self::$currentPath[$key])) {
                         $skipedFolders[] = $folder;
 
                         unset($validFolders[$key]);
@@ -209,10 +279,17 @@ class FTP
 
                 $remainFolders = array_values($validFolders); // return in right index
 
-                if (count(array_diff(self::$currentPath, $skipedFolders))) {
+                if (count(array_diff(
+                    self::$currentPath,
+                    $skipedFolders
+                ))) {
                     self::$currentPath = array();
 
-                    if (!ftp_chdir(self::$connection, count($skipedFolders) ? '/' . implode('/', $skipedFolders) : '/')) {
+                    if (!ftp_chdir(
+                        self::$connection,
+                        count($skipedFolders) ? '/' .
+                        implode('/', $skipedFolders) : '/'
+                    )) {
                         $chdirFailed = true;
                     } else {
                         self::$currentPath = $skipedFolders;
@@ -229,7 +306,9 @@ class FTP
                     }
 
                     try {
-                        if (!ftp_chdir(self::$connection, $folder) && (!ftp_mkdir(self::$connection, $folder) || !ftp_chdir(self::$connection, $folder))) {
+                        if (!ftp_chdir(self::$connection, $folder)
+                            && (!ftp_mkdir(self::$connection, $folder)
+                            || !ftp_chdir(self::$connection, $folder))) {
                             $chdirFailed = true;
                             break;
                         } else {
@@ -253,24 +332,15 @@ class FTP
         return false;
     }
 
-    public function __destruct()
-    {
-        if (self::$connection) {
-            return ftp_close(self::$connection);
-        }
-
-        return true;
-    }
-
-    public function getCurrentServer()
-    {
-        if (self::$connection) {
-            return &self::$currentServer;
-        }
-
-        return false;
-    }
-
+    /**
+     * Upload a file
+     *
+     * @param string $localFile Path to file that needs to be uploaded
+     * @param string $remotePath Target path (not including file name) on remote server
+     * @param string $remoteFileName File name
+     *
+     * @return string Return Path to the file on remote FTP server (/ftproot/blablabla/file1.txt)
+     */
     public function upload($localFile, $remotePath, $remoteFileName)
     {
         $server = array();
@@ -279,8 +349,15 @@ class FTP
         if ($server = $this->getCurrentServer()) {
             \Facula\Framework::core('debug')->criticalSection(true);
 
-            if (isset($server['Path']) && !$this->doEnterPath($server['Path'] . '/' . $remotePath, $currentRemotePath)) {
-                \Facula\Framework::core('debug')->exception('ERROR_FTP_CHANGEDIR_FAILED', 'ftp', true);
+            if (isset($server['Path']) && !$this->doEnterPath(
+                $server['Path'] . '/' . $remotePath,
+                $currentRemotePath
+            )) {
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_FTP_CHANGEDIR_FAILED',
+                    'ftp',
+                    true
+                );
             }
 
             if (is_readable($localFile)) {
@@ -288,7 +365,11 @@ class FTP
                     $resultPath = $currentRemotePath . '/' . $remoteFileName;
                 }
             } else {
-                \Facula\Framework::core('debug')->exception('ERROR_FTP_FILE_UNREADABLE|' . $localFile, 'ftp', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_FTP_FILE_UNREADABLE|' . $localFile,
+                    'ftp',
+                    true
+                );
             }
 
             \Facula\Framework::core('debug')->criticalSection(false);

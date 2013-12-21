@@ -26,38 +26,60 @@
 
 namespace Facula\Unit;
 
+/**
+ * The hasher particularly for password
+ */
 class Session
 {
+    /** Bool for anti re-initing */
     private static $inited = false;
 
+    /** Default settings */
     private static $defaults = array();
 
+    /** Current session keys */
     private static $currentSessionKeys = array();
 
+    /** Loaded sessions */
     private static $sessions = array();
 
+    /** Cores from facula */
     private static $cores = array();
 
-    private static $hashCharMap = 'abcdefghijklnmopqistuvwxyzABCDEFGHIJKLNMOPQRSTUVWXYZ1234567890`~!@#$%^&*()[]\{}|;\':",./<>?';
+    /** Hash char map */
+    private static $hashCharMap =
+        'abcdefghijklnmopqistuvwxyzABCDEFGHIJKLNMOPQRSTUVWXYZ1234567890`~!@#$%^&*()[]\{}|;\':",./<>?';
 
-    /* Method for init */
-    public static function init($setting = array())
+    /**
+     * Initializer
+     *
+     * @param array $setting Configure array
+     *
+     * @return bool Return true when initialized, false when fail.
+     *              Remember re-init cause fail too
+     */
+    public static function init(array $setting = array())
     {
         if (!self::$inited) {
             self::$cores = \Facula\Framework::getAllCores();
 
             self::$defaults = array(
                 'Setting' => array(
-                    'CookieKey' => isset($setting['CookieKey']) ? $setting['CookieKey'] : '!',
-                    'Expire' => isset($setting['Expire']) ? (int)($setting['Expire']) : 3600,
-                    'Salt' => isset($setting['Salt']) ? $setting['Salt'] : '',
+                    'CookieKey' => isset($setting['CookieKey'])
+                                    ? $setting['CookieKey'] : '!',
+
+                    'Expire' => isset($setting['Expire'])
+                                    ? (int)($setting['Expire']) : 3600,
+
+                    'Salt' => isset($setting['Salt'])
+                                    ? $setting['Salt'] : '',
                 ),
             );
 
             self::$inited = true;
 
             register_shutdown_function(function () {
-                self::update();
+                return self::update();
             });
 
             return true;
@@ -66,14 +88,27 @@ class Session
         return false;
     }
 
-    public static function setup($setting = array(), $type = 'General')
+    /**
+     * Setup the specified session
+     *
+     * @param array $setting Configure array of the array
+     * @param string $type Configure array of the array
+     *
+     * @return bool Return true when setup success, false when fail
+     */
+    public static function setup(array $setting = array(), $type = 'General')
     {
         if (!isset(self::$sessions[$type]) && self::$inited) {
             self::$sessions[$type] = array(
                 'Setting' => array(
-                    'CookieKey' => isset($setting['CookieKey']) ? $setting['CookieKey']: self::$defaults['Setting']['CookieKey'],
-                    'Expire' => isset($setting['Expire']) ? (int)($setting['Expire']): self::$defaults['Setting']['Expire'],
-                    'Salt' => isset($setting['Salt']) ? $setting['Salt'] : self::$defaults['Setting']['Salt'],
+                    'CookieKey' => isset($setting['CookieKey'])
+                        ? $setting['CookieKey']: self::$defaults['Setting']['CookieKey'],
+
+                    'Expire' => isset($setting['Expire'])
+                        ? (int)($setting['Expire']): self::$defaults['Setting']['Expire'],
+
+                    'Salt' => isset($setting['Salt'])
+                        ? $setting['Salt'] : self::$defaults['Setting']['Salt'],
                 ),
                 'Sessions' => array(),
                 'Handlers' => array(),
@@ -85,10 +120,17 @@ class Session
         return false;
     }
 
+    /**
+     * Update the session with handlers
+     *
+     * @return array Array of results from update handlers
+     */
     private static function update()
     {
         $updateHandler = $garbagerHandler = null;
         $garbageExpiredTime = 0;
+
+        $result = array();
 
         foreach (self::$sessions as $type => $sessions) {
             $garbageExpiredTime = FACULA_TIME - $sessions['Setting']['Expire'];
@@ -97,25 +139,35 @@ class Session
                 $updateHandler = $sessions['Handlers']['Update'];
 
                 foreach ($sessions['Sessions'] as $session) {
-                    $updateHandler($session);
+                    $result[] = $updateHandler($session);
                 }
             }
 
             if (isset($sessions['Handlers']['Garbage'])) {
-                if (!self::$cores['cache']->load('session-lock-' . $type, $sessions['Setting']['Expire'])) {
+                if (!self::$cores['cache']->load(
+                    'session-lock-' . $type,
+                    $sessions['Setting']['Expire']
+                )) {
                     $garbagerHandler = $sessions['Handlers']['Garbage'];
 
-                    $garbagerHandler($garbageExpiredTime);
+                    $result[] = $garbagerHandler($garbageExpiredTime);
 
                     self::$cores['cache']->save('session-lock-' . $type, true);
                 }
             }
         }
 
-        return true;
+        return $result;
     }
 
-    /* Set Handlers */
+    /**
+     * Set a reader handler for specified session
+     *
+     * @param closure $handler The reader function in closure
+     * @param string $for The session that this reader will be set for
+     *
+     * @return bool Return true when set, false otherwise
+     */
     public static function setReader(\Closure $handler, $for = 'General')
     {
         if (isset(self::$sessions[$for])) {
@@ -124,15 +176,31 @@ class Session
 
                 return true;
             } else {
-                self::$cores['debug']->exception('ERROR_SESSION_SETREADER_ALREADY_EXISTED|' . $for, 'session', true);
+                self::$cores['debug']->exception(
+                    'ERROR_SESSION_SETREADER_ALREADY_EXISTED|' . $for,
+                    'session',
+                    true
+                );
             }
         } elseif (self::$inited) {
-            self::$cores['debug']->exception('ERROR_SESSION_SETREADER_NOT_INITED|' . $for, 'session', true);
+            self::$cores['debug']->exception(
+                'ERROR_SESSION_SETREADER_NOT_INITED|' . $for,
+                'session',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Set a updater handler for specified session
+     *
+     * @param closure $handler The reader function in closure
+     * @param string $for The session that this updater will be set for
+     *
+     * @return bool Return true when set, false otherwise
+     */
     public static function setUpdater(\Closure $handler, $for = 'General')
     {
         if (isset(self::$sessions[$for])) {
@@ -141,15 +209,31 @@ class Session
 
                 return true;
             } else {
-                self::$cores['debug']->exception('ERROR_SESSION_SETWRITER_ALREADY_EXISTED|' . $for, 'session', true);
+                self::$cores['debug']->exception(
+                    'ERROR_SESSION_SETWRITER_ALREADY_EXISTED|' . $for,
+                    'session',
+                    true
+                );
             }
         } elseif (self::$inited) {
-            self::$cores['debug']->exception('ERROR_SESSION_SETWRITER_NOT_INITED|' . $for, 'session', true);
+            self::$cores['debug']->exception(
+                'ERROR_SESSION_SETWRITER_NOT_INITED|' . $for,
+                'session',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Set a garbager handler for specified session
+     *
+     * @param closure $handler The reader function in closure
+     * @param string $for The session that this garbager will be set for
+     *
+     * @return bool Return true when set, false otherwise
+     */
     public static function setGarbager(\Closure $handler, $for = 'General')
     {
         if (isset(self::$sessions[$for])) {
@@ -158,16 +242,31 @@ class Session
 
                 return true;
             } else {
-                self::$cores['debug']->exception('ERROR_SESSION_SETGARBAGER_ALREADY_EXISTED|' . $for, 'session', true);
+                self::$cores['debug']->exception(
+                    'ERROR_SESSION_SETGARBAGER_ALREADY_EXISTED|' . $for,
+                    'session',
+                    true
+                );
             }
         } elseif (self::$inited) {
-            self::$cores['debug']->exception('ERROR_SESSION_SETGARBAGER_NOT_INITED|' . $for, 'session', true);
+            self::$cores['debug']->exception(
+                'ERROR_SESSION_SETGARBAGER_NOT_INITED|' . $for,
+                'session',
+                true
+            );
         }
 
         return false;
     }
 
-    /* Get session in two way */
+    /**
+     * Get a session with session key
+     *
+     * @param string $sessionKey The reader function in closure
+     * @param string $for The type of the session
+     *
+     * @return bool Return the result of session reader handler when found, or false when fail
+     */
     public static function get($sessionKey, $for = 'General')
     {
         $handler = null;
@@ -183,6 +282,13 @@ class Session
         return false;
     }
 
+    /**
+     * Get current session
+     *
+     * @param string $for The type of the session
+     *
+     * @return bool Return the result of session reader handler when found, or false when fail
+     */
     public static function getCurrent($for = 'General')
     {
         $sessionKeyInfo = array();
@@ -193,14 +299,23 @@ class Session
             } elseif (isset(self::$sessions[$for]['Handlers']['Read'])) {
                 $handler = self::$sessions[$for]['Handlers']['Read'];
 
-                return (self::$sessions[$for]['Sessions'][$sessionKeyInfo['Key']] = $handler($sessionKeyInfo['Key'], $sessionKeyInfo['Safe']));
+                return (self::$sessions[$for]['Sessions'][$sessionKeyInfo['Key']] = $handler(
+                    $sessionKeyInfo['Key'],
+                    $sessionKeyInfo['Safe']
+                ));
             }
         }
 
         return false;
     }
 
-    // Following method for calc current sessionKey()
+    /**
+     * Get key for current session and send a new key to client if the key not existed
+     *
+     * @param string $for The type of the session
+     *
+     * @return array Array of session key
+     */
     private static function getCurrentKey($for = 'General')
     {
         $sessionKey = $sessionRawKey = '';
@@ -211,23 +326,55 @@ class Session
         if (isset(self::$sessions[$for]['Setting'])) {
             if (!isset(self::$currentSessionKeys[$for])) {
                 // Check if this user already has the session key in it's cookie
-                if (($sessionRawKey = self::$cores['request']->getCookie(self::$sessions[$for]['Setting']['CookieKey'])) && ($sessionKeyInfo = self::verifyKey($sessionRawKey, $networkID, $for))) {
+                if (($sessionRawKey = self::$cores['request']->getCookie(
+                    self::$sessions[$for]['Setting']['CookieKey']
+                ))
+                &&
+                ($sessionKeyInfo = self::verifyKey(
+                    $sessionRawKey,
+                    $networkID,
+                    $for
+                ))) {
                     $sessionKey = $sessionKeyInfo['Verify'];
                     $safeSession = true;
 
-                    if ($sessionKeyInfo['Expire'] - (self::$sessions[$for]['Setting']['Expire'] / 2) < FACULA_TIME) {
-                        $sessionKeyInfo['Expire'] = FACULA_TIME + self::$sessions[$for]['Setting']['Expire'];
+                    if ($sessionKeyInfo['Expire']
+                        - (self::$sessions[$for]['Setting']['Expire'] / 2)
+                        < FACULA_TIME) {
+                        $sessionKeyInfo['Expire'] =
+                            FACULA_TIME + self::$sessions[$for]['Setting']['Expire'];
 
-                        self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], self::$cores['request']->getClientInfo('rootURL'), '', self::$cores['request']->getClientInfo('https'), true);
+                        self::$cores['response']->setCookie(
+                            self::$sessions[$for]['Setting']['CookieKey'],
+                            implode("\t", $sessionKeyInfo),
+                            self::$sessions[$for]['Setting']['Expire'],
+                            self::$cores['request']->getClientInfo('rootURL'),
+                            '',
+                            self::$cores['request']->getClientInfo('https'),
+                            true
+                        );
                     }
-                } elseif ($sessionKeyInfo = self::generateKey($networkID, $for)) { // If not, generate one from it's ip address.
+                } elseif ($sessionKeyInfo = self::generateKey($networkID, $for)) {
+                    // If not, generate one from it's ip address.
                     // Set a stable key for this temp session.
                     $sessionKey = hash('md5', $networkID);
 
                     // And try set the cookie key for next reading
-                    self::$cores['response']->setCookie(self::$sessions[$for]['Setting']['CookieKey'], implode("\t", $sessionKeyInfo), self::$sessions[$for]['Setting']['Expire'], self::$cores['request']->getClientInfo('rootURL'), '', self::$cores['request']->getClientInfo('https'), true);
+                    self::$cores['response']->setCookie(
+                        self::$sessions[$for]['Setting']['CookieKey'],
+                        implode("\t", $sessionKeyInfo),
+                        self::$sessions[$for]['Setting']['Expire'],
+                        self::$cores['request']->getClientInfo('rootURL'),
+                        '',
+                        self::$cores['request']->getClientInfo('https'),
+                        true
+                    );
                 } else {
-                    self::$cores['debug']->exception('ERROR_SESSION_GET_CURRENT_KEY_FAILED|' . $for, 'session', true);
+                    self::$cores['debug']->exception(
+                        'ERROR_SESSION_GET_CURRENT_KEY_FAILED|' . $for,
+                        'session',
+                        true
+                    );
                 }
 
                 return (self::$currentSessionKeys[$for] = array(
@@ -242,6 +389,14 @@ class Session
         return array();
     }
 
+    /**
+     * Generate a key for current session
+     *
+     * @param string $networkID The unique ID of session's network
+     * @param string $for The type of the session
+     *
+     * @return array Array of session key
+     */
     private static function generateKey($networkID, $for = 'General')
     {
         global $_SERVER;
@@ -250,7 +405,13 @@ class Session
         $hasher = new Hasher(self::$sessions[$for]['Setting']['Salt'], 1);
 
         $rawKey = array(
-            'ClientID' => self::$hashCharMap[mt_rand(0, 89) % 90] . FACULA_TIME . $networkID . mt_rand(0, 65535) . (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'unknown') . self::$hashCharMap[mt_rand(0, 89) % 90],
+            'ClientID' => self::$hashCharMap[mt_rand(0, 89) % 90]
+                            . FACULA_TIME
+                            . $networkID
+                            . mt_rand(0, 65535)
+                            . (isset($_SERVER['HTTP_USER_AGENT'])
+                            ? $_SERVER['HTTP_USER_AGENT'] : 'unknown')
+                            . self::$hashCharMap[mt_rand(0, 89) % 90],
             'NetID' => $networkID,
         );
 
@@ -261,6 +422,15 @@ class Session
         return $key;
     }
 
+    /**
+     * Verify a key, check if it generated by the website
+     *
+     * @param string $sessionRawKey The key to check
+     * @param string $networkID The unique ID of session's network
+     * @param string $for The type of the session
+     *
+     * @return string The key
+     */
     private static function verifyKey($sessionRawKey, $networkID, $for = 'General')
     {
         $key = $rawKey = array();
