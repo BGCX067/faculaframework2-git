@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Imager Factory
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,24 +26,37 @@
 
 namespace Facula\Unit\Imager;
 
+/**
+ * Imager Factory
+ */
 class Factory extends \Facula\Base\Factory\Adapter
 {
+    /** Handler class name */
     private static $handlerClassName = '';
 
+    /** Settings */
     private static $setting = array(
-        'Temp' => '',
         'Font' => '',
         'FontSize' => 12,
         'MemoryLimit' => 0,
     );
 
+    /** Declare default adapters */
     protected static $adapters = array(
         'GD' => 'Facula\Unit\Imager\Adapter\GD',
         'Gmagick' => 'Facula\Unit\Imager\Adapter\Gmagick',
         'Imagick' => 'Facula\Unit\Imager\Adapter\Imagick',
     );
 
-    public static function setup($setting, $type = '')
+    /**
+     * Setup and initialize the class
+     *
+     * @param array $setting Global setting for imager
+     * @param string $type Specify the image handler
+     *
+     * @return bool Return true when succeed. false when fail
+     */
+    public static function setup(array $setting, $type = '')
     {
         if (!$type) {
             if (extension_loaded('gd')) {
@@ -53,7 +66,11 @@ class Factory extends \Facula\Base\Factory\Adapter
             } elseif (extension_loaded('imagick')) {
                 $type = 'Imagick';
             } else {
-                \Facula\Framework::core('debug')->exception('ERROR_IMAGE_HANDLER_NOTFOUND', 'imager', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_IMAGE_HANDLER_NOTFOUND',
+                    'imager',
+                    true
+                );
 
                 return false;
             }
@@ -65,19 +82,38 @@ class Factory extends \Facula\Base\Factory\Adapter
             self::$handlerClassName = $className;
 
             self::$setting = array(
-                'MemoryLimit' => (int)((\Facula\Base\Tool\Misc\PHPIni::convertIniUnit(ini_get('memory_limit')) * 0.8) - memory_get_peak_usage()),
-                'Font' => isset($setting['Font']) && is_readable($setting['Font']) ? $setting['Font'] : null,
-                'FontSize' => isset($setting['FontSize']) && is_readable($setting['FontSize']) ? $setting['FontSize'] : 12,
+                'MemoryLimit' => (int)((\Facula\Base\Tool\Misc\PHPIni::convertIniUnit(
+                    ini_get('memory_limit')
+                ) * 0.8) - memory_get_peak_usage()),
+
+                'Font' =>
+                    isset($setting['Font']) && is_readable($setting['Font'])
+                    ? $setting['Font'] : null,
+
+                'FontSize' =>
+                    isset($setting['FontSize']) && is_readable($setting['FontSize'])
+                    ? $setting['FontSize'] : 12,
             );
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_IMAGE_HANDLER_NOTFOUND', 'imager', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_IMAGE_HANDLER_NOTFOUND',
+                'imager',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Get a image hander with file
+     *
+     * @param array $file Path to the file
+     *
+     * @return mixed Return the image handler instance for success or false for fail
+     */
     public static function get($file)
     {
         $handler = null;
@@ -90,13 +126,20 @@ class Factory extends \Facula\Base\Factory\Adapter
                     return $handler;
                 }
             } else {
-                \Facula\Framework::core('debug')->exception('ERROR_IMAGE_HANDLER_INTERFACE_INVALID', 'imager', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_IMAGE_HANDLER_INTERFACE_INVALID',
+                    'imager',
+                    true
+                );
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_IMAGE_HANDLER_NOTSPECIFIED', 'imager', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_IMAGE_HANDLER_NOTSPECIFIED',
+                'imager',
+                true
+            );
         }
 
         return false;
     }
 }
-

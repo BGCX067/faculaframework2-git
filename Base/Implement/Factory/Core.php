@@ -31,5 +31,9 @@ namespace Facula\Base\Implement\Factory;
  */
 interface Core
 {
-    public static function getInstance(array $cfg, array $common, \Facula\Framework $parent);
+    public static function getInstance(
+        array $cfg,
+        array $common,
+        \Facula\Framework $parent
+    );
 }

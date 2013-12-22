@@ -641,6 +641,7 @@ class Framework
      *
      * @param string $hook Hook
      * @param array $params Parameter in array
+     * @param array $errors A reference to get error details of plugins
      *
      * @return mixed Result array when success, false when failed.
      */

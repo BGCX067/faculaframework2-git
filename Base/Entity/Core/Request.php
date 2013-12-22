@@ -32,6 +32,7 @@ namespace Facula\Base\Entity\Core;
  */
 class Request extends \Facula\Base\Prototype\Core\Request
 {
+    /** Declare maintainer information */
     public static $plate = array(
         'Author' => 'Rain Lee',
         'Reviser' => '',

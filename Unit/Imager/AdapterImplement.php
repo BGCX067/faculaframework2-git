@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Image Adapter Interface
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,19 +26,41 @@
 
 namespace Facula\Unit\Imager;
 
+/**
+ * Interface for image adapter
+ */
 interface AdapterImplement
 {
-    public function __construct($file, &$config = array());
+    public function __construct($file, array &$config = array());
 
     public function getLastError();
     public function getImageRes();
 
-    public function resize($width, $height, $resizeSmall = false, $drawAreaWidth = 0, $drawAreaHeight = 0);
-    public function ratioResize($width, $height, $resizeSmall = false);
+    public function resize(
+        $width,
+        $height,
+        $resizeSmall = false,
+        $drawAreaWidth = 0,
+        $drawAreaHeight = 0
+    );
+    public function ratioResize(
+        $width,
+        $height,
+        $resizeSmall = false
+    );
     public function fillResize($width, $height);
 
-    public function waterMark($file, $align = 'center center', $margin = 0);
-    public function waterMarkText($text, $align = 'center center', $margin = 0, $color = array(255, 255, 255));
+    public function waterMark(
+        $file,
+        $align = 'center center',
+        $margin = 0
+    );
+    public function waterMarkText(
+        $text,
+        $align = 'center center',
+        $margin = 0,
+        $color = array(255, 255, 255)
+    );
 
     public function save($file);
 }

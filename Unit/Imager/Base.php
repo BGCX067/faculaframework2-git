@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Image Adapter Base Class
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,10 +26,31 @@
 
 namespace Facula\Unit\Imager;
 
-class Base
+/**
+ * Interface for image adapter
+ */
+abstract class Base
 {
-    protected function getAlignPos($alignType, $imageWidth, $imageHeight, $subjectWidth, $subjectHeight, $margin = 0)
-    {
+    /**
+     * Get the position of other object for image inserting
+     *
+     * @param string $alignType Position type of the image
+     * @param integer $imageWidth Width of the image
+     * @param integer $imageHeight Height of the image
+     * @param integer $subjectWidth Width of the result image
+     * @param integer $subjectHeight Height of the result image
+     * @param integer $margin Margin for image
+     *
+     * @return array The position of X, Y value in array
+     */
+    protected function getAlignPos(
+        $alignType,
+        $imageWidth,
+        $imageHeight,
+        $subjectWidth,
+        $subjectHeight,
+        $margin = 0
+    ) {
         $result = array(0, 0);
 
         switch ($alignType) {

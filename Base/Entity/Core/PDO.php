@@ -32,6 +32,7 @@ namespace Facula\Base\Entity\Core;
  */
 class PDO extends \Facula\Base\Prototype\Core\PDO
 {
+    /** Declare maintainer information */
     public static $plate = array(
         'Author' => 'Rain Lee',
         'Reviser' => '',

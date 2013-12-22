@@ -32,6 +32,7 @@ namespace Facula\Base\Entity\Core;
  */
 class Template extends \Facula\Base\Prototype\Core\Template
 {
+    /** Declare maintainer information */
     public static $plate = array(
         'Author' => 'Rain Lee',
         'Reviser' => '',
