@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Query Interface
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,6 +26,9 @@
 
 namespace Facula\Unit\Query;
 
+/**
+ * Interface for Query class itself
+ */
 interface Implement
 {
     public static function from($tableName, $autoParse = false);

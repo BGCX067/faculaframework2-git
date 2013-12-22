@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * RemoteStorage Adapter Interface
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,8 +26,11 @@
 
 namespace Facula\Unit\RemoteStorage;
 
+/**
+ * Interface for RemoteStorage Adapter
+ */
 interface AdapterImplement
 {
-    public function __construct($setting);
+    public function __construct(array $setting);
     public function upload($localFile, &$error = '');
 }

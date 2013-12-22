@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Query Operator
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,15 +26,21 @@
 
 namespace Facula\Unit\Query;
 
+/**
+ * Query Operator
+ */
 class Factory extends \Facula\Base\Factory\Adapter implements Implement
 {
+    /** Tag to anti reinitializing */
     private static $inited = false;
 
+    /** Default Adapters */
     protected static $adapters = array(
-        'mysql' => 'Facula\Unit\Query\Adapter\Mysql',
-        'pgsql' => 'Facula\Unit\Query\Adapter\Pgsql',
+        'mysql' => '\Facula\Unit\Query\Adapter\Mysql',
+        'pgsql' => '\Facula\Unit\Query\Adapter\Pgsql',
     );
 
+    /** Shortcut for PDO data types */
     private static $pdoDataTypes = array(
         'BOOL' => \PDO::PARAM_BOOL,
         'NULL' => \PDO::PARAM_NULL,
@@ -43,6 +49,7 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         'LOB' => \PDO::PARAM_LOB,
     );
 
+    /** Allowed query operators */
     private static $queryOperators = array(
         '=' => '=',
         '<' => '<',
@@ -63,26 +70,34 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         'IS NOT NULL' => 'IS NOT NULL',
     );
 
+    /** Allowed logic operators */
     private static $logicOperators = array(
         'AND' => 'AND',
         'OR' => 'OR',
     );
 
+    /** Allowed order operators */
     private static $orderOperators = array(
         'DESC' => 'DESC',
         'ASC' => 'ASC',
     );
 
+    /** Last statement cache */
     private static $lastStatement = array(
         'Statement' => null,
         'Identity' => '',
     );
 
+    /** Registered parsers */
     private static $parsers = array();
 
+    /** Active connection for current query */
     private $connection = null;
+
+    /** Active adapter for current query */
     private $adapter = null;
 
+    /** Query information */
     protected $query = array();
 
     /*
@@ -91,7 +106,16 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         'Type' => 'Write|Read', // Query Type
         'From' => '', // Table name
         'Parser' => false, // Enable or disable auto parser
-        'Required' => array('Fields', 'Where', 'Group', 'Having', 'Order', 'Limit', 'Values', 'Sets'), // Required fields of this array for param validation
+        'Required' => array(
+            'Fields',
+            'Where',
+            'Group',
+            'Having',
+            'Order',
+            'Limit',
+            'Values',
+            'Sets'
+        ), // Required fields of this array for param validation
         'Fields' => array('STR', 'INT', 'BOOL', 'PARSERS'), // Fields => Types
         'Where' => array(), // Where conditions
         'Group' => array(), // Group by
@@ -105,14 +129,34 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
     );
     */
 
+    /** Data index for saved data */
     private $dataIndex = 0;
+
+    /** Map for saved data */
     protected $dataMap = array();
 
+    /**
+     * Start to build a new query
+     *
+     * @param string $tableName Table name for query
+     * @param bool $autoParse Enable or disable the auto parser for this query
+     *
+     * @return object Instance of query instance
+     */
     public static function from($tableName, $autoParse = false)
     {
         return new self($tableName, $autoParse);
     }
 
+    /**
+     * Add auto parser into the class
+     *
+     * @param string $name Name of the parser
+     * @param string $type Operation type of the parser
+     * @param closure $parser The parser itself in Closure
+     *
+     * @return bool Return true when succeed, false for fail
+     */
     public static function addAutoParser($name, $type, \Closure $parser)
     {
         if (!isset(static::$parsers[$name][$type])) {
@@ -130,7 +174,11 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                     break;
 
                 default:
-                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_PARSER_TYPE_INVALID|' . $type, 'query', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_PARSER_TYPE_INVALID|' . $type,
+                        'query',
+                        true
+                    );
                     break;
             }
         }
@@ -138,14 +186,13 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         return false;
     }
 
+    /**
+     * Do self initialize
+     *
+     * @return bool Always return true
+     */
     private static function selfInit()
     {
-        if (self::$inited) {
-            return true;
-        } else {
-            self::$inited = true;
-        }
-
         static::addAutoParser('Serialized', 'Reader', function ($data) {
             return $data ? unserialize($data) : '';
         });
@@ -181,17 +228,33 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         return true;
     }
 
+    /**
+     * Constructor
+     *
+     * @param string $tableName Table name to query
+     * @param bool $autoParse Enable or disable the auto parser
+     *
+     * @return void
+     */
     private function __construct($tableName, $autoParse = false)
     {
         $this->query['From'] = $tableName;
         $this->query['Parser'] = $autoParse ? true : false;
 
-        self::selfInit();
+        if (!self::$inited && $this->query['Parser']) {
+            self::$inited = true;
 
-        return true;
+            self::selfInit();
+        }
     }
 
-    // Select
+    /**
+     * Declare fields and set query type to SELECT for operating
+     *
+     * @param array $fields Fields in Name => Type pair
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     public function select($fields)
     {
         if (!isset($this->query['Action'])) {
@@ -215,13 +278,23 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                 return $this;
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'], 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
-    // Insert
+    /**
+     * Declare fields and set query type to INSERT for operating
+     *
+     * @param array $fields Fields in Name => Type pair
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     public function insert($fields)
     {
         if (!isset($this->query['Action'])) {
@@ -236,13 +309,23 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                 return $this;
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'], 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
-    // Update
+    /**
+     * Declare fields and set query type to UPDATE for operating
+     *
+     * @param array $fields Fields in Name => Type pair
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     public function update($fields)
     {
         if (!isset($this->query['Action'])) {
@@ -267,13 +350,23 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                 return $this;
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'], 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
-    // Delete
+    /**
+     * Declare fields and set query type to DELETE for operating
+     *
+     * @param array $fields Fields in Name => Type pair
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     public function delete($fields)
     {
         if (!isset($this->query['Action'])) {
@@ -295,20 +388,31 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                 return $this;
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'], 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
-    // Save data and data type to data map for bindValue
+    /**
+     * Save fields into current class
+     *
+     * @param array $fields Fields in Name => Type pair
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     protected function saveFields($fields)
     {
         $fieldTypes = array();
 
         if (is_array($fields)) {
             foreach ($fields as $fieldName => $fieldType) {
-                if ((is_array($fieldType) && ($fieldTypes = $fieldType)) || ($fieldTypes = explode(' ', $fieldType))) {
+                if ((is_array($fieldType) && ($fieldTypes = $fieldType))
+                    || ($fieldTypes = explode(' ', $fieldType))) {
                     foreach ($fieldTypes as $type) {
                         if (isset(static::$pdoDataTypes[$type])) {
                             $this->query['Fields'][$fieldName] = $type;
@@ -320,19 +424,31 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                     }
                 }
 
-                if (!isset($this->query['Fields'][$fieldName]) || !$this->query['Fields'][$fieldName]) {
+                if (!isset($this->query['Fields'][$fieldName])
+                    || !$this->query['Fields'][$fieldName]) {
                     $this->query['Fields'][$fieldName] = 'STR';
                 }
             }
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_SAVEFIELD_FIELDS_INVALID', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_SAVEFIELD_FIELDS_INVALID',
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Save value into class
+     *
+     * @param array $fields Fields in Name => Type pair
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     protected function saveValue($value, $forField)
     {
         $saveParser = null;
@@ -341,39 +457,73 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
 
         if (isset($this->query['Fields'][$forField])) {
             if (isset(static::$pdoDataTypes[$this->query['Fields'][$forField]])) {
-                $this->dataMap[$dataKey]['Type'] = static::$pdoDataTypes[$this->query['Fields'][$forField]]; // Type
+                $this->dataMap[$dataKey]['Type'] =
+                    static::$pdoDataTypes[$this->query['Fields'][$forField]]; // Type
+
                 $this->dataMap[$dataKey]['Value'] = $value;
 
                 if ($this->query['Parser'] && isset($this->query['FieldParsers'][$forField])) {
-                    foreach (array_reverse($this->query['FieldParsers'][$forField]) as $parserType) {
+                    foreach (array_reverse(
+                        $this->query['FieldParsers'][$forField]
+                    ) as $parserType) {
+
                         if (isset(static::$parsers[$parserType]['Writer'])) {
                             $saveParser = static::$parsers[$parserType]['Writer'];
 
-                            $this->dataMap[$dataKey]['Value'] = $saveParser($this->dataMap[$dataKey]['Value']); // With parser
+                            $this->dataMap[$dataKey]['Value'] = $saveParser(
+                                $this->dataMap[$dataKey]['Value']
+                            ); // With parser
                         } else {
-                            \Facula\Framework::core('debug')->exception('ERROR_QUERY_SAVEVALUE_PARSER_WRITER_NOTSET|' . $forField, 'query', true);
+                            \Facula\Framework::core('debug')->exception(
+                                'ERROR_QUERY_SAVEVALUE_PARSER_WRITER_NOTSET|' . $forField,
+                                'query',
+                                true
+                            );
                         }
+
                     }
                 }
 
                 return $dataKey;
             } else {
-                \Facula\Framework::core('debug')->exception('ERROR_QUERY_SAVEVALUE_TYPE_UNKNOWN|' . $this->query['Fields'][$forField], 'query', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_QUERY_SAVEVALUE_TYPE_UNKNOWN|'
+                    . $this->query['Fields'][$forField],
+                    'query',
+                    true
+                );
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_SAVEVALUE_FIELD_UNKNOWN|' . $forField, 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_SAVEVALUE_FIELD_UNKNOWN|' . $forField,
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
-    // Conditions like where and having
+    /**
+     * Make condition operating configuration
+     *
+     * @param string $logic Logic to previous condition
+     * @param string $fieldName Field name
+     * @param string $operator Operator for the field name and value
+     * @param string $value The value for the field
+     *
+     * @return mixed Return condition configuration when succeed, or false for failed
+     */
     private function condition($logic, $fieldName, $operator, $value)
     {
         $params = array();
 
         if (!isset(static::$queryOperators[$operator])) {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_CONDITION_UNKNOWN_OPERATOR|' . $operator, 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_CONDITION_UNKNOWN_OPERATOR|' . $operator,
+                'query',
+                true
+            );
 
             return false;
         }
@@ -466,7 +616,11 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                         ),
                     );
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
+                        'query',
+                        true
+                    );
 
                     return false;
                 }
@@ -482,7 +636,11 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                         ),
                     );
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
+                        'query',
+                        true
+                    );
 
                     return false;
                 }
@@ -497,7 +655,11 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                     }
 
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
+                        'query',
+                        true
+                    );
 
                     return false;
                 }
@@ -512,7 +674,11 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                     }
 
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator, 'query', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
+                        'query',
+                        true
+                    );
 
                     return false;
                 }
@@ -536,7 +702,12 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         if (isset(static::$logicOperators[$logic])) {
             $params['Logic'] = static::$logicOperators[$logic];
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_CONDITION_UNKNOWN_LOGIC|' . $logic, 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_CONDITION_UNKNOWN_LOGIC|' . $logic,
+                'query',
+                true
+            );
+
             return false;
         }
 
@@ -550,61 +721,119 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         return $condition;
     }
 
-    // Where
+    /**
+     * Make WHERE operating configuration
+     *
+     * @param string $logic Logic to previous condition
+     * @param string $fieldName Field name
+     * @param string $operator Operator for the field name and value
+     * @param string $value The value for the field
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     public function where($logic, $fieldName, $operator, $value)
     {
         if (!isset($this->query['Where'])) {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_WHERE_NOT_SUPPORTED', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_WHERE_NOT_SUPPORTED',
+                'query',
+                true
+            );
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_WHERE_FIELD_UNKOWN|' . $fieldName, 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_WHERE_FIELD_UNKOWN|' . $fieldName,
+                'query',
+                true
+            );
 
             return false;
         }
 
-        if ($this->query['Where'][] = $this->condition($logic, $fieldName, $operator, $value)) {
+        if ($this->query['Where'][] = $this->condition(
+            $logic,
+            $fieldName,
+            $operator,
+            $value
+        )) {
             return $this;
         }
 
         return false;
     }
 
-    // Having
+    /**
+     * Make HAVING operating configuration
+     *
+     * @param string $logic Logic to previous condition
+     * @param string $fieldName Field name
+     * @param string $operator Operator for the field name and value
+     * @param string $value The value for the field
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     public function having($logic, $fieldName, $operator, $value)
     {
         if (!isset($this->query['Having'])) {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_HAVING_NOT_SUPPORTED', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_HAVING_NOT_SUPPORTED',
+                'query',
+                true
+            );
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_HAVING_FIELD_UNKOWN|' . $fieldName, 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_HAVING_FIELD_UNKOWN|' . $fieldName,
+                'query',
+                true
+            );
 
             return false;
         }
 
-        if ($this->query['Having'][] = $this->condition($logic, $fieldName, $operator, $value)) {
+        if ($this->query['Having'][] = $this->condition(
+            $logic,
+            $fieldName,
+            $operator,
+            $value
+        )) {
             return $this;
         }
 
         return false;
     }
 
-    // Group
+    /**
+     * Make GROUP operating configuration
+     *
+     * @param string $fieldName Field name
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     public function group($fieldName)
     {
         if (!isset($this->query['Group'])) {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_GROUP_NOT_SUPPORTED', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_GROUP_NOT_SUPPORTED',
+                'query',
+                true
+            );
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_GROUP_FIELD_UNKOWN|' . $fieldName, 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_GROUP_FIELD_UNKOWN|' . $fieldName,
+                'query',
+                true
+            );
 
             return false;
         }
@@ -617,23 +846,42 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         return $this;
     }
 
-    // Order
+    /**
+     * Make ORDER operating configuration
+     *
+     * @param string $fieldName Field name
+     * @param string $sort Sort method, DESC or ASC
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     public function order($fieldName, $sort)
     {
         if (!isset($this->query['Order'])) {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_ORDER_NOT_SUPPORTED', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_ORDER_NOT_SUPPORTED',
+                'query',
+                true
+            );
 
             return false;
         }
 
         if (!isset(static::$orderOperators[$sort])) {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_ORDER_SORTOPERATOR_UNKOWN|' . $sort, 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_ORDER_SORTOPERATOR_UNKOWN|' . $sort,
+                'query',
+                true
+            );
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_ORDER_FIELD_UNKOWN|' . $fieldName, 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_ORDER_FIELD_UNKOWN|' . $fieldName,
+                'query',
+                true
+            );
 
             return false;
         }
@@ -646,7 +894,13 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         return $this;
     }
 
-    // Values
+    /**
+     * Make VALUE operating configuration
+     *
+     * @param string $value Values in Field => Value pair
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     public function value($value)
     {
         $tempValueData = array();
@@ -656,7 +910,11 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                 if (isset($value[$field])) {
                     $tempValueData[] = $this->saveValue($value[$field], $field);
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_VALUES_FIELD_NOTSET|' . $field, 'query', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_VALUES_FIELD_NOTSET|' . $field,
+                        'query',
+                        true
+                    );
                 }
             }
 
@@ -664,13 +922,23 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
 
             return $this;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_VALUES_NOT_SUPPORTED', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_VALUES_NOT_SUPPORTED',
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
-    // Sets
+    /**
+     * Make SET operating configuration
+     *
+     * @param string $values Values in Field => Value pair
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     public function set($values)
     {
         if (isset($this->query['Sets'])) {
@@ -684,13 +952,24 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
 
             return $this;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_SETS_NOT_SUPPORTED', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_SETS_NOT_SUPPORTED',
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
-    // Limit
+    /**
+     * Make LIMIT operating configuration
+     *
+     * @param integer $offset Position of beginning cursor
+     * @param integer $distance Distance the cursor will travel through
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
     public function limit($offset, $distance)
     {
         if (isset($this->query['Limit'])) {
@@ -703,27 +982,53 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
 
                 return $this;
             } else {
-                \Facula\Framework::core('debug')->exception('ERROR_QUERY_LIMIT_ALREADY_ASSIGNED', 'query', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_QUERY_LIMIT_ALREADY_ASSIGNED',
+                    'query',
+                    true
+                );
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_LIMIT_NOT_SUPPORTED', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_LIMIT_NOT_SUPPORTED',
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
-    // Task Preparers
+    /**
+     * Get PDO Connection for active query
+     *
+     * @return mixed Return a PDO connection when succeed, or false for fail
+     */
     private function getPDOConnection()
     {
-        if ($this->connection = \Facula\Framework::core('pdo')->getConnection(array('Table' => $this->query['From'], 'Operation' => $this->query['Type']))) {
+        if ($this->connection = \Facula\Framework::core('pdo')->getConnection(
+            array(
+                'Table' => $this->query['From'],
+                'Operation' => $this->query['Type']
+            )
+        )) {
             return $this->connection;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_PDO_CONNECTION_FAILED', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_PDO_CONNECTION_FAILED',
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Get adapter for active query
+     *
+     * @return mixed Return a PDO connection when succeed, or false for fail
+     */
     private function getDBAdapter()
     {
         $adapterName = '';
@@ -731,22 +1036,41 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
 
         if (!$this->adapter) {
             if (isset($this->connection->_connection['Driver'])) {
-                $adapterName = static::getAdapter($this->connection->_connection['Driver']);
+                $adapterName = static::getAdapter(
+                    $this->connection->_connection['Driver']
+                );
 
                 if (class_exists($adapterName)) {
-                    $adapter = new $adapterName($this->connection->_connection['Prefix'] . $this->query['From'], $this->query);
+                    $adapter = new $adapterName(
+                        $this->connection->_connection['Prefix']
+                        . $this->query['From'],
+                        $this->query
+                    );
 
                     if ($adapter instanceof AdapterImplement) {
                         return ($this->adapter = $adapter);
                     } else {
-                        \Facula\Framework::core('debug')->exception('ERROR_QUERY_BUILDER_INTERFACE_INVALID', 'query', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_QUERY_BUILDER_INTERFACE_INVALID',
+                            'query',
+                            true
+                        );
                     }
 
                 } else {
-                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_BUILDER_DRIVER_NOTSUPPORTED|' . $this->connection->_connection['Driver'], 'query', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_BUILDER_DRIVER_NOTSUPPORTED|'
+                        . $this->connection->_connection['Driver'],
+                        'query',
+                        true
+                    );
                 }
             } else {
-                \Facula\Framework::core('debug')->exception('ERROR_QUERY_SQL_BUILDER_NEEDS_CONNECTION', 'query', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_QUERY_SQL_BUILDER_NEEDS_CONNECTION',
+                    'query',
+                    true
+                );
             }
         } else {
             return $this->adapter;
@@ -755,17 +1079,31 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         return null;
     }
 
-    protected function exec($requiredQueryParams = array())
-    {
+    /**
+     * Execute the query
+     *
+     * @param array $requiredQueryParams Required query parameters for safe check
+     *
+     * @return array Return a PDO statement when succeed, or false for fail
+     */
+    protected function exec(
+        array $requiredQueryParams = array()
+    ) {
         $sql = $sqlID = '';
         $statement = null;
         $matchedParams = array();
 
         if (isset($this->query['Action'])) {
-            // A little check before we actually do query. We need to know if our required data in $this->query has been filled or we may make big mistake.
+            // A little check before we actually do query. We need to know if
+            // our required data in $this->query has been filled or we may make
+            // mistake. And the mistake may cause query poisoning or inject
             foreach ($requiredQueryParams as $param) {
                 if (empty($this->query[$param])) {
-                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_PREPARE_PARAM_REQUIRED|' . $param, 'query', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_PREPARE_PARAM_REQUIRED|' . $param,
+                        'query',
+                        true
+                    );
 
                     return false;
                     break;
@@ -784,7 +1122,8 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                             $statement = static::$lastStatement['Statement'];
                         } else {
                             static::$lastStatement['Identity'] = $sqlID;
-                            $statement = (static::$lastStatement['Statement'] = $this->connection->prepare($sql));
+                            $statement = (static::$lastStatement['Statement']
+                                            = $this->connection->prepare($sql));
                         }
 
                         if ($statement) {
@@ -794,11 +1133,28 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                                 // Use key to search in datamap, and bind the value and types
                                 foreach ($matchedParams[0] as $paramKey) {
                                     if (isset($this->dataMap[$paramKey])) {
-                                        if (!$statement->bindValue($paramKey, $this->dataMap[$paramKey]['Value'], $this->dataMap[$paramKey]['Type'])) {
-                                            \Facula\Framework::core('debug')->exception('ERROR_QUERY_PREPARE_PARAM_BINDVALUE_FAILED|' . ($paramKey . ' = (' . $this->dataMap[$paramKey]['Type'] . ')' . $this->dataMap[$paramKey]['Value']), 'query', true);
+                                        if (!$statement->bindValue(
+                                            $paramKey,
+                                            $this->dataMap[$paramKey]['Value'],
+                                            $this->dataMap[$paramKey]['Type']
+                                        )) {
+                                            \Facula\Framework::core('debug')->exception(
+                                                'ERROR_QUERY_PREPARE_PARAM_BINDVALUE_FAILED|'
+                                                . ($paramKey
+                                                . ' = ('
+                                                . $this->dataMap[$paramKey]['Type']
+                                                . ')'
+                                                . $this->dataMap[$paramKey]['Value']),
+                                                'query',
+                                                true
+                                            );
                                         }
                                     } else {
-                                        \Facula\Framework::core('debug')->exception('ERROR_QUERY_PREPARE_PARAM_NOTSET|' . $paramKey, 'query', true);
+                                        \Facula\Framework::core('debug')->exception(
+                                            'ERROR_QUERY_PREPARE_PARAM_NOTSET|' . $paramKey,
+                                            'query',
+                                            true
+                                        );
                                     }
                                 }
                             }
@@ -811,18 +1167,30 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                             }
                         }
                     } catch (PDOException $e) {
-                        \Facula\Framework::core('debug')->exception('ERROR_QUERY_PREPARE_FAILED|' . $e->getMessage(), 'query', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_QUERY_PREPARE_FAILED|' . $e->getMessage(),
+                            'query',
+                            true
+                        );
                     }
                 }
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_PREPARE_MUST_INITED', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_PREPARE_MUST_INITED',
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
-    // Operator: Query performers
+    /**
+     * Perform the data query and return one result
+     *
+     * @return mixed Return the result when succeed, or false when fail
+     */
     public function get()
     {
         $result = array();
@@ -834,6 +1202,14 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         return false;
     }
 
+    /**
+     * Perform the data query and return requested results
+     *
+     * @param string $mode PDO Query method in short, ASSOC etc
+     * @param string $argument Additional argument
+     *
+     * @return mixed Return the result when succeed, or false when fail
+     */
     public function fetch($mode = 'ASSOC', $argument = null)
     {
         $sql = '';
@@ -859,46 +1235,75 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                 try {
                     if (isset($pdoFetchStyle[$mode])) {
                         if ($argument !== null) {
-                            $statement->setFetchMode($pdoFetchStyle[$mode], $argument);
+                            $statement->setFetchMode(
+                                $pdoFetchStyle[$mode],
+                                $argument
+                            );
                         } else {
-                            $statement->setFetchMode($pdoFetchStyle[$mode]);
+                            $statement->setFetchMode(
+                                $pdoFetchStyle[$mode]
+                            );
                         }
 
                         if ($result = $this->adapter->fetch($statement)) {
-                            if ($this->query['Parser'] && isset($this->query['FieldParsers'])) {
+                            if ($this->query['Parser']
+                                && isset($this->query['FieldParsers'])) {
+
                                 foreach ($result as $statKey => $statVal) {
                                     foreach ($this->query['FieldParsers'] as $field => $parsers) {
                                         if (isset($statVal[$field])) {
                                             foreach ($parsers as $parser) {
                                                 if (isset(static::$parsers[$parser]['Reader'])) {
                                                     if (!isset($readParsers[$parser])) {
-                                                        $readParsers[$parser] = static::$parsers[$parser]['Reader'];
+                                                        $readParsers[$parser] =
+                                                            static::$parsers[$parser]['Reader'];
                                                     }
 
-                                                    $statVal[$field] = $readParsers[$parser]($statVal[$field]);
+                                                    $statVal[$field] =
+                                                        $readParsers[$parser]($statVal[$field]);
                                                 }
                                             }
                                         }
                                     }
                                 }
+
                             }
 
                             return $result;
                         }
                     } else {
-                        \Facula\Framework::core('debug')->exception('ERROR_QUERY_FETCH_UNKNOWN_METHOD|' . $mode, 'query', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_QUERY_FETCH_UNKNOWN_METHOD|' . $mode,
+                            'query',
+                            true
+                        );
                     }
                 } catch (PDOException $e) {
-                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_FETCH_FAILED|' . $e->getMessage(), 'query', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_FETCH_FAILED|' . $e->getMessage(),
+                        'query',
+                        true
+                    );
                 }
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_FETCH_NOT_SUPPORTED', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_FETCH_NOT_SUPPORTED',
+                'query',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Perform a data writing query
+     *
+     * @param string $param Additional argument
+     *
+     * @return mixed Return the result when succeed, or false when fail
+     */
     public function save($param = null)
     {
         $statement = null;
@@ -922,16 +1327,30 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                             break;
 
                         default:
-                            \Facula\Framework::core('debug')->exception('ERROR_QUERY_SAVE_METHOD_UNSUPPORTED|' . $this->query['Action'], 'query', true);
+                            \Facula\Framework::core('debug')->exception(
+                                'ERROR_QUERY_SAVE_METHOD_UNSUPPORTED|'
+                                . $this->query['Action'],
+                                'query',
+                                true
+                            );
+
                             break;
                     }
 
                 } catch (PDOException $e) {
-                    \Facula\Framework::core('debug')->exception('ERROR_QUERY_SAVE_FAILED|' . $e->getMessage(), 'query', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_SAVE_FAILED|' . $e->getMessage(),
+                        'query',
+                        true
+                    );
                 }
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_QUERY_SAVE_NOT_SUPPORTED', 'query', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_SAVE_NOT_SUPPORTED',
+                'query',
+                true
+            );
         }
     }
 }

@@ -43,9 +43,9 @@ class Factory extends \Facula\Base\Factory\Adapter
 
     /** Declare default adapters */
     protected static $adapters = array(
-        'GD' => 'Facula\Unit\Imager\Adapter\GD',
-        'Gmagick' => 'Facula\Unit\Imager\Adapter\Gmagick',
-        'Imagick' => 'Facula\Unit\Imager\Adapter\Imagick',
+        'GD' => '\Facula\Unit\Imager\Adapter\GD',
+        'Gmagick' => '\Facula\Unit\Imager\Adapter\Gmagick',
+        'Imagick' => '\Facula\Unit\Imager\Adapter\Imagick',
     );
 
     /**

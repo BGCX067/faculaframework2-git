@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Remote Storage
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -27,7 +27,6 @@
 namespace Facula\Unit\RemoteStorage;
 
 /*
-
 Here's how to use
 
 $setting = array {
@@ -68,17 +67,30 @@ $setting = array {
 
 */
 
+/**
+ * Remote Storage Operator
+ */
 class Factory extends \Facula\Base\Factory\Adapter
 {
+    /** The adapter instance that will be use to upload files */
     private static $handler = null;
 
+    /** Default adapters */
     protected static $adapters = array(
-        'ftp' => 'Facula\Unit\RemoteStorage\Adapter\FTP',
+        'ftp' => '\Facula\Unit\RemoteStorage\Adapter\FTP',
     );
 
+    /** Servers as name */
     private static $servers = array();
 
-    public static function setup($setting)
+    /**
+     * Setup the class for ready
+     *
+     * @param array $setting Setting in array
+     *
+     * @return bool Return true when setup success, false otherwise
+     */
+    public static function setup(array $setting)
     {
         if (isset($setting['Servers'])) {
             if (isset($setting['SelectMethod'])) {
@@ -100,6 +112,14 @@ class Factory extends \Facula\Base\Factory\Adapter
         return false;
     }
 
+    /**
+     * Upload a file
+     *
+     * @param string $localFile Path to the file
+     * @param string &$error Error detail
+     *
+     * @return mixed Return path on the remote server when success, false otherwise
+     */
     public static function upload($localFile, &$error = '')
     {
         $handler = null;
@@ -114,9 +134,11 @@ class Factory extends \Facula\Base\Factory\Adapter
                         $adapterName = static::getAdapter($server['Type']);
 
                         if (class_exists($adapterName)) {
-                            $handler = new $adapterName(isset($server['Option']) ? $server['Option'] : array());
+                            $handler = new $adapterName(
+                                isset($server['Option']) ? $server['Option'] : array()
+                            );
 
-                            if ($handler instanceof \Facula\Unit\RemoteStorage\AdapterImplement) {
+                            if ($handler instanceof AdapterImplement) {
                                 if ($result = $handler->upload($localFile, $error)) {
                                     self::$handler = $handler;
 
@@ -125,20 +147,36 @@ class Factory extends \Facula\Base\Factory\Adapter
                                     unset($handler);
                                 }
                             } else {
-                                \Facula\Framework::core('debug')->exception('ERROR_REMOTESTORAGE_INTERFACE_INVALID', 'remote storage', true);
+                                \Facula\Framework::core('debug')->exception(
+                                    'ERROR_REMOTESTORAGE_INTERFACE_INVALID',
+                                    'remote storage',
+                                    true
+                                );
                             }
                         } else {
-                            \Facula\Framework::core('debug')->exception('ERROR_REMOTESTORAGE_SERVER_TYPE_UNSUPPORTED', 'remote storage', true);
+                            \Facula\Framework::core('debug')->exception(
+                                'ERROR_REMOTESTORAGE_SERVER_TYPE_UNSUPPORTED',
+                                'remote storage',
+                                true
+                            );
                         }
                     } else {
-                        \Facula\Framework::core('debug')->exception('ERROR_REMOTESTORAGE_SERVER_NOTYPE', 'remote storage', true);
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_REMOTESTORAGE_SERVER_NOTYPE',
+                            'remote storage',
+                            true
+                        );
                     }
                 }
             } else {
                 return self::$handler->upload($localFile, $error);
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_REMOTESTORAGE_FILE_UNREADABLE|' . $localFile, 'remote storage', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_REMOTESTORAGE_FILE_UNREADABLE|' . $localFile,
+                'remote storage',
+                true
+            );
         }
 
         return false;

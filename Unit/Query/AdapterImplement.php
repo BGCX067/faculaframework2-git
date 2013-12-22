@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Query Adapter Interface
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,13 +26,16 @@
 
 namespace Facula\Unit\Query;
 
+/**
+ * Interface for Query adapters
+ */
 interface AdapterImplement
 {
-    public function __construct($tableName, &$querySet);
+    public function __construct($tableName, array &$querySet);
     public function build();
 
-    public function fetch($statement);
-    public function update($statement);
-    public function insert($statement, $primaryKey);
-    public function delete($statement);
+    public function fetch(\PDOStatement $statement);
+    public function update(\PDOStatement $statement);
+    public function insert(\PDOStatement $statement, $primaryKey);
+    public function delete(\PDOStatement $statement);
 }

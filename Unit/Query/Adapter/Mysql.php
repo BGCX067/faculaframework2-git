@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * MySQL Adapter for Query
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,19 +26,36 @@
 
 namespace Facula\Unit\Query\Adapter;
 
+/**
+ * Query MySQL
+ */
 class Mysql implements \Facula\Unit\Query\AdapterImplement
 {
+    /** Table name */
     private $table = '';
+
+    /** Query parameters */
     private $query = array();
 
-    public function __construct($tableName, &$querySet)
+    /**
+     * Constructor
+     *
+     * @param string $tableName Name of the table
+     * @param array &$querySet Query setting
+     *
+     * @return void
+     */
+    public function __construct($tableName, array &$querySet)
     {
         $this->table = $tableName;
         $this->query = $querySet;
-
-        return true;
     }
 
+    /**
+     * Build the query in MySQL syntax
+     *
+     * @return string The SQL query
+     */
     public function build()
     {
         switch ($this->query['Action']) {
@@ -59,13 +76,23 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
                 break;
 
             default:
-                \Facula\Framework::core('debug')->exception('ERROR_QUERY_MYSQL_UNKONWN_ACTION_TYPE|' . $this->query['Action'], 'query', true);
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_QUERY_MYSQL_UNKONWN_ACTION_TYPE|' . $this->query['Action'],
+                    'query',
+                    true
+                );
+
                 break;
         }
 
         return false;
     }
 
+    /**
+     * Build the SELECT syntax
+     *
+     * @return string The SQL query
+     */
     private function buildSelect()
     {
         $sql = 'SELECT';
@@ -106,6 +133,11 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
         return $sql;
     }
 
+    /**
+     * Build the INSERT syntax
+     *
+     * @return string The SQL query
+     */
     private function buildInsert()
     {
         $sql = 'INSERT';
@@ -125,6 +157,11 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
         return $sql;
     }
 
+    /**
+     * Build the UPDATE syntax
+     *
+     * @return string The SQL query
+     */
     private function buildUpdate()
     {
         $sql = 'UPDATE `' . $this->table . '`';
@@ -152,6 +189,11 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
         return $sql;
     }
 
+    /**
+     * Build the DELETE syntax
+     *
+     * @return string The SQL query
+     */
     private function buildDelete()
     {
         $sql = 'DELETE FROM `' . $this->table . '`';
@@ -174,13 +216,24 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
         return $sql;
     }
 
-    // Builder Functions
-    public function doFields()
+    /**
+     * Generate the field syntax
+     *
+     * @return string The SQL query
+     */
+    private function doFields()
     {
         return '`' . implode('`, `', array_keys($this->query['Fields'])) . '`';
     }
 
-    public function doCondition($name)
+    /**
+     * Generate the condition syntax
+     *
+     * @param string Type if the condition, WHERE or HAVING
+     *
+     * @return string The SQL query
+     */
+    private function doCondition($name)
     {
         $sql = '';
 
@@ -248,19 +301,27 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
                     break;
 
                 case 'BETWEEN':
-                    $sql .= '(`' . $where['Field'] . '` BETWEEN ' . $where['Value'][0] . ' AND ' . $where['Value'][1] . ')';
+                    $sql .= '(`' . $where['Field'] . '` BETWEEN ' . $where['Value'][0]
+                        . ' AND ' . $where['Value'][1] . ')';
                     break;
 
                 case 'NOT BETWEEN':
-                    $sql .= '(`' . $where['Field'] . '` NOT BETWEEN ' . $where['Value'][0] . ' AND ' . $where['Value'][1] . ')';
+                    $sql .= '(`' . $where['Field'] . '` NOT BETWEEN ' . $where['Value'][0]
+                        . ' AND ' . $where['Value'][1] . ')';
                     break;
 
                 case 'IN':
-                    $sql .= '(`' . $where['Field'] . '` IN (' . implode(', ', $where['Value']) . '))';
+                    $sql .= '(`' . $where['Field'] . '` IN (' . implode(
+                        ', ',
+                        $where['Value']
+                    ) . '))';
                     break;
 
                 case 'NOT IN':
-                    $sql .= '(`' . $where['Field'] . '` NOT IN (' . implode(', ', $where['Value']) . '))';
+                    $sql .= '(`' . $where['Field'] . '` NOT IN (' . implode(
+                        ', ',
+                        $where['Value']
+                    ) . '))';
                     break;
 
                 case 'IS NULL':
@@ -276,6 +337,11 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
         return $sql;
     }
 
+    /**
+     * Generate the order syntax
+     *
+     * @return string The SQL query
+     */
     private function doOrder()
     {
         $sql = '';
@@ -299,6 +365,11 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
         return $sql;
     }
 
+    /**
+     * Generate the group syntax
+     *
+     * @return string The SQL query
+     */
     private function doGroup()
     {
         $sql = '';
@@ -312,11 +383,24 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
         return $sql;
     }
 
+    /**
+     * Generate the limit syntax
+     *
+     * @param bool $disOnly Is the Limit only has distance?
+     *
+     * @return string The SQL query
+     */
     private function doLimit($disOnly = false)
     {
-        return (!$disOnly ? $this->query['Limit']['Offset'] . ', ' : '') . $this->query['Limit']['Distance'];
+        return (!$disOnly ? $this->query['Limit']['Offset'] . ', ' : '')
+                . $this->query['Limit']['Distance'];
     }
 
+    /**
+     * Generate the value syntax
+     *
+     * @return string The SQL query
+     */
     private function doValues()
     {
         $sql = '';
@@ -330,6 +414,11 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
         return $sql;
     }
 
+    /**
+     * Generate the set syntax
+     *
+     * @return string The SQL query
+     */
     private function doSets()
     {
         $sql = '';
@@ -343,8 +432,14 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
         return $sql;
     }
 
-    // Query resulting methods
-    public function fetch($statement)
+    /**
+     * Trim the PDO statement for SELECT
+     *
+     * @param $statement PDO
+     *
+     * @return array The result of fetch
+     */
+    public function fetch(\PDOStatement $statement)
     {
         $data = array();
 
@@ -355,17 +450,39 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
         return $data;
     }
 
-    public function insert($statement, $primaryKey)
+    /**
+     * Trim the PDO statement for INSERT
+     *
+     * @param \PDOStatement $statement
+     * @param string $primaryKey Primary field of the table
+     *
+     * @return mixed Return the last inserted ID
+     */
+    public function insert(\PDOStatement $statement, $primaryKey)
     {
         return $statement->connection->lastInsertId();
     }
 
-    public function update($statement)
+    /**
+     * Trim the PDO statement for UPDATE
+     *
+     * @param \PDOStatement $statement
+     *
+     * @return integer Return the number of affected rows
+     */
+    public function update(\PDOStatement $statement)
     {
         return $statement->rowCount();
     }
 
-    public function delete($statement)
+    /**
+     * Trim the PDO statement for DELETE
+     *
+     * @param \PDOStatement $statement
+     *
+     * @return integer Return the number of affected rows
+     */
+    public function delete(\PDOStatement $statement)
     {
         return $statement->rowCount();
     }

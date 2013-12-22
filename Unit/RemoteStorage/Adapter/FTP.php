@@ -26,10 +26,15 @@
 
 namespace Facula\Unit\RemoteStorage\Adapter;
 
+/**
+ * Remote Storage FTP Adapter
+ */
 class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
 {
+    /** For activated FTP connection handler */
     private $connection = null;
 
+    /** Configure for this connection */
     private $setting = array(
         'Username' => '',
         'Password' => '',
@@ -41,24 +46,52 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
         'Access' => '',
     );
 
+    /** Current entered path */
     private $currentPath = array();
 
-    public function __construct($setting)
+    /**
+     * Constructor of the adapter
+     *
+     * @param array $setting Setting array
+     *
+     * @return void
+     */
+    public function __construct(array $setting)
     {
         $this->setting = array(
-            'Username' => isset($setting['Username'][0]) ? $setting['Username'] : 'anonymous',
-            'Password' => isset($setting['Password'][0]) ? $setting['Password'] : '',
-            'Host' => isset($setting['Host'][0]) ? $setting['Host'] : 'localhost',
-            'Port' => isset($setting['Port']) ? $setting['Port'] : 21,
-            'Timeout' => isset($setting['Timeout']) ? $setting['Timeout'] : 3,
-            'SSL' => isset($setting['SSL']) && $setting['SSL'] && function_exists('ftp_ssl_connect') ? true : false,
-            'Path' => isset($setting['Path'][0]) ? $setting['Path'] : '/',
-            'Access' => isset($setting['Access'][0]) ? $setting['Access'] . '/' : '',
-        );
+            'Username' => isset($setting['Username'][0])
+                ? $setting['Username'] : 'anonymous',
 
-        return false;
+            'Password' => isset($setting['Password'][0])
+                ? $setting['Password'] : '',
+
+            'Host' => isset($setting['Host'][0])
+                ? $setting['Host'] : 'localhost',
+
+            'Port' => isset($setting['Port'])
+                ? $setting['Port'] : 21,
+
+            'Timeout' => isset($setting['Timeout'])
+                ? $setting['Timeout'] : 3,
+
+            'SSL' => isset($setting['SSL'])
+                && $setting['SSL']
+                && function_exists('ftp_ssl_connect')
+                ? true : false,
+
+            'Path' => isset($setting['Path'][0])
+                ? $setting['Path'] : '/',
+
+            'Access' => isset($setting['Access'][0])
+                ? $setting['Access'] . '/' : '',
+        );
     }
 
+    /**
+     * Destructor of the adapter
+     *
+     * @return void
+     */
     public function __destruct()
     {
         $result = false;
@@ -78,6 +111,14 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
         return true;
     }
 
+    /**
+     * Upload the file
+     *
+     * @param string $localFile Path to the local file
+     * @param string &$error A reference to get error detail
+     *
+     * @return void
+     */
     public function upload($localFile, &$error = '')
     {
         $currentRemotePath = $remoteFileName = $resultPath = $fileExt = '';
@@ -86,8 +127,17 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
         if ($this->connection || $this->connect()) {
             \Facula\Framework::core('debug')->criticalSection(true);
 
-            if ($this->setting['Path'] && !$this->chDir($this->setting['Path'] . $this->generatePath(), $currentRemotePath)) {
-                \Facula\Framework::core('debug')->exception('ERROR_FTP_CHANGEDIR_FAILED', 'ftp', false);
+            if ($this->setting['Path']
+            && !$this->chDir(
+                $this->setting['Path'] . $this->generatePath(),
+                $currentRemotePath
+            )) {
+                \Facula\Framework::core('debug')->exception(
+                    'ERROR_FTP_CHANGEDIR_FAILED',
+                    'ftp',
+                    false
+                );
+
                 $failed = true;
             } else {
                 $fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
@@ -107,7 +157,10 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
 
             \Facula\Framework::core('debug')->criticalSection(false);
 
-            return $failed ? false : ($this->setting['Access'] . substr($resultPath, strlen($this->setting['Path'])));
+            return $failed ? false : ($this->setting['Access'] . substr(
+                $resultPath,
+                strlen($this->setting['Path'])
+            ));
         } else {
             $error = 'ERROR_REMOTESTORAGE_CONNECTION_FAILED';
         }
@@ -115,6 +168,11 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
         return false;
     }
 
+    /**
+     * Perform the server connect
+     *
+     * @return bool Return true when connect, or false when fail
+     */
     private function connect()
     {
         $conn = null;
@@ -137,7 +195,11 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
 
         if ($conn) {
             if (isset($this->setting['Username'][0])) {
-                if (!ftp_login($conn, $this->setting['Username'], isset($this->setting['Password'][0]) ? $this->setting['Password'] : '')) {
+                if (!ftp_login(
+                    $conn,
+                    $this->setting['Username'],
+                    isset($this->setting['Password'][0]) ? $this->setting['Password'] : ''
+                )) {
                     ftp_close($conn);
                     $conn = null;
                 }
@@ -157,6 +219,14 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
         return false;
     }
 
+    /**
+     * Change the current folder for the connection hander
+     *
+     * @param string $remotePath Remote path that will be enter into
+     * @param string &$enteredRemotePath Entered path
+     *
+     * @return bool When path entered, return true, or return false on fail
+     */
     private function chDir($remotePath, &$enteredRemotePath = '')
     {
         $folders = explode('/', str_replace(array('/', '\\'), '/', $remotePath));
@@ -189,7 +259,10 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
                 if (count(array_diff($this->currentPath, $skipedFolders))) {
                     $this->currentPath = array();
 
-                    if (!ftp_chdir($this->connection, count($skipedFolders) ? '/' . implode('/', $skipedFolders) : '/')) {
+                    if (!ftp_chdir(
+                        $this->connection,
+                        count($skipedFolders) ? '/' . implode('/', $skipedFolders) : '/'
+                    )) {
                         $chdirFailed = true;
                     } else {
                         $this->currentPath = $skipedFolders;
@@ -206,7 +279,9 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
                     }
 
                     try {
-                        if (!ftp_chdir($this->connection, $folder) && (!ftp_mkdir($this->connection, $folder) || !ftp_chdir($this->connection, $folder))) {
+                        if (!ftp_chdir($this->connection, $folder)
+                        && (!ftp_mkdir($this->connection, $folder)
+                        || !ftp_chdir($this->connection, $folder))) {
                             $chdirFailed = true;
                             break;
                         } else {
@@ -230,6 +305,11 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
         return false;
     }
 
+    /**
+     * Generate a random path for the uploading file
+     *
+     * @return string The generated path
+     */
     private function generatePath()
     {
         return '/' . date('Y') . '/' . abs((int)(crc32(date('m/w')) / 10240));
