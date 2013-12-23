@@ -251,7 +251,7 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
     /**
      * Constructor
      *
-     * @param array &$cfg Array of core configuration
+     * @param array $cfg Array of core configuration
      * @param array $common Array of common configuration
      * @param \Facula\Framework $facula The framework itself
      *

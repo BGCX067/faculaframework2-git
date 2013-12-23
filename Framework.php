@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Struct Manage Unit
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,18 +26,28 @@
 
 namespace Facula;
 
+/** Version of current Facula version */
 define('__FACULAVERSION__', '2 Prototype 0.2');
 
+/** Root of Facula Framework */
 define('FACULA_ROOT', dirname(__FILE__));
+
+/** Root of project directory */
 define('PROJECT_ROOT', realpath('.'));
 
+/** Separator for namespace */
 define('NAMESPACE_SEPARATER', '\\');
 
+/** Inform modules the Facula Framework is declared */
 define('IN_FACULA', true);
+
+/** Stable current time for this runtime */
 define('FACULA_TIME', isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time());
 
 /**
- * The core of Facula Framework
+ * Struct Manage Unit
+ *
+ * Core of Facula Framework
  */
 class Framework
 {

@@ -37,7 +37,7 @@ abstract class Base
     /**
      * Connect to a SMTP server
      *
-     * @param array &$error String reference to get error detail
+     * @param array $error String reference to get error detail
      *
      * @return bool Return true when connected, false for otherwise
      */
@@ -46,7 +46,7 @@ abstract class Base
     /**
      * Send email
      *
-     * @param array &$email Email in array
+     * @param array $email Email in array
      *
      * @return bool Return true when sent, false for otherwise
      */

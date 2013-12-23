@@ -41,7 +41,7 @@ class Pgsql implements \Facula\Unit\Query\AdapterImplement
      * Constructor
      *
      * @param string $tableName Name of the table
-     * @param array &$querySet Query setting
+     * @param array $querySet Query setting
      *
      * @return void
      */

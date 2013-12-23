@@ -55,7 +55,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
     /**
      * Constructor
      *
-     * @param array &$cfg Array of core configuration
+     * @param array $cfg Array of core configuration
      * @param array $common Array of common configuration
      * @param \Facula\Framework $facula The framework itself
      *
@@ -494,8 +494,8 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
     /**
      * Check if we theoretically lost the connection, and perform reconnect automatically
      *
-     * @param string &$dbh The PDO connection object
-     * @param string &$error A reference for storage error detail.
+     * @param string $dbh The PDO connection object
+     * @param string $error A reference for storage error detail.
      *
      * @return object Return PDO object that connected to a database server
      */
@@ -515,7 +515,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
      * Connect to a server
      *
      * @param string $dbIndex Index number of database server in configure file
-     * @param string &$error A reference for storage error detail.
+     * @param string $error A reference for storage error detail.
      *
      * @return mixed Return PDO object that connected to a database server when success, false otherwise
      */
@@ -573,7 +573,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
      * Reconnect to a server
      *
      * @param string $dbh The PDO connection object
-     * @param string &$error A reference for storage error detail.
+     * @param string $error A reference for storage error detail.
      *
      * @return mixed Return PDO object that connected to a database server when success, false otherwise
      */

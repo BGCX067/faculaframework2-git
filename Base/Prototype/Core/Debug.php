@@ -58,7 +58,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     /**
      * Constructor
      *
-     * @param array &$cfg Array of core configuration
+     * @param array $cfg Array of core configuration
      * @param array $common Array of common configuration
      * @param \Facula\Framework $facula The framework itself
      *
@@ -164,7 +164,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      * @param string $type Type of this error
      * @param string $errorCode Error code
      * @param string $content Message of the error
-     * @param string &$backTraces Data of back Traces
+     * @param string $backTraces Data of back Traces
      *
      * @return bool true when log saved, false otherwise
      */

@@ -115,7 +115,7 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
      * Upload the file
      *
      * @param string $localFile Path to the local file
-     * @param string &$error A reference to get error detail
+     * @param string $error A reference to get error detail
      *
      * @return void
      */
@@ -223,7 +223,7 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
      * Change the current folder for the connection hander
      *
      * @param string $remotePath Remote path that will be enter into
-     * @param string &$enteredRemotePath Entered path
+     * @param string $enteredRemotePath Entered path
      *
      * @return bool When path entered, return true, or return false on fail
      */

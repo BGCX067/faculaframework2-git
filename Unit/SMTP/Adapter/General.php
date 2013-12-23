@@ -104,7 +104,7 @@ class General extends \Facula\Unit\SMTP\Base
     /**
      * Connect to server
      *
-     * @param array &$error Array reference to get error detail
+     * @param array $error Array reference to get error detail
      *
      * @return bool Return true when connected and ready, or false when fail
      */
@@ -160,7 +160,7 @@ class General extends \Facula\Unit\SMTP\Base
     /**
      * Send the email
      *
-     * @param array &$email Array of email
+     * @param array $email Array of email
      *
      * @return bool Return true when success, or false when fail
      */

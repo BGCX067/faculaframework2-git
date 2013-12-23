@@ -116,7 +116,7 @@ class Factory extends \Facula\Base\Factory\Adapter
      * Upload a file
      *
      * @param string $localFile Path to the file
-     * @param string &$error Error detail
+     * @param string $error Error detail
      *
      * @return mixed Return path on the remote server when success, false otherwise
      */

@@ -37,8 +37,8 @@ class Render implements \Facula\Base\Implement\Core\Template\Render
     /**
      * Constructor of Render
      *
-     * @param string &$targetTpl File path to the PHP script file (Compiled template)
-     * @param array &$assigned Assigned data
+     * @param string $targetTpl File path to the PHP script file (Compiled template)
+     * @param array $assigned Assigned data
      *
      * @return void
      */

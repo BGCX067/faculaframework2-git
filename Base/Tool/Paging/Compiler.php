@@ -138,8 +138,8 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
     /**
      * Constructor of compiler
      *
-     * @param array &$tag Assigned data
-     * @param string &$sourceTpl Content of the template file
+     * @param array $tag Assigned data
+     * @param string $sourceTpl Content of the template file
      *
      * @return void
      */

@@ -47,7 +47,7 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Adapter
      * Constructor of Image handler
      *
      * @param string $file Path to the file
-     * @param array &$config Configure array
+     * @param array $config Configure array
      *
      * @return void
      */

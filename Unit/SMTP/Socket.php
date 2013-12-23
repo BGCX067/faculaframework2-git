@@ -75,8 +75,8 @@ class Socket
     /**
      * Open a new socket
      *
-     * @param string &$error String of error number
-     * @param string &$errorstr String of error message
+     * @param string $error String of error number
+     * @param string $errorstr String of error message
      *
      * @return bool Return true when success, or false when fail
      */

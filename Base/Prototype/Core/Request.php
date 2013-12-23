@@ -88,7 +88,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
     /**
      * Constructor
      *
-     * @param array &$cfg Array of core configuration
+     * @param array $cfg Array of core configuration
      * @param array $common Array of common configuration
      * @param \Facula\Framework $facula The framework itself
      *
@@ -418,7 +418,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
      *
      * @param string $type Type of the data (GET, POST, COOKIE and so)
      * @param string $key Key name of the data
-     * @param string &$errored A reference to storage if it's not found
+     * @param string $errored A reference to storage if it's not found
      *
      * @return mixed Return data when found, or null otherwise
      */
@@ -438,7 +438,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
      *
      * @param string $type Type of the data (GET, POST, COOKIE and so)
      * @param string $key Key name of the data
-     * @param string &$errored A reference to storage if it's not found
+     * @param string $errored A reference to storage if it's not found
      *
      * @return mixed Return data when found, or null otherwise
      */

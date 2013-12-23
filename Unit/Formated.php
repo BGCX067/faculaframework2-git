@@ -363,7 +363,7 @@ class Formated
     /**
      * Add a new tag into current instance
      *
-     * @param array &$error A reference to get detailed error report
+     * @param array $error A reference to get detailed error report
      *
      * @return mixed return true when rendered, or false otherwise
      */
@@ -379,7 +379,7 @@ class Formated
     /**
      * Parse all tags
      *
-     * @param array &$error A reference to get detailed error report
+     * @param array $error A reference to get detailed error report
      *
      * @return mixed return true when rendered, or false otherwise
      */
@@ -493,7 +493,7 @@ class Formated
     /**
      * Scan tags for parse
      *
-     * @param array &$error A reference to get detailed error report
+     * @param array $error A reference to get detailed error report
      *
      * @return mixed return true when scan complete, or false otherwise
      */

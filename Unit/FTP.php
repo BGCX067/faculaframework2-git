@@ -240,7 +240,7 @@ class FTP
      * Enter a path on FTP server
      *
      * @param string $remotePath Path on server to enter
-     * @param string &$enteredRemotePath A reference to get entered path
+     * @param string $enteredRemotePath A reference to get entered path
      *                                   (For half enter check and safely get entered path)
      *
      * @return bool true when succeed, false when fail
