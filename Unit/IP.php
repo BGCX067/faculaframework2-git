@@ -62,10 +62,10 @@ abstract class IP
         }
 
         foreach ($ip as $k => $v) {
-            if ($ip[$k]) {
+            if (isset($ip[$k]) && $ip[$k] !== '') {
                 $input[$k] = $v;
             } else {
-                $input[$k] = '0';
+                break;
             }
         }
 
