@@ -50,8 +50,8 @@ abstract class Validator
      *
      * @param string $string The string to check
      * @param string $type Type if the string
-     * @param string $max Max length of the string
-     * @param string $min Min length of the string
+     * @param integer $max Max length of the string
+     * @param integer $min Min length of the string
      * @param string $error Min length of the string
      *
      * @return bool Return true when the string is valid, false when not
@@ -94,7 +94,7 @@ abstract class Validator
     /**
      * Add new regular into class
      *
-     * @param string $name Type if the regular
+     * @param string $type Type if the regular
      * @param string $regular Regular itself
      *
      * @return bool Return true when added, false on failed

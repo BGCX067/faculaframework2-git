@@ -33,6 +33,8 @@ abstract class Strings
 {
     /** Tag to anti-reinitialize */
     protected static $inited = false;
+
+    /** Default internal encode */
     protected static $default_encode = 'utf-8';
 
     /**
