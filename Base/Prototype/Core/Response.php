@@ -499,13 +499,13 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
     /**
      * Set cookie without poison the output buffer
      *
-     * @param string $k Cookie key
-     * @param string $v Value that will be set
-     * @param string $e Expire time
-     * @param string $p Path
-     * @param string $d Domain
-     * @param bool $s For HTTPS
-     * @param bool $http For HTTP Only
+     * @param string $key Cookie key
+     * @param string $value Value that will be set
+     * @param string $expire Expire time
+     * @param string $path Path
+     * @param string $domain Domain
+     * @param bool $secure For HTTPS
+     * @param bool $httpOnly For HTTP Only
      *
      * @return bool Always true
      */
