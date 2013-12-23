@@ -118,7 +118,9 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
         if ($this->configs['Cache']) {
             if (isset($cfg['CachePath']) && is_dir($cfg['CachePath'])) {
-                $this->configs['Cached'] = $cfg['CachePath'];
+                $this->configs['Cached'] = \Facula\Base\Tool\File\PathParser::get(
+                    $cfg['CachePath']
+                );
             } else {
                 throw new \Exception(
                     'CachePath must be defined and existed.'

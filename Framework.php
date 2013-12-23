@@ -282,7 +282,11 @@ class Framework
             return false;
         }
 
-        return static::$components['Scope'][$className] = $file;
+        return static::$components['Scope'][$className] = str_replace(
+            array('\\', '/', DIRECTORY_SEPARATOR),
+            DIRECTORY_SEPARATOR,
+            $file
+        );
     }
 
     /**
@@ -360,7 +364,18 @@ class Framework
             $map = self::locateNamespace(self::splitNamespace($nsPrefix), true);
 
             if (!isset($map['Ref']['P']) || !$map['Ref']['P']) {
-                $map['Ref']['P'] = rtrim($path, DIRECTORY_SEPARATOR);
+                $map['Ref']['P'] = rtrim(
+                    str_replace(
+                        array(
+                            '\\',
+                            '/',
+                            DIRECTORY_SEPARATOR
+                        ),
+                        DIRECTORY_SEPARATOR,
+                        $path
+                    ),
+                    DIRECTORY_SEPARATOR
+                );
 
                 return true;
             } else {
