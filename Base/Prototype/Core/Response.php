@@ -561,7 +561,7 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
     /**
      * Unset the cookie
      *
-     * @param string $k Cookie key
+     * @param string $key Cookie key
      *
      * @return bool Always true
      */
