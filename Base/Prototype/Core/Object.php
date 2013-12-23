@@ -372,9 +372,8 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
     /**
      * Dynamically call a function
      *
-     * @param object $object Object instance
+     * @param object $function The function
      * @param array $args Arguments of calling
-     * @param bool $cache Load the cached instance, and cache it after initialize.
      *
      * @return mixed Return the result of called class when succeed, false otherwise
      */

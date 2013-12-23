@@ -306,7 +306,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      * @param bool $errno Error mumber
      * @param bool $errstr Error message
      * @param bool $errfile File trigger that error
-     * @param bool $errno Line of that code trigger the error
+     * @param bool $errline Line of that code trigger the error
      * @param bool $errcontext Dump information
      *
      * @return mixed Return the result of static::exception

@@ -53,6 +53,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
         'PATCH' => 'patch'
     );
 
+    /** Priority of forward header */
     protected static $xForwardPriority = array(
         'HTTP_X_FORWARDED_FOR' => 3,
         'HTTP_X_FORWARDED' => 2,
@@ -393,10 +394,11 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
      * Shorter: Get posts
      *
      * @param array $keys The key names of post
+     * @param array $errors Error reference for detail
      *
      * @return mixed Return the result of static::gets
      */
-    public function getPosts(array $keys, &$errors = array())
+    public function getPosts(array $keys, array &$errors = array())
     {
         return $this->gets('POST', $keys, $errors, false);
     }
@@ -405,10 +407,11 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
      * Shorter: Get gets
      *
      * @param array $keys The key names of get
+     * @param array $errors Error reference for detail
      *
      * @return mixed Return the result of static::gets
      */
-    public function getGets(array $keys, &$errors = array())
+    public function getGets(array $keys, array &$errors = array())
     {
         return $this->gets('GET', $keys, $errors, false);
     }
@@ -418,7 +421,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
      *
      * @param string $type Type of the data (GET, POST, COOKIE and so)
      * @param string $key Key name of the data
-     * @param string $errored A reference to storage if it's not found
+     * @param bool $errored A reference to storage if it's not found
      *
      * @return mixed Return data when found, or null otherwise
      */
@@ -437,12 +440,13 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
      * Get request datas
      *
      * @param string $type Type of the data (GET, POST, COOKIE and so)
-     * @param string $key Key name of the data
-     * @param string $errored A reference to storage if it's not found
+     * @param array $keys Key name of the data
+     * @param array $errors A reference to storage if it's not found
+     * @param bool $failfalse Return false when any requested data not found
      *
      * @return mixed Return data when found, or null otherwise
      */
-    public function gets($type, array $keys, &$errors = array(), $failfalse = false)
+    public function gets($type, array $keys, array &$errors = array(), $failfalse = false)
     {
         $result = array();
 
@@ -470,7 +474,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
     /**
      * Get user's theoretically real IP
      *
-     * @param string $outAsString Get a string or array of IP
+     * @param bool $outAsString Get a string or array of IP
      *
      * @return mixed Return the IP address as $outAsString setting. Use 0.0.0.0 for false.
      */

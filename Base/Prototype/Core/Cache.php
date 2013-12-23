@@ -193,7 +193,7 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
     /**
      * Make directory for cache
      *
-     * @param string $dirName Path name
+     * @param string $pathName Path name
      *
      * @return string Return cache path
      */
