@@ -31,14 +31,6 @@ namespace Facula\Core;
  */
 class Request extends \Facula\Base\Factory\Core
 {
-    public static $plate = array(
-        'Author' => 'Rain Lee',
-        'Reviser' => '',
-        'Updated' => '2013',
-        'Contact' => 'raincious@gmail.com',
-        'Version' => __FACULAVERSION__,
-    );
-
     /** Default class of the core */
     protected static $default = '\Facula\Base\Entity\Core\Request';
 
