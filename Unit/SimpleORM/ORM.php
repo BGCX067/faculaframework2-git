@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * SimpleORM Database Abstract
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,23 +26,47 @@
 
 namespace Facula\Unit\SimpleORM;
 
+/**
+ * SimpleORM
+ */
 abstract class ORM implements Implement, \ArrayAccess
 {
+    /** Current Table */
     protected $table = '';
+
+    /** Declared fields */
     protected $fields = array();
+
+    /** The primary key */
     protected $primary = '';
 
+    /** Trigger to enable or disable auto parser */
     protected $noParser = false;
 
+    /** Container of data */
     private $data = array();
+
+    /** Backup container when data's changed */
     private $dataOriginal = array();
 
+    /** Path to the Object cached */
     public $cachedObjectFilePath = '';
+
+    /** Time of when the object cached */
     public $cachedObjectSaveTime = 0;
 
+    /**
+     * Magic Setter: Set a data in the current ORM session
+     *
+     * @param string $key The data key name of the property
+     * @param string $val Value of the property
+     *
+     * @return void
+     */
     public function __set($key, $val)
     {
-        // Behaver changed. It will not try to protect original value, but backup last value.
+        // Behaver changed. It will not try to protect original value,
+        // but backup last value.
         if (isset($this->data[$key])) {
             $this->dataOriginal[$key] = $this->data[$key];
         } else {
@@ -52,21 +76,52 @@ abstract class ORM implements Implement, \ArrayAccess
         $this->data[$key] = $val;
     }
 
+    /**
+     * Magic Getter: Get a data in the current ORM session
+     *
+     * @param string $key The data key name of the property
+     *
+     * @return mixed Return the data when success, or null when data not set
+     */
     public function __get($key)
     {
         return isset($this->data[$key]) ? $this->data[$key] : null;
     }
 
+    /**
+     * Magic Isset: Check of the data is existed in current ORM session
+     *
+     * @param string $key The data key name of the property
+     *
+     * @return bool Return true when data exist, or false when fail
+     */
     public function __isset($key)
     {
         return isset($this->data[$key]);
     }
 
+    /**
+     * Magic Unset: Release the data that existed in current ORM session
+     *
+     * @param string $key The data key name of the property
+     *
+     * @return void
+     */
     public function __unset($key)
     {
-        unset($this->data[$key]);
+        if (isset($this->data[$key])) {
+            unset($this->data[$key]);
+        }
     }
 
+    /**
+     * Array Operation: Set data
+     *
+     * @param integer $offset The data key name of the property
+     * @param string $value The value of the property
+     *
+     * @return void
+     */
     public function offsetSet($offset, $value)
     {
         if (isset($this->data[$offset])) {
@@ -78,60 +133,141 @@ abstract class ORM implements Implement, \ArrayAccess
         $this->data[$offset] = $value;
     }
 
+    /**
+     * Array Operation: Get data
+     *
+     * @param integer $offset The data key name of the property
+     *
+     * @return bool Return true when data exist, or null when data not found
+     */
     public function offsetGet($offset)
     {
         return isset($this->data[$offset]) ? $this->data[$offset] : null;
     }
 
+    /**
+     * Array Operation: Check of the data is existed in current ORM session
+     *
+     * @param integer $offset The data key name of the property
+     *
+     * @return bool Return true when data exist, or false when fail
+     */
     public function offsetExists($offset)
     {
         return isset($this->data[$offset]);
     }
 
+    /**
+     * Array Operation: Release the data that existed in current ORM session
+     *
+     * @param integer $offset The data key name of the property
+     *
+     * @return void
+     */
     public function offsetUnset($offset)
     {
         unset($this->data[$offset]);
     }
 
+    /**
+     * Get the value of primary key
+     *
+     * @param integer $offset The data key name of the property
+     *
+     * @return mixed Return the value of the key when success, or null when not set
+     */
     public function getPrimaryValue()
     {
         if (isset($this->data[$this->primary])) {
             return $this->data[$this->primary];
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_ORM_GETPRIMARY_PRIMARYDATA_EMPTY', 'orm', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_ORM_GETPRIMARY_PRIMARYDATA_EMPTY',
+                'orm',
+                true
+            );
         }
 
         return null;
     }
 
+    /**
+     * Export field declaration
+     *
+     * @return array Return the field declaration
+     */
     public function getFields()
     {
         return $this->fields;
     }
 
+    /**
+     * Export current data
+     *
+     * @return array Return the data
+     */
     public function getData()
     {
         return $this->data;
     }
 
+    /**
+     * Get current data reference to operate data outside the class
+     *
+     * @return array Return the data reference
+     */
     private function &getDataRef()
     {
         return $this->data;
     }
 
-    public function get(array $param, $returnType = 'CLASS', $whereOperator = '=')
-    {
+    /**
+     * Get one row from database
+     *
+     * @param array $param The WHERE param for query
+     * @param string $returnType Data return type for Query class
+     * @param string $whereOperator Default operator for WHERE condition
+     *
+     * @return array Return the result of query when success, false otherwise
+     */
+    public function get(
+        array $param,
+        $returnType = 'CLASS',
+        $whereOperator = '='
+    ) {
         $data = array();
 
-        if (($data = $this->fetch(array('Where' => $param), 0, 1, $returnType = 'CLASS', $whereOperator = '=')) && isset($data[0])) {
+        if (($data = $this->fetch(
+            array('Where' => $param),
+            0,
+            1,
+            $returnType = 'CLASS',
+            $whereOperator = '='
+        )) && isset($data[0])) {
             return $data[0];
         }
 
         return false;
     }
 
-    public function fetch(array $param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=')
-    {
+    /**
+     * Get datas from database
+     *
+     * @param array $param The params for query (Where, Order, Limit)
+     * @param integer $offset The start point of cursor
+     * @param integer $dist Length of how long the cursor will travel
+     * @param string $returnType Data return type for Query class
+     * @param string $whereOperator Default operator for WHERE condition
+     *
+     * @return array Return the result of query when success, false otherwise
+     */
+    public function fetch(
+        array $param,
+        $offset = 0,
+        $dist = 0,
+        $returnType = 'CLASS',
+        $whereOperator = '='
+    ) {
         $whereParams = array();
 
         $query = null;
@@ -142,14 +278,22 @@ abstract class ORM implements Implement, \ArrayAccess
         if (isset($param['Where'])) {
             foreach ($param['Where'] as $field => $value) {
                 if (is_array($value)) {
-                    $whereParams['Operator'] = isset($value[1]) ? $value[1] : $whereOperator;
-                    $whereParams['Value'] = isset($value[0]) ? $value[0] : 'NULL';
+                    $whereParams['Operator'] = isset($value[1])
+                        ? $value[1] : $whereOperator;
+
+                    $whereParams['Value'] = isset($value[0])
+                        ? $value[0] : 'NULL';
                 } else {
                     $whereParams['Operator'] = $whereOperator;
                     $whereParams['Value'] = $value;
                 }
 
-                $query->where('AND', $field, $whereParams['Operator'], $whereParams['Value']);
+                $query->where(
+                    'AND',
+                    $field,
+                    $whereParams['Operator'],
+                    $whereParams['Value']
+                );
             }
         }
 
@@ -165,7 +309,10 @@ abstract class ORM implements Implement, \ArrayAccess
 
         switch ($returnType) {
             case 'CLASS':
-                return $query->fetch('CLASSLATE', get_class($this));
+                return $query->fetch(
+                    'CLASSLATE',
+                    get_class($this)
+                );
                 break;
 
             default:
@@ -176,26 +323,105 @@ abstract class ORM implements Implement, \ArrayAccess
         return array();
     }
 
-    public function finds(array $param, $offset = 0, $dist = 0, $returnType = 'CLASS')
-    {
-        return $this->fetch($param, $offset, $dist, $returnType, $whereOperator = 'LIKE');
+    /**
+     * Search data in database
+     *
+     * @param array $param The params for query (Where, Order, Limit)
+     * @param integer $offset The start point of cursor
+     * @param integer $dist Length of how long the cursor will travel
+     * @param string $returnType Data return type for Query class
+     *
+     * @return array Return the result of query when success, false otherwise
+     */
+    public function finds(
+        array $param,
+        $offset = 0,
+        $dist = 0,
+        $returnType = 'CLASS'
+    ) {
+        return $this->fetch($param, $offset, $dist, $returnType, 'LIKE');
     }
 
-    public function getByPK($key, $returnType = 'CLASS')
+    /**
+     * Get data using value of primary key
+     *
+     * @param string $value Value of primary key
+     * @param string $returnType Data return type for Query class
+     *
+     * @return array Return the result of query when success, false otherwise
+     */
+    public function getByPK($value, $returnType = 'CLASS')
     {
-        return $this->getInKey($this->primary, $key, array(), $returnType);
+        return $this->getInKey(
+            $this->primary,
+            $value,
+            array(),
+            $returnType
+        );
     }
 
-    public function fetchByPKs($keys, array $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=')
-    {
-        return $this->fetchInKeys($this->primary, $keys, $param, $offset, $dist, $returnType, $whereOperator);
+    /**
+     * Get data using value of primary keys
+     *
+     * @param array $values Values of primary keys
+     * @param array $param Params for query (Where, Order, Limit)
+     * @param integer $offset The start point of cursor
+     * @param integer $dist Length of how long the cursor will travel
+     * @param string $returnType Data return type for Query class
+     * @param string $whereOperator Default operator for WHERE condition
+     *
+     * @return array Return the result of query when success, false otherwise
+     */
+    public function fetchByPKs(
+        array $values,
+        array $param = array(),
+        $offset = 0,
+        $dist = 0,
+        $returnType = 'CLASS',
+        $whereOperator = '='
+    ) {
+        return $this->fetchInKeys(
+            $this->primary,
+            $values,
+            $param,
+            $offset,
+            $dist,
+            $returnType,
+            $whereOperator
+        );
     }
 
-    public function getInKey($keyField, $value, $param = array(), $returnType = 'CLASS', $whereOperator = '=')
-    {
+    /**
+     * Get data using value of specified key
+     *
+     * @param string $keyField Field of the key
+     * @param mixed $value Value of the key field
+     * @param array $param Parameters for query
+     * @param string $returnType Data return type for Query class
+     * @param string $whereOperator Default operator for WHERE condition
+     *
+     * @return array Return the result of query when success, false otherwise
+     */
+    public function getInKey(
+        $keyField,
+        $value,
+        $param = array(),
+        $returnType = 'CLASS',
+        $whereOperator = '='
+    ) {
         $data = array();
 
-        if ($data = array_values($this->fetchInKeys($keyField, array($value), $param, 0, 1, $returnType, $whereOperator))) {
+        if ($data = array_values(
+            $this->fetchInKeys(
+                $keyField,
+                array($value),
+                $param,
+                0,
+                1,
+                $returnType,
+                $whereOperator
+            )
+        )) {
             if (isset($data[0])) {
                 return $data[0];
             }
@@ -204,70 +430,147 @@ abstract class ORM implements Implement, \ArrayAccess
         return false;
     }
 
-    public function fetchInKeys($keyField, array $values, array $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=')
-    {
+    /**
+     * Get data using value of specified keys
+     *
+     * @param string $keyField Field of the key
+     * @param array $values Value of the key field
+     * @param array $param Parameters for query
+     * @param integer $offset The start point of cursor
+     * @param integer $dist Length of how long the cursor will travel
+     * @param string $returnType Data return type for Query class
+     * @param string $whereOperator Default operator for WHERE condition
+     *
+     * @return array Return the result of query when success, false otherwise
+     */
+    public function fetchInKeys(
+        $keyField,
+        array $values,
+        array $param = array(),
+        $offset = 0,
+        $dist = 0,
+        $returnType = 'CLASS',
+        $whereOperator = '='
+    ) {
         $fetched = $where = array();
 
         $param['Where'][$keyField] = array($values, 'IN');
 
-        if ($fetched = $this->fetch($param, $offset, $dist, $returnType, $whereOperator)) {
+        if ($fetched = $this->fetch(
+            $param,
+            $offset,
+            $dist,
+            $returnType,
+            $whereOperator
+        )) {
             return $fetched;
         }
 
         return array();
     }
 
-    private function fetchWithJoinParamParser(array &$joinModels, array &$joinedMap, $parnetName = 'main')
-    {
+    /**
+     * Parser the result of fetch for Fetch With
+     *
+     * @param array $joinModels Setting of joined models
+     * @param array $joinedMap Map of joined models
+     * @param string $parentName Parent name of current joined model
+     *
+     * @return array Return true when data parsed, false otherwise
+     */
+    private function fetchWithJoinParamParser(
+        array &$joinModels,
+        array &$joinedMap,
+        $parentName = 'main'
+    ) {
         if (is_array($joinModels)) {
             foreach ($joinModels as $jMkey => $jMVal) {
                 if (!isset($jMVal['Field']) && $jMVal['Field']) {
-                    \Facula\Framework::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_FIELDNAME_NOTSET', 'orm', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_ORM_FETCHWITH_JOIN_FIELDNAME_NOTSET',
+                        'orm',
+                        true
+                    );
 
                     return false;
                     break;
                 }
 
                 if (!isset($jMVal['Model']) && $jMVal['Model']) {
-                    \Facula\Framework::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_MODELNAME_NOTSET', 'orm', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_ORM_FETCHWITH_JOIN_MODELNAME_NOTSET',
+                        'orm',
+                        true
+                    );
 
                     return false;
                     break;
                 }
 
                 if (!isset($jMVal['Key']) && $jMVal['Key']) {
-                    \Facula\Framework::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_MODELKEYNAME_NOTSET', 'orm', true);
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_ORM_FETCHWITH_JOIN_MODELKEYNAME_NOTSET',
+                        'orm',
+                        true
+                    );
 
                     return false;
                     break;
                 }
 
-                $tempJoinedModelAlias = isset($jMVal['Alias']) ? $jMVal['Alias'] : ($jMVal['Field']);
-                $tempJoinedModelAddr = $parnetName . '.' . $tempJoinedModelAlias;
+                $tempJoinedModelAlias = isset($jMVal['Alias'])
+                    ? $jMVal['Alias'] : ($jMVal['Field']);
+
+                $tempJoinedModelAddr = $parentName
+                                        . '.'
+                                        . $tempJoinedModelAlias;
 
                 $joinedMap[$tempJoinedModelAddr] = array(
                     'Field' => $jMVal['Field'],
                     'Model' => $jMVal['Model'],
                     'Key' => $jMVal['Key'],
                     'Alias' => $tempJoinedModelAlias,
-                    'Single' => isset($jMVal['Single']) && $jMVal['Single'] ? true : false,
+                    'Single' => isset($jMVal['Single'])
+                                && $jMVal['Single'] ? true : false,
                     'Param' => isset($jMVal['Param']) ? $jMVal['Param'] : array(),
-                    'With' => $parnetName,
+                    'With' => $parentName,
                 );
 
                 if (isset($jMVal['With'])) {
-                    $this->fetchWithJoinParamParser($jMVal['With'], $joinedMap, $tempJoinedModelAddr);
+                    $this->fetchWithJoinParamParser(
+                        $jMVal['With'],
+                        $joinedMap,
+                        $tempJoinedModelAddr
+                    );
                 }
             }
+
+            return true;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_ORM_FETCHWITH_JOIN_WITH_INVALID', 'orm', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_ORM_FETCHWITH_JOIN_WITH_INVALID',
+                'orm',
+                true
+            );
         }
 
         return false;
     }
 
-    private function fetchWithGetColumnDataRootRef(array &$dataMap, $dataMapName, $elementKey)
-    {
+    /**
+     * Convert current data into columned array
+     *
+     * @param array $dataMap Data struct that will be converted
+     * @param array $dataMapName Name of the map
+     * @param string $elementKey Key of the field
+     *
+     * @return array Return the converted array
+     */
+    private function fetchWithGetColumnDataRootRef(
+        array &$dataMap,
+        $dataMapName,
+        $elementKey
+    ) {
         $result = array();
 
         if (isset($dataMap[$dataMapName])) {
@@ -281,14 +584,32 @@ abstract class ORM implements Implement, \ArrayAccess
         return $result;
     }
 
-    public function getWith(array $joinModels, array $whereParams, $whereOperator = '=')
-    {
+    /**
+     * Get a query result with multi tables
+     *
+     * @param array $joinModels Join setting
+     * @param array $whereParams Where conditions
+     * @param string $whereOperator Default operator of WHERE
+     *
+     * @return array Return the result of query when success, or false when fail
+     */
+    public function getWith(
+        array $joinModels,
+        array $whereParams,
+        $whereOperator = '='
+    ) {
         $data = array();
         $currentParams = array(
             'Where' => $whereParams,
         );
 
-        if ($data = $this->fetchWith($joinModels, $currentParams, 0, 1, $whereOperator)) {
+        if ($data = $this->fetchWith(
+            $joinModels,
+            $currentParams,
+            0,
+            1,
+            $whereOperator
+        )) {
             if (isset($data[0])) {
                 return $data[0];
             }
@@ -297,27 +618,58 @@ abstract class ORM implements Implement, \ArrayAccess
         return false;
     }
 
-    public function fetchWith(array $joinModels, array $currentParams, $offset = 0, $dist = 0, $whereOperator = '=')
-    {
+    /**
+     * Get query results with multi tables
+     *
+     * @param array $joinModels Join setting
+     * @param array $currentParams Where conditions for primary table
+     * @param integer $offset The start point of cursor
+     * @param integer $dist Length of how long the cursor will travel
+     * @param string $whereOperator Default operator of WHERE
+     *
+     * @return array Return the query result when query is succeed, or a empty array when query's failed
+     */
+    public function fetchWith(
+        array $joinModels,
+        array $currentParams,
+        $offset = 0,
+        $dist = 0,
+        $whereOperator = '='
+    ) {
         $principals = $participants = array();
         $principal = $participant = null;
 
         $joinedMap = $dataMap = $colAddress = array();
 
-        /*************
+        /*
+            Format:
+
             $joinModels = array(
                 array(
-                    'Field' => 'TargetField', // Field name of the key in primary table
-                    'Model' => 'ModelName2', // Model name of the table you want to join
-                    'Key' => 'JoinedKey', // Field name of the key use to query
-                    'Alias' => 'JoinResultASFieldName', // Save result in to another name
-                    'Single' => true, // Only return one result, use for primary or unique field
-                    'Param' => array( // Fetch params for joined table
+                    // Field name of the key in primary table
+                    'Field' => 'TargetField',
+
+                    // Model name of the table you want to join
+                    'Model' => 'ModelName2',
+
+                    // Field name of the key use to query
+                    'Key' => 'JoinedKey',
+
+                    // Save result in to another name
+                    'Alias' => 'JoinResultASFieldName',
+
+                    // Only return one result, use for primary or unique field
+                    'Single' => true,
+
+                    // Fetch params for joined table
+                    'Param' => array(
                         'Where' => array(
                             'key' => 'val',
                         )
                     )
-                    'With' => array( // Join Sub table of this sub table
+
+                    // Join Sub table of this sub table
+                    'With' => array(
                         array(
                             'Field' => 'TargetField',
                             'Model' => 'ModelName2',
@@ -333,10 +685,17 @@ abstract class ORM implements Implement, \ArrayAccess
                     'Alias' => 'JoinResultASFieldName',
                 ),
             );
-        *************/
+        */
 
-        if ($principals = $this->fetch($currentParams, $offset, $dist, 'CLASS', $whereOperator)) {
-            // First step is, fetch data from master table, and save reference to total reference map
+        if ($principals = $this->fetch(
+            $currentParams,
+            $offset,
+            $dist,
+            'CLASS',
+            $whereOperator
+        )) {
+            // First step is, fetch data from master table, and save reference
+            // to total reference map
             foreach ($principals as $principalKey => $principal) {
                 $dataMap['main'][$principalKey] = &$principal->getDataRef();
             }
@@ -353,21 +712,46 @@ abstract class ORM implements Implement, \ArrayAccess
 
             // Query joined table one by one
             foreach ($joinedMap as $joinedKey => $JoinedVal) {
-                if ($participant = \Facula\Framework::core('object')->getInstance($JoinedVal['Model'], array(), true)) {
-                    $tempJoinedKeys = $this->fetchWithGetColumnDataRootRef($dataMap, $JoinedVal['With'], $JoinedVal['Field']);
+                if ($participant = \Facula\Framework::core('object')->getInstance(
+                    $JoinedVal['Model'],
+                    array(),
+                    true
+                )) {
+                    $tempJoinedKeys = $this->fetchWithGetColumnDataRootRef(
+                        $dataMap,
+                        $JoinedVal['With'],
+                        $JoinedVal['Field']
+                    );
 
-                    if (!empty($tempJoinedKeys) && ($participants = $participant->fetchInKeys($JoinedVal['Key'], array_keys($tempJoinedKeys), $JoinedVal['Param']))) {
+                    if (!empty($tempJoinedKeys)
+                    && ($participants = $participant->fetchInKeys(
+                        $JoinedVal['Key'],
+                        array_keys($tempJoinedKeys),
+                        $JoinedVal['Param']
+                    ))) {
                         foreach ($participants as $participantKey => $participantVal) {
                             $JoinedVal['Data'][$participantKey] = $participantVal->getData();
 
-                            if (isset($tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']]) && !is_array($tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']])) {
-                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']] = array();
+                            if (isset(
+                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']]
+                            )
+                            &&
+                            !is_array(
+                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']]
+                            )) {
+                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']] =
+                                    array();
                             }
 
-                            if ($JoinedVal['Single'] && empty($tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']])) {
-                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']] = &$JoinedVal['Data'][$participantKey];
+                            if ($JoinedVal['Single']
+                            && empty(
+                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']]
+                            )) {
+                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']] =
+                                    &$JoinedVal['Data'][$participantKey];
                             } else {
-                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']][] = &$JoinedVal['Data'][$participantKey];
+                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']][] =
+                                    &$JoinedVal['Data'][$participantKey];
                             }
                         }
                     }
@@ -380,6 +764,11 @@ abstract class ORM implements Implement, \ArrayAccess
         return array();
     }
 
+    /**
+     * Save current data into Database
+     *
+     * @return mixed Return count of affected data when success, or false otherwise
+     */
     public function save()
     {
         $primaryKey = $result = null;
@@ -398,18 +787,41 @@ abstract class ORM implements Implement, \ArrayAccess
                 }
             }
 
-            if ($result = \Facula\Unit\Query\Factory::from($this->table, !$this->noParser)->update($this->fields)->set($data)->where('AND', $this->primary, '=', $primaryKey)->save()) {
+            if ($result = \Facula\Unit\Query\Factory::from(
+                $this->table,
+                !$this->noParser
+            )->update(
+                $this->fields
+            )->set(
+                $data
+            )->where(
+                'AND',
+                $this->primary,
+                '=',
+                $primaryKey
+            )->save()) {
+
                 $this->dataOriginal = $this->data;
 
                 return $result;
+
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET', 'orm', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET',
+                'orm',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Insert current data into database
+     *
+     * @return mixed Return the primary key of new inserted data when success, or false when fail
+     */
     public function insert()
     {
         $result = null;
@@ -423,7 +835,17 @@ abstract class ORM implements Implement, \ArrayAccess
         }
 
         // Must returning primary key
-        if ($result = \Facula\Unit\Query\Factory::from($this->table, !$this->noParser)->insert($keys)->value($data)->save($this->primary)) {
+        if ($result = \Facula\Unit\Query\Factory::from(
+            $this->table,
+            !$this->noParser
+        )->insert(
+            $keys
+        )->value(
+            $data
+        )->save(
+            $this->primary
+        )) {
+
             $this->dataOriginal = $this->data;
 
             if (!isset($this->data[$this->primary])) {
@@ -436,18 +858,37 @@ abstract class ORM implements Implement, \ArrayAccess
         return false;
     }
 
+    /**
+     * Delete data from database
+     *
+     * @return mixed Return count of affected data when success, or false for otherwise
+     */
     public function delete()
     {
         $result = null;
 
         if (isset($this->data[$this->primary])) {
-            if ($result = \Facula\Unit\Query\Factory::from($this->table, !$this->noParser)->delete($this->fields)->where('AND', $this->primary, '=', $this->data[$this->primary])->save()) {
+            if ($result = \Facula\Unit\Query\Factory::from(
+                $this->table,
+                !$this->noParser
+            )->delete(
+                $this->fields
+            )->where(
+                'AND',
+                $this->primary,
+                '=',
+                $this->data[$this->primary]
+            )->save()) {
                 $this->dataOriginal = $this->data = array();
 
                 return $result;
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET', 'orm', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET',
+                'orm',
+                true
+            );
         }
 
         return false;

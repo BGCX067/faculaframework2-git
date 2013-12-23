@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * SMTP MIME Builder
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,12 +26,24 @@
 
 namespace Facula\Unit\SMTP;
 
+/**
+ * Build a mail according to MIME
+ */
 class Datar
 {
+    /** Temp mail settings */
     private $mail = array();
-    private $mailContent = array();
-    private $parsedMail = array();
 
+    /** Mail content */
+    private $mailContent = array();
+
+    /**
+     * Constructor for the MIME mail builder
+     *
+     * @param array $mail The email in array
+     *
+     * @return void
+     */
     public function __construct(array $mail)
     {
         global $_SERVER;
@@ -47,29 +59,69 @@ class Datar
         );
 
         // Parse mail body
-        $mail['Subject'] = '=?UTF-8?B?' . rtrim(base64_encode($mailContent['Title'] ? $mailContent['Title'] : 'Untitled'), '=') . '?=';
-        $mail['Body'] = chunk_split(base64_encode($mailContent['Message']) . '?=', 76, "\r\n");
-        $mail['AltBody'] = chunk_split(base64_encode(strip_tags(str_replace('</', "\r\n</", $mailContent['Message']))) . '?=', 76, "\r\n");
+        $mail['Subject'] = '=?UTF-8?B?' . rtrim(
+            base64_encode($mailContent['Title'] ? $mailContent['Title'] : 'Untitled'),
+            '='
+        ) . '?=';
+
+        $mail['Body'] = chunk_split(
+            base64_encode($mailContent['Message']) . '?=',
+            76,
+            "\r\n"
+        );
+
+        $mail['AltBody'] = chunk_split(
+            base64_encode(strip_tags(str_replace('</', "\r\n</", $mailContent['Message']))) . '?=',
+            76,
+            "\r\n"
+        );
 
         // Make mail header
         $this->addLine('MIME-Version', '1.0');
         $this->addLine('X-Priority', '3');
         $this->addLine('X-MSMail-Priority', 'Normal');
 
-        $this->addLine('X-Mailer', $appInfo['App'] . ' ' . $appInfo['Ver'] . ' (' . $appInfo['Base'] . ')');
+        $this->addLine(
+            'X-Mailer',
+            $appInfo['App']
+            . ' '
+            . $appInfo['Ver']
+            . ' (' . $appInfo['Base'] . ')'
+        );
         $this->addLine('X-MimeOLE', $appInfo['Base'] . ' Mailer OLE');
 
-        $this->addLine('X-AntiAbuse', 'This header was added to track abuse, please include it with any abuse report');
+        $this->addLine(
+            'X-AntiAbuse',
+            'This header was added to track abuse, please include it with any abuse report'
+        );
         $this->addLine('X-AntiAbuse', 'Primary Hostname - ' .$senderHost);
         $this->addLine('X-AntiAbuse', 'Original Domain - ' . $senderHost);
-        $this->addLine('X-AntiAbuse', 'Originator/Caller UID/GID - [' . $senderHost . ' ' . $mail['SenderIP'] . '] / [' . $senderHost . ' ' . $mail['SenderIP'] . ']');
+        $this->addLine(
+            'X-AntiAbuse',
+            'Originator/Caller UID/GID - ['
+            . $senderHost
+            . ' '
+            . $mail['SenderIP']
+            . '] / ['
+            . $senderHost
+            . ' '
+            . $mail['SenderIP']
+            . ']'
+        );
         $this->addLine('X-AntiAbuse', 'Sender Address Domain - ' . $senderHost);
 
         // Mail title
         $this->addLine('Subject', $mail['Subject']);
 
         // Addresses
-        $this->addLine('From', '=?UTF-8?B?' . base64_encode($mail['Screenname']) . '?= <' . $mail['From'] . '>');
+        $this->addLine(
+            'From',
+            '=?UTF-8?B?'
+            . base64_encode($mail['Screenname'])
+            . '?= <'
+            . $mail['From']
+            . '>'
+        );
         $this->addLine('To', 'undisclosed-recipients:;');
         $this->addLine('Return-Path', '<' . $mail['ReturnTo'] . '>');
         $this->addLine('Reply-To', '<' . $mail['ReplyTo'] . '>');
@@ -77,9 +129,15 @@ class Datar
 
         $this->addLine('Date', date('D, d M y H:i:s O', FACULA_TIME));
 
-        $this->addLine('Message-ID', $this->getFactor() . '@' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost'));
+        $this->addLine(
+            'Message-ID',
+            $this->getFactor()
+            . '@'
+            . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost')
+        );
 
-        // Ready content for boundary check. Combine all content strings to one line, then check if the boundary existed.
+        // Ready content for boundary check. Combine all content
+        // strings to one line, then check if the boundary existed.
         $checkContent = $mail['Subject'] . $mail['Body'] . $mail['AltBody'];
 
         while (true) {
@@ -92,12 +150,25 @@ class Datar
             }
         }
 
-        $this->addLine('Content-Type', 'multipart/alternative; boundary="' . $this->mail['Boundary'] . '"');
+        $this->addLine(
+            'Content-Type',
+            'multipart/alternative; boundary="' . $this->mail['Boundary'] . '"'
+        );
 
         // Make mail body
         $this->addRaw(null); // Make space
-        $this->addRaw('This MIME email produced by ' . $appInfo['Base'] . ' Mailer for ' . $senderHost . '.');
-        $this->addRaw('If you have any problem reading this email, please contact ' . $mail['ReturnTo'] . ' for help.');
+        $this->addRaw(
+            'This MIME email produced by '
+            . $appInfo['Base']
+            . ' Mailer for '
+            . $senderHost
+            . '.'
+        );
+        $this->addRaw(
+            'If you have any problem reading this email, please contact '
+            . $mail['ReturnTo']
+            . ' for help.'
+        );
         $this->addRaw(null);
 
         // Primary content
@@ -116,15 +187,26 @@ class Datar
         $this->addRaw(null);
 
         $this->addRaw($this->mail['BoundarySpliterEnd']);
-
-        return true;
     }
 
+    /**
+     * Get the resulted email in array line by line
+     *
+     * @return array Array of the email by line
+     */
     public function get()
     {
         return implode("\r\n", $this->mailContent);
     }
 
+    /**
+     * Add a new head line to the mail content
+     *
+     * @param string $head The mime header
+     * @param string $content Content of the header
+     *
+     * @return bool Always true
+     */
     private function addLine($head, $content)
     {
         $this->mailContent[] = $head . ': ' . $content;
@@ -132,11 +214,24 @@ class Datar
         return true;
     }
 
+    /**
+     * Add raw content into MIME mail
+     *
+     * @param string $head The mime header
+     * @param string $content Content of the header
+     *
+     * @return bool Always true
+     */
     private function addRaw($content)
     {
         $this->mailContent[] = $content;
     }
 
+    /**
+     * Generate a random number
+     *
+     * @return string a random number in string
+     */
     private function getFactor()
     {
         return mt_rand(0, 65535) . mt_rand(0, 65535);

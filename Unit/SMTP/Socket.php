@@ -26,35 +26,70 @@
 
 namespace Facula\Unit\SMTP;
 
+/**
+ * SMTP Socket
+ */
 class Socket
 {
+    /** Socket connection */
     private $connection = null;
+
+    /** Container of parser */
     private $responseParsers = array();
 
+    /** Host name */
     private $host = 'localhost';
+
+    /** Host port */
     private $port = 0;
+
+    /** Timeout */
     private $timeout = 0;
 
+    /**
+     * Constructor of the socket operator
+     *
+     * @param string $host Host name
+     * @param integer $port Host Port
+     * @param integer $timeout Connection timeout
+     */
     public function __construct($host, $port, $timeout)
     {
         $this->host = $host;
         $this->port = $port;
         $this->timeout = $timeout;
-
-        return true;
     }
 
+    /**
+     * Destructor of the socket operator
+     *
+     * @param string $host Host name
+     * @param integer $port Host Port
+     * @param integer $timeout Connection timeout
+     */
     public function __destruct()
     {
         $this->close();
-
-        return true;
     }
 
+    /**
+     * Open a new socket
+     *
+     * @param string &$error String of error number
+     * @param string &$errorstr String of error message
+     *
+     * @return bool Return true when success, or false when fail
+     */
     public function open(&$error, &$errorstr)
     {
         if (function_exists('fsockopen')) {
-            if ($this->connection = fsockopen($this->host, $this->port, $error, $errorstr, $this->timeout)) {
+            if ($this->connection = fsockopen(
+                $this->host,
+                $this->port,
+                $error,
+                $errorstr,
+                $this->timeout
+            )) {
                 stream_set_blocking($this->connection, true);
                 stream_set_timeout($this->connection, $this->timeout);
 
@@ -67,6 +102,14 @@ class Socket
         return false;
     }
 
+    /**
+     * Send socket data
+     *
+     * @param string $command The data to send
+     * @param mixed $getReturn Return method of response data
+     *
+     * @return bool Return a return according to $getReturn, or false when fail
+     */
     public function put($command, $getReturn = false)
     {
         if ($this->connection) {
@@ -93,6 +136,14 @@ class Socket
         }
     }
 
+    /**
+     * Get response
+     *
+     * @param bool $parseResponse Trigger to enable or disable response parsing
+     * @param bool $hasNext There still remaining data
+     *
+     * @return bool Return response when got any, or false when fail
+     */
     public function get($parseResponse = false, &$hasNext = false)
     {
         $response = null;
@@ -101,10 +152,12 @@ class Socket
 
         if ($this->connection) {
             if ($response = trim(fgets($this->connection, 512))) {
-                // If response contain a '-'    and all char before the - is numberic (response code)
-                if ((($dashPOS = strpos($response, '-')) !== false) && is_numeric(substr($response, 0, $dashPOS))) {
+                // If response contain a '-' and all char before the - is numberic (response code)
+                if ((($dashPOS = strpos($response, '-')) !== false)
+                    && is_numeric(substr($response, 0, $dashPOS))) {
                     $hasNext = true;
-                } elseif ((($spacePOS = strpos($response, ' ')) !== false) && is_numeric(substr($response, 0, $spacePOS))) {
+                } elseif ((($spacePOS = strpos($response, ' ')) !== false)
+                    && is_numeric(substr($response, 0, $spacePOS))) {
                     // Only when response contain a ' ' and all char before the ' ' is number (response code)
                     // Means the response got only one line (Or this is the end of responses)
                     $hasNext = false;
@@ -123,6 +176,13 @@ class Socket
         return false;
     }
 
+    /**
+     * Get last line of the response
+     *
+     * @param bool $parseResponse Trigger to enable or disable response parsing
+     *
+     * @return bool Return the last response
+     */
     public function getLast($parseResponse = false)
     {
         $response = $responseLast = null;
@@ -139,6 +199,11 @@ class Socket
         return $responseLast;
     }
 
+    /**
+     * Close socket connection
+     *
+     * @return bool Return true when success, or false when fail
+     */
     public function close()
     {
         if ($this->connection) {
@@ -152,6 +217,14 @@ class Socket
         return false;
     }
 
+    /**
+     * Register a new response parser
+     *
+     * @param mixed $responseCode The response code
+     * @param closure $parser Callback of the parser itself
+     *
+     * @return bool Return true when success, or false when fail
+     */
     public function registerResponseParser($responseCode, \Closure $parser)
     {
         if (!isset($this->responseParsers[$responseCode])) {
@@ -159,12 +232,23 @@ class Socket
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_SMTP_SOCKET_RESPONSE_PARSER_EXISTED', 'smtp', true);
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_SMTP_SOCKET_RESPONSE_PARSER_EXISTED',
+                'smtp',
+                true
+            );
         }
 
         return false;
     }
 
+    /**
+     * Parse the response using registered handler
+     *
+     * @param mixed $response The response code
+     *
+     * @return bool Return the result of parsed response code, or false for fail
+     */
     private function parseResponse($response)
     {
         $responseParam = $parserName = $splitType = '';
@@ -173,7 +257,8 @@ class Socket
         $parser = null;
 
         if ($responseContent = trim($response)) {
-            // Position check seems the only stable way is do determine which we will use ('-' OR ' ').
+            // Position check seems the only stable way is do determine which
+            // we will use ('-' OR ' ').
             if (($fstSpacePos = strpos($responseContent, ' ')) === false) {
                 $fstSpacePos = null;
             }
@@ -209,7 +294,9 @@ class Socket
                     break;
             }
 
-            if (isset($responseParams[0]) && $responseParams[0] && is_numeric($responseParams[0])) {
+            if (isset($responseParams[0])
+                && $responseParams[0]
+                && is_numeric($responseParams[0])) {
                 $responseCode = (int)($responseParams[0]);
             }
 

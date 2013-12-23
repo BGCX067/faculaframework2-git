@@ -26,14 +26,48 @@
 
 namespace Facula\Unit\SMTP;
 
+/**
+ * SMTP Base
+ */
 abstract class Base
 {
+    /** Connection socket */
     private $socket = null;
 
+    /**
+     * Connect to a SMTP server
+     *
+     * @param array &$error String reference to get error detail
+     *
+     * @return bool Return true when connected, false for otherwise
+     */
     abstract public function connect(&$error);
+
+    /**
+     * Send email
+     *
+     * @param array &$email Email in array
+     *
+     * @return bool Return true when sent, false for otherwise
+     */
     abstract public function send(array &$email);
+
+    /**
+     * Disconnect from SMTP server
+     *
+     * @return bool Return true when disconnected, false otherwise
+     */
     abstract public function disconnect();
 
+    /**
+     * Get connection socket
+     *
+     * @param string $host Host name
+     * @param integer $port Host port
+     * @param integer $timeout Timeout
+     *
+     * @return object Return the instance of socket
+     */
     final protected function getSocket($host, $port, $timeout)
     {
         if (!$this->socket) {
@@ -43,6 +77,13 @@ abstract class Base
         return $this->socket;
     }
 
+    /**
+     * Get authenticator
+     *
+     * @param array $auths Server's authenticate method
+     *
+     * @return object Return the authenticator instance
+     */
     final protected function getAuth(array &$auths)
     {
         if ($this->socket) {
@@ -52,6 +93,13 @@ abstract class Base
         return false;
     }
 
+    /**
+     * Get Data MIME builder
+     *
+     * @param array $mail Mail content info
+     *
+     * @return object Return the MIME builder instance
+     */
     final protected function getData(array $mail)
     {
         return new Datar($mail);

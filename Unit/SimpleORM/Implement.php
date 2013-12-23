@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Interface of SimpleORM
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -26,29 +26,83 @@
 
 namespace Facula\Unit\SimpleORM;
 
+/**
+ * SimpleORM Interface
+ */
 interface Implement
 {
     public function __set($key, $val);
     public function __get($key);
     public function __isset($key);
+    public function __unset($key);
+
+    public function offsetSet($offset, $value);
+    public function offsetGet($offset);
+    public function offsetExists($offset);
+    public function offsetUnset($offset);
 
     public function getPrimaryValue();
     public function getFields();
     public function getData();
 
-    public function get(array $param, $returnType = 'CLASS', $whereOperator = '=');
-    public function fetch(array $param, $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
+    public function get(
+        array $param,
+        $returnType = 'CLASS',
+        $whereOperator = '='
+    );
+    public function fetch(
+        array $param,
+        $offset = 0,
+        $dist = 0,
+        $returnType = 'CLASS',
+        $whereOperator = '='
+    );
+    public function finds(
+        array $param,
+        $offset = 0,
+        $dist = 0,
+        $returnType = 'CLASS'
+    );
 
-    public function finds(array $param, $offset = 0, $dist = 0, $returnType = 'CLASS');
+    public function getInKey(
+        $keyField,
+        $value,
+        $param = array(),
+        $returnType = 'CLASS',
+        $whereOperator = '='
+    );
+    public function fetchInKeys(
+        $keyField,
+        array $values,
+        array $param = array(),
+        $offset = 0,
+        $dist = 0,
+        $returnType = 'CLASS',
+        $whereOperator = '='
+    );
 
-    public function getInKey($keyField, $value, $param = array(), $returnType = 'CLASS', $whereOperator = '=');
-    public function fetchInKeys($keyField, array $values, array $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
+    public function getByPK($value, $returnType = 'CLASS');
+    public function fetchByPKs(
+        array $values,
+        array $param = array(),
+        $offset = 0,
+        $dist = 0,
+        $returnType = 'CLASS',
+        $whereOperator = '='
+    );
 
-    public function getByPK($key, $returnType = 'CLASS');
-    public function fetchByPKs($keys, array $param = array(), $offset = 0, $dist = 0, $returnType = 'CLASS', $whereOperator = '=');
-
-    public function getWith(array $joinModels, array $whereParams, $whereOperator = '=');
-    public function fetchWith(array $joinModels, array $currentParams, $offset = 0, $dist = 0, $whereOperator = '=');
+    public function getWith(
+        array $joinModels,
+        array $whereParams,
+        $whereOperator = '='
+    );
+    public function fetchWith(
+        array $joinModels,
+        array $currentParams,
+        $offset = 0,
+        $dist = 0,
+        $whereOperator = '='
+    );
 
     public function save();
     public function insert();

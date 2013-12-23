@@ -26,17 +26,36 @@
 
 namespace Facula\Unit\SMTP\Adapter;
 
+/**
+ * General SMTP Operator
+ */
 class General extends \Facula\Unit\SMTP\Base
 {
-    protected $server = '';
+    /** Array of server connect info */
+    protected $server = array();
 
+    /** Server runtime information */
     protected $serverInfo = array();
+
+    /** Container of last forwarded */
     protected $lastForwardServerRCPT = array();
 
+    /**
+     * Constructor
+     *
+     * @param array $server Configuration
+     *
+     * @return void
+     */
     public function __construct($server)
     {
         $this->server = $server;
-        $this->socket = $this->getSocket($this->server['Host'], $this->server['Port'], $this->server['Timeout']);
+
+        $this->socket = $this->getSocket(
+            $this->server['Host'],
+            $this->server['Port'],
+            $this->server['Timeout']
+        );
 
         $this->socket->registerResponseParser(
             250,
@@ -52,7 +71,11 @@ class General extends \Facula\Unit\SMTP\Base
 
                     case 'auth':
                         if (isset($params[1])) {
-                            $this->serverInfo['AuthMethods'] = explode(' ', strtolower($params[1]), 16);
+                            $this->serverInfo['AuthMethods'] = explode(
+                                ' ',
+                                strtolower($params[1]),
+                                16
+                            );
                         }
                         break;
                 }
@@ -67,7 +90,8 @@ class General extends \Facula\Unit\SMTP\Base
                 $newAddrs = array();
 
                 if (preg_match('/\<(.*)\>/ui', $param, $newAddrs)) {
-                    if (isset($newAddrs[1]) && Validator::check($newAddrs[1], 'email', 512, 1)) {
+                    if (isset($newAddrs[1])
+                        && \Facula\Unit\Validator::check($newAddrs[1], 'email', 512, 1)) {
                         $this->lastForwardServerRCPT[] = $newAddrs[1];
                     }
                 }
@@ -75,10 +99,15 @@ class General extends \Facula\Unit\SMTP\Base
                 return 551;
             }
         );
-
-        return true;
     }
 
+    /**
+     * Connect to server
+     *
+     * @param array &$error Array reference to get error detail
+     *
+     * @return bool Return true when connected and ready, or false when fail
+     */
     public function connect(&$error)
     {
         $errorMsg = '';
@@ -104,10 +133,16 @@ class General extends \Facula\Unit\SMTP\Base
             }
 
             // Next should be AUTH, Read AUTH type from $this->serverInfo['AuthMethods'].
-            // We don't need to bother with TLS since this will be done for other type of server operator
+            // We don't need to bother with TLS since this will be done for other type of
+            // server operator
             if (isset($this->serverInfo['AuthMethods']) && $this->server['Username']) {
-                if (!$this->getAuth($this->serverInfo['AuthMethods'])->auth($this->server['Username'], $this->server['Password'], $errorMsg)) {
-                    $error = 'ERROR_SMTP_SERVER_RESPONSE_AUTH_FAILED' . ($errorMsg ? '_' . $errorMsg : '');
+                if (!$this->getAuth($this->serverInfo['AuthMethods'])->auth(
+                    $this->server['Username'],
+                    $this->server['Password'],
+                    $errorMsg
+                )) {
+                    $error = 'ERROR_SMTP_SERVER_RESPONSE_AUTH_FAILED'
+                            . ($errorMsg ? '_' . $errorMsg : '');
                     $this->disconnect();
 
                     return false;
@@ -122,9 +157,17 @@ class General extends \Facula\Unit\SMTP\Base
         return false;
     }
 
+    /**
+     * Send the email
+     *
+     * @param array &$email Array of email
+     *
+     * @return bool Return true when success, or false when fail
+     */
     public function send(array &$email)
     {
-        $this->lastForwardServerRCPT = array(); // Reset lastForwardServerRCPT array for retry sending
+        // Reset lastForwardServerRCPT array for retry sending
+        $this->lastForwardServerRCPT = array();
         $mailContent = '';
 
         if ($this->socket->put('MAIL FROM: <' . $this->server['From'] . '>', 'one') != 250) {
@@ -160,7 +203,8 @@ class General extends \Facula\Unit\SMTP\Base
             'ErrorTo' => $this->server['ErrorTo'],
             'SenderIP' => $this->server['SenderIP'],
         ))->get()) {
-            if (isset($this->serverInfo['MailMaxSize']) && strlen($mailContent) > $this->serverInfo['MailMaxSize']) {
+            if (isset($this->serverInfo['MailMaxSize'])
+                && strlen($mailContent) > $this->serverInfo['MailMaxSize']) {
                 return false;
             }
 
@@ -182,8 +226,13 @@ class General extends \Facula\Unit\SMTP\Base
         return false;
     }
 
+    /**
+     * Disconnect
+     *
+     * @return bool Return true when disconnected, or false when fail
+     */
     public function disconnect()
     {
-        $this->socket->close();
+        return $this->socket->close();
     }
 }

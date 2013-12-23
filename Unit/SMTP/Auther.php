@@ -26,78 +26,49 @@
 
 namespace Facula\Unit\SMTP;
 
+/**
+ * The authentication operator for SMTP Socket
+ */
 class Auther
 {
-    private $socket = null;
-    private $auths = array();
-    private static $authers = array();
-    
+    /** Tag for Anti reinitializing */
     private static $inited = false;
 
-    public function __construct($socket, array &$auths)
-    {
-        $this->socket = $socket;
-        $this->auths = $auths;
+    /** Socket instance */
+    private $socket = null;
 
-        return true;
-    }
+    /** Allowed authentication methods of current SMTP server */
+    private $auths = array();
 
-    public function auth($username, $password, &$error = '')
-    {
-        $auther = null;
+    /** Registered authentication operator */
+    private static $authers = array();
 
-        foreach ($this->auths as $method) {
-            if (isset(self::$authers[$method])) {
-                $auther = self::$authers[$method];
-
-                if ($auther($this->socket, $username, $password, $error)) {
-                    return true;
-                } else {
-                    $error = $error ? $error : 'UNKONWN_ERROR';
-
-                    return false;
-                }
-
-                break;
-            }
-        }
-
-        $error = 'NOTSUPPORTED|' . implode(', ', $this->auths) . ' for ' . implode(', ', array_keys(self::$authers));
-
-        return false;
-    }
-
-    public static function register($type, \Closure $auther)
-    {
-        if (!isset(self::$authers[$type])) {
-            self::$authers[$type] = $auther;
-
-            return true;
-        } else {
-            \Facula\Framework::core('debug')->exception('ERROR_SMTP_AUTHER_EXISTED', 'smtp', true);
-        }
-
-        return false;
-    }
-
+    /**
+     * Initialize the class for instantiation and operation
+     *
+     * @return bool Always return true
+     */
     public static function init()
     {
         if (self::$inited) {
             return true;
-        } else {
-            self::$inited = true;
         }
-        
+
         static::register('plain', function ($socket, $username, $password, &$error) {
             $null = "\0";
-            $plainAuthStr = rtrim(base64_encode($username . $null . $username . $null . $password), '=');
+
+            $plainAuthStr = rtrim(
+                base64_encode($username . $null . $username . $null . $password),
+                '='
+            );
 
             if ($socket->put('AUTH PLAIN', 'one') != 334) {
                 $error = 'UNKOWN_RESPONSE';
                 return false;
             }
 
-            switch ($socket->put($plainAuthStr, 'one')) { // Give the username and check return
+            // Give the username and check return
+            switch ($socket->put($plainAuthStr, 'one')) {
                 case 535:
                     $error = 'AUTHENTICATION_FAILED';
                     break;
@@ -122,32 +93,34 @@ class Auther
             $response = '';
             $b64Username = rtrim(base64_encode($username), '=');
             $b64Password = rtrim(base64_encode($password), '=');
+            $responseParser = function ($param) {
+                switch (strtolower(base64_decode($param))) {
+                    case 'username:':
+                        return 'Username';
+                        break;
+
+                    case 'password:':
+                        return 'Password';
+                        break;
+
+                    default:
+                        return $param;
+                        break;
+                }
+            };
 
             if ($socket->registerResponseParser(
                 334,
-                function ($param) {
-                    $resp = strtolower(base64_decode($param)); // I have no idea why they decided to base64 this
-
-                    switch ($resp) {
-                        case 'username:':
-                            return 'Username';
-                            break;
-
-                        case 'password:':
-                            return 'Password';
-                            break;
-
-                        default:
-                            return $param;
-                            break;
-                    }
-                }
+                $responseParser
             )) {
                 switch ($response = $socket->put('AUTH LOGIN', 'one')) {
                     case 'Username':
                         // Response for user name
-                        switch ($socket->put($b64Username, 'one')) { // Give the username and check return
-                            case 'Password': // Want password, give password
+
+                        // Give the username and check return
+                        switch ($socket->put($b64Username, 'one')) {
+                            case 'Password':
+                                // Want password, give password
                                 switch ($socket->put($b64Password, 'one')) {
                                     case 535:
                                         $error = 'AUTHENTICATION_FAILED';
@@ -172,8 +145,10 @@ class Auther
 
                     case 'Password':
                         // Response for password, it's odd. First case is normal case
-                        switch ($socket->put($b64Password, 'one')) { // Give the password and check return
-                            case 'Username': // Want username? give username
+                        // Give the password and check return
+                        switch ($socket->put($b64Password, 'one')) {
+                            case 'Username':
+                                // Want username? give username
                                 switch ($socket->put($b64Password, 'one')) {
                                     case 535:
                                         $error = 'AUTHENTICATION_FAILED';
@@ -205,8 +180,81 @@ class Auther
             return false;
         });
 
+        self::$inited = true;
+
         return true;
     }
+
+    /**
+     * Constructor of MIME builder
+     *
+     * @return void
+     */
+    public function __construct(Socket $socket, array &$auths)
+    {
+        $this->socket = $socket;
+        $this->auths = $auths;
+    }
+
+    /**
+     * Perform a authenticate operation with handler
+     *
+     * @param string $username User name to identification
+     * @param string $password Password to identification
+     * @param string $error A reference to get error feedback
+     *
+     * @return bool Return true when passed the identification, false when not
+     */
+    public function auth($username, $password, &$error = '')
+    {
+        $auther = null;
+
+        foreach ($this->auths as $method) {
+            if (isset(self::$authers[$method])) {
+                $auther = self::$authers[$method];
+
+                if ($auther($this->socket, $username, $password, $error)) {
+                    return true;
+                } else {
+                    $error = $error ? $error : 'UNKONWN_ERROR';
+
+                    return false;
+                }
+
+                break;
+            }
+        }
+
+        $error = 'NOTSUPPORTED|'
+                . implode(', ', $this->auths)
+                . ' for '
+                . implode(', ', array_keys(self::$authers));
+
+        return false;
+    }
+
+    /**
+     * Register
+     *
+     * @param string $type Type string of auther
+     * @param closure $auther The auther itself.
+     *
+     * @return bool Return true when registered, false when fail
+     */
+    public static function register($type, \Closure $auther)
+    {
+        if (!isset(self::$authers[$type])) {
+            self::$authers[$type] = $auther;
+
+            return true;
+        } else {
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_SMTP_AUTHER_EXISTED',
+                'smtp',
+                true
+            );
+        }
+
+        return false;
+    }
 }
-
-
