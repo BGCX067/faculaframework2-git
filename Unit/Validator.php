@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * String Validator
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -27,7 +27,7 @@
 namespace Facula\Unit;
 
 /**
- * The hasher particularly for password
+ * String Formation Validator
  */
 abstract class Validator
 {

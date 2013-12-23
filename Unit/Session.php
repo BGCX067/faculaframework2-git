@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * Session Manager
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -27,7 +27,7 @@
 namespace Facula\Unit;
 
 /**
- * The hasher particularly for password
+ * Session Manager
  */
 class Session
 {

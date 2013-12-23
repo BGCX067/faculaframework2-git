@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * GD Adapter for Imager
  *
  * Facula Framework 2013 (C) Rain Lee
  *

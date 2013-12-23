@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * FTP Adapter for RemoteStorage
  *
  * Facula Framework 2013 (C) Rain Lee
  *

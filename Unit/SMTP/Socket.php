@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Facula Framework Struct Manage Unit
+ * SMTP Socketor
  *
  * Facula Framework 2013 (C) Rain Lee
  *
