@@ -445,7 +445,8 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
     /**
      * Save value into class
      *
-     * @param array $fields Fields in Name => Type pair
+     * @param array $value The value of the field
+     * @param array $forField Name of the field
      *
      * @return mixed Return current object when succeed, or false otherwise
      */

@@ -236,7 +236,8 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Adapter
      * @param integer $width Width of the resulting image
      * @param integer $height Height of the resulting image
      * @param bool $resizeSmall Resize the image to resulting size even it small than it
-     * @param integer $drawAreaWidth Resize the image to resulting size even it small than it
+     * @param integer $drawAreaWidth Width of the max drawing area
+     * @param integer $drawAreaHeight Height of the max drawing area
      *
      * @return bool Return true when image destroyed, false when fail
      */

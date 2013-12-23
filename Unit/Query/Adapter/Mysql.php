@@ -229,7 +229,7 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
     /**
      * Generate the condition syntax
      *
-     * @param string Type if the condition, WHERE or HAVING
+     * @param string $name Type if the condition, WHERE or HAVING
      *
      * @return string The SQL query
      */

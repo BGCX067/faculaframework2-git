@@ -324,7 +324,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
     /**
      * Get connection with settings
      *
-     * @param string $setting Setting ('Table' => '', 'Operation' => '') to connect
+     * @param array $setting Setting ('Table' => '', 'Operation' => '') to connect
      *
      * @return mixed Return PDO object that connected to a database server when success, false otherwise
      */

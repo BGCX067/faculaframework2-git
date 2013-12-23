@@ -487,7 +487,7 @@ class Framework
      * Register hooks from plugin
      *
      * @param array $pluginName Plugin name
-     * @param bool $create File that contains the plugin class
+     * @param bool $mainFile File that contains the plugin class
      *
      * @return bool ture when succeeded, false otherwise
      */
@@ -925,11 +925,23 @@ class Framework
         return $setting;
     }
 
+    /**
+     * Export common setting
+     *
+     * @return array
+     */
     protected function importCommonSetting()
     {
         return isset($this->setting['Common']) ? $this->setting['Common'] : array();
     }
 
+    /**
+     * Import setting form configuration
+     *
+     * @param array $cfg Configuration array
+     *
+     * @return bool Always return true
+     */
     protected function importConfigs(array &$cfg)
     {
         foreach ($cfg as $key => $value) {
@@ -939,6 +951,11 @@ class Framework
         return true;
     }
 
+    /**
+     * Register all built in and configured Namespace
+     *
+     * @return bool Always return true
+     */
     protected function registerAllNamespaces()
     {
         $namespaces = $validNamespaces = array();
@@ -957,6 +974,11 @@ class Framework
         return true;
     }
 
+    /**
+     * Discover components, and import them into Framework
+     *
+     * @return void
+     */
     protected function pickComponents()
     {
         $components = $modules = array();

@@ -192,11 +192,13 @@ abstract class Route
     /**
      * Set the path parameters of the request
      *
+     * @param string $path Set the path of the request
+     *
      * @return bool Return true when successfully set, false otherwise
      */
     public static function setPath($path)
     {
-        if ($path !== null
+        if (!is_null($path)
             && (self::$pathParams = explode(
                 self::$routeSplit,
                 trim($path, self::$routeSplit),

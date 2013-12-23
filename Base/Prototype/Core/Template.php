@@ -651,9 +651,8 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
     /**
      * Import a file path into language pool
      *
-     * @param string $name Name of the language file
+     * @param string $languageCode Language code like zh-CN etc
      * @param string $path Path to the language file
-     * @param string $templateSet Set name of the language file
      *
      * @return mixed Return true when success, false otherwise
      */
