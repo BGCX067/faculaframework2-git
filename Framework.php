@@ -122,16 +122,7 @@ class Framework
     public static function run(array &$cfg)
     {
         if (!static::$instance) {
-            spl_autoload_register(function ($className) {
-                // Check if this is a namespace calling
-                if (strpos($className, static::$cfg['NSSplitter'])) {
-                    return static::loadNamespace($className);
-                } else {
-                    return static::loadScope($className);
-                }
-
-                return false;
-            });
+            spl_autoload_register(array(__CLASS__, 'loadClass'));
 
             static::$profile['StartTime'] = microtime(true);
 
@@ -223,6 +214,18 @@ class Framework
     {
         if (static::$instance && isset(static::$instance->setting['StateCache'])) {
             return unlink(static::$instance->setting['StateCache']);
+        }
+
+        return false;
+    }
+
+    public static function loadClass($className)
+    {
+        // Check if this is a namespace calling
+        if (strpos($className, static::$cfg['NSSplitter'])) {
+            return static::loadNamespace($className);
+        } else {
+            return static::loadScope($className);
         }
 
         return false;
@@ -342,8 +345,6 @@ class Framework
                 require($fullPath);
 
                 return true;
-            } else {
-                throw new \Exception('Class ' . $class . ' was not found.');
             }
         }
 
