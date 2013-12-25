@@ -908,14 +908,8 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
 
         if (isset($this->query['Values'])) {
             foreach ($this->query['Fields'] as $field => $type) {
-                if (isset($value[$field]) || is_null($value[$field])) {
+                if (isset($value[$field])) {
                     $tempValueData[] = $this->saveValue($value[$field], $field);
-                } else {
-                    \Facula\Framework::core('debug')->exception(
-                        'ERROR_QUERY_VALUES_FIELD_NOTSET|' . $field,
-                        'query',
-                        true
-                    );
                 }
             }
 
