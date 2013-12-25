@@ -255,7 +255,7 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
      *
      * @return mixed Return current object when succeed, or false otherwise
      */
-    public function select($fields)
+    public function select(array $fields)
     {
         if (!isset($this->query['Action'])) {
             $this->query['Action'] = 'select';
@@ -295,7 +295,7 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
      *
      * @return mixed Return current object when succeed, or false otherwise
      */
-    public function insert($fields)
+    public function insert(array $fields)
     {
         if (!isset($this->query['Action'])) {
             $this->query['Action'] = 'insert';
@@ -326,7 +326,7 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
      *
      * @return mixed Return current object when succeed, or false otherwise
      */
-    public function update($fields)
+    public function update(array $fields)
     {
         if (!isset($this->query['Action'])) {
             $this->query['Action'] = 'update';
@@ -367,7 +367,7 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
      *
      * @return mixed Return current object when succeed, or false otherwise
      */
-    public function delete($fields)
+    public function delete(array $fields)
     {
         if (!isset($this->query['Action'])) {
             $this->query['Action'] = 'delete';
@@ -403,43 +403,33 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
      *
      * @param array $fields Fields in Name => Type pair
      *
-     * @return mixed Return current object when succeed, or false otherwise
+     * @return bool Always true
      */
-    protected function saveFields($fields)
+    protected function saveFields(array $fields)
     {
         $fieldTypes = array();
 
-        if (is_array($fields)) {
-            foreach ($fields as $fieldName => $fieldType) {
-                if ((is_array($fieldType) && ($fieldTypes = $fieldType))
-                    || ($fieldTypes = explode(' ', $fieldType))) {
-                    foreach ($fieldTypes as $type) {
-                        if (isset(static::$pdoDataTypes[$type])) {
-                            $this->query['Fields'][$fieldName] = $type;
-                        }
-
-                        if (isset(static::$parsers[$type])) {
-                            $this->query['FieldParsers'][$fieldName][] = $type;
-                        }
+        foreach ($fields as $fieldName => $fieldType) {
+            if ((is_array($fieldType) && ($fieldTypes = $fieldType))
+                || ($fieldTypes = explode(' ', $fieldType))) {
+                foreach ($fieldTypes as $type) {
+                    if (isset(static::$pdoDataTypes[$type])) {
+                        $this->query['Fields'][$fieldName] = $type;
                     }
-                }
 
-                if (!isset($this->query['Fields'][$fieldName])
-                    || !$this->query['Fields'][$fieldName]) {
-                    $this->query['Fields'][$fieldName] = 'STR';
+                    if (isset(static::$parsers[$type])) {
+                        $this->query['FieldParsers'][$fieldName][] = $type;
+                    }
                 }
             }
 
-            return true;
-        } else {
-            \Facula\Framework::core('debug')->exception(
-                'ERROR_QUERY_SAVEFIELD_FIELDS_INVALID',
-                'query',
-                true
-            );
+            if (!isset($this->query['Fields'][$fieldName])
+                || !$this->query['Fields'][$fieldName]) {
+                $this->query['Fields'][$fieldName] = 'STR';
+            }
         }
 
-        return false;
+        return true;
     }
 
     /**
@@ -902,14 +892,20 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
      *
      * @return mixed Return current object when succeed, or false otherwise
      */
-    public function value($value)
+    public function value(array $value)
     {
         $tempValueData = array();
 
         if (isset($this->query['Values'])) {
             foreach ($this->query['Fields'] as $field => $type) {
-                if (isset($value[$field])) {
+                if (isset($value[$field]) || array_key_exists($field, $value)) {
                     $tempValueData[] = $this->saveValue($value[$field], $field);
+                } else {
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_VALUES_FIELD_NOTSET|' . $field,
+                        'query',
+                        true
+                    );
                 }
             }
 
@@ -934,7 +930,7 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
      *
      * @return mixed Return current object when succeed, or false otherwise
      */
-    public function set($values)
+    public function set(array $values)
     {
         if (isset($this->query['Sets'])) {
 

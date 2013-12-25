@@ -35,10 +35,10 @@ interface Implement
     public static function addAutoParser($name, $type, \Closure $parser);
     public static function registerAdapter($driver, $adapterClass);
 
-    public function select($fields);
-    public function insert($fields);
-    public function update($fields);
-    public function delete($fields);
+    public function select(array $fields);
+    public function insert(array $fields);
+    public function update(array $fields);
+    public function delete(array $fields);
 
     public function where($logic, $fieldName, $operator, $value);
     public function having($logic, $fieldName, $operator, $value);
@@ -46,8 +46,8 @@ interface Implement
     public function group($fieldName);
     public function order($fieldName, $sort);
 
-    public function value($value);
-    public function set($values);
+    public function value(array $value);
+    public function set(array $values);
 
     public function limit($offset, $distance);
 
