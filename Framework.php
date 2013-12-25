@@ -219,6 +219,13 @@ class Framework
         return false;
     }
 
+    /**
+     * Load a class from register record (Namespace and scope)
+     *
+     * @param string $className Fully qualified class name
+     *
+     * @return bool Return true when success, false otherwise.
+     */
     public static function loadClass($className)
     {
         // Check if this is a namespace calling
