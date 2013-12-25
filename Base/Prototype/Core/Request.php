@@ -187,10 +187,10 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
         }
 
         // Get current absolute root
-        if (isset($_SERVER['SERVER_ADDR']) && isset($_SERVER['SERVER_PORT'])) {
+        if (isset($_SERVER['SERVER_NAME']) && isset($_SERVER['SERVER_PORT'])) {
             $this->requestInfo['absRootURL'] =
                 ($_SERVER['SERVER_PORT'] == 443 ? 'https://' : 'http://')
-                . $_SERVER['SERVER_ADDR']
+                . $_SERVER['SERVER_NAME']
                 . ($_SERVER['SERVER_PORT'] == 80 ? '' : ':'
                 . $_SERVER['SERVER_PORT'])
                 . $this->requestInfo['rootURL'];
