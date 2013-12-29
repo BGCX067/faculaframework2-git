@@ -82,6 +82,14 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         'ASC' => 'ASC',
     );
 
+    /** Allowed math operators */
+    private static $mathOperators = array(
+        '+' => '+',
+        '-' => '-',
+        '*' => '*',
+        '/' => '/',
+    );
+
     /** Last statement cache */
     private static $lastStatement = array(
         'Statement' => null,
@@ -337,6 +345,9 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
             if ($this->saveFields($fields)) {
                 // Enable sets
                 $this->query['Sets'] = array();
+
+                // Enable Changes
+                $this->query['Changes'] = array();
 
                 // Enable Where
                 $this->query['Where'] = array();
@@ -888,18 +899,18 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
     /**
      * Make VALUE operating configuration
      *
-     * @param string $value Values in Field => Value pair
+     * @param array $value Values in Field => Value pair
      *
      * @return mixed Return current object when succeed, or false otherwise
      */
-    public function value(array $value)
+    public function value(array $values)
     {
         $tempValueData = array();
 
         if (isset($this->query['Values'])) {
             foreach ($this->query['Fields'] as $field => $type) {
-                if (isset($value[$field]) || array_key_exists($field, $value)) {
-                    $tempValueData[] = $this->saveValue($value[$field], $field);
+                if (isset($values[$field]) || array_key_exists($field, $values)) {
+                    $tempValueData[] = $this->saveValue($values[$field], $field);
                 } else {
                     \Facula\Framework::core('debug')->exception(
                         'ERROR_QUERY_VALUES_FIELD_NOTSET|' . $field,
@@ -926,7 +937,7 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
     /**
      * Make SET operating configuration
      *
-     * @param string $values Values in Field => Value pair
+     * @param array $values Values in Field => Value pair
      *
      * @return mixed Return current object when succeed, or false otherwise
      */
@@ -945,6 +956,85 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         } else {
             \Facula\Framework::core('debug')->exception(
                 'ERROR_QUERY_SETS_NOT_SUPPORTED',
+                'query',
+                true
+            );
+        }
+
+        return false;
+    }
+
+    /**
+     * Make SET operating configuration for change existing number data
+     *
+     * @param array $values Arrays in array(Operator => '', Field => '', Value => '')
+     *
+     * @return mixed Return current object when succeed, or false otherwise
+     */
+    public function changes(array $values)
+    {
+        if (isset($this->query['Changes'])) {
+
+            foreach ($values as $value) {
+                if (!is_array($value)) {
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_CHANGE_OPERATOR_PARAM_INVALID',
+                        'query',
+                        true
+                    );
+
+                    return false;
+                    break;
+                }
+
+                if (!isset(
+                    $value['Operator'],
+                    $value['Field'],
+                    $value['Value']
+                )) {
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_CHANGE_OPERATOR_PARAM_MISSING|Picked up only: ' . implode(', ', array_keys($values)),
+                        'query',
+                        true
+                    );
+
+                    return false;
+                    break;
+                }
+
+                if (!isset(static::$mathOperators[$value['Operator']])) {
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_CHANGE_OPERATOR_INVALID|' . $operator,
+                        'query',
+                        true
+                    );
+
+                    return false;
+                    break;
+                }
+
+                if (!is_numeric($value['Value'])) {
+                    \Facula\Framework::core('debug')->exception(
+                        'ERROR_QUERY_CHANGE_VALUE_NOT_NUMBER',
+                        'query',
+                        true
+                    );
+
+                    return false;
+                    break;
+                }
+
+                $this->query['Changes'][] = array(
+                    'Field' => $value['Field'],
+                    'Operator' => static::$mathOperators[$value['Operator']],
+                    'Value' => $this->saveValue($value['Value'], $value['Field'])
+                );
+            }
+
+            return $this;
+        } else {
+            \Facula\Framework::core('debug')->exception(
+                'ERROR_QUERY_CHANGE_NOT_SUPPORTED',
                 'query',
                 true
             );
@@ -1197,77 +1287,56 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
      * Perform the data query and return requested results
      *
      * @param string $mode PDO Query method in short, ASSOC etc
-     * @param string $argument Additional argument
+     * @param string $className Class use to bind data if use Class mode
      *
      * @return mixed Return the result when succeed, or false when fail
      */
-    public function fetch($mode = 'ASSOC', $argument = null)
+    public function fetch($mode = 'ASSOC', $className = null)
     {
         $sql = '';
         $statement = $readParser = null;
-        $result = $readParsers = array();
-
-        $pdoFetchStyle = array(
-            'ASSOC' => \PDO::FETCH_ASSOC,
-            'BOUND' => \PDO::FETCH_BOUND,
-            'INTO' => \PDO::FETCH_INTO,
-            'NUM' => \PDO::FETCH_NUM,
-            'LAZY' => \PDO::FETCH_LAZY,
-            'OBJ' => \PDO::FETCH_OBJ,
-            'BOTH' => \PDO::FETCH_BOTH,
-            'COLUMN' => \PDO::FETCH_COLUMN,
-            'CLASS' => \PDO::FETCH_CLASS,
-            'CLASSLATE' => \PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE,
-            'FUNC' => \PDO::FETCH_FUNC,
-        );
+        $results = $rawResults = $readParsers = array();
 
         if (isset($this->query['Action']) && $this->query['Type'] == 'Read') {
             if ($statement = $this->exec($this->query['Required'])) {
                 try {
-                    if (isset($pdoFetchStyle[$mode])) {
-                        if ($argument !== null) {
-                            $statement->setFetchMode(
-                                $pdoFetchStyle[$mode],
-                                $argument
-                            );
-                        } else {
-                            $statement->setFetchMode(
-                                $pdoFetchStyle[$mode]
-                            );
-                        }
+                    // Yeah, Always returns assoc array
+                    $statement->setFetchMode(\PDO::FETCH_ASSOC);
 
-                        if ($result = $this->adapter->fetch($statement)) {
-                            if ($this->query['Parser']
-                                && isset($this->query['FieldParsers'])) {
+                    if ($this->query['Parser']
+                    && isset($this->query['FieldParsers'])) {
+                        $rawResults = $this->fetchWithParsers($this->adapter->fetch($statement));
+                    } else {
+                        $rawResults = $this->fetchPure($this->adapter->fetch($statement));
+                    }
 
-                                foreach ($result as $statKey => $statVal) {
-                                    foreach ($this->query['FieldParsers'] as $field => $parsers) {
-                                        if (isset($statVal[$field])) {
-                                            foreach ($parsers as $parser) {
-                                                if (isset(static::$parsers[$parser]['Reader'])) {
-                                                    if (!isset($readParsers[$parser])) {
-                                                        $readParsers[$parser] =
-                                                            static::$parsers[$parser]['Reader'];
-                                                    }
+                    switch($mode) {
+                        case 'CLASS':
+                            if (!class_exists($className)) {
+                                \Facula\Framework::core('debug')->exception(
+                                    'ERROR_QUERY_FETCH_CLASS_NOTFOUND|' . $className,
+                                    'query',
+                                    true
+                                );
 
-                                                    $statVal[$field] =
-                                                        $readParsers[$parser]($statVal[$field]);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
+                                return false;
                             }
 
-                            return $result;
-                        }
-                    } else {
-                        \Facula\Framework::core('debug')->exception(
-                            'ERROR_QUERY_FETCH_UNKNOWN_METHOD|' . $mode,
-                            'query',
-                            true
-                        );
+                            foreach ($rawResults as $key => $row) {
+                                $tempClass = new $className();
+
+                                foreach ($row as $rowKey => $rowVal) {
+                                    $tempClass->$rowKey = $rowVal;
+                                }
+
+                                $results[] = $tempClass;
+                            }
+
+                            return $results;
+                            break;
+
+                        default:
+                            return $rawResults;
                     }
                 } catch (PDOException $e) {
                     \Facula\Framework::core('debug')->exception(
@@ -1286,6 +1355,58 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
         }
 
         return false;
+    }
+
+    /**
+     * Fetch data with parsers
+     *
+     * @param PDOStatement $statement The PDO statement
+     *
+     * @return array Return array of results when succeed, or empty array when fail
+     */
+    private function fetchWithParsers(\PDOStatement $statement)
+    {
+        $result = array();
+
+        while ($row = $statement->fetch()) {
+
+            foreach ($this->query['FieldParsers'] as $field => $parsers) {
+                if (isset($row[$field])) {
+                    foreach ($parsers as $parser) {
+                        if (isset(static::$parsers[$parser]['Reader'])) {
+                            if (!isset($readParsers[$parser])) {
+                                $readParsers[$parser] =
+                                    static::$parsers[$parser]['Reader'];
+                            }
+
+                            $row[$field] = $readParsers[$parser]($row[$field]);
+                        }
+                    }
+                }
+            }
+
+            $result[] = $row;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Fetch data in PDO statement
+     *
+     * @param PDOStatement $statement The PDO statement
+     *
+     * @return array Return array of results when succeed, or empty array when fail
+     */
+    private function fetchPure(\PDOStatement $statement)
+    {
+        $result = array();
+
+        while ($row = $statement->fetch()) {
+            $result[] = $row;
+        }
+
+        return $result;
     }
 
     /**

@@ -172,6 +172,11 @@ class Pgsql implements \Facula\Unit\Query\AdapterImplement
              $sql .= ' SET ' . $this->doSets();
         }
 
+        // Changes
+        if (!empty($this->query['Changes'])) {
+             $sql .= ' SET ' . $this->doChanges();
+        }
+
         // Where
         if (!empty($this->query['Where'])) {
              $sql .= ' WHERE ' . $this->doCondition('Where');
@@ -427,6 +432,16 @@ class Pgsql implements \Facula\Unit\Query\AdapterImplement
             $sql .= '"' . $set['Field'] . '" = ' . $set['Value'];
         }
 
+        if (isset($this->query['Changes'])) {
+            foreach ($this->query['Changes'] as $change) {
+                $sql .= $sql ? ', ' : '';
+
+                $sql .= '"' . $change['Field'] . '" = "'
+                    . $change['Field'] . '" ' . $change['Operator']
+                    . ' ' . $change['Value'];
+            }
+        }
+
         return $sql;
     }
 
@@ -439,13 +454,7 @@ class Pgsql implements \Facula\Unit\Query\AdapterImplement
      */
     public function fetch(\PDOStatement $statement)
     {
-        $data = array();
-
-        while ($row = $statement->fetch()) {
-            $data[] = $row;
-        }
-
-        return $data;
+        return $statement;
     }
 
     /**

@@ -429,6 +429,16 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
             $sql .= '`' . $set['Field'] . '` = ' . $set['Value'];
         }
 
+        if (isset($this->query['Changes'])) {
+            foreach ($this->query['Changes'] as $change) {
+                $sql .= $sql ? ', ' : '';
+
+                $sql .= '`' . $change['Field'] . '` = `'
+                    . $change['Field'] . '` ' . $change['Operator']
+                    . ' ' . $change['Value'];
+            }
+        }
+
         return $sql;
     }
 
@@ -441,13 +451,7 @@ class Mysql implements \Facula\Unit\Query\AdapterImplement
      */
     public function fetch(\PDOStatement $statement)
     {
-        $data = array();
-
-        while ($row = $statement->fetch()) {
-            $data[] = $row;
-        }
-
-        return $data;
+        return $statement;
     }
 
     /**

@@ -46,8 +46,9 @@ interface Implement
     public function group($fieldName);
     public function order($fieldName, $sort);
 
-    public function value(array $value);
+    public function value(array $values);
     public function set(array $values);
+    public function changes(array $values);
 
     public function limit($offset, $distance);
 

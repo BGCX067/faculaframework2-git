@@ -46,7 +46,7 @@ abstract class ORM implements Implement, \ArrayAccess
     /** Container of data */
     private $data = array();
 
-    /** Backup container when data's changed */
+    /** Backup container for original data */
     private $dataOriginal = array();
 
     /** Path to the Object cached */
@@ -67,9 +67,7 @@ abstract class ORM implements Implement, \ArrayAccess
     {
         // Behaver changed. It will not try to protect original value,
         // but backup last value.
-        if (isset($this->data[$key])) {
-            $this->dataOriginal[$key] = $this->data[$key];
-        } else {
+        if (!isset($this->data[$key])) {
             $this->dataOriginal[$key] = $val;
         }
 
@@ -124,9 +122,7 @@ abstract class ORM implements Implement, \ArrayAccess
      */
     public function offsetSet($offset, $value)
     {
-        if (isset($this->data[$offset])) {
-            $this->dataOriginal[$offset] = $this->data[$offset];
-        } else {
+        if (!isset($this->data[$offset])) {
             $this->dataOriginal[$offset] = $value;
         }
 
@@ -310,7 +306,7 @@ abstract class ORM implements Implement, \ArrayAccess
         switch ($returnType) {
             case 'CLASS':
                 return $query->fetch(
-                    'CLASSLATE',
+                    'CLASS',
                     get_class($this)
                 );
                 break;
@@ -771,8 +767,13 @@ abstract class ORM implements Implement, \ArrayAccess
      */
     public function save()
     {
-        $primaryKey = $result = null;
-        $data = array();
+        $primaryKey = $result = $query = null;
+        $sets = $changes = array();
+        $changeOperator = '';
+        $changesTo = 0;
+
+        $tempNewValType = '';
+        $tempNewValIsNum = false;
 
         if (isset($this->data[$this->primary])) {
             if (isset($this->dataOriginal[$this->primary])) {
@@ -783,28 +784,82 @@ abstract class ORM implements Implement, \ArrayAccess
 
             foreach ($this->data as $key => $val) {
                 if (isset($this->fields[$key])) {
-                    $data[$key] = $val;
+                    // Determine data type of current val
+                    if (is_int($val)) {
+                        $tempNewValType = 'int';
+                        $tempNewValIsNum = true;
+                    } elseif (is_float($val)) {
+                        $tempNewValType = 'float';
+                        $tempNewValIsNum = true;
+                    } else {
+                        $tempNewValType = 'other';
+                        $tempNewValIsNum = false;
+                    }
+
+                    // If this val is number, use change method to change it
+                    if ($tempNewValIsNum
+                    && isset($this->dataOriginal[$key])
+                    && is_numeric($this->dataOriginal[$key])) {
+
+                        switch ($tempNewValType) {
+                            case 'int':
+                                $changesTo = (int)$this->dataOriginal[$key] - $val;
+                                break;
+
+                            case 'float':
+                                $changesTo = (float)$this->dataOriginal[$key] - $val;
+                                break;
+
+                            default:
+                                $changesTo = 0;
+                                continue;
+                                break;
+                        }
+
+                        if ($changesTo > 0) {
+                            $changeOperator = '-';
+                        } elseif ($changesTo < 0) {
+                            $changeOperator = '+';
+                        } else {
+                            $changeOperator = '';
+                        }
+
+                        if ($changeOperator) {
+                            $changes[] = array(
+                                'Field' => $key,
+                                'Operator' => $changeOperator,
+                                'Value' => abs($changesTo)
+                            );
+                        }
+                    } else {
+                        // Or, use replace method
+                        $sets[$key] = $val;
+                    }
                 }
             }
 
-            if ($result = \Facula\Unit\Query\Factory::from(
+            $query = \Facula\Unit\Query\Factory::from(
                 $this->table,
                 !$this->noParser
-            )->update(
-                $this->fields
-            )->set(
-                $data
-            )->where(
+            )->update($this->fields);
+
+            if (!empty($sets)) {
+                $query->set($sets);
+            }
+
+            if (!empty($changes)) {
+                $query->changes($changes);
+            }
+
+            if ($result = $query->where(
                 'AND',
                 $this->primary,
                 '=',
                 $primaryKey
             )->save()) {
-
                 $this->dataOriginal = $this->data;
 
                 return $result;
-
             }
         } else {
             \Facula\Framework::core('debug')->exception(
