@@ -993,7 +993,8 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                     $value['Value']
                 )) {
                     \Facula\Framework::core('debug')->exception(
-                        'ERROR_QUERY_CHANGE_OPERATOR_PARAM_MISSING|Picked up only: ' . implode(', ', array_keys($values)),
+                        'ERROR_QUERY_CHANGE_OPERATOR_PARAM_MISSING|Picked up only: '
+                        . implode(', ', array_keys($values)),
                         'query',
                         true
                     );
@@ -1311,6 +1312,10 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                     }
 
                     switch($mode) {
+                        case 'ASSOC':
+                            return $rawResults;
+                            break;
+
                         case 'CLASS':
                             if (!class_exists($className)) {
                                 \Facula\Framework::core('debug')->exception(
@@ -1336,7 +1341,14 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                             break;
 
                         default:
-                            return $rawResults;
+                            \Facula\Framework::core('debug')->exception(
+                                'ERROR_QUERY_FETCH_UNKNOWN_MODE|' . $mode,
+                                'query',
+                                true
+                            );
+
+                            return false;
+                            break;
                     }
                 } catch (PDOException $e) {
                     \Facula\Framework::core('debug')->exception(

@@ -466,7 +466,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                     $tmpstr .= 'object ' . get_class($val);
                 } elseif (is_bool($val)) {
                     $tmpstr .= $val ? 'true' : 'false';
-                } elseif (is_integer($val)) {
+                } elseif (is_int($val)) {
                     $tmpstr .= 'integer ' . $val;
                 } elseif (is_float($val)) {
                     $tmpstr .= 'float ' . $val;
