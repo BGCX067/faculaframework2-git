@@ -46,10 +46,6 @@ class Session
     /** Cores from facula */
     private static $cores = array();
 
-    /** Hash char map */
-    private static $hashCharMap =
-        'abcdefghijklnmopqistuvwxyzABCDEFGHIJKLNMOPQRSTUVWXYZ1234567890`~!@#$%^&*()[]\{}|;\':",./<>?';
-
     /**
      * Initializer
      *
@@ -73,6 +69,9 @@ class Session
 
                     'Salt' => isset($setting['Salt'])
                                     ? $setting['Salt'] : '',
+
+                    'RandomKeyLen' => isset($setting['RandomKeyLen'])
+                                    ? (int)$setting['RandomKeyLen'] : 16,
                 ),
             );
 
@@ -109,6 +108,9 @@ class Session
 
                     'Salt' => isset($setting['Salt'])
                         ? $setting['Salt'] : self::$defaults['Setting']['Salt'],
+
+                    'RandomKeyLen' => isset($setting['RandomKeyLen'])
+                        ? $setting['RandomKeyLen'] : self::$defaults['Setting']['RandomKeyLen'],
                 ),
                 'Sessions' => array(),
                 'Handlers' => array(),
@@ -401,17 +403,21 @@ class Session
     {
         global $_SERVER;
         $key = $rawKey = array();
+        $randomKey = '';
 
         $hasher = new Hasher(self::$sessions[$for]['Setting']['Salt'], 1);
 
+        for ($i = 0; $i < static::$sessions[$for]['Setting']['RandomKeyLen']; $i++) {
+            $randomKey .= chr(mt_rand(0, 255));
+        }
+
         $rawKey = array(
-            'ClientID' => self::$hashCharMap[mt_rand(0, 89) % 90]
-                            . FACULA_TIME
-                            . $networkID
-                            . mt_rand(0, 65535)
-                            . (isset($_SERVER['HTTP_USER_AGENT'])
-                            ? $_SERVER['HTTP_USER_AGENT'] : 'unknown')
-                            . self::$hashCharMap[mt_rand(0, 89) % 90],
+            'ClientID' => $randomKey
+                        . FACULA_TIME
+                        . $networkID
+                        . (isset($_SERVER['HTTP_USER_AGENT'])
+                        ? $_SERVER['HTTP_USER_AGENT'] : 'unknown')
+                        . $randomKey[0],
             'NetID' => $networkID,
         );
 
