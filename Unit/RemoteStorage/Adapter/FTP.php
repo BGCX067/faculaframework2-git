@@ -202,10 +202,10 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
                 )) {
                     ftp_close($conn);
                     $conn = null;
+                } else {
+                    ftp_pasv($conn, false);
                 }
             }
-
-            ftp_pasv($conn, false);
         }
 
         \Facula\Framework::core('debug')->criticalSection(false);
