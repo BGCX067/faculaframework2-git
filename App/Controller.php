@@ -226,7 +226,11 @@ abstract class Controller extends Setting
         if ($this->template) {
             return $this->template->insertMessage($msg);
         } else {
-            $this->debug->exception('ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE', 'controller', true);
+            $this->debug->exception(
+                'ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE',
+                'controller',
+                true
+            );
         }
 
         return false;
@@ -243,8 +247,13 @@ abstract class Controller extends Setting
      *
      * @return mixed Result from Response core::send when success, false otherwise
      */
-    protected function display($tplName, $cacheExpired = 0, $cacheExpiredCallback = null, $tplSet = '', $factor = '')
-    {
+    protected function display(
+        $tplName,
+        $cacheExpired = 0,
+        $cacheExpiredCallback = null,
+        $tplSet = '',
+        $factor = ''
+    ) {
         $content = '';
 
         if (isset($this->template)) {

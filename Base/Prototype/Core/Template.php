@@ -272,11 +272,11 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
      *
      * Notice that the message will not showing if there is no message template made for display it
      *
-     * @param string $message Message content in string or array
+     * @param array $message Message content in array
      *
      * @return bool Return the parsed message when inserted, false otherwise
      */
-    public function insertMessage($message)
+    public function insertMessage(array $message)
     {
         if (!empty($message)) {
             if (isset($message['Code'])) {

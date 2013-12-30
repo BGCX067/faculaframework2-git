@@ -42,7 +42,7 @@ interface Template
         $expiredCallback = null,
         $cacheFactor = ''
     );
-    public function insertMessage($message);
+    public function insertMessage(array $message);
     public function importTemplateFile($name, $path);
     public function importLanguageFile($languageCode, $path);
     public function getLanguageString($key);
