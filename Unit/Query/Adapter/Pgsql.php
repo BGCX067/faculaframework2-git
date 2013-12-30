@@ -172,11 +172,6 @@ class Pgsql implements \Facula\Unit\Query\AdapterImplement
              $sql .= ' SET ' . $this->doSets();
         }
 
-        // Changes
-        if (!empty($this->query['Changes'])) {
-             $sql .= ' SET ' . $this->doChanges();
-        }
-
         // Where
         if (!empty($this->query['Where'])) {
              $sql .= ' WHERE ' . $this->doCondition('Where');
