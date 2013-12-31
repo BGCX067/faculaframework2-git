@@ -122,7 +122,7 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
     public function upload($localFile, &$error = '')
     {
         $currentRemotePath = $remoteFileName = $resultPath = $fileExt = '';
-        $failed = false;
+        $success = false;
 
         if ($this->connection || $this->connect()) {
             \Facula\Framework::core('debug')->criticalSection(true);
@@ -139,8 +139,6 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
                         'ftp',
                         false
                     );
-
-                    $failed = true;
                 } else {
                     $fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
 
@@ -152,6 +150,8 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
 
                     if (ftp_put($this->connection, $remoteFileName, $localFile, FTP_BINARY)) {
                         $resultPath =  $currentRemotePath . '/' . $remoteFileName;
+
+                        $success = true;
                     } else {
                         $error = 'ERROR_REMOTESTORAGE_UPLOAD_FAILED';
                     }
@@ -163,7 +163,7 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
 
             \Facula\Framework::core('debug')->criticalSection(false);
 
-            return $failed ? false : ($this->setting['Access'] . substr(
+            return !$success ? false : ($this->setting['Access'] . substr(
                 $resultPath,
                 strlen($this->setting['Path'])
             ));
