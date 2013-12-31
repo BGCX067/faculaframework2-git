@@ -799,7 +799,7 @@ abstract class ORM implements Implement, \ArrayAccess
                     // If this val is number, use change method to change it
                     if ($tempNewValIsNum
                     && isset($this->dataOriginal[$key])
-                    && is_numeric($this->dataOriginal[$key])) {
+                    && (is_int($this->dataOriginal[$key]) || is_float($this->dataOriginal[$key]))) {
 
                         switch ($tempNewValType) {
                             case 'int':
