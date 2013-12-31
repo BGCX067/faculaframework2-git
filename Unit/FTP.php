@@ -347,8 +347,6 @@ class FTP
         $path = $currentRemotePath = $resultPath = '';
 
         if ($server = $this->getCurrentServer()) {
-            \Facula\Framework::core('debug')->criticalSection(true);
-
             if (isset($server['Path']) && !$this->doEnterPath(
                 $server['Path'] . '/' . $remotePath,
                 $currentRemotePath
@@ -359,6 +357,8 @@ class FTP
                     true
                 );
             }
+
+            \Facula\Framework::core('debug')->criticalSection(true);
 
             if (is_readable($localFile)) {
                 if (ftp_put(self::$connection, $remoteFileName, $localFile, FTP_BINARY)) {
