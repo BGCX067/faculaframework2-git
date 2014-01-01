@@ -345,6 +345,12 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
 
             $finalContent = $oldBufferContent . static::$content;
 
+            $hookResult = \Facula\Framework::summonHook(
+                'response_preparing',
+                array($finalContent),
+                $errors
+            );
+
             if (isset(static::$httpContentTypes[$type])) {
                 header(
                     'Content-Type: '
