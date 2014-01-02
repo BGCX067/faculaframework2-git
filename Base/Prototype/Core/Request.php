@@ -303,7 +303,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
                         if (strpos(
                             $_SERVER['HTTP_REFERER'],
                             $this->requestInfo['absRootURL']
-                        ) === 0) {
+                        ) == 0) {
                             $this->requestInfo['fromSelf'] = true;
                         }
                         break;
