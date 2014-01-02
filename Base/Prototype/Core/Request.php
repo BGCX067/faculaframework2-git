@@ -83,7 +83,8 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
             'ip' => '0.0.0.0',
             'ipArray' => array('0','0','0','0'),
             'forwarded' => false,
-            'xForwardedName' => ''
+            'xForwardedName' => '',
+            'fromSelf' => false,
     );
 
     /**
@@ -101,6 +102,12 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
 
         if (function_exists('get_magic_quotes_gpc')) {
             $this->configs['AutoMagicQuotes'] = get_magic_quotes_gpc();
+        }
+
+        if (isset($cfg['DenyExternalSubmit']) && $cfg['DenyExternalSubmit']) {
+            $this->configs['NoExtSubmit'] = true;
+        } else {
+            $this->configs['NoExtSubmit'] = false;
         }
 
         if (isset($cfg['MaxDataSize'])) {
@@ -296,7 +303,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
                         if (strpos(
                             $_SERVER['HTTP_REFERER'],
                             $this->requestInfo['absRootURL']
-                        ) == 0) {
+                        ) === 0) {
                             $this->requestInfo['fromSelf'] = true;
                         }
                         break;
@@ -336,6 +343,12 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
                 && $this->requestInfo['ip'] != $_SERVER['REMOTE_ADDR']) {
                 $this->requestInfo['forwarded'] = true;
             }
+        }
+
+        // Deny external submit request when needed by clear POST array
+        if ($this->configs['NoExtSubmit']
+        && !$this->requestInfo['fromSelf']) {
+            $_POST = array();
         }
 
         $this->pool = array(

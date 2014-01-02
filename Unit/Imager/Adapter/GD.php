@@ -363,6 +363,13 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Adapter
         return false;
     }
 
+    /**
+     * Blur the current image resource
+     *
+     * @param integer $level Level of blur
+     *
+     * @return bool Return true when image success blured, false otherwise
+     */
     public function blur($level = 1)
     {
         $gaussian = array(
@@ -389,6 +396,13 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Adapter
         return false;
     }
 
+    /**
+     * Sharpen the current image resource
+     *
+     * @param integer $level Level of sharp
+     *
+     * @return bool Return true when image success blured, false otherwise
+     */
     public function sharp($level = 1)
     {
         $shape = array(
