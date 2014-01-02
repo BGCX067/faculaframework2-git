@@ -157,7 +157,7 @@ class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
                     }
                 }
 
-            } catch(Exception $e) {
+            } catch (Exception $e) {
                 $error = $e->getMessage();
             }
 
