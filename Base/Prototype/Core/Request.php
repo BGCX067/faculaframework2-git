@@ -292,6 +292,15 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
                         );
                         break;
 
+                    case 'HTTP_REFERER':
+                        if (strpos(
+                            $_SERVER['HTTP_REFERER'],
+                            $this->requestInfo['absRootURL']
+                        ) == 0) {
+                            $this->requestInfo['fromSelf'] = true;
+                        }
+                        break;
+
                     case 'HTTP_X_FORWARDED_FOR':
                     case 'HTTP_X_FORWARDED':
                     case 'HTTP_FORWARDED_FOR':
