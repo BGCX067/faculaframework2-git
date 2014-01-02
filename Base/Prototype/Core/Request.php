@@ -261,7 +261,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
                     case 'REQUEST_METHOD':
                         // Determine the type of request method.
                         $this->requestInfo['method'] = isset(static::$requestMethods[$val])
-                        ? static::$requestMethods[$val] : 'get';
+                            ? static::$requestMethods[$val] : 'get';
                         break;
 
                     case 'HTTP_ACCEPT_ENCODING':
