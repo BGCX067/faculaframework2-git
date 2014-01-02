@@ -911,7 +911,7 @@ class Framework
         if (!$this->cores[$coreName] = $coreRef->getMethod('getInstance')->invoke(
             null,
             $this->squeezeCoreSetting($coreName),
-            $this->importCommonSetting(),
+            $this->exportCommonSetting(),
             $this
         )) {
             throw new \Exception(
@@ -953,7 +953,7 @@ class Framework
      *
      * @return array
      */
-    protected function importCommonSetting()
+    protected function exportCommonSetting()
     {
         return isset($this->setting['Common']) ? $this->setting['Common'] : array();
     }
