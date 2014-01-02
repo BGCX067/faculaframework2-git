@@ -224,7 +224,13 @@ abstract class Controller extends Setting
     protected function error($msg)
     {
         if ($this->template) {
-            return $this->template->insertMessage($msg);
+            if (is_array($msg)) {
+                return $this->template->insertMessage($msg);
+            } else {
+                return $this->template->insertMessage(array(
+                    'Message' => $msg,
+                ));
+            }
         } else {
             $this->debug->exception(
                 'ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE',
