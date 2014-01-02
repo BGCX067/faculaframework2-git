@@ -36,6 +36,8 @@ interface AdapterImplement
     public function getLastError();
     public function getImageRes();
 
+    public function blur($level = 1);
+    public function sharp($level = 1);
     public function resize(
         $width,
         $height,

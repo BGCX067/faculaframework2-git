@@ -363,6 +363,58 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Adapter
         return false;
     }
 
+    public function blur($level = 1)
+    {
+        $gaussian = array(
+            array(2.0, 3.0, 2.0),
+            array(3.0, 6.0, 3.0),
+            array(2.0, 3.0, 2.0)
+        );
+
+        if ($this->imageRes) {
+            for ($i = 0; $i < $level; $i++) {
+                if (!imageconvolution(
+                    $this->imageRes,
+                    $gaussian,
+                    array_sum(array_map('array_sum', $gaussian)),
+                    0
+                )) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public function sharp($level = 1)
+    {
+        $shape = array(
+            array(-1.2, -1, -1.2),
+            array(-1, 20, -1),
+            array(-1.2, -1, -1.2)
+        );
+
+        if ($this->imageRes) {
+            for ($i = 0; $i < $level; $i++) {
+                if (!imageconvolution(
+                    $this->imageRes,
+                    $shape,
+                    array_sum(array_map('array_sum', $shape)),
+                    0
+                )) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Full the image with specified size
      *
