@@ -271,6 +271,9 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
             'PSignal' => isset($cfg['PostProfileSignal']) && $cfg['PostProfileSignal']
                                 ? true : false,
 
+            'NoExposure' => isset($cfg['HideServerInfo']) && !$cfg['HideServerInfo']
+                                ? false : true,
+
             'Encoding' => isset($cfg['Encoding'])
                                 ? $cfg['Encoding'] : 'utf-8',
 
@@ -288,10 +291,6 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
      */
     public function inited()
     {
-        static::$headers[] = 'Server: Facula Framework';
-        static::$headers[] = 'X-Powered-By: Facula Framework ' . __FACULAVERSION__;
-        static::$headers[] = 'X-Powered-For: ' . $this->configs['AppVersion'];
-
         if (\Facula\Framework::core('request')->getClientInfo('gzip') && $this->configs['GZIPEnabled']) {
             $this->configs['UseGZIP'] = true;
         } else {
@@ -360,6 +359,13 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
                 );
             } else {
                 header('Content-Type: ' . $type);
+            }
+
+            // Hide server software information by replace it.
+            if ($this->configs['NoExposure']) {
+                header('Server: Facula');
+                header('X-Powered-By: Facula ' . __FACULAVERSION__);
+                header('X-Powered-For: ' . $this->configs['AppVersion']);
             }
 
             if ($this->configs['PSignal']) {

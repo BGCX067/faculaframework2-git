@@ -721,7 +721,7 @@ class Framework
     {
         if (isset(static::$instance)) {
             return array(
-                'Base' => 'Facula Framework ' . __FACULAVERSION__,
+                'Base' => 'Facula ' . __FACULAVERSION__,
 
                 'App' => isset(static::$instance->setting['AppName'])
                         ? static::$instance->setting['AppName'] : 'Facula App',
