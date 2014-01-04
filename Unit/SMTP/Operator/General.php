@@ -1,7 +1,7 @@
 <?php
 
 /**
- * General SMTP Adapter
+ * General SMTP Operator
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -24,7 +24,7 @@
  * @see        https://github.com/raincious/facula FYI
  */
 
-namespace Facula\Unit\SMTP\Adapter;
+namespace Facula\Unit\SMTP\Operator;
 
 /**
  * General SMTP Operator

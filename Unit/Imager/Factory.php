@@ -29,7 +29,7 @@ namespace Facula\Unit\Imager;
 /**
  * Imager Factory
  */
-class Factory extends \Facula\Base\Factory\Adapter
+class Factory extends \Facula\Base\Factory\Operator
 {
     /** Handler class name */
     private static $handlerClassName = '';
@@ -41,11 +41,11 @@ class Factory extends \Facula\Base\Factory\Adapter
         'MemoryLimit' => 0,
     );
 
-    /** Declare default adapters */
-    protected static $adapters = array(
-        'GD' => '\Facula\Unit\Imager\Adapter\GD',
-        'Gmagick' => '\Facula\Unit\Imager\Adapter\Gmagick',
-        'Imagick' => '\Facula\Unit\Imager\Adapter\Imagick',
+    /** Declare default operators */
+    protected static $operators = array(
+        'GD' => '\Facula\Unit\Imager\Operator\GD',
+        'Gmagick' => '\Facula\Unit\Imager\Operator\Gmagick',
+        'Imagick' => '\Facula\Unit\Imager\Operator\Imagick',
     );
 
     /**
@@ -76,7 +76,7 @@ class Factory extends \Facula\Base\Factory\Adapter
             }
         }
 
-        $className = static::getAdapter($type);
+        $className = static::getOperator($type);
 
         if (class_exists($className)) {
             self::$handlerClassName = $className;
@@ -121,7 +121,7 @@ class Factory extends \Facula\Base\Factory\Adapter
         if (self::$handlerClassName) {
             $handler = new self::$handlerClassName($file, self::$setting);
 
-            if ($handler instanceof AdapterImplement) {
+            if ($handler instanceof OperatorImplement) {
                 if ($handler->getImageRes()) {
                     return $handler;
                 }

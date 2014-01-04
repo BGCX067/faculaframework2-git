@@ -1,7 +1,7 @@
 <?php
 
 /**
- * GD Adapter for Imager
+ * GD Operator for Imager
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -24,12 +24,12 @@
  * @see        https://github.com/raincious/facula FYI
  */
 
-namespace Facula\Unit\Imager\Adapter;
+namespace Facula\Unit\Imager\Operator;
 
 /**
  * Imager GD Handler
  */
-class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\AdapterImplement
+class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\OperatorImplement
 {
     /** Resource handler */
     private $imageRes = null;

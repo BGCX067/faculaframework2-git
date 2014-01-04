@@ -29,7 +29,7 @@ namespace Facula\Unit\RemoteStorage;
 /**
  * Interface for RemoteStorage Adapter
  */
-interface AdapterImplement
+interface OperatorImplement
 {
     public function __construct(array $setting);
     public function upload($localFile, &$error = '');

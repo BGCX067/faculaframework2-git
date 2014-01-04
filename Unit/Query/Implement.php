@@ -32,8 +32,6 @@ namespace Facula\Unit\Query;
 interface Implement
 {
     public static function from($tableName, $autoParse = false);
-    public static function addAutoParser($name, $type, \Closure $parser);
-    public static function registerAdapter($driver, $adapterClass);
 
     public function select(array $fields);
     public function insert(array $fields);

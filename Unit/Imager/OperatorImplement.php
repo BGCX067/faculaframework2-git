@@ -29,7 +29,7 @@ namespace Facula\Unit\Imager;
 /**
  * Interface for image adapter
  */
-interface AdapterImplement
+interface OperatorImplement
 {
     public function __construct($file, array &$config = array());
 

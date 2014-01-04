@@ -70,14 +70,14 @@ $setting = array {
 /**
  * Remote Storage Operator
  */
-class Factory extends \Facula\Base\Factory\Adapter
+class Factory extends \Facula\Base\Factory\Operator
 {
     /** The adapter instance that will be use to upload files */
     private static $handler = null;
 
-    /** Default adapters */
-    protected static $adapters = array(
-        'ftp' => '\Facula\Unit\RemoteStorage\Adapter\FTP',
+    /** Default operators */
+    protected static $operators = array(
+        'ftp' => '\Facula\Unit\RemoteStorage\Operator\FTP',
     );
 
     /** Servers as name */
@@ -131,14 +131,14 @@ class Factory extends \Facula\Base\Factory\Adapter
             if (!self::$handler) {
                 foreach (self::$servers as $server) {
                     if (isset($server['Type'][0])) {
-                        $adapterName = static::getAdapter($server['Type']);
+                        $adapterName = static::getOperator($server['Type']);
 
                         if (class_exists($adapterName)) {
                             $handler = new $adapterName(
                                 isset($server['Option']) ? $server['Option'] : array()
                             );
 
-                            if ($handler instanceof AdapterImplement) {
+                            if ($handler instanceof Operator) {
                                 if ($result = $handler->upload($localFile, $error)) {
                                     self::$handler = $handler;
 

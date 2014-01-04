@@ -1,7 +1,7 @@
 <?php
 
 /**
- * FTP Adapter for RemoteStorage
+ * FTP Operator for RemoteStorage
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -24,12 +24,12 @@
  * @see        https://github.com/raincious/facula FYI
  */
 
-namespace Facula\Unit\RemoteStorage\Adapter;
+namespace Facula\Unit\RemoteStorage\Operator;
 
 /**
- * Remote Storage FTP Adapter
+ * Remote Storage FTP Operator
  */
-class FTP implements \Facula\Unit\RemoteStorage\AdapterImplement
+class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
 {
     /** For activated FTP connection handler */
     private $connection = null;

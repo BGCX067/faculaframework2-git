@@ -45,7 +45,7 @@ $cfg = array(
 /**
  * SMTP Operating Factory
  */
-class Factory extends \Facula\Base\Factory\Adapter
+class Factory extends \Facula\Base\Factory\Operator
 {
     /** Global configuration of the class */
     private static $config = array();
@@ -53,9 +53,9 @@ class Factory extends \Facula\Base\Factory\Adapter
     /** Container of email that waiting to be send */
     private static $emails = array();
 
-    /** Default adapter */
-    protected static $adapters = array(
-        'general' => '\Facula\Unit\SMTP\Adapter\General',
+    /** Default operators */
+    protected static $operators = array(
+        'general' => '\Facula\Unit\SMTP\Operator\General',
     );
 
     /**
@@ -233,7 +233,7 @@ class Factory extends \Facula\Base\Factory\Adapter
                 while (!empty($currentServers)
                     && !empty(self::$emails) && $retryLimit > 0) {
                     foreach ($currentServers as $serverkey => $server) {
-                        $operaterClassName = static::getAdapter($server['Type']);
+                        $operaterClassName = static::getOperator($server['Type']);
 
                         if (class_exists($operaterClassName, true)) {
                             $operater = new $operaterClassName($server);

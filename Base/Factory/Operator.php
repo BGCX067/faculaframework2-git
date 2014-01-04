@@ -27,25 +27,25 @@
 namespace Facula\Base\Factory;
 
 /**
- * Extends by adapter based factory
+ * Extends by operator based factory
  */
-abstract class Adapter
+abstract class Operator
 {
-    /** Default container for adapters if child classes not overwrite */
-    protected static $adapters = array();
+    /** Default container for operators if child classes not overwrite */
+    protected static $operators = array();
 
     /**
-     * Register a adapter
+     * Register a operator
      *
-     * @param string $adapter The name of adapter
-     * @param string $adapterClass The Class name of adapter
+     * @param string $operator The name of operator
+     * @param string $operatorClass The Class name of operator
      *
      * @return bool Return true when succeed, false otherwise
      */
-    public static function registerAdapter($adapter, $adapterClass)
+    public static function registerOperator($operator, $operatorClass)
     {
-        if (!isset(static::$adapters[$adapter]) && class_exists($adapterClass)) {
-            static::$adapters[$adapter] = $adapterClass;
+        if (!isset(static::$operators[$operator]) && class_exists($operatorClass)) {
+            static::$operators[$operator] = $operatorClass;
 
             return true;
         }
@@ -54,16 +54,16 @@ abstract class Adapter
     }
 
     /**
-     * Unregister a adapter
+     * Unregister a operator
      *
-     * @param string $adapter The name of adapter
+     * @param string $operator The name of operator
      *
      * @return bool Return true when succeed, false otherwise
      */
-    public static function unregisterAdapter($adapter)
+    public static function unregisterOperator($operator)
     {
-        if (isset(static::$adapters[$adapter])) {
-            unset(static::$adapters[$adapter]);
+        if (isset(static::$operators[$operator])) {
+            unset(static::$operators[$operator]);
 
             return true;
         }
@@ -72,20 +72,20 @@ abstract class Adapter
     }
 
     /**
-     * Get a adapter
+     * Get a operator
      *
-     * @param string $adapter The name of adapter
+     * @param string $operator The name of operator
      *
-     * @return bool Return the class name of adapter when succeed, false otherwise
+     * @return bool Return the class name of operator when succeed, false otherwise
      */
-    protected static function getAdapter($adapter)
+    protected static function getOperator($operator)
     {
-        if (isset(static::$adapters[$adapter])) {
-            return static::$adapters[$adapter];
+        if (isset(static::$operators[$operator])) {
+            return static::$operators[$operator];
         } else {
             \Facula\Framework::core('debug')->exception(
-                'ERROR_ADAPTERFACTORY_ADAPTER_NOT_FOUND|' . get_called_class() . '::' . $adapter,
-                'adapterfactory',
+                'ERROR_OPERATORFACTORY_OPERATOR_NOT_FOUND|' . get_called_class() . '::' . $operator,
+                'operator factory',
                 true
             );
         }

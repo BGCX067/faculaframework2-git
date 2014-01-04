@@ -29,7 +29,7 @@ namespace Facula\Unit\Query;
 /**
  * Interface for Query adapters
  */
-interface AdapterImplement
+interface OperatorImplement
 {
     public function __construct($tableName, array &$querySet);
     public function build();

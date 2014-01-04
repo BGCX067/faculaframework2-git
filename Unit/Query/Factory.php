@@ -29,15 +29,15 @@ namespace Facula\Unit\Query;
 /**
  * Query Operator
  */
-class Factory extends \Facula\Base\Factory\Adapter implements Implement
+class Factory extends \Facula\Base\Factory\Operator implements Implement
 {
     /** Tag to anti reinitializing */
     private static $inited = false;
 
-    /** Default Adapters */
-    protected static $adapters = array(
-        'mysql' => '\Facula\Unit\Query\Adapter\Mysql',
-        'pgsql' => '\Facula\Unit\Query\Adapter\Pgsql',
+    /** Default operators */
+    protected static $operators = array(
+        'mysql' => '\Facula\Unit\Query\Operator\Mysql',
+        'pgsql' => '\Facula\Unit\Query\Operator\Pgsql',
     );
 
     /** Shortcut for PDO data types */
@@ -102,8 +102,8 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
     /** Active connection for current query */
     private $connection = null;
 
-    /** Active adapter for current query */
-    private $adapter = null;
+    /** Active operator for current query */
+    private $operator = null;
 
     /** Query information */
     protected $query = array();
@@ -1107,30 +1107,30 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
     }
 
     /**
-     * Get adapter for active query
+     * Get operator for active query
      *
      * @return mixed Return a PDO connection when succeed, or false for fail
      */
-    private function getDBAdapter()
+    private function getDBOperator()
     {
-        $adapterName = '';
-        $adapter = null;
+        $operatorName = '';
+        $operator = null;
 
-        if (!$this->adapter) {
+        if (!$this->operator) {
             if (isset($this->connection->_connection['Driver'])) {
-                $adapterName = static::getAdapter(
+                $operatorName = static::getOperator(
                     $this->connection->_connection['Driver']
                 );
 
-                if (class_exists($adapterName)) {
-                    $adapter = new $adapterName(
+                if (class_exists($operatorName)) {
+                    $operator = new $operatorName(
                         $this->connection->_connection['Prefix']
                         . $this->query['From'],
                         $this->query
                     );
 
-                    if ($adapter instanceof AdapterImplement) {
-                        return ($this->adapter = $adapter);
+                    if ($operator instanceof OperatorImplement) {
+                        return ($this->operator = $operator);
                     } else {
                         \Facula\Framework::core('debug')->exception(
                             'ERROR_QUERY_BUILDER_INTERFACE_INVALID',
@@ -1155,7 +1155,7 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                 );
             }
         } else {
-            return $this->adapter;
+            return $this->operator;
         }
 
         return null;
@@ -1192,9 +1192,9 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
                 }
             }
 
-            if ($this->getPDOConnection() && $this->getDBAdapter()) {
+            if ($this->getPDOConnection() && $this->getDBOperator()) {
                 // Build SQL Syntax
-                if ($sql = $this->adapter->build()) {
+                if ($sql = $this->operator->build()) {
                     try {
                         // Ensure the connection we used still the last one
                         $sqlID = crc32($sql . $this->connection->_connection['LstConnected']);
@@ -1306,9 +1306,9 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
 
                     if ($this->query['Parser']
                     && isset($this->query['FieldParsers'])) {
-                        $rawResults = $this->fetchWithParsers($this->adapter->fetch($statement));
+                        $rawResults = $this->fetchWithParsers($this->operator->fetch($statement));
                     } else {
-                        $rawResults = $this->fetchPure($this->adapter->fetch($statement));
+                        $rawResults = $this->fetchPure($this->operator->fetch($statement));
                     }
 
                     switch($mode) {
@@ -1439,15 +1439,15 @@ class Factory extends \Facula\Base\Factory\Adapter implements Implement
 
                     switch ($this->query['Action']) {
                         case 'insert':
-                            return $this->adapter->insert($statement, $param);
+                            return $this->operator->insert($statement, $param);
                             break;
 
                         case 'update':
-                            return $this->adapter->update($statement);
+                            return $this->operator->update($statement);
                             break;
 
                         case 'delete':
-                            return $this->adapter->delete($statement);
+                            return $this->operator->delete($statement);
                             break;
 
                         default:

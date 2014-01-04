@@ -1,7 +1,7 @@
 <?php
 
 /**
- * PostgreSQL Adapter for Query
+ * PostgreSQL Operator for Query
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -24,12 +24,12 @@
  * @see        https://github.com/raincious/facula FYI
  */
 
-namespace Facula\Unit\Query\Adapter;
+namespace Facula\Unit\Query\Operator;
 
 /**
  * Query PostgreSQL
  */
-class Pgsql implements \Facula\Unit\Query\AdapterImplement
+class Pgsql implements \Facula\Unit\Query\OperatorImplement
 {
     /** Table name */
     private $table = '';

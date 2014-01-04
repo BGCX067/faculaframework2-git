@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MySQL Adapter for Query
+ * MySQL Operator for Query
  *
  * Facula Framework 2013 (C) Rain Lee
  *
@@ -24,12 +24,12 @@
  * @see        https://github.com/raincious/facula FYI
  */
 
-namespace Facula\Unit\Query\Adapter;
+namespace Facula\Unit\Query\Operator;
 
 /**
  * Query MySQL
  */
-class Mysql implements \Facula\Unit\Query\AdapterImplement
+class Mysql implements \Facula\Unit\Query\OperatorImplement
 {
     /** Table name */
     private $table = '';
