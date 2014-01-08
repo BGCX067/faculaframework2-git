@@ -233,6 +233,22 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
             return (float)($data);
         });
 
+        static::addAutoParser('Lower', 'Reader', function ($data) {
+            return strtolower($data);
+        });
+
+        static::addAutoParser('Lower', 'Writer', function ($data) {
+            return strtolower($data);
+        });
+
+        static::addAutoParser('Upper', 'Reader', function ($data) {
+            return strtoupper($data);
+        });
+
+        static::addAutoParser('Upper', 'Writer', function ($data) {
+            return strtoupper($data);
+        });
+
         return true;
     }
 
