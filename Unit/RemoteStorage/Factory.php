@@ -72,7 +72,7 @@ $setting = array {
  */
 class Factory extends \Facula\Base\Factory\Operator
 {
-    /** The adapter instance that will be use to upload files */
+    /** The operator instance that will be use to upload files */
     private static $handler = null;
 
     /** Default operators */
@@ -123,7 +123,7 @@ class Factory extends \Facula\Base\Factory\Operator
     public static function upload($localFile, &$error = '')
     {
         $handler = null;
-        $adapterName = '';
+        $operatorName = '';
         $result = '';
 
         if (is_readable($localFile)) {
@@ -131,14 +131,14 @@ class Factory extends \Facula\Base\Factory\Operator
             if (!self::$handler) {
                 foreach (self::$servers as $server) {
                     if (isset($server['Type'][0])) {
-                        $adapterName = static::getOperator($server['Type']);
+                        $operatorName = static::getOperator($server['Type']);
 
-                        if (class_exists($adapterName)) {
-                            $handler = new $adapterName(
+                        if (class_exists($operatorName)) {
+                            $handler = new $operatorName(
                                 isset($server['Option']) ? $server['Option'] : array()
                             );
 
-                            if ($handler instanceof Operator) {
+                            if ($handler instanceof OperatorImplement) {
                                 if ($result = $handler->upload($localFile, $error)) {
                                     self::$handler = $handler;
 
