@@ -472,7 +472,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             $phpcode .= '<?php if (isset(' . $param[0] . ')) { ';
 
             if (!isset($param[1])) {
-                $phpcode .= 'echo(' . $param[0] . ');';
+                $phpcode .= 'echo(htmlspecialchars(' . $param[0] . ', ENT_QUOTES));';
             } else {
                 switch ($param[1]) {
                     case 'date':
@@ -677,10 +677,17 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                                 . '));';
                         break;
 
+                    case 'pure':
+                        $variableName = array_shift($param);
+
+                        $phpcode .= 'echo(' . $variableName . ');';
+                        break;
+
                     default:
                         $variableName = array_shift($param);
+
                         $phpcode .= 'printf('
-                                . $variableName
+                                . 'htmlspecialchars(' . $variableName . ', ENT_QUOTES)'
                                 . ', '
                                 . implode(', ', $param)
                                 . ');';
