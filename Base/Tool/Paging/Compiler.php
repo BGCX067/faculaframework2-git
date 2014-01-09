@@ -495,29 +495,62 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                         break;
 
                     case 'friendlyTime':
-                        if (isset($this->pool['LanguageMap']['FORMAT_TIME_SNDBEFORE']) &&
-                            isset($this->pool['LanguageMap']['FORMAT_TIME_MINBEFORE']) &&
-                            isset($this->pool['LanguageMap']['FORMAT_TIME_HRBEFORE']) &&
-                            isset($this->pool['LanguageMap']['FORMAT_TIME_DAYBEFORE']) &&
-                            isset($this->pool['LanguageMap']['FORMAT_TIME_MOREBEFORE'])) {
-                            $phpcode .= '$temptime = $Time - ('
-                                    . $param[0]
-                                    . '); if ($temptime < 60) { printf(\''
-                                    . $this->pool['LanguageMap']['FORMAT_TIME_SNDBEFORE']
-                                    . '\', $temptime); } elseif ($temptime < 3600) { printf(\''
-                                    . $this->pool['LanguageMap']['FORMAT_TIME_MINBEFORE']
-                                    . '\', (int)($temptime / 60)); }'
-                                    . ' elseif ($temptime < 86400) { printf(\''
-                                    . $this->pool['LanguageMap']['FORMAT_TIME_HRBEFORE']
-                                    . '\', (int)($temptime / 3600)); }'
-                                    . ' elseif ($temptime < 604800) { printf(\''
-                                    . $this->pool['LanguageMap']['FORMAT_TIME_DAYBEFORE']
-                                    . '\', (int)($temptime / 86400)); }'
-                                    . ' elseif ($temptime) { echo(date(\''
-                                    . $this->pool['LanguageMap']['FORMAT_TIME_MOREBEFORE']
-                                    . '\', (int)('
-                                    . $param[0]
-                                    . '))); } $temptime = 0;';
+                        if (isset($this->pool['LanguageMap']['FORMAT_TIME_DEFAULT']) &&
+                            isset($this->pool['LanguageMap']['FORMAT_TIME_BEFORE_DAY']) &&
+                            isset($this->pool['LanguageMap']['FORMAT_TIME_BEFORE_HR']) &&
+                            isset($this->pool['LanguageMap']['FORMAT_TIME_BEFORE_MIN']) &&
+                            isset($this->pool['LanguageMap']['FORMAT_TIME_BEFORE_SND']) &&
+                            isset($this->pool['LanguageMap']['FORMAT_TIME_AFTER_SND']) &&
+                            isset($this->pool['LanguageMap']['FORMAT_TIME_AFTER_MIN']) &&
+                            isset($this->pool['LanguageMap']['FORMAT_TIME_AFTER_HR']) &&
+                            isset($this->pool['LanguageMap']['FORMAT_TIME_AFTER_DAY'])) {
+                            $phpcode .= '$tempTime = $Time - (' . $param[0]. ');'
+                                    // If small than 0, means after time
+                                    . 'if ($tempTime < 0) { $tempTime = abs($tempTime); '
+
+                                    . 'if ($tempTime < 60) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_AFTER_SND']
+                                    . '\', $tempTime); '
+
+                                    . '} elseif ($tempTime < 3600) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_AFTER_MIN']
+                                    . '\', (int)($tempTime / 60)); '
+
+                                    . '} elseif ($tempTime < 86400) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_AFTER_HR']
+                                    . '\', (int)($tempTime / 3600)); '
+
+                                    . '} elseif ($tempTime < 604800) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_AFTER_DAY']
+                                    . '\', (int)($tempTime / 86400)); '
+
+                                    . '} elseif ($tempTime) { echo(date(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_DEFAULT']
+                                    . '\', (int)(' . $param[0] . '))); } '
+
+                                    . '} else { ' // Or, if larger than 0 means before
+
+                                    . 'if ($tempTime < 60) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_BEFORE_SND']
+                                    . '\', $tempTime); '
+
+                                    . '} elseif ($tempTime < 3600) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_BEFORE_MIN']
+                                    . '\', (int)($tempTime / 60)); '
+
+                                    . '} elseif ($tempTime < 86400) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_BEFORE_HR']
+                                    . '\', (int)($tempTime / 3600)); '
+
+                                    . '} elseif ($tempTime < 604800) { printf(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_BEFORE_DAY']
+                                    . '\', (int)($tempTime / 86400)); '
+
+                                    . '} elseif ($tempTime) { echo(date(\''
+                                    . $this->pool['LanguageMap']['FORMAT_TIME_DEFAULT']
+                                    . '\', (int)(' . $param[0] . '))); } '
+
+                                    . '} $tempTime = 0;';
                         } else {
                             \Facula\Framework::core('debug')->exception(
                                 'ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYTIME_LANG_MISSED',
@@ -582,15 +615,15 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                         $phpcode .= 'echo(addslashes(' . $param[0] . '));';
                         break;
 
-                    case 'html':
-                        $phpcode .= 'echo(htmlspecialchars(' . $param[0] . ', ENT_QUOTES));';
-                        break;
-
-                    case 'htmlnl':
+                    case 'nl':
                         $phpcode .= 'echo(nl2br(htmlspecialchars(' . $param[0] . ', ENT_QUOTES)));';
                         break;
 
-                    case 'nl':
+                    case 'pure':
+                        $phpcode .= 'echo(' . $param[0] . ');';
+                        break;
+
+                    case 'pureNl':
                         $phpcode .= 'echo(nl2br(' . $param[0] . '));';
                         break;
 
@@ -675,12 +708,6 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                                 . ', '
                                 . (isset($param[2]) ? (int)($param[2]) : 2)
                                 . '));';
-                        break;
-
-                    case 'pure':
-                        $variableName = array_shift($param);
-
-                        $phpcode .= 'echo(' . $variableName . ');';
                         break;
 
                     default:
