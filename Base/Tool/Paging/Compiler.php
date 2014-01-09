@@ -456,7 +456,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
     private function doVariable($format, $pos)
     {
         $param = explode('|', $format);
-        $phpcode = '';
+        $phpcode = $phpBeginStr = $phpBeginDft = '';
 
         if (isset($param[0])) {
             if (!$this->doCheckVariableName($param[0])) {
@@ -469,16 +469,24 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                 return false;
             }
 
-            $phpcode .= '<?php if (isset(' . $param[0] . ')) { ';
+            // Code begin and end for string
+            $phpBeginStr = '<?php if (isset(' . $param[0] . '[0])) { ';
+            $phpEndsStr = ' } elseif (isset(' . $param[0] . ')) { echo(' . $param[0] . '); ';
+
+            // Code begin for other data type
+            $phpBeginDft = '<?php if (isset(' . $param[0] . ')) { ';
 
             if (!isset($param[1])) {
-                $phpcode .= 'echo(htmlspecialchars(' . $param[0] . ', ENT_QUOTES));';
+                $phpcode .= $phpBeginStr
+                        . 'echo(htmlspecialchars(' . $param[0] . ', ENT_QUOTES));'
+                        . $phpEndsStr;
             } else {
                 switch ($param[1]) {
                     case 'date':
                         if (isset($param[2])
                             && isset($this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]])) {
-                            $phpcode .= 'echo(date(\''
+                            $phpcode .= $phpBeginDft
+                                    . 'echo(date(\''
                                     . $this->pool['LanguageMap']['FORMAT_DATE_' . $param[2]]
                                     . '\', (int)('
                                     . $param[0]
@@ -504,7 +512,8 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                             isset($this->pool['LanguageMap']['FORMAT_TIME_AFTER_MIN']) &&
                             isset($this->pool['LanguageMap']['FORMAT_TIME_AFTER_HR']) &&
                             isset($this->pool['LanguageMap']['FORMAT_TIME_AFTER_DAY'])) {
-                            $phpcode .= '$tempTime = $Time - (' . $param[0]. ');'
+                            $phpcode .= $phpBeginDft
+                                    . '$tempTime = $Time - (' . $param[0]. ');'
                                     // If small than 0, means after time
                                     . 'if ($tempTime < 0) { $tempTime = abs($tempTime); '
 
@@ -568,7 +577,8 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                             isset($this->pool['LanguageMap']['FORMAT_FILESIZE_MEGABYTES']) &&
                             isset($this->pool['LanguageMap']['FORMAT_FILESIZE_GIGABYTES']) &&
                             isset($this->pool['LanguageMap']['FORMAT_FILESIZE_TRILLIONBYTES'])) {
-                            $phpcode .= '$tempsize = '
+                            $phpcode .= $phpBeginDft
+                                    . '$tempsize = '
                                     . $param[0]
                                     . '; if ($tempsize < 1024) { echo (($tempsize).\''
                                     . $this->pool['LanguageMap']['FORMAT_FILESIZE_BYTES']
@@ -597,38 +607,53 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                         break;
 
                     case 'json':
-                        $phpcode .= 'echo(json_encode('
+                        $phpcode .= $phpBeginStr
+                                . 'echo(json_encode('
                                 . $param[0]
                                 . ', JSON_HEX_QUOT | JSON_HEX_APOS'
-                                . '| JSON_HEX_AMP | JSON_HEX_TAG));';
+                                . '| JSON_HEX_AMP | JSON_HEX_TAG));'
+                                . $phpEndsStr;
                         break;
 
                     case 'jsonData':
-                        $phpcode .= 'echo(htmlspecialchars(json_encode(' . $param[0] . ')));';
+                        $phpcode .= $phpBeginStr
+                                . 'echo(htmlspecialchars(json_encode(' . $param[0] . ')));'
+                                . $phpEndsStr;
                         break;
 
                     case 'urlChar':
-                        $phpcode .= 'echo(urlencode(' . $param[0] . '));';
+                        $phpcode .= $phpBeginStr
+                                . 'echo(urlencode(' . $param[0] . '));'
+                                . $phpEndsStr;
                         break;
 
                     case 'slashed':
-                        $phpcode .= 'echo(addslashes(' . $param[0] . '));';
+                        $phpcode .= $phpBeginStr
+                                . 'echo(addslashes(' . $param[0] . '));'
+                                . $phpEndsStr;
                         break;
 
                     case 'nl':
-                        $phpcode .= 'echo(nl2br(htmlspecialchars(' . $param[0] . ', ENT_QUOTES)));';
+                        $phpcode .= $phpBeginStr
+                                . 'echo(nl2br(htmlspecialchars(' . $param[0] . ', ENT_QUOTES)));'
+                                . $phpEndsStr;
                         break;
 
                     case 'pure':
-                        $phpcode .= 'echo(' . $param[0] . ');';
+                        $phpcode .= $phpBeginStr
+                                . 'echo(' . $param[0] . ');'
+                                . $phpEndsStr;
                         break;
 
                     case 'pureNl':
-                        $phpcode .= 'echo(nl2br(' . $param[0] . '));';
+                        $phpcode .= $phpBeginStr
+                                . 'echo(nl2br(' . $param[0] . '));'
+                                . $phpEndsStr;
                         break;
 
                     case 'number':
-                        $phpcode .= 'echo(number_format(' . $param[0] . '));';
+                        $phpcode .= $phpBeginDft
+                                . 'echo(number_format(' . $param[0] . '));';
                         break;
 
                     case 'friendlyNumber':
@@ -640,7 +665,8 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                             isset($this->pool['LanguageMap']['FORMAT_NUMBER_QUADRILLION']) &&
                             isset($this->pool['LanguageMap']['FORMAT_NUMBER_QUINTILLION']) &&
                             isset($this->pool['LanguageMap']['FORMAT_NUMBER_SEXTILLION'])) {
-                            $phpcode .= 'if ('
+                            $phpcode .= $phpBeginDft
+                                    . 'if ('
                                     . $param[0]
                                     . ' > 1000000000000000000000) { echo(round(('
                                     . $param[0]
@@ -703,7 +729,8 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                         break;
 
                     case 'floatNumber':
-                        $phpcode .= 'echo(number_format('
+                        $phpcode .= $phpBeginDft
+                                . 'echo(number_format('
                                 . $param[0]
                                 . ', '
                                 . (isset($param[2]) ? (int)($param[2]) : 2)
@@ -713,11 +740,13 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     default:
                         $variableName = array_shift($param);
 
-                        $phpcode .= 'printf('
+                        $phpcode .= $phpBeginStr
+                                . 'printf('
                                 . 'htmlspecialchars(' . $variableName . ', ENT_QUOTES)'
                                 . ', '
                                 . implode(', ', $param)
-                                . ');';
+                                . ');'
+                                . $phpEndsStr;
                         break;
                 }
             }
