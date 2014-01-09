@@ -515,8 +515,6 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
                     // If REMOTE_ADDR (Must be proxy's addr here) not in our trusted
                     // list OR No any server we can trust in X Forward, set the address to REMOTE_ADDR
                     $ip = $_SERVER['REMOTE_ADDR'];
-                } else {
-                    $ip = $_SERVER['REMOTE_ADDR'];
                 }
             } else {
                 $ip = '0.0.0.0';
