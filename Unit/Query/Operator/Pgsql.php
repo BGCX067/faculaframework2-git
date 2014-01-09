@@ -291,7 +291,7 @@ class Pgsql implements \Facula\Unit\Query\OperatorImplement
                     break;
 
                 case 'IS NOT':
-                    $sql .= '("' . $where['Field'] . '" IS ' . $where['Value'] . ')';
+                    $sql .= '("' . $where['Field'] . '" IS NOT ' . $where['Value'] . ')';
                     break;
 
                 case 'LIKE':
@@ -299,7 +299,7 @@ class Pgsql implements \Facula\Unit\Query\OperatorImplement
                     break;
 
                 case 'NOT LIKE':
-                    $sql .= '("' . $where['Field'] . '" LIKE ' . $where['Value'] . ')';
+                    $sql .= '("' . $where['Field'] . '" NOT LIKE ' . $where['Value'] . ')';
                     break;
 
                 case 'BETWEEN':
