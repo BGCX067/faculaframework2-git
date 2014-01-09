@@ -607,18 +607,16 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                         break;
 
                     case 'json':
-                        $phpcode .= $phpBeginStr
+                        $phpcode .= $phpBeginDft
                                 . 'echo(json_encode('
                                 . $param[0]
                                 . ', JSON_HEX_QUOT | JSON_HEX_APOS'
-                                . '| JSON_HEX_AMP | JSON_HEX_TAG));'
-                                . $phpEndsStr;
+                                . '| JSON_HEX_AMP | JSON_HEX_TAG));';
                         break;
 
                     case 'jsonData':
-                        $phpcode .= $phpBeginStr
-                                . 'echo(htmlspecialchars(json_encode(' . $param[0] . ')));'
-                                . $phpEndsStr;
+                        $phpcode .= $phpBeginDft
+                                . 'echo(htmlspecialchars(json_encode(' . $param[0] . ')));';
                         break;
 
                     case 'urlChar':
