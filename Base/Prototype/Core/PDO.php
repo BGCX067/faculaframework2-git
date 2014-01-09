@@ -335,7 +335,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
         switch ($this->configs['SelectMethod']) {
             case 'Normal':
                 if (isset($this->connMap[$this->configs['SelectMethod']])) {
-                    return $this->doPDOCheckConnectivity(
+                    return $this->doPDOConnectivityCheck(
                         $this->connMap[$this->configs['SelectMethod']],
                         $error
                     );
@@ -356,7 +356,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                     $tablekey = $setting['Table'];
 
                     if (isset($this->connMap[$this->configs['SelectMethod']][$tablekey])) {
-                        return $this->doPDOCheckConnectivity(
+                        return $this->doPDOConnectivityCheck(
                             $this->connMap[$this->configs['SelectMethod']][$tablekey],
                             $error
                         );
@@ -394,7 +394,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                     $tablekey = $setting['Operation'];
 
                     if (isset($this->connMap[$this->configs['SelectMethod']][$tablekey])) {
-                        return $this->doPDOCheckConnectivity(
+                        return $this->doPDOConnectivityCheck(
                             $this->connMap[$this->configs['SelectMethod']][$tablekey],
                             $error
                         );
@@ -429,7 +429,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                     $tablekey = $setting['Table'] . '#' . $setting['Operation'];
 
                     if (isset($this->connMap[$this->configs['SelectMethod']][$tablekey])) {
-                        return $this->doPDOCheckConnectivity(
+                        return $this->doPDOConnectivityCheck(
                             $this->connMap[$this->configs['SelectMethod']][$tablekey],
                             $error
                         );
@@ -499,12 +499,10 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
      *
      * @return object Return PDO object that connected to a database server
      */
-    protected function doPDOCheckConnectivity(&$dbh, &$error)
+    protected function doPDOConnectivityCheck(\PDO &$dbh, &$error)
     {
-        $currentTime = time();
-
         if ($dbh->_connection['Wait']
-            && $currentTime - $dbh->_connection['LstConnected'] > $dbh->_connection['Wait']) {
+            && time() - $dbh->_connection['LstConnected'] >= $dbh->_connection['Wait']) {
             $dbh = $this->doPDOReconnect($dbh, $error);
         }
 
@@ -523,7 +521,6 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
     {
         $dbh = null;
         $successed = false;
-        $currentTime = time();
 
         if (!isset($this->map['DBConn'][$dbIndex]['Connection'])) {
             // Enter Critical Section so no error below belowing code will cause error
@@ -541,7 +538,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                     ) + $this->pool['DBs'][$dbIndex]['Options']
                 );
 
-                $this->pool['DBs'][$dbIndex]['LstConnected'] = $currentTime;
+                $this->pool['DBs'][$dbIndex]['LstConnected'] = time();
                 $dbh->_connection = &$this->pool['DBs'][$dbIndex];
 
                 $successed = true;
@@ -577,14 +574,18 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
      *
      * @return mixed Return PDO object that connected to a database server when success, false otherwise
      */
-    protected function doPDOReconnect(&$dbh, &$error)
+    protected function doPDOReconnect(\PDO &$dbh, &$error)
     {
+        $dbIdx = $dbh->_connection['ID'];
+
         if (isset($dbh->_connection)) {
             if (isset($this->map['DBConn'][$dbh->_connection['ID']]['Connection'])) {
-                unset($this->map['DBConn'][$dbh->_connection['ID']]['Connection']);
+                $dbh = $this->map['DBConn'][$dbIdx]['Connection'] = null;
+
+                unset($this->map['DBConn'][$dbIdx]['Connection']);
             }
 
-            if ($dbh = $this->doPDOConnect($dbh->_connection['ID'], $error)) {
+            if ($dbh = $this->doPDOConnect($dbIdx, $error)) {
                 return $dbh;
             }
         }
