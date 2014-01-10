@@ -155,7 +155,7 @@ class Framework
     {
         $cache = array();
 
-        if (is_readable($stateFile)) {
+        if (file_exists($stateFile)) {
             require($stateFile);
 
             if (!empty($cache)) {
@@ -229,10 +229,8 @@ class Framework
     public static function loadClass($className)
     {
         // Check if this is a namespace calling
-        if (strpos($className, static::$cfg['NSSplitter'])) {
+        if (!static::loadScope($className)) {
             return static::loadNamespace($className);
-        } else {
-            return static::loadScope($className);
         }
 
         return false;
@@ -247,10 +245,8 @@ class Framework
      */
     protected static function loadScope($class)
     {
-        $className = strtolower($class);
-
-        if (isset(static::$components['Scope'][$className])) {
-            require(static::$components['Scope'][$className]);
+        if (isset(static::$components['Scope'][$class])) {
+            require(static::$components['Scope'][$class]);
 
             return true;
         }
@@ -268,9 +264,7 @@ class Framework
      */
     public static function registerScope($class, $file)
     {
-        $className = strtolower($class);
-
-        if (isset(static::$components['Scope'][$className])) {
+        if (isset(static::$components['Scope'][$class])) {
             throw new \Exception(
                 'Trying register a class('
                 . $class
@@ -292,7 +286,7 @@ class Framework
             return false;
         }
 
-        return static::$components['Scope'][$className] = str_replace(
+        return static::$components['Scope'][$class] = str_replace(
             array('\\', '/', DIRECTORY_SEPARATOR),
             DIRECTORY_SEPARATOR,
             $file
@@ -308,9 +302,7 @@ class Framework
      */
     public static function unregisterScope($class)
     {
-        $className = strtolower($class);
-
-        if (!isset(static::$components['Scope'][$className])) {
+        if (!isset(static::$components['Scope'][$class])) {
             throw new \Exception(
                 'Trying unregister a class('
                 . $class
@@ -320,7 +312,7 @@ class Framework
             return false;
         }
 
-        unset(static::$components['Scope'][$className]);
+        unset(static::$components['Scope'][$class]);
 
         return true;
     }
@@ -348,7 +340,7 @@ class Framework
                         . $className
                         . '.' . static::$cfg['PHPExt'];
 
-            if ($map['Ref']['P'] && is_readable($fullPath)) {
+            if ($map['Ref']['P']) {
                 require($fullPath);
 
                 return true;
@@ -368,7 +360,7 @@ class Framework
      */
     public static function registerNamespace($nsPrefix, $path)
     {
-        if (file_exists($path)) {
+        if (is_dir($path)) {
             $map = self::locateNamespace(self::splitNamespace($nsPrefix), true);
 
             if (!isset($map['Ref']['P']) || !$map['Ref']['P']) {
@@ -1033,11 +1025,11 @@ class Framework
                         break;
 
                     case 'class':
-                        self::registerScope(strtolower($module['Name']), $module['Path']);
+                        self::registerScope(ucfirst($module['Name']), $module['Path']);
                         break;
 
                     default:
-                        self::registerScope(strtolower($module['Name']), $module['Path']);
+                        self::registerScope($module['Name'], $module['Path']);
                         break;
                 }
             }
