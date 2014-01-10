@@ -481,7 +481,7 @@ abstract class ORM implements Implement, \ArrayAccess
     ) {
         if (is_array($joinModels)) {
             foreach ($joinModels as $jMkey => $jMVal) {
-                if (!isset($jMVal['Field']) && $jMVal['Field']) {
+                if (!isset($jMVal['Field'][0])) {
                     \Facula\Framework::core('debug')->exception(
                         'ERROR_ORM_FETCHWITH_JOIN_FIELDNAME_NOTSET',
                         'orm',
@@ -492,7 +492,7 @@ abstract class ORM implements Implement, \ArrayAccess
                     break;
                 }
 
-                if (!isset($jMVal['Model']) && $jMVal['Model']) {
+                if (!isset($jMVal['Model'][0])) {
                     \Facula\Framework::core('debug')->exception(
                         'ERROR_ORM_FETCHWITH_JOIN_MODELNAME_NOTSET',
                         'orm',
@@ -503,7 +503,7 @@ abstract class ORM implements Implement, \ArrayAccess
                     break;
                 }
 
-                if (!isset($jMVal['Key']) && $jMVal['Key']) {
+                if (!isset($jMVal['Key'][0])) {
                     \Facula\Framework::core('debug')->exception(
                         'ERROR_ORM_FETCHWITH_JOIN_MODELKEYNAME_NOTSET',
                         'orm',
@@ -572,7 +572,7 @@ abstract class ORM implements Implement, \ArrayAccess
         if (isset($dataMap[$dataMapName])) {
             foreach ($dataMap[$dataMapName] as $key => $val) {
                 if (isset($val[$elementKey])) {
-                    $result[$val[$elementKey]] = &$dataMap[$dataMapName][$key];
+                    $result[$val[$elementKey]][] = &$dataMap[$dataMapName][$key];
                 }
             }
         }
@@ -723,31 +723,36 @@ abstract class ORM implements Implement, \ArrayAccess
                     && ($participants = $participant->fetchInKeys(
                         $JoinedVal['Key'],
                         array_keys($tempJoinedKeys),
-                        $JoinedVal['Param']
+                        $JoinedVal['Param'],
+                        0,
+                        0,
+                        'ASSOC'
                     ))) {
-                        foreach ($participants as $participantKey => $participantVal) {
-                            $JoinedVal['Data'][$participantKey] = $participantVal->getData();
+                        foreach ($participants as $pKey => $pVal) {
+                            $JoinedVal['Data'][$pKey] = $pVal;
 
-                            if (isset(
-                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']]
-                            )
-                            &&
-                            !is_array(
-                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']]
-                            )) {
-                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']] =
-                                    array();
-                            }
+                            foreach ($tempJoinedKeys[$pVal[$JoinedVal['Key']]] as $tkJoinedKey => $tkJoinedVal) {
+                                if (isset(
+                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
+                                )
+                                &&
+                                !is_array(
+                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
+                                )) {
+                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
+                                        array();
+                                }
 
-                            if ($JoinedVal['Single']
-                            && empty(
-                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']]
-                            )) {
-                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']] =
-                                    &$JoinedVal['Data'][$participantKey];
-                            } else {
-                                $tempJoinedKeys[$participantVal[$JoinedVal['Key']]][$JoinedVal['Alias']][] =
-                                    &$JoinedVal['Data'][$participantKey];
+                                if ($JoinedVal['Single']
+                                && empty(
+                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
+                                )) {
+                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
+                                        &$JoinedVal['Data'][$pKey];
+                                } else {
+                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
+                                        &$JoinedVal['Data'][$pKey];
+                                }
                             }
                         }
                     }
