@@ -54,47 +54,39 @@ abstract class IP
      */
     public static function joinIP(array $ip, $mask = false)
     {
+        $rPicked = false;
         $input = array();
         $ips = '';
 
-        if (!is_array($ip)) {
-            return '0.0.0.0';
-        }
-
-        foreach ($ip as $k => $v) {
-            if (isset($ip[$k]) && $ip[$k] !== '') {
-                $input[$k] = $v;
-            } else {
-                break;
+        foreach (array_reverse($ip) as $k => $v) {
+            if ($v || $rPicked) {
+                $rPicked = true;
+                array_unshift($input, $v);
             }
         }
 
         $iplen = count($input);
 
         if ($mask) {
-            if ($iplen > 2) {
+            if ($iplen > 3) {
                 $input[$iplen - 2] = $input[$iplen - 1] = '*';
-            } elseif ($iplen > 1) {
+            } elseif ($iplen > 2) {
                 $input[$iplen - 1] = '*';
             }
         }
 
-        switch ($iplen) {
-            case 4:
-                return implode(
-                    '.',
-                    array(
-                        $input[0],
-                        $input[1],
-                        $input[2],
-                        $input[3]
-                    )
-                );
-                break;
-
-            default:
-                return implode(':', $input);
-                break;
+        if ($iplen == 4) {
+            return implode(
+                '.',
+                array(
+                    $input[0],
+                    $input[1],
+                    $input[2],
+                    $input[3]
+                )
+            );
         }
+
+        return implode(':', $input);
     }
 }
