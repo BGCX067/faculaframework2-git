@@ -456,6 +456,6 @@ class Session
             }
         }
 
-        return $key;
+        return false;
     }
 }
