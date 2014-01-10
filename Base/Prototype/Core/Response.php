@@ -537,10 +537,10 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
         $cVal = $value !== null ? $value : null;
 
         $cExpire = $expire ? FACULA_TIME + (int)($expire) : 0;
-        $cPath = $path;
+        $cPath = $path ? $path : '/';
 
         $cDomain = $domain ?
-                    $domain : (strpos($_SERVER['HTTP_HOST'], '.') != -1 ? $_SERVER['HTTP_HOST'] : '');
+                    $domain : (strpos($_SERVER['HTTP_HOST'], '.') !== false ? $_SERVER['HTTP_HOST'] : '');
 
         $cSecure = $secure ? true : false;
 
