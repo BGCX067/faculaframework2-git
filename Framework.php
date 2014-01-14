@@ -363,7 +363,7 @@ class Framework
         if (is_dir($path)) {
             $map = self::locateNamespace(self::splitNamespace($nsPrefix), true);
 
-            if (!isset($map['Ref']['P']) || !$map['Ref']['P']) {
+            if (!isset($map['Ref']['P'][0])) {
                 $map['Ref']['P'] = rtrim(
                     str_replace(
                         array(
