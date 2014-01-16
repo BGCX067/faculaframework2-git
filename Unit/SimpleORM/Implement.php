@@ -81,6 +81,7 @@ interface Implement
         $whereOperator = '='
     );
 
+    public static function getBy($field, $value, $returnType = 'CLASS');
     public static function getByPK($value, $returnType = 'CLASS');
     public static function fetchByPKs(
         array $values,

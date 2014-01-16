@@ -212,7 +212,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the data reference
      */
-    private function &getDataRef()
+    protected function & getDataRef()
     {
         return $this->data;
     }
@@ -339,6 +339,25 @@ abstract class ORM implements Implement, \ArrayAccess
     }
 
     /**
+     * Get data using specified key
+     *
+     * @param string $field Field name to get
+     * @param string $value Value of primary key
+     * @param string $returnType Data return type for Query class
+     *
+     * @return array Return the result of query when success, false otherwise
+     */
+    public static function getBy($field, $value, $returnType = 'CLASS')
+    {
+        return self::get(
+            array(
+                $field => $value,
+            ),
+            $returnType
+        );
+    }
+
+    /**
      * Get data using value of primary key
      *
      * @param string $value Value of primary key
@@ -348,12 +367,9 @@ abstract class ORM implements Implement, \ArrayAccess
      */
     public static function getByPK($value, $returnType = 'CLASS')
     {
-        return self::getInKey(
-            static::$primary,
-            $value,
-            array(),
-            $returnType
-        );
+        return self::get(array(
+            static::$primary => $value
+        ), $returnType);
     }
 
     /**
@@ -474,7 +490,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return true when data parsed, false otherwise
      */
-    private static function fetchWithJoinParamParser(
+    protected static function fetchWithJoinParamParser(
         array &$joinModels,
         array &$joinedMap,
         $parentName = 'main'
@@ -562,7 +578,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the converted array
      */
-    private static function fetchWithGetColumnDataRootRef(
+    protected static function fetchWithGetColumnDataRootRef(
         array &$dataMap,
         $dataMapName,
         $elementKey
@@ -632,8 +648,8 @@ abstract class ORM implements Implement, \ArrayAccess
         $dist = 0,
         $whereOperator = '='
     ) {
-        $principals = $participants = array();
-        $principal = $participant = null;
+        $principals = array();
+        $principal = null;
 
         $joinedMap = $dataMap = $colAddress = array();
 
@@ -708,51 +724,44 @@ abstract class ORM implements Implement, \ArrayAccess
 
             // Query joined table one by one
             foreach ($joinedMap as $joinedKey => $JoinedVal) {
-                if ($participant = \Facula\Framework::core('object')->getInstance(
-                    $JoinedVal['Model'],
-                    array(),
-                    true
-                )) {
-                    $tempJoinedKeys = self::fetchWithGetColumnDataRootRef(
-                        $dataMap,
-                        $JoinedVal['With'],
-                        $JoinedVal['Field']
-                    );
+                $tempJoinedKeys = self::fetchWithGetColumnDataRootRef(
+                    $dataMap,
+                    $JoinedVal['With'],
+                    $JoinedVal['Field']
+                );
 
-                    if (!empty($tempJoinedKeys)
-                    && ($participants = $participant->fetchInKeys(
+                if (!empty($tempJoinedKeys)) {
+                    foreach ($JoinedVal['Model']::fetchInKeys(
                         $JoinedVal['Key'],
                         array_keys($tempJoinedKeys),
                         $JoinedVal['Param'],
                         0,
                         0,
                         'ASSOC'
-                    ))) {
-                        foreach ($participants as $pKey => $pVal) {
-                            $JoinedVal['Data'][$pKey] = $pVal;
+                    ) as $pKey => $pVal) {
+                        $JoinedVal['Data'][$pKey] = $pVal;
 
-                            foreach ($tempJoinedKeys[$pVal[$JoinedVal['Key']]] as $tkJoinedKey => $tkJoinedVal) {
-                                if (isset(
-                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
-                                )
-                                &&
-                                !is_array(
-                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
-                                )) {
-                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
-                                        array();
-                                }
+                        foreach ($tempJoinedKeys[$pVal[$JoinedVal['Key']]] as $tkJoinedKey => $tkJoinedVal) {
+                            if (isset(
+                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
+                            )
+                            &&
+                            !is_array(
+                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
+                            )) {
+                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
+                                    array();
+                            }
 
-                                if ($JoinedVal['Single']
-                                && empty(
-                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
-                                )) {
-                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
-                                        &$JoinedVal['Data'][$pKey];
-                                } else {
-                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
-                                        &$JoinedVal['Data'][$pKey];
-                                }
+                            if ($JoinedVal['Single']
+                            && empty(
+                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
+                            )) {
+                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
+                                    &$JoinedVal['Data'][$pKey];
+                            } else {
+                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
+                                    &$JoinedVal['Data'][$pKey];
                             }
                         }
                     }
@@ -781,6 +790,9 @@ abstract class ORM implements Implement, \ArrayAccess
         $tempNewValIsNum = false;
 
         if (isset($this->data[static::$primary])) {
+            // Must call the hook before we handle data
+            $this->onSave();
+
             if (isset($this->dataOriginal[static::$primary])) {
                 $primaryKey = $this->dataOriginal[static::$primary];
             } else {
@@ -887,6 +899,9 @@ abstract class ORM implements Implement, \ArrayAccess
         $result = null;
         $data = $keys = array();
 
+        // Must call the hook before we handle data
+        $this->onInsert();
+
         foreach ($this->data as $key => $val) {
             if (isset(static::$fields[$key])) {
                 $keys[$key] = static::$fields[$key];
@@ -928,6 +943,8 @@ abstract class ORM implements Implement, \ArrayAccess
         $result = null;
 
         if (isset($this->data[static::$primary])) {
+            $this->onDelete();
+
             if ($result = \Facula\Unit\Query\Factory::from(
                 static::$table,
                 !static::$noParser
@@ -952,5 +969,32 @@ abstract class ORM implements Implement, \ArrayAccess
         }
 
         return false;
+    }
+
+    /**
+     * Hook for data insert
+     *
+     * @return void
+     */
+    protected function onInsert()
+    {
+    }
+
+    /**
+     * Hook for data update
+     *
+     * @return void
+     */
+    protected function onSave()
+    {
+    }
+
+    /**
+     * Hook for data delete
+     *
+     * @return void
+     */
+    protected function onDelete()
+    {
     }
 }
