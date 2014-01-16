@@ -32,16 +32,16 @@ namespace Facula\Unit\SimpleORM;
 abstract class ORM implements Implement, \ArrayAccess
 {
     /** Current Table */
-    protected $table = '';
+    protected static $table = '';
 
     /** Declared fields */
-    protected $fields = array();
+    protected static $fields = array();
 
     /** The primary key */
-    protected $primary = '';
+    protected static $primary = '';
 
     /** Trigger to enable or disable auto parser */
-    protected $noParser = false;
+    protected static $noParser = false;
 
     /** Container of data */
     private $data = array();
@@ -174,8 +174,8 @@ abstract class ORM implements Implement, \ArrayAccess
      */
     public function getPrimaryValue()
     {
-        if (isset($this->data[$this->primary])) {
-            return $this->data[$this->primary];
+        if (isset($this->data[static::primary])) {
+            return $this->data[static::primary];
         } else {
             \Facula\Framework::core('debug')->exception(
                 'ERROR_ORM_GETPRIMARY_PRIMARYDATA_EMPTY',
@@ -194,7 +194,7 @@ abstract class ORM implements Implement, \ArrayAccess
      */
     public function getFields()
     {
-        return $this->fields;
+        return static::$fields;
     }
 
     /**
@@ -226,14 +226,14 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the result of query when success, false otherwise
      */
-    public function get(
+    public static function get(
         array $param,
         $returnType = 'CLASS',
         $whereOperator = '='
     ) {
         $data = array();
 
-        if (($data = $this->fetch(
+        if (($data = self::fetch(
             array('Where' => $param),
             0,
             1,
@@ -257,7 +257,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the result of query when success, false otherwise
      */
-    public function fetch(
+    public static function fetch(
         array $param,
         $offset = 0,
         $dist = 0,
@@ -268,8 +268,8 @@ abstract class ORM implements Implement, \ArrayAccess
 
         $query = null;
 
-        $query = \Facula\Unit\Query\Factory::from($this->table, !$this->noParser);
-        $query->select($this->fields);
+        $query = \Facula\Unit\Query\Factory::from(static::$table, !static::$noParser);
+        $query->select(static::$fields);
 
         if (isset($param['Where'])) {
             foreach ($param['Where'] as $field => $value) {
@@ -307,7 +307,7 @@ abstract class ORM implements Implement, \ArrayAccess
             case 'CLASS':
                 return $query->fetch(
                     'CLASS',
-                    get_class($this)
+                    get_called_class()
                 );
                 break;
 
@@ -329,13 +329,13 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the result of query when success, false otherwise
      */
-    public function finds(
+    public static function finds(
         array $param,
         $offset = 0,
         $dist = 0,
         $returnType = 'CLASS'
     ) {
-        return $this->fetch($param, $offset, $dist, $returnType, 'LIKE');
+        return self::fetch($param, $offset, $dist, $returnType, 'LIKE');
     }
 
     /**
@@ -346,10 +346,10 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the result of query when success, false otherwise
      */
-    public function getByPK($value, $returnType = 'CLASS')
+    public static function getByPK($value, $returnType = 'CLASS')
     {
         return $this->getInKey(
-            $this->primary,
+            static::$primary,
             $value,
             array(),
             $returnType
@@ -368,7 +368,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the result of query when success, false otherwise
      */
-    public function fetchByPKs(
+    public static function fetchByPKs(
         array $values,
         array $param = array(),
         $offset = 0,
@@ -376,8 +376,8 @@ abstract class ORM implements Implement, \ArrayAccess
         $returnType = 'CLASS',
         $whereOperator = '='
     ) {
-        return $this->fetchInKeys(
-            $this->primary,
+        return self::fetchInKeys(
+            static::$primary,
             $values,
             $param,
             $offset,
@@ -398,7 +398,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the result of query when success, false otherwise
      */
-    public function getInKey(
+    public static function getInKey(
         $keyField,
         $value,
         $param = array(),
@@ -408,7 +408,7 @@ abstract class ORM implements Implement, \ArrayAccess
         $data = array();
 
         if ($data = array_values(
-            $this->fetchInKeys(
+            self::fetchInKeys(
                 $keyField,
                 array($value),
                 $param,
@@ -439,7 +439,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the result of query when success, false otherwise
      */
-    public function fetchInKeys(
+    public static function fetchInKeys(
         $keyField,
         array $values,
         array $param = array(),
@@ -452,7 +452,7 @@ abstract class ORM implements Implement, \ArrayAccess
 
         $param['Where'][$keyField] = array($values, 'IN');
 
-        if ($fetched = $this->fetch(
+        if ($fetched = self::fetch(
             $param,
             $offset,
             $dist,
@@ -474,7 +474,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return true when data parsed, false otherwise
      */
-    private function fetchWithJoinParamParser(
+    private static function fetchWithJoinParamParser(
         array &$joinModels,
         array &$joinedMap,
         $parentName = 'main'
@@ -533,7 +533,7 @@ abstract class ORM implements Implement, \ArrayAccess
                 );
 
                 if (isset($jMVal['With'])) {
-                    $this->fetchWithJoinParamParser(
+                    self::fetchWithJoinParamParser(
                         $jMVal['With'],
                         $joinedMap,
                         $tempJoinedModelAddr
@@ -562,7 +562,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the converted array
      */
-    private function fetchWithGetColumnDataRootRef(
+    private static function fetchWithGetColumnDataRootRef(
         array &$dataMap,
         $dataMapName,
         $elementKey
@@ -589,7 +589,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the result of query when success, or false when fail
      */
-    public function getWith(
+    public static function getWith(
         array $joinModels,
         array $whereParams,
         $whereOperator = '='
@@ -599,7 +599,7 @@ abstract class ORM implements Implement, \ArrayAccess
             'Where' => $whereParams,
         );
 
-        if ($data = $this->fetchWith(
+        if ($data = self::fetchWith(
             $joinModels,
             $currentParams,
             0,
@@ -625,7 +625,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the query result when query is succeed, or a empty array when query's failed
      */
-    public function fetchWith(
+    public static function fetchWith(
         array $joinModels,
         array $currentParams,
         $offset = 0,
@@ -683,7 +683,7 @@ abstract class ORM implements Implement, \ArrayAccess
             );
         */
 
-        if ($principals = $this->fetch(
+        if ($principals = self::fetch(
             $currentParams,
             $offset,
             $dist,
@@ -697,7 +697,7 @@ abstract class ORM implements Implement, \ArrayAccess
             }
 
             // Handle With Joined Params after master table successful queried
-            $this->fetchWithJoinParamParser($joinModels, $joinedMap, 'main');
+            self::fetchWithJoinParamParser($joinModels, $joinedMap, 'main');
 
             // Now, Init data container for joined tables
             foreach ($joinedMap as $joinedMapKey => $joinedMapVal) {
@@ -713,7 +713,7 @@ abstract class ORM implements Implement, \ArrayAccess
                     array(),
                     true
                 )) {
-                    $tempJoinedKeys = $this->fetchWithGetColumnDataRootRef(
+                    $tempJoinedKeys = self::fetchWithGetColumnDataRootRef(
                         $dataMap,
                         $JoinedVal['With'],
                         $JoinedVal['Field']
@@ -780,15 +780,15 @@ abstract class ORM implements Implement, \ArrayAccess
         $tempNewValType = '';
         $tempNewValIsNum = false;
 
-        if (isset($this->data[$this->primary])) {
-            if (isset($this->dataOriginal[$this->primary])) {
-                $primaryKey = $this->dataOriginal[$this->primary];
+        if (isset($this->data[static::$primary])) {
+            if (isset($this->dataOriginal[static::$primary])) {
+                $primaryKey = $this->dataOriginal[static::$primary];
             } else {
-                $primaryKey = $this->data[$this->primary];
+                $primaryKey = $this->data[static::$primary];
             }
 
             foreach ($this->data as $key => $val) {
-                if (isset($this->fields[$key])) {
+                if (isset(static::$fields[$key])) {
                     // Determine data type of current val
                     if (is_int($val)) {
                         $tempNewValType = 'int';
@@ -844,9 +844,9 @@ abstract class ORM implements Implement, \ArrayAccess
             }
 
             $query = \Facula\Unit\Query\Factory::from(
-                $this->table,
-                !$this->noParser
-            )->update($this->fields);
+                static::$table,
+                !static::$noParser
+            )->update(static::$fields);
 
             if (!empty($sets)) {
                 $query->set($sets);
@@ -858,7 +858,7 @@ abstract class ORM implements Implement, \ArrayAccess
 
             if ($result = $query->where(
                 'AND',
-                $this->primary,
+                static::$primary,
                 '=',
                 $primaryKey
             )->save()) {
@@ -888,28 +888,28 @@ abstract class ORM implements Implement, \ArrayAccess
         $data = $keys = array();
 
         foreach ($this->data as $key => $val) {
-            if (isset($this->fields[$key])) {
-                $keys[$key] = $this->fields[$key];
+            if (isset(static::$fields[$key])) {
+                $keys[$key] = static::$fields[$key];
                 $data[$key] = $val;
             }
         }
 
         // Must returning primary key
         if ($result = \Facula\Unit\Query\Factory::from(
-            $this->table,
-            !$this->noParser
+            static::$table,
+            !static::$noParser
         )->insert(
             $keys
         )->value(
             $data
         )->save(
-            $this->primary
+            static::$primary
         )) {
 
             $this->dataOriginal = $this->data;
 
-            if (!isset($this->data[$this->primary])) {
-                $this->data[$this->primary] = $result;
+            if (!isset($this->data[static::$primary])) {
+                $this->data[static::$primary] = $result;
             }
 
             return $result;
@@ -927,17 +927,17 @@ abstract class ORM implements Implement, \ArrayAccess
     {
         $result = null;
 
-        if (isset($this->data[$this->primary])) {
+        if (isset($this->data[static::$primary])) {
             if ($result = \Facula\Unit\Query\Factory::from(
-                $this->table,
-                !$this->noParser
+                static::$table,
+                !static::$noParser
             )->delete(
-                $this->fields
+                static::$fields
             )->where(
                 'AND',
-                $this->primary,
+                static::$primary,
                 '=',
-                $this->data[$this->primary]
+                $this->data[static::$primary]
             )->save()) {
                 $this->dataOriginal = $this->data = array();
 

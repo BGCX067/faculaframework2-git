@@ -45,33 +45,33 @@ interface Implement
     public function getFields();
     public function getData();
 
-    public function get(
+    public static function get(
         array $param,
         $returnType = 'CLASS',
         $whereOperator = '='
     );
-    public function fetch(
+    public static function fetch(
         array $param,
         $offset = 0,
         $dist = 0,
         $returnType = 'CLASS',
         $whereOperator = '='
     );
-    public function finds(
+    public static function finds(
         array $param,
         $offset = 0,
         $dist = 0,
         $returnType = 'CLASS'
     );
 
-    public function getInKey(
+    public static function getInKey(
         $keyField,
         $value,
         $param = array(),
         $returnType = 'CLASS',
         $whereOperator = '='
     );
-    public function fetchInKeys(
+    public static function fetchInKeys(
         $keyField,
         array $values,
         array $param = array(),
@@ -81,8 +81,8 @@ interface Implement
         $whereOperator = '='
     );
 
-    public function getByPK($value, $returnType = 'CLASS');
-    public function fetchByPKs(
+    public static function getByPK($value, $returnType = 'CLASS');
+    public static function fetchByPKs(
         array $values,
         array $param = array(),
         $offset = 0,
@@ -91,12 +91,12 @@ interface Implement
         $whereOperator = '='
     );
 
-    public function getWith(
+    public static function getWith(
         array $joinModels,
         array $whereParams,
         $whereOperator = '='
     );
-    public function fetchWith(
+    public static function fetchWith(
         array $joinModels,
         array $currentParams,
         $offset = 0,
