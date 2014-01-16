@@ -303,7 +303,8 @@ class Session
 
                 return (self::$sessions[$for]['Sessions'][$sessionKeyInfo['Key']] = $handler(
                     $sessionKeyInfo['Key'],
-                    $sessionKeyInfo['Safe']
+                    $sessionKeyInfo['Safe'],
+                    $sessionKeyInfo['Renew']
                 ));
             }
         }
@@ -322,7 +323,7 @@ class Session
     {
         $sessionKey = $sessionRawKey = '';
         $sessionKeyInfo = array();
-        $safeSession = false;
+        $safeSession = $needRenew = false;
         $networkID = self::$cores['request']->getClientInfo('ip');
 
         if (isset(self::$sessions[$for]['Setting'])) {
@@ -355,6 +356,8 @@ class Session
                             self::$cores['request']->getClientInfo('https'),
                             true
                         );
+
+                        $needRenew = true;
                     }
                 } elseif ($sessionKeyInfo = self::generateKey($networkID, $for)) {
                     // If not, generate one from it's ip address.
@@ -377,11 +380,14 @@ class Session
                         'session',
                         true
                     );
+
+                    return false;
                 }
 
                 return (self::$currentSessionKeys[$for] = array(
                     'Safe' => $safeSession,
                     'Key' => $sessionKey,
+                    'Renew' => $needRenew,
                 ));
             } else {
                 return self::$currentSessionKeys[$for];

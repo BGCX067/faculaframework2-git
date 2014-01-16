@@ -60,6 +60,8 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
                 . $caller
                 . '. But no class specified.'
             );
+
+            return false;
         }
 
         if (!isset(self::$instances[$class])) {
@@ -112,6 +114,8 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
                 . ' must be extend from base class '
                 . '\\Facula\\Base\\Prototype\\Core'
             );
+
+            return false;
         }
 
         if (!isset(static::$interface)) {
@@ -129,6 +133,8 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
                 . ' needs to implements interface '
                 . $classInterface
             );
+
+            return false;
         }
 
         return false;
