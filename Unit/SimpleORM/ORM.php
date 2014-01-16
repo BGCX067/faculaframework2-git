@@ -348,7 +348,7 @@ abstract class ORM implements Implement, \ArrayAccess
      */
     public static function getByPK($value, $returnType = 'CLASS')
     {
-        return $this->getInKey(
+        return self::getInKey(
             static::$primary,
             $value,
             array(),
