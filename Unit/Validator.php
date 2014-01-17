@@ -60,7 +60,7 @@ abstract class Validator
     {
         $strLen = 0;
 
-        if ($string
+        if ($string && is_string($string)
             &&
             (
                 !$type
