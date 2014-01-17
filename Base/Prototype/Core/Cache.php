@@ -67,6 +67,8 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
         } else {
             throw new \Exception('Cache root must be set and existed.');
         }
+
+        $this->configs['BootVer'] = $common['BootVersion'];
     }
 
     /**
@@ -83,14 +85,14 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
      * Load data from cache
      *
      * @param string $cacheName Cache name
-     * @param string $expire How long (in second) the cache will expired after saving
      *
      * @return bool Return true success, false otherwise
      */
-    public function load($cacheName, $expire = 0)
+    public function load($cacheName)
     {
         $path = $file = '';
         $cache = array();
+        $expireMethod = null;
 
         if ($path = $this->getCacheFileByName($cacheName)) {
             $file = $this->configs['Root'] . DIRECTORY_SEPARATOR . $path['File'];
@@ -98,15 +100,11 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
             if (is_readable($file)) {
                 require($file);
 
-                if (isset($cache['Data'])) {
-                    if ($expire && ($cache['Time'] < FACULA_TIME - $expire)) {
-                        unlink($file);
-                    }
-
-                    return $cache['Data'];
-                } else {
-                    return null;
+                if ($cache[0] > FACULA_TIME || $this->configs['BootVer'] > $cache[1]) {
+                    unlink($file);
                 }
+
+                return $cache[2]; // Yeah, actually null cannot be isset.
             }
         }
 
@@ -118,20 +116,44 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
      *
      * @param string $cacheName Cache name
      * @param string $data Data will be saved in cache
+     * @param string $expire How long (in second) the cache will expired after saving
      *
      * @return bool Return true success, false otherwise
      */
-    public function save($cacheName, $data)
+    public function save($cacheName, $data, $expire = 0)
     {
         $cacheData = array();
+        $expireMethod = null;
+        $expiredTime = 0;
 
         if ($path = $this->getCacheFileByName($cacheName)) {
             $file = $this->configs['Root'] . DIRECTORY_SEPARATOR . $path['File'];
 
+            if ($expire) {
+                if ($expire > FACULA_TIME) {
+                    $expireMethod = 2;
+                }
+
+                switch ($expireMethod) {
+                    case 2:
+                        // expireMethod = scheduled.
+                        // The cache will expired when reach specified date
+                        $expiredTime = $expire;
+                        break;
+
+                    default:
+                        // expireMethod = remaining.
+                        // The cache will expired when remaining time come to zero.
+                        $expiredTime = FACULA_TIME + $expire;
+                        break;
+                }
+            }
+
             if ($this->makeCacheDir($path['Path'])) {
                 $cacheData = array(
-                    'Time' => FACULA_TIME,
-                    'Data' => $data ? $data : null,
+                    0 => (int)$expiredTime, // Expired
+                    1 => (int)FACULA_TIME, // Cached Time
+                    2 => $data ? $data : null, // Data
                 );
 
                 return file_put_contents(
