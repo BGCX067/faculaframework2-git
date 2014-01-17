@@ -187,7 +187,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                 . $filename,
                 $format
                 . "\r\n",
-                FILE_APPEND
+                FILE_APPEND | LOCK_EX
             );
         }
 

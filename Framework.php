@@ -198,7 +198,7 @@ class Framework
                     . ';'
                     . self::$cfg['CacheTags'][1];
 
-        if (file_put_contents($stateFile, $content)) {
+        if (file_put_contents($stateFile, $content, LOCK_EX)) {
             return true;
         }
 

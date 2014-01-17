@@ -475,7 +475,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                             || mkdir($cachedPageRoot, 0744, true)) {
                             $cachedTmpPage = $cachedPagePath . '.temp.php';
 
-                            if (file_put_contents($cachedTmpPage, $compiledContentForCached)) {
+                            if (file_put_contents($cachedTmpPage, $compiledContentForCached, LOCK_EX)) {
                                 \Facula\Framework::summonHook(
                                     'template_cache_prerender_*',
                                     array(),
@@ -530,7 +530,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
                                     unset($splitedRenderedContent, $splitedRenderedContentLen);
 
-                                    if (file_put_contents($cachedPagePath, $renderCachedOutputContent)) {
+                                    if (file_put_contents($cachedPagePath, $renderCachedOutputContent, LOCK_EX)) {
                                         return $cachedPagePath;
                                     }
                                 }
@@ -792,7 +792,8 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                     $resultTpl,
                     static::$setting['TemplateFileSafeCode'][0]
                     . static::$setting['TemplateFileSafeCode'][1]
-                    . $compiledContent
+                    . $compiledContent,
+                    LOCK_EX
                 );
             } else {
                 \Facula\Framework::core('debug')->exception(
@@ -877,7 +878,8 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                 . ' $langMap = '
                 . var_export($this->pool['LanguageMap'], true)
                 . '; '
-                . static::$setting['TemplateFileSafeCode'][1]
+                . static::$setting['TemplateFileSafeCode'][1],
+                LOCK_EX
             )) {
                 return true;
             }
