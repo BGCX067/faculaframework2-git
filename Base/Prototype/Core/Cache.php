@@ -100,8 +100,8 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
             if (is_readable($file)) {
                 require($file);
 
-                if ($cache[0] < FACULA_TIME || $this->configs['BootVer'] > $cache[1]) {
-                    unlink($file);
+                if (($cache[0] && $cache[0] < FACULA_TIME) || $this->configs['BootVer'] > $cache[1]) {
+                    return false;
                 }
 
                 return $cache[2]; // Yeah, actually null cannot be isset.
