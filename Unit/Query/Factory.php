@@ -209,11 +209,11 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
             return $data ? serialize($data) : '';
         });
 
-        static::addAutoParser('Trimed', 'Reader', function ($data) {
+        static::addAutoParser('Trimmed', 'Reader', function ($data) {
             return trim($data);
         });
 
-        static::addAutoParser('Trimed', 'Writer', function ($data) {
+        static::addAutoParser('Trimmed', 'Writer', function ($data) {
             return trim($data);
         });
 
