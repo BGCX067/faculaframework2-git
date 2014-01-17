@@ -100,7 +100,7 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
             if (is_readable($file)) {
                 require($file);
 
-                if ($cache[0] > FACULA_TIME || $this->configs['BootVer'] > $cache[1]) {
+                if ($cache[0] < FACULA_TIME || $this->configs['BootVer'] > $cache[1]) {
                     unlink($file);
                 }
 

@@ -33,5 +33,5 @@ namespace Facula\Base\Implement\Core;
 interface Cache
 {
     public function load($cacheName);
-    public function save($cacheName, $data, $expired = 0);
+    public function save($cacheName, $data, $expire = 0);
 }
