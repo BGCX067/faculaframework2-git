@@ -847,6 +847,8 @@ abstract class ORM implements Implement, \ArrayAccess
                                 'Operator' => $changeOperator,
                                 'Value' => abs($changesTo)
                             );
+                        } else {
+                            $sets[$key] = $val;
                         }
                     } else {
                         // Or, use replace method

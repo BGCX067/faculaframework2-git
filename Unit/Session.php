@@ -147,14 +147,17 @@ class Session
 
             if (isset($sessions['Handlers']['Garbage'])) {
                 if (!self::$cores['cache']->load(
-                    'session-lock-' . $type,
-                    $sessions['Setting']['Expire']
+                    'session-lock-' . $type
                 )) {
                     $garbagerHandler = $sessions['Handlers']['Garbage'];
 
                     $result[] = $garbagerHandler($garbageExpiredTime);
 
-                    self::$cores['cache']->save('session-lock-' . $type, true);
+                    self::$cores['cache']->save(
+                        'session-lock-' . $type,
+                        true,
+                        $sessions['Setting']['Expire']
+                    );
                 }
             }
         }
