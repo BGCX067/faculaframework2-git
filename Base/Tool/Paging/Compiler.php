@@ -991,7 +991,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                                 . ') &&'. ' is_array(' . $valuename . ') && !empty('
                                 . $valuename . ')) { ';
                         $phpcode .= 'foreach (' . $valuename
-                                . ' as $no => $' . $name . ') { ?>';
+                                . ' as $_' . $name . ' => $' . $name . ') { ?>';
 
                         $this->tagPositionMaps['Loop:' . $name] = array(
                             'Start' => $pos,
