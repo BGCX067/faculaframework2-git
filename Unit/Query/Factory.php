@@ -665,13 +665,16 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 break;
 
             case 'IN':
-                if (is_array($value) && !empty($value)) {
+                if (is_array($value)) {
+                    if (empty($value)) {
+                        return false;
+                    }
+
                     $params['Operator'] = 'IN';
 
                     foreach ($value as $val) {
                         $params['Value'][] = $this->saveValue($val, $fieldName);
                     }
-
                 } else {
                     \Facula\Framework::core('debug')->exception(
                         'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
@@ -684,13 +687,16 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 break;
 
             case 'NOT IN':
-                if (is_array($value) && !empty($value)) {
+                if (is_array($value)) {
+                    if (empty($value)) {
+                        return false;
+                    }
+
                     $params['Operator'] = 'NOT IN';
 
                     foreach ($value as $val) {
                         $params['Value'][] = $this->saveValue($val, $fieldName);
                     }
-
                 } else {
                     \Facula\Framework::core('debug')->exception(
                         'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
@@ -751,6 +757,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
      */
     public function where($logic, $fieldName, $operator, $value)
     {
+        $condition = array();
+
         if (!isset($this->query['Where'])) {
             \Facula\Framework::core('debug')->exception(
                 'ERROR_QUERY_WHERE_NOT_SUPPORTED',
@@ -771,12 +779,14 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
             return false;
         }
 
-        if ($this->query['Where'][] = $this->condition(
+        if ($condition = $this->condition(
             $logic,
             $fieldName,
             $operator,
             $value
         )) {
+            $this->query['Where'][] = $condition;
+
             return $this;
         }
 
@@ -795,6 +805,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
      */
     public function having($logic, $fieldName, $operator, $value)
     {
+        $condition = array();
+
         if (!isset($this->query['Having'])) {
             \Facula\Framework::core('debug')->exception(
                 'ERROR_QUERY_HAVING_NOT_SUPPORTED',
@@ -815,12 +827,14 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
             return false;
         }
 
-        if ($this->query['Having'][] = $this->condition(
+        if ($condition = $this->condition(
             $logic,
             $fieldName,
             $operator,
             $value
         )) {
+            $this->query['Having'][] = $condition;
+
             return $this;
         }
 
