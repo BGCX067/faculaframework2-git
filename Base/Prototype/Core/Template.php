@@ -383,7 +383,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
         $cacheFactor = ''
     ) {
         $templatePath = $templateContent = $cachedPagePath = $cachedPageRoot =
-        $cachedPageFactor = $cachedPageFile = $cachedPageFactorDir = $cachedTmpPage =
+        $cachedPageFactor = $cachedPageFile = $cachedPageFactorDir =
         $renderCachedContent = $renderCachedOutputContent = '';
 
         $splitedCompiledContentIndexLen = $splitedRenderedContentLen = $currentExpireTimestamp = 0;
@@ -473,9 +473,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
                         if (is_dir($cachedPageRoot)
                             || mkdir($cachedPageRoot, 0744, true)) {
-                            $cachedTmpPage = $cachedPagePath . '.temp.php';
-
-                            if (file_put_contents($cachedTmpPage, $compiledContentForCached, LOCK_EX)) {
+                            if (file_put_contents($cachedPagePath, $compiledContentForCached, LOCK_EX)) {
                                 \Facula\Framework::summonHook(
                                     'template_cache_prerender_*',
                                     array(),
@@ -491,11 +489,11 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                                 // Render nocached compiled content
                                 if (($renderCachedContent = $this->doRender(
                                     $templateName,
-                                    $cachedTmpPage
-                                )) && unlink($cachedTmpPage)) {
+                                    $cachedPagePath
+                                ))) {
                                     /*
                                         Beware the renderCachedContent as it may contains code that assigned
-                                        by user. After render and cache, the php code may will
+                                        by user. After render and cache, the php codes in it may will
                                         turn to executable.
 
                                         Web ui designer should filter those code to avoid danger by using
