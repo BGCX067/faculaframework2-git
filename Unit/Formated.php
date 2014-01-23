@@ -282,6 +282,45 @@ class Formated
             }
         );
 
+        static::newTag(
+            'T',
+            function ($value, $selected, $param, $pool) {
+                $result = '';
+                $time = 0;
+
+                if (isset($pool['T'][$selected])) {
+                    $time = intval($pool['T'][$selected]);
+                } else {
+                    $locator = explode('.', trim($selected), 2);
+
+                    if (isset($pool['%'][$locator[0]])) {
+                        if (!isset($locator[1])) {
+                            $time = intval($pool['%'][$locator[0]]);
+                        } elseif (isset($pool['%'][$locator[0]]['.' . $locator[1]])) {
+                            $time = intval($pool['%'][$locator[0]]['.' . $locator[1]]);
+                        }
+                    }
+                }
+
+                switch (trim($param)) {
+                    case 'RFC2822':
+                        return date(DATE_RFC2822, $time);
+                        break;
+
+                    case 'ATOM':
+                        return date(DATE_ATOM, $time);
+                        break;
+
+                    default:
+                        return date('F j, Y, g:i a T', $time);
+                        break;
+                }
+            },
+            function ($value) {
+                return $value;
+            }
+        );
+
         return true;
     }
 
