@@ -499,90 +499,6 @@ class Framework
     }
 
     /**
-     * Register hooks from plugin
-     *
-     * @param array $pluginName Plugin name
-     * @param bool $mainFile File that contains the plugin class
-     *
-     * @return bool ture when succeeded, false otherwise
-     */
-    public static function registerPlugin($pluginName, $mainFile)
-    {
-        $pluginClassname = $pluginName . 'Plugin';
-        $invokeResult = null;
-
-        if (!static::registerScope($pluginClassname, $mainFile)) {
-            throw new \Exception(
-                'Cannot register class scope for plugin class '
-                . $pluginClassname .'.'
-            );
-
-            return false;
-        }
-
-        $plugRef = new \ReflectionClass($pluginClassname);
-
-        if (!$plugRef->implementsInterface('\Facula\Base\Implement\Plugin')) {
-            throw new \Exception(
-                'A facula plugin have to implement interface: '
-                . '\\Facula\\Base\\Implement\\Plugin'
-            );
-
-            return false;
-        }
-
-        if (!is_array($invokeResult = $plugRef->getMethod('register')->invoke(null))) {
-            throw new \Exception(
-                'Registering plugin '
-                . $pluginClassname
-                . ', but registrant returns invalid result.'
-            );
-
-            return false;
-        }
-
-        foreach ($invokeResult as $hookName => $binded) {
-            static::registerHook($hookName, $pluginClassname, $binded);
-        }
-
-        return true;
-    }
-
-    /**
-     * Unregister hooks from plugin
-     *
-     * @param array $pluginName Plugin name
-     *
-     * @return bool ture when successed, false otherwise
-     */
-    public static function unregisterPlugin($pluginName)
-    {
-        $pickedUp = false;
-        $pluginClassname = $pluginName . 'Plugin';
-
-        // We can use static::unregisterHook to do same thing, but below code is faster
-        foreach (static::$components['Hooks'] as $hook => $hookName) {
-            if ($hookName == $pluginClassname) {
-                $pickedUp = true;
-
-                unset(static::$components['Hooks'][$hook][$hookName]);
-            }
-        }
-
-        if ($pickup) {
-            return static::unregisterScope($pluginClassname);
-        } else {
-            throw new \Exception(
-                'Unregistering plugin '
-                . $pluginClassname
-                . '. But it seems not registered.'
-            );
-        }
-
-        return false;
-    }
-
-    /**
      * Register a hook
      *
      * @param string $hook Hook name
@@ -966,6 +882,70 @@ class Framework
         return true;
     }
 
+
+    /**
+     * Register hooks from plugin classes
+     *
+     * @param bool $mainFile File that contains the plugin class
+     *
+     * @return bool ture when succeeded, false otherwise
+     */
+    protected static function initPlugin($mainFile)
+    {
+        $invokeResult = null;
+        $declaredClasses = get_declared_classes();
+
+        if (!is_readable($mainFile)) {
+            throw new \Exception(
+                'Plugin file '
+                . $mainFile
+                . ' is not readable.'
+            );
+
+            return false;
+        } else {
+            require($mainFile);
+        }
+
+        foreach (array_diff(get_declared_classes(), $declaredClasses) as $key => $pluginClassname) {
+            if (!static::registerScope($pluginClassname, $mainFile)) {
+                throw new \Exception(
+                    'Cannot register class scope for plugin class '
+                    . $pluginClassname .'.'
+                );
+
+                return false;
+            }
+
+            $plugRef = new \ReflectionClass($pluginClassname);
+
+            if (!$plugRef->implementsInterface('\Facula\Base\Implement\Plugin')) {
+                throw new \Exception(
+                    'A facula plugin have to implement interface: '
+                    . '\\Facula\\Base\\Implement\\Plugin'
+                );
+
+                return false;
+            }
+
+            if (!is_array($invokeResult = $plugRef->getMethod('register')->invoke(null))) {
+                throw new \Exception(
+                    'Registering plugin '
+                    . $pluginClassname
+                    . ', but registrant returns invalid result.'
+                );
+
+                return false;
+            }
+
+            foreach ($invokeResult as $hookName => $binded) {
+                static::registerHook($hookName, $pluginClassname, $binded);
+            }
+        }
+
+        return true;
+    }
+
     /**
      * Register all built in and configured Namespace
      *
@@ -1021,15 +1001,15 @@ class Framework
                         break;
 
                     case 'plugin':
-                        self::registerPlugin($module['Name'], $module['Path']);
+                        static::initPlugin($module['Path']);
                         break;
 
                     case 'class':
-                        self::registerScope(ucfirst($module['Name']), $module['Path']);
+                        static::registerScope(ucfirst($module['Name']), $module['Path']);
                         break;
 
                     default:
-                        self::registerScope($module['Name'], $module['Path']);
+                        static::registerScope($module['Name'], $module['Path']);
                         break;
                 }
             }
