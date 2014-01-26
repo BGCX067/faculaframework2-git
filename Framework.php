@@ -119,7 +119,7 @@ class Framework
      *
      * @return mixed Return a singleton Facula object when successed, false otherwise.
      */
-    public static function run(array &$cfg)
+    public static function run(array &$cfg = array())
     {
         if (!static::$instance) {
             spl_autoload_register(array(__CLASS__, 'loadClass'));
