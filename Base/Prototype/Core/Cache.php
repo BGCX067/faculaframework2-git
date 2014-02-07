@@ -170,8 +170,7 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
                     . ' $cache = '
                     . var_export($cacheData, true)
                     . '; '
-                    . static::$setting['CacheFileSafeCode'][1],
-                    LOCK_EX
+                    . static::$setting['CacheFileSafeCode'][1]
                 );
             }
         }
