@@ -123,7 +123,7 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
 
                     if ($this->configs['OCExpire']
                         && $instance->cachedObjectSaveTime < $this->configs['OCExpire'] - FACULA_TIME) {
-                        unlink($file);
+                        return false;
                     }
 
                     return $instance;
@@ -163,6 +163,14 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                                             . ($uniqueID ? $uniqueID : 'common')
                                             . '.php';
             $instance->cachedObjectSaveTime = FACULA_TIME;
+
+            \Facula\Framework::core('debug')->criticalSection(true);
+
+            if (file_exists($instance->cachedObjectFilePath)) {
+                unlink($instance->cachedObjectFilePath);
+            }
+
+            \Facula\Framework::core('debug')->criticalSection(false);
 
             return file_put_contents(
                 $instance->cachedObjectFilePath,

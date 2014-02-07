@@ -156,6 +156,14 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
                     2 => $data ? $data : null, // Data
                 );
 
+                \Facula\Framework::core('debug')->criticalSection(true);
+
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+
+                \Facula\Framework::core('debug')->criticalSection(false);
+
                 return file_put_contents(
                     $file,
                     static::$setting['CacheFileSafeCode'][0]
