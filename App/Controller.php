@@ -223,6 +223,10 @@ abstract class Controller extends Setting
      */
     protected function error($msg)
     {
+        if (!$msg) {
+            return false;
+        }
+        
         if ($this->template) {
             if (is_array($msg)) {
                 return $this->template->insertMessage($msg);
