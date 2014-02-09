@@ -536,6 +536,15 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
                                     unset($splitedRenderedContent, $splitedRenderedContentLen);
 
+                                    // Remove the old file, let APC cache knows the update.
+                                    \Facula\Framework::core('debug')->criticalSection(true);
+
+                                    if (file_exists($cachedPagePath)) {
+                                        unlink($cachedPagePath);
+                                    }
+
+                                    \Facula\Framework::core('debug')->criticalSection(false);
+
                                     if (file_put_contents($cachedPagePath, $renderCachedOutputContent)) {
                                         return $cachedPagePath;
                                     }
@@ -794,6 +803,14 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                     );
                 }
 
+                \Facula\Framework::core('debug')->criticalSection(true);
+
+                if (file_exists($resultTpl)) {
+                    unlink($resultTpl);
+                }
+
+                \Facula\Framework::core('debug')->criticalSection(false);
+
                 return file_put_contents(
                     $resultTpl,
                     static::$setting['TemplateFileSafeCode'][0]
@@ -876,6 +893,14 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                                                                     trim($langMapTemp[1]);
                 }
             }
+
+            \Facula\Framework::core('debug')->criticalSection(true);
+
+            if (file_exists($compiledLangFile)) {
+                unlink($compiledLangFile);
+            }
+
+            \Facula\Framework::core('debug')->criticalSection(false);
 
             if (file_put_contents(
                 $compiledLangFile,
