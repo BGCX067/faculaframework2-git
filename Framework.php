@@ -198,7 +198,7 @@ class Framework
                     . ';'
                     . self::$cfg['CacheTags'][1];
 
-        if (file_put_contents($stateFile, $content, LOCK_EX)) {
+        if (file_put_contents($stateFile, $content)) {
             return true;
         }
 
@@ -882,7 +882,6 @@ class Framework
         return true;
     }
 
-
     /**
      * Register hooks from plugin classes
      *
@@ -964,6 +963,8 @@ class Framework
             foreach ($this->setting['Namespaces'] as $namespace => $path) {
                 static::registerNamespace($namespace, $path);
             }
+
+            unset($this->setting['Namespaces']);
         }
 
         return true;
@@ -983,7 +984,7 @@ class Framework
             foreach ($this->setting['Paths'] as $path) {
                 $scanner = new \Facula\Base\Tool\File\ModuleScanner($path);
 
-                // Must use array_merge. Yes, it's slow but it can auto resolve reindex problem
+                // Must use array_merge. Yes, it's slow but we need it for auto resolve reindex problem
                 $modules = array_merge($modules, $scanner->scan());
             }
 
@@ -1015,7 +1016,9 @@ class Framework
             }
 
             // Unset the setting and release memory
-            unset($this->setting['Paths'], $this->setting['Namespaces']);
+            unset($this->setting['Paths']);
         }
+
+        return false;
     }
 }
