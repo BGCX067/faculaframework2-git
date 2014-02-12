@@ -178,8 +178,7 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                 . '$obj = '
                 . var_export(serialize($instance), true)
                 . ';'
-                . static::$config['CacheSafeCode'][1],
-                LOCK_EX
+                . static::$config['CacheSafeCode'][1]
             );
         }
 
