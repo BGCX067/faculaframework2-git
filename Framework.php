@@ -198,10 +198,6 @@ class Framework
                     . ';'
                     . self::$cfg['CacheTags'][1];
 
-        if (file_exists($stateFile)) {
-            unlink($stateFile);
-        }
-
         if (file_put_contents($stateFile, $content)) {
             return true;
         }
