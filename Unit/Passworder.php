@@ -78,7 +78,7 @@ class Passworder
      * Get password hashed
      *
      * @param string $string Salt used for hashing
-     * @param string $salt Repeat times for string hashing
+     * @param string $salt Use specified salt instead of current hash for hashing.
      *
      * @return string Hashed password
      */
