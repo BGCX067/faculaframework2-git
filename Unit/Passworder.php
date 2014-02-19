@@ -34,9 +34,6 @@ class Passworder
     /** Cost for algorithm */
     protected $cost = 12;
 
-    /** Salt for obscure */
-    protected $salt = '';
-
     /** Instance of hasher object */
     protected $hasher = null;
 
@@ -56,35 +53,19 @@ class Passworder
         $this->hasher = new Hasher($salt, $loop);
 
         $this->cost = $cost > 1 ? $cost : 1;
-
-        if (CRYPT_BLOWFISH == 1) {
-            $this->salt = '$2a$04$' . $this->getRandomSalt(64) . '$';
-        } elseif (CRYPT_SHA512 == 1) {
-            $this->salt = '$6$rounds=1000$' . $this->getRandomSalt(16);
-        } elseif (CRYPT_SHA256 == 1) {
-            $this->salt = '$5$rounds=1000$' . $this->getRandomSalt(16);
-        } elseif (CRYPT_MD5 == 1) {
-            $this->salt = '$1$' . $this->getRandomSalt(12);
-        } elseif (CRYPT_EXT_DES == 1) {
-            $this->salt = '_J9..' . $this->getRandomSalt(4);
-        } elseif (CRYPT_STD_DES == 1) {
-            $this->salt = $this->getRandomSalt(2);
-        } else {
-            $this->salt = crypt($this->getRandomSalt(16));
-        }
     }
 
     /**
      * Get password hashed
      *
      * @param string $string Salt used for hashing
-     * @param string $salt Use specified salt instead of current hash for hashing.
+     * @param string $salt Use specified salt instead of random hash for hashing.
      *
      * @return string Hashed password
      */
     public function hash($string, $salt = '')
     {
-        $passwordSalt = $salt ? $salt : $this->salt;
+        $passwordSalt = $salt ? $salt : $this->getSalt();
         $passwordHash = $this->hasher->obscuredSafe($string);
 
         for ($i = 0; $i < $this->cost; $i++) {
@@ -130,6 +111,34 @@ class Passworder
 
         for ($i = (int)$num; $i > 0; $i--) {
             $salt .= $map[mt_rand(0, 63)];
+        }
+
+        return $salt;
+    }
+
+    /**
+     * Get a random salt for hashing
+     *
+     * @return string The random salt
+     */
+    protected function getSalt()
+    {
+        $salt = '';
+
+        if (CRYPT_BLOWFISH == 1) {
+            $salt = '$2a$04$' . $this->getRandomSalt(64) . '$';
+        } elseif (CRYPT_SHA512 == 1) {
+            $salt = '$6$rounds=1000$' . $this->getRandomSalt(16);
+        } elseif (CRYPT_SHA256 == 1) {
+            $salt = '$5$rounds=1000$' . $this->getRandomSalt(16);
+        } elseif (CRYPT_MD5 == 1) {
+            $salt = '$1$' . $this->getRandomSalt(12);
+        } elseif (CRYPT_EXT_DES == 1) {
+            $salt = '_J9..' . $this->getRandomSalt(4);
+        } elseif (CRYPT_STD_DES == 1) {
+            $salt = $this->getRandomSalt(2);
+        } else {
+            $salt = crypt($this->getRandomSalt(16));
         }
 
         return $salt;
