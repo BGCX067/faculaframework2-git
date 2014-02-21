@@ -48,27 +48,75 @@ class PathParser
     */
     public static function get($path)
     {
-        $rightPath = rtrim(
-            str_replace(
+        // Check type of this path
+        if (($uriPos = strpos($path, '://')) !== false) { // 1: URI: http://123.com/dir/ (file://c/system32/)
+            $rightPath = static::replaceSub(
+                $path,
+                static::$config['Separators'],
+                '/',
+                $uriPos + 3,
+                strlen($path),
+                static::$config['NoEnding']
+            );
+        } elseif (($uriPos = strpos($path, '\\\\')) !== false && $uriPos == 0) { // 2: Samba server addr \\123.com\dir\
+            $rightPath = static::replaceSub(
+                $path,
+                static::$config['Separators'],
+                '\\',
+                $uriPos + 2,
+                strlen($path),
+                static::$config['NoEnding']
+            );
+        } else { // Normal file system path
+            $rightPath = static::replaceSub(
+                $path,
                 static::$config['Separators'],
                 DIRECTORY_SEPARATOR,
-                $path
-            ),
-            DIRECTORY_SEPARATOR
-        );
-
-        while (strpos($rightPath, DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR) === true) {
-            $rightPath = str_replace(
-                DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR,
-                DIRECTORY_SEPARATOR,
-                $rightPath
+                0,
+                strlen($path),
+                static::$config['NoEnding']
             );
         }
 
-        if (!static::$config['NoEnding']) {
-            $rightPath .= DIRECTORY_SEPARATOR;
+        return $rightPath;
+    }
+
+    protected static function replaceSub(
+        $string,
+        $find,
+        $replaceTo,
+        $startPos = 0,
+        $endPos = 0,
+        $addEnding = false
+    ) {
+        $result = $beforeStr = $targetStr = $afterStr = '';
+        $finds = array();
+
+        $beforeStr = substr($string, 0, $startPos);
+        $afterStr = substr($string, $endPos, strlen($string) - 1);
+
+        $targetStr = substr($string, $startPos, $endPos);
+
+        if (!is_array($find)) {
+            $finds[] = $find;
+        } else {
+            $finds = $find;
         }
 
-        return $rightPath;
+        foreach ($finds as $word) {
+            $targetStr = str_replace($word, $replaceTo, $targetStr);
+
+            while (strpos($targetStr, $replaceTo . $replaceTo) !== false) {
+                $targetStr = str_replace($replaceTo . $replaceTo, $replaceTo, $targetStr);
+            }
+        }
+
+        $result = rtrim($beforeStr . $targetStr . $afterStr, $replaceTo);
+
+        if ($addEnding && $result[strlen($result) - 1] != $replaceTo) {
+            $afterStr .= $replaceTo;
+        }
+
+        return $result;
     }
 }
