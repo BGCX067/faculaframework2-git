@@ -56,7 +56,7 @@ class PathParser
                 '/',
                 $uriPos + 3,
                 strlen($path),
-                static::$config['NoEnding']
+                !static::$config['NoEnding']
             );
         } elseif (($uriPos = strpos($path, '\\\\')) !== false && $uriPos == 0) { // 2: Samba server addr \\123.com\dir\
             $rightPath = static::replaceSub(
@@ -65,7 +65,7 @@ class PathParser
                 '\\',
                 $uriPos + 2,
                 strlen($path),
-                static::$config['NoEnding']
+                !static::$config['NoEnding']
             );
         } else { // Normal file system path
             $rightPath = static::replaceSub(
@@ -74,7 +74,7 @@ class PathParser
                 DIRECTORY_SEPARATOR,
                 0,
                 strlen($path),
-                static::$config['NoEnding']
+                !static::$config['NoEnding']
             );
         }
 

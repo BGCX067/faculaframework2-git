@@ -579,7 +579,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
         $current = abs(crc32($cacheName));
 
-        while (1) {
+        while (true) {
             if ($current > 1024) {
                 $path[] = $current = (int)($current / 1024);
             } else {
