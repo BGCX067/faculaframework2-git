@@ -113,8 +113,8 @@ class PathParser
 
         $result = rtrim($beforeStr . $targetStr . $afterStr, $replaceTo);
 
-        if ($addEnding && $result[strlen($result) - 1] != $replaceTo) {
-            $afterStr .= $replaceTo;
+        if (!$result || ($addEnding && $result[strlen($result) - 1] != $replaceTo)) {
+            $result .= $replaceTo;
         }
 
         return $result;
