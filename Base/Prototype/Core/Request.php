@@ -69,22 +69,22 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
 
     /** Request info */
     protected $requestInfo = array(
-            'method' => 'get',
-            'gzip' => false,
-            'languages' => array(
-                'en'
-            ),
-            'language' => 'en',
-            'https' => false,
-            'auth' => array(
-                'Username' => '',
-                'Password' => '',
-            ),
-            'ip' => '0.0.0.0',
-            'ipArray' => array('0','0','0','0'),
-            'forwarded' => false,
-            'xForwardedName' => '',
-            'fromSelf' => false,
+        'method' => 'get',
+        'gzip' => false,
+        'languages' => array(
+            'en'
+        ),
+        'language' => 'en',
+        'https' => false,
+        'auth' => array(
+            'Username' => '',
+            'Password' => '',
+        ),
+        'ip' => '0.0.0.0',
+        'ipArray' => array('0','0','0','0'),
+        'forwarded' => false,
+        'xForwardedName' => '',
+        'fromSelf' => false,
     );
 
     /**
@@ -475,12 +475,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
         if (is_array($keys)) {
             foreach ($keys as $key) {
                 if (isset($this->pool[$type][$key])) {
-                    $result[$key] =
-                        $this->pool[$type][$key]
-                        ?
-                        $this->pool[$type][$key]
-                        :
-                        null;
+                    $result[$key] = $this->pool[$type][$key];
                 } elseif ($failfalse) {
                     return false;
                 } else {

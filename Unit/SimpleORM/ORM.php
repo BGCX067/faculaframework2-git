@@ -258,7 +258,7 @@ abstract class ORM implements Implement, \ArrayAccess
      * @return array Return the result of query when success, false otherwise
      */
     public static function fetch(
-        array $param,
+        array $param = array(),
         $offset = 0,
         $dist = 0,
         $returnType = 'CLASS',
