@@ -38,7 +38,7 @@ abstract class Controller extends Setting
      *
      * @return bool Return true when initialize complete, false otherwise.
      */
-    public function init()
+    final public function init()
     {
         foreach (\Facula\Framework::getAllCores() as $coreName => $coreReference) {
             $this->$coreName = $coreReference;
@@ -56,7 +56,7 @@ abstract class Controller extends Setting
      *
      * @return mixed Return the result of the method when it's found, false otherwise.
      */
-    public function run()
+    final public function run()
     {
         $method = $this->request->getClientInfo('method');
 
@@ -76,7 +76,7 @@ abstract class Controller extends Setting
      *
      * @return mixed Return the result of Request core::getGet
      */
-    protected function getGet($key)
+    final protected function getGet($key)
     {
         return $this->request->getGet($key);
     }
@@ -88,7 +88,7 @@ abstract class Controller extends Setting
      *
      * @return mixed Return the result of Request core::getPost
      */
-    protected function getPost($key)
+    final protected function getPost($key)
     {
         return $this->request->getPost($key);
     }
@@ -100,7 +100,7 @@ abstract class Controller extends Setting
      *
      * @return mixed Return the result of Request core::getCookie
      */
-    protected function getCookie($key)
+    final protected function getCookie($key)
     {
         return $this->request->getCookie($key);
     }
@@ -113,7 +113,7 @@ abstract class Controller extends Setting
      *
      * @return mixed Return the result of Request core::getGets
      */
-    protected function getGets(array $keys, array &$errors = array())
+    final protected function getGets(array $keys, array &$errors = array())
     {
         return $this->request->getGets($keys, $errors);
     }
@@ -126,7 +126,7 @@ abstract class Controller extends Setting
      *
      * @return mixed Return the result of Request core::getPosts
      */
-    protected function getPosts(array $keys, array &$errors = array())
+    final protected function getPosts(array $keys, array &$errors = array())
     {
         return $this->request->getPosts($keys, $errors);
     }
@@ -140,7 +140,7 @@ abstract class Controller extends Setting
      *
      * @return mixed Return the result of Response core::setHeader
      */
-    protected function redirect($addr, $httpcode = 302, $interior = true)
+    final protected function redirect($addr, $httpcode = 302, $interior = true)
     {
         $rootUrl = $interior ? $this->request->getClientInfo('rootURL') . '/' : '';
 
@@ -167,7 +167,7 @@ abstract class Controller extends Setting
      *
      * @return mixed Return the result of Response core::setHeader
      */
-    protected function header($header)
+    final protected function header($header)
     {
         return $this->response->setHeader($header);
     }
@@ -180,7 +180,7 @@ abstract class Controller extends Setting
      *
      * @return mixed Return the result of Response core::send when success, false otherwise
      */
-    protected function send($content, $type)
+    final protected function send($content, $type)
     {
         if ($this->response->setContent($content)) {
             return $this->response->send($type);
@@ -197,7 +197,7 @@ abstract class Controller extends Setting
      *
      * @return mixed Return the result of Template core::assign when success, false otherwise
      */
-    protected function assign($key, $val)
+    final protected function assign($key, $val)
     {
         if (isset($this->template)) {
             if ($this->template->assign($key, $val)) {
@@ -221,12 +221,12 @@ abstract class Controller extends Setting
      *
      * @return mixed Result from Template core::insertMessage when success, false otherwise
      */
-    protected function error($msg)
+    final protected function error($msg)
     {
         if (!$msg) {
             return false;
         }
-        
+
         if ($this->template) {
             if (is_array($msg)) {
                 return $this->template->insertMessage($msg);
@@ -257,7 +257,7 @@ abstract class Controller extends Setting
      *
      * @return mixed Result from Response core::send when success, false otherwise
      */
-    protected function display(
+    final protected function display(
         $tplName,
         $cacheExpired = 0,
         $cacheExpiredCallback = null,
