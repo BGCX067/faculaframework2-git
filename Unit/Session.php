@@ -354,7 +354,7 @@ class Session
                             self::$sessions[$for]['Setting']['CookieKey'],
                             implode("\t", $sessionKeyInfo),
                             self::$sessions[$for]['Setting']['Expire'],
-                            self::$cores['request']->getClientInfo('rootURL'),
+                            self::$cores['request']->getClientInfo('rootURL') . '/',
                             '',
                             self::$cores['request']->getClientInfo('https'),
                             true
@@ -372,7 +372,7 @@ class Session
                         self::$sessions[$for]['Setting']['CookieKey'],
                         implode("\t", $sessionKeyInfo),
                         self::$sessions[$for]['Setting']['Expire'],
-                        self::$cores['request']->getClientInfo('rootURL'),
+                        self::$cores['request']->getClientInfo('rootURL') . '/',
                         '',
                         self::$cores['request']->getClientInfo('https'),
                         true

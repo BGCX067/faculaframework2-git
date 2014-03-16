@@ -70,6 +70,8 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
     /** Request info */
     protected $requestInfo = array(
         'method' => 'get',
+        'rootURL' => '',
+        'absRootURL' => '',
         'gzip' => false,
         'languages' => array(
             'en'
