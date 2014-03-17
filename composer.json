@@ -1,0 +1,29 @@
+{
+    "name": "raincious/facula",
+    "description": "Facula PHP Framework",
+    "type": "library",
+    "keywords": ["Facula Framework", "Framework", "Autoloader"],
+    "homepage": "http://github.com/raincious/facula/",
+    "license": "LGPL-3.0",
+    "authors": [
+        {
+            "name": "Rain Lee",
+            "email": "raincious@gmail.com",
+            "homepage": "https://3ax.org"
+        }
+    ],
+    "support": {
+        "issues": "http://github.com/raincious/facula/issues",
+        "wiki": "http://github.com/raincious/facula/wiki"
+    },
+    "require": {
+        "php": ">=5.3.3",
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "Facula\\": "src/Facula/",
+        }
+    },
+    "minimum-stability": "dev"
+}
