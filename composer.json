@@ -17,12 +17,12 @@
         "wiki": "http://github.com/raincious/facula/wiki"
     },
     "require": {
-        "php": ">=5.3.3",
+        "php": ">=5.3.3"
     },
     "require-dev": {},
     "autoload": {
         "psr-4": {
-            "Facula\\": "src/Facula/",
+            "Facula\\": "src/Facula/"
         }
     },
     "minimum-stability": "dev"
