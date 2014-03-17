@@ -52,6 +52,15 @@ define('FACULA_TIME', isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME']
  */
 class Framework
 {
+    /** Mirror constant for FACULA_ROOT */
+    const ROOT = FACULA_ROOT;
+
+    /** Mirror constant for PROJECT_ROOT */
+    const PATH = PROJECT_ROOT;
+
+    /** Mirror constant for FACULA_TIME */
+    const TIME = FACULA_TIME;
+
     /** Singleton instance container */
     protected static $instance = null;
 
