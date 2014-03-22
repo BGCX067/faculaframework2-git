@@ -3,7 +3,7 @@
 /**
  * Interface of SimpleORM
  *
- * Facula Framework 2013 (C) Rain Lee
+ * Facula Framework 2014 (C) Rain Lee
  *
  * Facula Framework is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -41,6 +41,8 @@ interface Implement
     public function offsetGet($offset);
     public function offsetExists($offset);
     public function offsetUnset($offset);
+
+    public function isChanged();
 
     public function getPrimaryValue();
     public function getFields();

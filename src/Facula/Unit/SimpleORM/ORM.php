@@ -3,7 +3,7 @@
 /**
  * SimpleORM Database Abstract
  *
- * Facula Framework 2013 (C) Rain Lee
+ * Facula Framework 2014 (C) Rain Lee
  *
  * Facula Framework is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -164,6 +164,20 @@ abstract class ORM implements Implement, \ArrayAccess
     public function offsetUnset($offset)
     {
         unset($this->data[$offset]);
+    }
+
+    /**
+     * Is data has changed since load?
+     *
+     * @return bool Return true when changed, false otherwise.
+     */
+    public function isChanged()
+    {
+        if ($this->dataOriginal != $this->data) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

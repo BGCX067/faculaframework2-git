@@ -3,7 +3,7 @@
 /**
  * Path Parser
  *
- * Facula Framework 2013 (C) Rain Lee
+ * Facula Framework 2014 (C) Rain Lee
  *
  * Facula Framework is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
