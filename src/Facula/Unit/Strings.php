@@ -32,9 +32,6 @@ namespace Facula\Unit;
  */
 abstract class Strings
 {
-    /** Default internal encode */
-    protected static $default_encode = 'utf-8';
-
     /**
      * Wrapped version of substr but with mb_substr
      *
