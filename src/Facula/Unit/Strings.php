@@ -32,29 +32,8 @@ namespace Facula\Unit;
  */
 abstract class Strings
 {
-    /** Tag to anti-reinitialize */
-    protected static $inited = false;
-
     /** Default internal encode */
     protected static $default_encode = 'utf-8';
-
-    /**
-     * Initialize the class
-     *
-     * @return bool Return true when initialized, false when initialize failed
-     */
-    protected static function selfInit()
-    {
-        if (static::$inited) {
-            return true;
-        }
-
-        if (mb_internal_encoding(static::$default_encode)) {
-            return true;
-        }
-
-        return false;
-    }
 
     /**
      * Wrapped version of substr but with mb_substr
@@ -73,8 +52,6 @@ abstract class Strings
         $len,
         $apostrophe = false
     ) {
-        static::selfInit();
-
         if ($len > mb_strlen($string)) {
             return $string;
         } else {
@@ -98,8 +75,6 @@ abstract class Strings
      */
     public static function strlen($string)
     {
-        static::selfInit();
-
         return mb_strlen($string);
     }
 
@@ -117,8 +92,6 @@ abstract class Strings
         $needle,
         $offset = 0
     ) {
-        static::selfInit();
-
         return mb_strpos($haystack, $needle, $offset);
     }
 }
