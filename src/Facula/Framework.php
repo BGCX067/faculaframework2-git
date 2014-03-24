@@ -350,7 +350,7 @@ class Framework
                         . $className
                         . '.' . static::$cfg['PHPExt'];
 
-            if ($map['Ref']['P']) {
+            if ($map['Ref']['P'] && file_exists($fullPath)) {
                 require($fullPath);
 
                 return true;
