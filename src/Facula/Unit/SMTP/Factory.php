@@ -49,10 +49,10 @@ $cfg = array(
 class Factory extends \Facula\Base\Factory\Operator
 {
     /** Global configuration of the class */
-    private static $config = array();
+    protected static $config = array();
 
     /** Container of email that waiting to be send */
-    private static $emails = array();
+    protected static $emails = array();
 
     /** Default operators */
     protected static $operators = array(
@@ -71,14 +71,14 @@ class Factory extends \Facula\Base\Factory\Operator
         $version = array();
         $senderIP = '';
 
-        if (empty(self::$config)) {
+        if (empty(static::$config)) {
             $version = \Facula\Framework::getVersion();
             $senderIP = \Facula\Unit\IP::joinIP(
                 \Facula\Framework::core('request')->getClientInfo('ipArray'),
                 true
             );
 
-            self::$config['Handler'] = $version['App'] . ' ' . $version['Ver'];
+            static::$config['Handler'] = $version['App'] . ' ' . $version['Ver'];
 
             if (isset($cfg['Servers']) && is_array($cfg['Servers'])) {
                 if (isset($cfg['SelectMethod'])
@@ -87,30 +87,30 @@ class Factory extends \Facula\Base\Factory\Operator
                 }
 
                 foreach ($cfg['Servers'] as $key => $val) {
-                    self::$config['Servers'][$key] = array(
+                    static::$config['Servers'][$key] = array(
                         'Host' => isset($val['Host']) ? $val['Host'] : 'localhost',
                         'Port' => isset($val['Port']) ? $val['Port'] : 25,
                         'Type' => isset($val['Type']) ? $val['Type'] : 'general',
                         'Timeout' => isset($val['Timeout']) ? $val['Timeout'] : 1,
                         'Username' => isset($val['Username']) ? $val['Username'] : '',
                         'Password' => isset($val['Password']) ? $val['Password'] : '',
-                        'Handler' => self::$config['Handler'],
+                        'Handler' => static::$config['Handler'],
                         'SenderIP' => $senderIP,
                     );
 
                     // Set poster screen name, this will be display on the receiver's list
                     if (isset($val['Screenname'])) {
-                        self::$config['Servers'][$key]['Screenname'] =
+                        static::$config['Servers'][$key]['Screenname'] =
                             $val['Screenname'];
                     } else {
-                        self::$config['Servers'][$key]['Screenname'] =
-                            self::$config['Servers'][$key]['Username'];
+                        static::$config['Servers'][$key]['Screenname'] =
+                            static::$config['Servers'][$key]['Username'];
                     }
 
                     // Set MAIL FROM, this one must be set for future use
                     if (isset($val['From'])) {
                         if (\Facula\Unit\Validator::check($val['From'], 'email')) {
-                            self::$config['Servers'][$key]['From'] = $val['From'];
+                            static::$config['Servers'][$key]['From'] = $val['From'];
                         } else {
                             \Facula\Framework::core('debug')->exception(
                                 'ERROR_SMTP_ADDRESS_FORM_INVALID|' . $val['From'],
@@ -119,16 +119,16 @@ class Factory extends \Facula\Base\Factory\Operator
                             );
                         }
                     } else {
-                        self::$config['Servers'][$key]['From'] =
-                            self::$config['Servers'][$key]['Username']
+                        static::$config['Servers'][$key]['From'] =
+                            static::$config['Servers'][$key]['Username']
                             . '@'
-                            . self::$config['Servers'][$key]['Host'];
+                            . static::$config['Servers'][$key]['Host'];
                     }
 
                     // Set REPLY TO
                     if (isset($val['ReplyTo'])) {
                         if (\Facula\Unit\Validator::check($val['ReplyTo'], 'email')) {
-                            self::$config['Servers'][$key]['ReplyTo'] = $val['ReplyTo'];
+                            static::$config['Servers'][$key]['ReplyTo'] = $val['ReplyTo'];
                         } else {
                             \Facula\Framework::core('debug')->exception(
                                 'ERROR_SMTP_ADDRESS_REPLYTO_INVALID|' . $val['ReplyTo'],
@@ -137,14 +137,14 @@ class Factory extends \Facula\Base\Factory\Operator
                             );
                         }
                     } else {
-                        self::$config['Servers'][$key]['ReplyTo'] =
-                            self::$config['Servers'][$key]['From'];
+                        static::$config['Servers'][$key]['ReplyTo'] =
+                            static::$config['Servers'][$key]['From'];
                     }
 
                     // Set RETURN TO
                     if (isset($val['ReturnTo'])) {
                         if (\Facula\Unit\Validator::check($val['ReturnTo'], 'email')) {
-                            self::$config['Servers'][$key]['ReturnTo'] = $val['ReturnTo'];
+                            static::$config['Servers'][$key]['ReturnTo'] = $val['ReturnTo'];
                         } else {
                             \Facula\Framework::core('debug')->exception(
                                 'ERROR_SMTP_ADDRESS_RETURNTO_INVALID|' . $val['ReturnTo'],
@@ -153,14 +153,14 @@ class Factory extends \Facula\Base\Factory\Operator
                             );
                         }
                     } else {
-                        self::$config['Servers'][$key]['ReturnTo'] =
-                            self::$config['Servers'][$key]['From'];
+                        static::$config['Servers'][$key]['ReturnTo'] =
+                            static::$config['Servers'][$key]['From'];
                     }
 
                     // Set ERROR TO
                     if (isset($val['ErrorTo'])) {
                         if (\Facula\Unit\Validator::check($val['ErrorTo'], 'email')) {
-                            self::$config['Servers'][$key]['ErrorTo'] = $val['ErrorTo'];
+                            static::$config['Servers'][$key]['ErrorTo'] = $val['ErrorTo'];
                         } else {
                             \Facula\Framework::core('debug')->exception(
                                 'ERROR_SMTP_ADDRESS_ERRORTO_INVALID|' . $val['ErrorTo'],
@@ -169,7 +169,7 @@ class Factory extends \Facula\Base\Factory\Operator
                             );
                         }
                     } else {
-                        self::$config['Servers'][$key]['ErrorTo'] = self::$config['Servers'][$key]['From'];
+                        static::$config['Servers'][$key]['ErrorTo'] = static::$config['Servers'][$key]['From'];
                     }
                 }
 
@@ -177,7 +177,7 @@ class Factory extends \Facula\Base\Factory\Operator
                     'response_finished',
                     'SMTP_Sending',
                     function () {
-                        self::sendMail();
+                        static::sendMail();
                     }
                 );
 
@@ -203,7 +203,7 @@ class Factory extends \Facula\Base\Factory\Operator
      */
     public static function newMail($title, $message, array $receivers)
     {
-        self::$emails[] = array(
+        static::$emails[] = array(
             'Receivers' => $receivers,
             'Title' => $title,
             'Message' => $message,
@@ -221,18 +221,18 @@ class Factory extends \Facula\Base\Factory\Operator
     {
         $operater = null;
         $operaterClassName = $error = '';
-        $remainingMails = count(self::$emails);
+        $remainingMails = count(static::$emails);
         $retryLimit = 3;
         $currentServers = array();
 
-        if (!empty(self::$config) && $remainingMails > 0) {
-            $currentServers = self::$config['Servers'];
+        if (!empty(static::$config) && $remainingMails > 0) {
+            $currentServers = static::$config['Servers'];
 
             \Facula\Framework::core('debug')->criticalSection(true);
 
             try {
                 while (!empty($currentServers)
-                    && !empty(self::$emails) && $retryLimit > 0) {
+                    && !empty(static::$emails) && $retryLimit > 0) {
                     foreach ($currentServers as $serverkey => $server) {
                         $operaterClassName = static::getOperator($server['Type']);
 
@@ -242,9 +242,9 @@ class Factory extends \Facula\Base\Factory\Operator
                             if ($operater instanceof Base) {
                                 if ($operater->connect($error)) {
 
-                                    foreach (self::$emails as $mailkey => $email) {
+                                    foreach (static::$emails as $mailkey => $email) {
                                         if ($operater->send($email)) {
-                                            unset(self::$emails[$mailkey]);
+                                            unset(static::$emails[$mailkey]);
                                         } else {
                                             $retryLimit--;
                                             break;

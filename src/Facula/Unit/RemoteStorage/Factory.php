@@ -30,7 +30,7 @@ namespace Facula\Unit\RemoteStorage;
 /*
 Here's how to use
 
-$setting = array {
+$setting = array(
     'SelectMethod' => 'Normal|Random',
     'Servers' => array(
         array(
@@ -60,7 +60,7 @@ $setting = array {
             ),
         )
     )
-}
+)
 
 \Facula\Unit\RemoteStorage::setup($setting);
 
@@ -129,7 +129,7 @@ class Factory extends \Facula\Base\Factory\Operator
 
         if (is_readable($localFile)) {
             // Create handler instance
-            if (!self::$handler) {
+            if (!static::$handler) {
                 foreach (static::$servers as $server) {
                     if (isset($server['Type'][0])) {
                         $operatorName = static::getOperator($server['Type']);
@@ -141,7 +141,7 @@ class Factory extends \Facula\Base\Factory\Operator
 
                             if ($handler instanceof OperatorImplement) {
                                 if ($result = $handler->upload($localFile, $error)) {
-                                    self::$handler = $handler;
+                                    static::$handler = $handler;
 
                                     return $result;
                                 } else {
@@ -170,7 +170,7 @@ class Factory extends \Facula\Base\Factory\Operator
                     }
                 }
             } else {
-                return self::$handler->upload($localFile, $error);
+                return static::$handler->upload($localFile, $error);
             }
         } else {
             \Facula\Framework::core('debug')->exception(
