@@ -365,6 +365,40 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Operato
     }
 
     /**
+     * Full the image with specified size
+     *
+     * @param integer $width Max width of the image
+     * @param integer $height Max Height of the image
+     *
+     * @return bool Return the result if self::resize when success, or false for fail
+     */
+    public function fillResize($width, $height)
+    {
+        $ratio = $ratioWidth = $ratioHeight = 0;
+
+        if ($this->imageRes) {
+            $ratioWidth = $width / $this->imageInfo['Width'];
+            $ratioHeight = $height / $this->imageInfo['Height'];
+
+            if ($ratioWidth > $ratioHeight) {
+                $ratio = $ratioWidth;
+            } else {
+                $ratio = $ratioHeight;
+            }
+
+            return $this->resize(
+                $this->imageInfo['Width'] * $ratio,
+                $this->imageInfo['Height'] * $ratio,
+                true,
+                $width,
+                $height
+            );
+        }
+
+        return false;
+    }
+
+    /**
      * Blur the current image resource
      *
      * @param integer $level Level of blur
@@ -425,40 +459,6 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Operato
             }
 
             return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Full the image with specified size
-     *
-     * @param integer $width Max width of the image
-     * @param integer $height Max Height of the image
-     *
-     * @return bool Return the result if self::resize when success, or false for fail
-     */
-    public function fillResize($width, $height)
-    {
-        $ratio = $ratioWidth = $ratioHeight = 0;
-
-        if ($this->imageRes) {
-            $ratioWidth = $width / $this->imageInfo['Width'];
-            $ratioHeight = $height / $this->imageInfo['Height'];
-
-            if ($ratioWidth > $ratioHeight) {
-                $ratio = $ratioWidth;
-            } else {
-                $ratio = $ratioHeight;
-            }
-
-            return $this->resize(
-                $this->imageInfo['Width'] * $ratio,
-                $this->imageInfo['Height'] * $ratio,
-                true,
-                $width,
-                $height
-            );
         }
 
         return false;
