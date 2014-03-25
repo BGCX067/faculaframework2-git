@@ -122,7 +122,7 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
      */
     public function upload($localFile, &$error = '')
     {
-        $currentRemotePath = $remoteFileName = $resultPath = $fileExt = '';
+        $currentRemotePath = $remoteFileName = $resultPath = $fileExt = $cdError = '';
         $success = false;
 
         if ($this->connection || $this->connect()) {
@@ -133,8 +133,11 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
                 if ($this->setting['Path']
                 && !$this->chDir(
                     $this->setting['Path'] . $this->generatePath(),
-                    $currentRemotePath
+                    $currentRemotePath,
+                    $cdError
                 )) {
+                    $error = 'ERROR_REMOTESTORAGE_ENTERDIR_FAILED|' . $error;
+
                     \Facula\Framework::core('debug')->exception(
                         'ERROR_FTP_CHANGEDIR_FAILED',
                         'ftp',
@@ -231,15 +234,15 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
      *
      * @param string $remotePath Remote path that will be enter into
      * @param string $enteredRemotePath Entered path
+     * @param string $error Reference to error feedback
      *
      * @return bool When path entered, return true, or return false on fail
      */
-    private function chDir($remotePath, &$enteredRemotePath = '')
+    private function chDir($remotePath, &$enteredRemotePath = '', &$error = '')
     {
         $folders = explode('/', str_replace(array('/', '\\'), '/', $remotePath));
 
         $chdirFailed = false;
-        $error = '';
         $validFolders = $skipedFolders = $remainFolders = array();
 
         if ($this->connection && count($folders)) {
