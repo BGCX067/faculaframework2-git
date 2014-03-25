@@ -87,12 +87,10 @@ class Factory extends \Facula\Base\Factory\Operator
                     ini_get('memory_limit')
                 ) * 0.8) - memory_get_peak_usage()),
 
-                'Font' =>
-                    isset($setting['Font']) && is_readable($setting['Font'])
+                'Font' => isset($setting['Font']) && is_readable($setting['Font'])
                     ? $setting['Font'] : null,
 
-                'FontSize' =>
-                    isset($setting['FontSize']) && is_readable($setting['FontSize'])
+                'FontSize' => isset($setting['FontSize'])
                     ? $setting['FontSize'] : 12,
             );
 
