@@ -82,16 +82,16 @@ class Factory extends \Facula\Base\Factory\Operator
         if (class_exists($className)) {
             self::$handlerClassName = $className;
 
-            self::$setting = array(
+            static::$setting = array(
                 'MemoryLimit' => (int)((\Facula\Base\Tool\Misc\PHPIni::convertIniUnit(
                     ini_get('memory_limit')
                 ) * 0.8) - memory_get_peak_usage()),
 
                 'Font' => isset($setting['Font']) && is_readable($setting['Font'])
-                    ? $setting['Font'] : null,
+                    ? static::$setting['Font'] : null,
 
                 'FontSize' => isset($setting['FontSize'])
-                    ? $setting['FontSize'] : 12,
+                    ? static::$setting['FontSize']  : 12,
             );
 
             return true;
@@ -118,7 +118,7 @@ class Factory extends \Facula\Base\Factory\Operator
         $handler = null;
 
         if (self::$handlerClassName) {
-            $handler = new self::$handlerClassName($file, self::$setting);
+            $handler = new self::$handlerClassName($file, static::$setting);
 
             if ($handler instanceof OperatorImplement) {
                 if ($handler->getImageRes()) {
