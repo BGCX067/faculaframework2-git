@@ -140,7 +140,7 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Operato
                 switch ($imageInfo['Type']) {
                     case IMAGETYPE_GIF:
                         if ($this->setting['MemoryLimit'] >=
-                            ($imageInfo['Area'] * $imageInfo['Channels'] + 1)) {
+                            ($imageInfo['Area'] * ($imageInfo['Channels'] + 1))) {
                             $imageRes = imagecreatefromgif($file);
                         } else {
                             $this->error = 'ERROR_IMAGE_HANDLER_MEMORYLIMIT_EXCEED';
@@ -149,7 +149,7 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Operato
 
                     case IMAGETYPE_JPEG:
                         if ($this->setting['MemoryLimit'] >
-                            ($imageInfo['Area'] * $imageInfo['Channels'] + 1)) {
+                            ($imageInfo['Area'] * ($imageInfo['Channels'] + 1))) {
                             $imageRes = imagecreatefromjpeg($file);
                         } else {
                             $this->error = 'ERROR_IMAGE_HANDLER_MEMORYLIMIT_EXCEED';
@@ -177,7 +177,7 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Operato
 
                     case IMAGETYPE_WBMP:
                         if ($this->setting['MemoryLimit'] >=
-                            ($imageInfo['Area'] * $imageInfo['Channels'] + 1)) {
+                            ($imageInfo['Area'] * ($imageInfo['Channels'] + 1))) {
                             $imageRes = imagecreatefromwbmp($file);
                         } else {
                             $this->error = 'ERROR_IMAGE_HANDLER_MEMORYLIMIT_EXCEED';
@@ -186,7 +186,7 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Operato
 
                     case IMAGETYPE_XBM:
                         if ($this->setting['MemoryLimit'] >=
-                            ($imageInfo['Area'] * $imageInfo['Channels'] + 1)) {
+                            ($imageInfo['Area'] * ($imageInfo['Channels'] + 1))) {
                             $imageRes = imagecreatefromxbm($file);
                         } else {
                             $this->error = 'ERROR_IMAGE_HANDLER_MEMORYLIMIT_EXCEED';

@@ -110,10 +110,11 @@ class Factory extends \Facula\Base\Factory\Operator
      * Get a image hander with file
      *
      * @param array $file Path to the file
+     * @param string $error Reference for error feedback
      *
      * @return mixed Return the image handler instance for success or false for fail
      */
-    public static function get($file)
+    public static function get($file, &$error = '')
     {
         $handler = null;
 
@@ -123,6 +124,8 @@ class Factory extends \Facula\Base\Factory\Operator
             if ($handler instanceof OperatorImplement) {
                 if ($handler->getImageRes()) {
                     return $handler;
+                } else {
+                    $error = $handler->getLastError();
                 }
             } else {
                 \Facula\Framework::core('debug')->exception(
