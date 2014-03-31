@@ -372,6 +372,8 @@ class Framework
      */
     public static function registerNamespace($nsPrefix, $path)
     {
+        $currentRoot = null;
+
         if (is_dir($path)) {
             $map = self::locateNamespace(self::splitNamespace($nsPrefix), true);
 
@@ -389,6 +391,25 @@ class Framework
                     DIRECTORY_SEPARATOR
                 );
                 $map['Ref']['R'] = true;
+
+                // Refresh unregisted sub namespaces
+                $currentRoot = & $map['Ref']['S'];
+                $currentParentRoot = & $map['Ref'];
+                while (!empty($currentRoot)) {
+
+                    foreach ($currentRoot as $subNamespaceKey => $subNamespace) {
+                        if (!$currentRoot[$subNamespaceKey]['R']) {
+                            $currentRoot[$subNamespaceKey]['P'] = $currentParentRoot['P']
+                            . DIRECTORY_SEPARATOR
+                            . $subNamespaceKey;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    $currentParentRoot = & $currentRoot[$subNamespaceKey];
+                    $currentRoot = & $currentRoot[$subNamespaceKey]['S'];
+                }
 
                 return true;
             } else {
