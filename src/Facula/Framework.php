@@ -93,6 +93,8 @@ class Framework
         // File extension for PHP script files
         'PHPExt' => 'php',
 
+        'PkgDeclareFile' => 'Package',
+
         // The char to split namespaces
         'NSSplitter' => NAMESPACE_SEPARATER,
 
@@ -587,6 +589,118 @@ class Framework
         return false;
     }
 
+
+    /**
+     * Register a package(combination of namespaces, classes, and paths) into Framework
+     *
+     * @return void
+     */
+    public static function registerPackage($path)
+    {
+        $package = array();
+        $pkgPath = \Facula\Base\Tool\File\PathParser::get($path);
+        $dclFile = $pkgPath
+                                . DIRECTORY_SEPARATOR
+                                . static::$cfg['PkgDeclareFile']
+                                . '.'
+                                . static::$cfg['PHPExt'];
+
+        if (!is_dir($pkgPath)) {
+            throw new \Exception(
+                'Package path '
+                . $pkgPath
+                . ' not existed.'
+            );
+
+            return false;
+        }
+
+        if (!is_file($dclFile)) {
+            throw new \Exception(
+                'Package declaration file '
+                . $dclFile
+                . ' not existed.'
+            );
+
+            return false;
+        }
+
+        // Load package info
+        require($dclFile);
+
+        if (!is_array($package)) {
+            throw new \Exception(
+                'Informations in package declaration file '
+                . $dclFile
+                . ' is invalid.'
+            );
+
+            return false;
+        }
+
+        // Namespaces
+        if (isset($package['Namespaces'])) {
+            if (!is_array($package['Paths'])) {
+                throw new \Exception(
+                    'Package namespace declaration is invalid.'
+                );
+
+                return false;
+            }
+
+            foreach ($package['Namespaces'] as $namespace => $nsPath) {
+                static::registerNamespace(
+                    $namespace,
+                    \Facula\Base\Tool\File\PathParser::get(
+                        $pkgPath
+                        . DIRECTORY_SEPARATOR
+                        . $nsPath
+                    )
+                );
+            }
+        }
+
+        // Classes
+        if (isset($package['Classes'])) {
+            if (!is_array($package['Classes'])) {
+                throw new \Exception(
+                    'Package class declaration is invalid.'
+                );
+
+                return false;
+            }
+
+            foreach ($package['Classes'] as $class => $classPath) {
+                static::registerScope($class, $classPath);
+            }
+        }
+
+        // Paths
+        if (isset($package['Paths'])) {
+            if (!is_array($package['Paths'])) {
+                throw new \Exception(
+                    'Package path declaration is invalid.'
+                );
+
+                return false;
+            }
+
+            $packagePaths = array();
+
+            foreach ($package['Paths'] as $packagePath) {
+                $packagePaths[] = \Facula\Base\Tool\File\PathParser::get(
+                    $pkgPath
+                    . DIRECTORY_SEPARATOR
+                    . $packagePath
+                );
+            }
+
+            static::pickComponents($packagePaths);
+        }
+
+        return true;
+    }
+
     /**
      * Run a hook
      *
@@ -723,7 +837,10 @@ class Framework
             $this->registerAllNamespaces();
 
             // Second, start components pickup
-            $this->pickComponents();
+            $this->pickAllComponents();
+
+            // And then, register all packages
+            $this->registerAllPackages();
 
             // Now, init up all function cores
             $this->initCores();
@@ -893,6 +1010,67 @@ class Framework
     }
 
     /**
+     * Register all built in and configured Namespace
+     *
+     * @return bool Always return true
+     */
+    protected function registerAllNamespaces()
+    {
+        $namespaces = $validNamespaces = array();
+
+        // Convert core namespace's relative path in to actual path
+        foreach (static::$cfg['FWNS'] as $namespace => $path) {
+            static::registerNamespace($namespace, $path);
+        }
+
+        if (isset($this->setting['Namespaces']) && is_array($this->setting['Namespaces'])) {
+            foreach ($this->setting['Namespaces'] as $namespace => $path) {
+                static::registerNamespace($namespace, $path);
+            }
+
+            unset($this->setting['Namespaces']);
+        }
+
+        return true;
+    }
+
+    /**
+     * Pickup all declared components and register them in to Framework
+     *
+     * @return void
+     */
+    protected function pickAllComponents()
+    {
+        if (isset($this->setting['Paths']) && is_array($this->setting['Paths'])) {
+            static::pickComponents($this->setting['Paths']);
+
+            // Release memory
+            unset($this->setting['Paths']);
+        }
+
+        return true;
+    }
+
+    /**
+     * Pickup all declared packages and register them in to Framework
+     *
+     * @return void
+     */
+    protected function registerAllPackages()
+    {
+        if (isset($this->setting['Packages']) && is_array($this->setting['Packages'])) {
+            foreach ($this->setting['Packages'] as $package) {
+                static::registerPackage($package);
+            }
+
+            // Release memory
+            unset($this->setting['Packages']);
+        }
+
+        return false;
+    }
+
+    /**
      * Register hooks from plugin classes
      *
      * @param bool $mainFile File that contains the plugin class
@@ -920,7 +1098,8 @@ class Framework
             if (!static::registerScope($pluginClassname, $mainFile)) {
                 throw new \Exception(
                     'Cannot register class scope for plugin class '
-                    . $pluginClassname .'.'
+                    . $pluginClassname
+                    . '.'
                 );
 
                 return false;
@@ -956,79 +1135,48 @@ class Framework
     }
 
     /**
-     * Register all built in and configured Namespace
-     *
-     * @return bool Always return true
-     */
-    protected function registerAllNamespaces()
-    {
-        $namespaces = $validNamespaces = array();
-
-        // Convert core namespace's relative path in to actual path
-        foreach (static::$cfg['FWNS'] as $namespace => $path) {
-            static::registerNamespace($namespace, $path);
-        }
-
-        if (isset($this->setting['Namespaces']) && is_array($this->setting['Namespaces'])) {
-            foreach ($this->setting['Namespaces'] as $namespace => $path) {
-                static::registerNamespace($namespace, $path);
-            }
-
-            unset($this->setting['Namespaces']);
-        }
-
-        return true;
-    }
-
-    /**
      * Discover components, and import them into Framework
      *
      * @return void
      */
-    protected function pickComponents()
+    protected static function pickComponents(array $paths)
     {
         $components = $modules = array();
 
-        if (isset($this->setting['Paths']) && is_array($this->setting['Paths'])) {
+        foreach ($paths as $path) {
+            $scanner = new \Facula\Base\Tool\File\ModuleScanner($path);
 
-            foreach ($this->setting['Paths'] as $path) {
-                $scanner = new \Facula\Base\Tool\File\ModuleScanner($path);
-
-                // Must use array_merge. Yes, it's slow but we need it for auto resolve reindex problem
-                $modules = array_merge($modules, $scanner->scan());
-            }
-
-            foreach ($modules as $module) {
-                switch ($module['Prefix']) {
-                    case 'include':
-                        static::$includes[] = $module['Path'];
-
-                        // Require the include file for init
-                        require($module['Path']);
-                        break;
-
-                    case 'routine':
-                        static::$components['Routine'][] = $module['Path'];
-                        break;
-
-                    case 'plugin':
-                        static::initPlugin($module['Path']);
-                        break;
-
-                    case 'class':
-                        static::registerScope(ucfirst($module['Name']), $module['Path']);
-                        break;
-
-                    default:
-                        static::registerScope($module['Name'], $module['Path']);
-                        break;
-                }
-            }
-
-            // Unset the setting and release memory
-            unset($this->setting['Paths']);
+            // Must use array_merge. Yes, it's slow but we need it for auto resolve reindex problem
+            $modules = array_merge($modules, $scanner->scan());
         }
 
-        return false;
+        foreach ($modules as $module) {
+            switch ($module['Prefix']) {
+                case 'include':
+                    static::$includes[] = $module['Path'];
+
+                    // Require the include file for init
+                    require($module['Path']);
+                    break;
+
+                case 'routine':
+                    static::$components['Routine'][] = $module['Path'];
+                    break;
+
+                case 'plugin':
+                    static::initPlugin($module['Path']);
+                    break;
+
+                case 'class':
+                    static::registerScope(ucfirst($module['Name']), $module['Path']);
+                    break;
+
+                default:
+                    static::registerScope($module['Name'], $module['Path']);
+                    break;
+            }
+        }
+
+        return true;
     }
 }
