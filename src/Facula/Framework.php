@@ -393,23 +393,29 @@ class Framework
                 $map['Ref']['R'] = true;
 
                 // Refresh unregisted sub namespaces
-                $currentRoot = & $map['Ref']['S'];
-                $currentParentRoot = & $map['Ref'];
-                while (!empty($currentRoot)) {
+                $reloadNS = function(&$curRoot, &$curPntRoot) use (&$reloadNS) {
+                    foreach ($curRoot as $subNamespaceKey => $subNamespace) {
 
-                    foreach ($currentRoot as $subNamespaceKey => $subNamespace) {
-                        if (!$currentRoot[$subNamespaceKey]['R']) {
-                            $currentRoot[$subNamespaceKey]['P'] = $currentParentRoot['P']
+                        if (!isset($curRoot[$subNamespaceKey])) {
+                            break;
+                        }
+
+                        if (!$curRoot[$subNamespaceKey]['R']) {
+                            $curRoot[$subNamespaceKey]['P'] = $curPntRoot['P']
                             . DIRECTORY_SEPARATOR
                             . $subNamespaceKey;
+
+                            $reloadNS(
+                                $curRoot[$subNamespaceKey]['S'],
+                                $curRoot[$subNamespaceKey]
+                            );
                         } else {
                             break;
                         }
                     }
+                };
 
-                    $currentParentRoot = & $currentRoot[$subNamespaceKey];
-                    $currentRoot = & $currentRoot[$subNamespaceKey]['S'];
-                }
+                $reloadNS($map['Ref']['S'], $map['Ref']);
 
                 return true;
             } else {
