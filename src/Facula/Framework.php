@@ -393,7 +393,7 @@ class Framework
                 $map['Ref']['R'] = true;
 
                 // Refresh unregisted sub namespaces
-                $reloadNS = function(&$curRoot, &$curPntRoot) use (&$reloadNS) {
+                $reloadNS = function (&$curRoot, &$curPntRoot) use (&$reloadNS) {
                     foreach ($curRoot as $subNamespaceKey => $subNamespace) {
 
                         if (!isset($curRoot[$subNamespaceKey])) {
