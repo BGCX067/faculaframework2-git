@@ -193,11 +193,11 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     $tempResult['EndPos'] = $tempResult['StartPos'] + $tempResult['OriginalLen'];
 
                     // Generate replacement
-                    if (!$tempResult['Result'] = $format['Function'](
+                    if (!($tempResult['Result'] = $format['Function'](
                         $matchedTags[1][0],
                         $tempResult['StartPos'],
                         $this->tagPositionMaps
-                    )) {
+                    )) && is_bool($tempResult['Result'])) {
                         \Facula\Framework::core('debug')->exception(
                             'ERROR_TEMPLATE_COMPILER_UNKNOWNERROR',
                             'template',
@@ -416,11 +416,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             foreach ($this->pool['Injected'][$format] as $code) {
                 $phpcode .= $code;
             }
-
-            return $phpcode;
         }
 
-        return false;
+        return $phpcode;
     }
 
     /**
