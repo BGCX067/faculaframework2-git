@@ -626,10 +626,10 @@ class Framework
         $package = array();
         $pkgPath = \Facula\Base\Tool\File\PathParser::get($path);
         $dclFile = $pkgPath
-                                . DIRECTORY_SEPARATOR
-                                . static::$cfg['PkgDeclareFile']
-                                . '.'
-                                . static::$cfg['PHPExt'];
+                    . DIRECTORY_SEPARATOR
+                    . static::$cfg['PkgDeclareFile']
+                    . '.'
+                    . static::$cfg['PHPExt'];
 
         if (!is_dir($pkgPath)) {
             throw new \Exception(
@@ -1167,7 +1167,7 @@ class Framework
      */
     protected static function pickComponents(array $paths)
     {
-        $components = $modules = array();
+        $modules = array();
 
         foreach ($paths as $path) {
             $scanner = new \Facula\Base\Tool\File\ModuleScanner($path);
