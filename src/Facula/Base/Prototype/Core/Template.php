@@ -432,13 +432,13 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                 && (!$expire || filemtime($cachedPagePath) > $currentExpireTimestamp)) {
                 return $cachedPagePath;
             } else {
-                if ($templatePath = $this->getCompiledTemplate($templateName, $templateSet)) {
-                    if ($expiredCallback
-                        && is_callable($expiredCallback)
-                        && !$expiredCallback()) {
-                        return false;
-                    }
+                if ($expiredCallback
+                    && is_callable($expiredCallback)
+                    && !$expiredCallback()) {
+                    return false;
+                }
 
+                if ($templatePath = $this->getCompiledTemplate($templateName, $templateSet)) {
                     if ($templateContent = file_get_contents($templatePath)) {
                         // Spilt using no cache
                         $splitedCompiledContent = explode(
