@@ -106,48 +106,6 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
     private $tagPositionMaps = array();
 
     /**
-     * Add a new tag into compiler
-     *
-     * @param char $tag The tag in single character
-     * @param mixed $command The tag processor
-     *
-     * @return bool Return true when succeed, false otherwise
-     */
-    public static function addTag($tag, $command)
-    {
-        foreach (self::$setting as $format) {
-            if ($format['Tag'] == $tag[0]) {
-                \Facula\Framework::core('debug')->exception(
-                    'ERROR_TEMPLATE_COMPILER_TAG_EXISTED|' . $tag[0],
-                    'template',
-                    true
-                );
-
-                return false;
-                break;
-            }
-        }
-
-        if (is_callable($command)) {
-            self::$setting[] = array(
-                'Tag' => $tag[0],
-                'Command' => $command,
-                'IsExternal' => true,
-            );
-
-            return true;
-        } else {
-            \Facula\Framework::core('debug')->exception(
-                'ERROR_TEMPLATE_COMPILER_TAG_COMMAND_UNCALLABLE|' . $tag,
-                'template',
-                true
-            );
-        }
-
-        return false;
-    }
-
-    /**
      * Constructor of compiler
      *
      * @param array $tag Assigned data
@@ -290,7 +248,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      *
      * @return mixed Return tag and tag name paired with ':' when found unclosed tag, or false otherwise.
      */
-    public function doCheckUnclosedTags()
+    protected function doCheckUnclosedTags()
     {
         foreach ($this->tagPositionMaps as $refKey => $refRecord) {
             if (!isset($refRecord['Start']) || !isset($refRecord['End'])) {
@@ -342,7 +300,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      *
      * @return mixed Return true if it's valid, false otherwise
      */
-    public function doCheckVariableName($name)
+    protected function doCheckVariableName($name)
     {
         if (preg_match('/^(\$[A-Za-z0-9\_\'\"\[\]]+)$/', $name)) {
             return true;
@@ -359,7 +317,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      *
      * @return mixed Return true when succeed, false otherwise
      */
-    private function doInclude($format, $pos)
+    protected function doInclude($format, $pos)
     {
         $param = explode(' ', $format, 2);
 
@@ -426,7 +384,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      *
      * @return mixed Return true when succeed, false otherwise
      */
-    private function doInjectArea($format, $pos)
+    protected function doInjectArea($format, $pos)
     {
         $wrapCode = false;
         $phpcode = '';
@@ -474,7 +432,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      *
      * @return mixed Return true when succeed, false otherwise
      */
-    private function doLanguage($format, $pos)
+    protected function doLanguage($format, $pos)
     {
         if (isset($this->pool['LanguageMap'][$format][0])) {
             return $this->pool['LanguageMap'][$format];
@@ -497,7 +455,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      *
      * @return mixed Return true when succeed, false otherwise
      */
-    private function doVariable($format, $pos)
+    protected function doVariable($format, $pos)
     {
         $param = explode('|', $format);
         $phpcode = $phpBeginStr = $phpBeginDft = '';
@@ -815,7 +773,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      *
      * @return mixed Return true when succeed, false otherwise
      */
-    private function doPageSwitcher($format)
+    protected function doPageSwitcher($format)
     {
         $formatMatched = array();
         $formatVariables = array('Search' => array(), 'Replace' => array());
@@ -923,7 +881,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      *
      * @return mixed Return true when succeed, false otherwise
      */
-    private function doLoop($format, $pos)
+    protected function doLoop($format, $pos)
     {
         $params = explode(' ', $format);
         $matched = array();
@@ -1076,7 +1034,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      *
      * @return mixed Return true when succeed, false otherwise
      */
-    private function doLogic($format, $pos)
+    protected function doLogic($format, $pos)
     {
         $params = explode(' ', $format, 2);
         $matched = array();
@@ -1271,7 +1229,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      *
      * @return mixed Return true when succeed, false otherwise
      */
-    private function doCase($format, $pos)
+    protected function doCase($format, $pos)
     {
         $params = explode(' ', $format, 2);
         $matched = array();
