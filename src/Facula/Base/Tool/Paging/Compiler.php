@@ -163,7 +163,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     // Generate replacement
                     if (!($tempResult['Result'] = $format['Function'](
-                        $matchedTags[1][0],
+                        trim($matchedTags[1][0]),
                         $tempResult['StartPos'],
                         $this->tagPositionMaps
                     )) && is_bool($tempResult['Result'])) {
@@ -319,7 +319,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      */
     protected function doInclude($format, $pos)
     {
-        $param = preg_split('/\s+/', trim($format), 2);
+        $param = preg_split('/\s+/', $format, 2);
 
         if (isset($this->pool['File']['Tpl'][$param[0]]['default'])) {
             $tplFileContent = file_get_contents(
@@ -388,7 +388,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
     {
         $wrapCode = false;
         $phpcode = '';
-        $formats = preg_split('/\s+/', trim($format), 2);
+        $formats = preg_split('/\s+/', $format, 2);
 
         $params = new \Facula\Base\Tool\Paging\Compiler\Parameters(
             isset($formats[1]) ? $formats[1] : '',
@@ -883,7 +883,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      */
     protected function doLoop($format, $pos)
     {
-        $params = preg_split('/\s+/', trim($format), 2);
+        $params = preg_split('/\s+/', $format, 2);
         $matched = array();
         $phpcode = $unclosed = '';
 
@@ -1036,7 +1036,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      */
     protected function doLogic($format, $pos)
     {
-        $params = preg_split('/\s+/', trim($format), 2);
+        $params = preg_split('/\s+/', $format, 2);
         $matched = array();
         $phpcode = $unclosed = '';
 
@@ -1231,7 +1231,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      */
     protected function doCase($format, $pos)
     {
-        $params = preg_split('/\s+/', trim($format), 2);
+        $params = preg_split('/\s+/', $format, 2);
         $matched = array();
         $phpcode = $unclosed = '';
 
