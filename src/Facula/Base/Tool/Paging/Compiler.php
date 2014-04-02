@@ -28,22 +28,33 @@
 namespace Facula\Base\Tool\Paging;
 
 /**
- * Provide a space to compile Facula page
+ * Provide a space to compile Facula pages
  */
 class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 {
     /*
         Format rules and parse priority:
-        {+ path/templatename (string1=replacewith1;string2=replacewith2) +} // Include another template
 
-        {# Name #} // Targeting an area for content inject
+        // Include another template
+        {+ path/templatename set="string1=replacewith1" set="string2=replacewith2" +}
+
+        // Targeting an area for content inject
+        {# Name empty="Message for empty" wrap="<div>(CODE)</div>" #}
 
         {! LANGUAGE_KEY !} // Inject content from auto loaded inline files (for language etc)
 
         {% $Variable %} // Simplely display the value of that variable
         {% $Variable|format %} // Display the value of that variable with specified format
 
-        {~ IDName (ClassName) CurrentPage TotalPages MaxPagesToDisplay (URLFORMAT/%PAGE%/) ~} // Display page switcher
+        // Display page switcher
+        {~
+            name="IDName"
+            classname="ClassName"
+            current="$CurrentPage"
+            total="$TotalPages"
+            max="$MaxPagesToDisplay"
+            format="URLFORMAT/%PAGE%/"
+        ~}
 
         {* LoopName $Variable *}
             <!--HTML CONTENTS-->
@@ -351,32 +362,39 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
     private function doInclude($format, $pos)
     {
         $param = explode(' ', $format, 2);
-        $replaces = $temprepleaces = array();
 
         if (isset($this->pool['File']['Tpl'][$param[0]]['default'])) {
-            $tplFileContent = file_get_contents($this->pool['File']['Tpl'][$param[0]]['default']);
+            $tplFileContent = file_get_contents(
+                $this->pool['File']['Tpl'][$param[0]]['default']
+            );
 
-            if (isset($param[1])) {
-                $param[1][strlen($param[1]) - 1] = $param[1][0] = null;
+            $params = new \Facula\Base\Tool\Paging\Compiler\Parameters(
+                isset($param[1]) ? $param[1] : '',
+                array(
+                    'set' => 'default',
+                )
+            );
 
-                $temprepleaces['Items'] = explode(';', $param[1]);
+            $setParams = array();
+            $setReplaceGroup = array(
+                'Search' => array(),
+                'Replace' => array()
+            );
 
-                foreach ($temprepleaces['Items'] as $replace) {
-                    $temprepleaces['Thing'] = explode('=', $replace);
+            foreach ($params->getAll('set') as $setParam) {
+                $setParams = explode('=', $setParam, 2);
 
-                    if (isset($temprepleaces['Thing'][0][0])
-                        && isset($temprepleaces['Thing'][1][0])) {
-                        $replaces['Search'][] = trim($temprepleaces['Thing'][0]);
-                        $replaces['Replace'][] = trim($temprepleaces['Thing'][1]);
-                    }
+                if (isset($setParams[0], $setParams[1])) {
+                    $setReplaceGroup['Search'][] = trim($setParams[0]);
+                    $setReplaceGroup['Replace'][] = trim($setParams[1]);
                 }
-
-                $tplFileContent = str_replace(
-                    $replaces['Search'],
-                    $replaces['Replace'],
-                    $tplFileContent
-                );
             }
+
+            $tplFileContent = str_replace(
+                $setReplaceGroup['Search'],
+                $setReplaceGroup['Replace'],
+                $tplFileContent
+            );
 
             $newCompiler = new self($this->pool, $tplFileContent);
 
@@ -410,12 +428,39 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      */
     private function doInjectArea($format, $pos)
     {
+        $wrapCode = false;
         $phpcode = '';
+        $formats = explode(' ', $format, 2);
 
-        if (isset($this->pool['Injected'][$format])) {
-            foreach ($this->pool['Injected'][$format] as $code) {
-                $phpcode .= $code;
+        $params = new \Facula\Base\Tool\Paging\Compiler\Parameters(
+            isset($formats[1]) ? $formats[1] : '',
+            array(
+                'wrap' => 'default',
+                'empty' => 'default',
+            )
+        );
+
+        if ($params->has('wrap')
+        && (strpos($params->get('wrap'), '(CODE)') !== false)) {
+            $wrapCode = true;
+        }
+
+        if (isset($this->pool['Injected'][$formats[0]])) {
+            if (!$wrapCode) {
+                foreach ($this->pool['Injected'][$formats[0]] as $code) {
+                    $phpcode .= $code;
+                }
+            } else {
+                foreach ($this->pool['Injected'][$formats[0]] as $code) {
+                    $phpcode .= str_replace(
+                        '(CODE)',
+                        $code,
+                        $params->get('wrap')
+                    );
+                }
             }
+        } elseif ($params->get('empty')) {
+            $phpcode .= $params->get('empty');
         }
 
         return $phpcode;
@@ -772,37 +817,41 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      */
     private function doPageSwitcher($format)
     {
-        $maxpage = 20;
-        $matched = $formatMatched = array();
+        $formatMatched = array();
         $formatVariables = array('Search' => array(), 'Replace' => array());
 
-        $phpcode = '<?php ';
-
-        if (preg_match(
-            '/^([A-Za-z0-9_-]+)'
-            . ' \(([A-Za-z0-9_-\s]+)\)'
-            . ' (\$[A-Za-z0-9\_\'\"\[\]]+)'
-            . ' (\$[A-Za-z0-9\_\'\"\[\]]+)'
-            . ' (\$[A-Za-z0-9\_\'\"\[\]]+)'
-            . ' \((.*)\)$/',
+        $params = new \Facula\Base\Tool\Paging\Compiler\Parameters(
             $format,
-            $matched
-        )) {
-            list(
-                $org,
-                $name,
-                $classname,
-                $currentpage,
-                $totalpage,
-                $maxdisplay,
-                $format
-            ) = $matched;
+            array(
+                'name' => 'default',
+                'classname' => 'default',
+                'current' => 'default',
+                'max' => 'default',
+                'total' => 'default',
+                'format' => 'default',
+            )
+        );
+
+        if ($params->has('name')
+        && $params->has('classname')
+        && $params->has('current')
+        && $params->has('max')
+        && $params->has('total')
+        && $params->has('format')) {
+            $phpcode = '<?php ';
+
+            $name = $params->get('name');
+            $classname = $params->get('classname');
+            $currentpage = $params->get('current');
+            $totalpage = $params->get('total');
+            $maxdisplay = $params->get('max');
+            $linkFormat = $params->get('format');
 
             $name = htmlspecialchars($name, ENT_QUOTES);
             $classname = htmlspecialchars($classname, ENT_QUOTES);
 
             // Find all variables in the format string
-            if (preg_match_all('/\{(\$[A-Za-z0-9\_\'\"\[\]]+)\}/sU', $format, $formatMatched)) {
+            if (preg_match_all('/\{(\$[A-Za-z0-9\_\'\"\[\]]+)\}/sU', $linkFormat, $formatMatched)) {
                 // Prepare for the replacement
                 foreach ($formatMatched[0] as $key => $value) {
                     $formatVariables['Search'][] = urlencode($value);
@@ -811,45 +860,45 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             }
 
             // Urlencode the format but replace some string back for url params
-            $format = str_replace(
+            $linkFormat = str_replace(
                 array('%3A', '%2F', '%3F', '%3D', '%26', '%25PAGE%25'),
                 array(':', '/', '?', '=', '&', '%PAGE%'),
-                urlencode($format)
+                urlencode($linkFormat)
             );
 
             // Replace variables string to variables
-            $format = str_replace(
+            $linkFormat = str_replace(
                 $formatVariables['Search'],
                 $formatVariables['Replace'],
-                $format
+                $linkFormat
             );
 
             $phpcode = '<?php if (' . $totalpage. ' > 1) { echo(\'<ul id="'
                     . $name . '" class="' . $classname . '">\'); if ('
                     . $totalpage . ' > 0 && ' . $currentpage . ' <= ' . $totalpage . ') { if ('
                     . $currentpage . ' > 1) echo(\'<li><a href="'
-                    . str_replace('%PAGE%', '1', $format)
+                    . str_replace('%PAGE%', '1', $linkFormat)
                     . '">&laquo;</a></li><li><a href="\' . str_replace(\'%PAGE%\', ('
-                    . $currentpage . ' - 1), \'' . $format
+                    . $currentpage . ' - 1), \'' . $linkFormat
                     . '\') . \'">&lsaquo;</a></li>\'); $loop = (int)(' . $maxdisplay
                     . ' / 2); if (' . $currentpage . ' - $loop > 0) { for ($i = '
                     . $currentpage . ' - $loop; $i <= ' . $totalpage . ' && $i <= '
                     . $currentpage . ' + $loop; $i++) { if ($i == ' . $currentpage
                     . ') { echo(\'<li class="this"><a href="\' . str_replace(\'%PAGE%\', $i, \''
-                    . $format . '\'). \'">\' . $i . \'</a></li>\'); } '
+                    . $linkFormat . '\'). \'">\' . $i . \'</a></li>\'); } '
                     . ' else { echo(\'<li><a href="\' . str_replace(\'%PAGE%\', $i, \''
-                    . $format . '\') . \'">\' . $i . \'</a></li>\'); } } } else '
+                    . $linkFormat . '\') . \'">\' . $i . \'</a></li>\'); } } } else '
                     . '{ for ($i = 1; $i <= ' . $totalpage . ' && $i <= ' . $maxdisplay
                     . '; $i++) { if ($i == ' . $currentpage
                     . ') { echo(\'<li class="this"><a href="\' . str_replace(\'%PAGE%\', $i, \''
-                    . $format . '\'). \'">\' . $i . \'</a></li>\'); } else'
+                    . $linkFormat . '\'). \'">\' . $i . \'</a></li>\'); } else'
                     . ' { echo(\'<li><a href="\' . str_replace(\'%PAGE%\', $i, \''
-                    . $format . '\') . \'">\' . $i . \'</a></li>\'); } } } unset($loop); if ('
+                    . $linkFormat . '\') . \'">\' . $i . \'</a></li>\'); } } } unset($loop); if ('
                     . $totalpage . ' > ' . $currentpage
                     . ') echo(\'<li><a href="\' . str_replace(\'%PAGE%\', ('
-                    . $currentpage . ' + 1), \'' . $format
+                    . $currentpage . ' + 1), \'' . $linkFormat
                     . '\') . \'">&rsaquo;</a></li><li><a href="\' . str_replace(\'%PAGE%\', ('
-                    . $totalpage . '), \'' . $format
+                    . $totalpage . '), \'' . $linkFormat
                     . '\') . \'">&raquo;</a></li>\'); } echo(\'</ul>\'); } ?>';
 
             $phpcode = str_replace(array("\r", "\r\n", "\t",'  '), '', $phpcode);
