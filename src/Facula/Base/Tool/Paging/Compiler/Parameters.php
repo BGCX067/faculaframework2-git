@@ -56,6 +56,14 @@ class Parameters
     /** Assignment Symbol (=) */
     protected static $valueAssignSymbol = '=';
 
+    /** Space symbols can be use before and after a valueAssignSymbol */
+    protected static $allowedSpaceSymbols = array(
+        "\r" => true,
+        "\n" => true,
+        ' ' => true,
+        "\t" => true,
+    );
+
     /** Start symbol for indicate the begin of property value */
     protected static $valueStartSymbol = '"';
 
@@ -244,13 +252,17 @@ class Parameters
                 default:
                     switch($currentLooking) {
                         case 'AssignSymbol':
-                            if ($currentChar != ' ') {
+                            if (!isset(
+                                static::$allowedSpaceSymbols[$currentChar]
+                            )) {
                                 return false;
                             }
                             break;
 
                         case 'StartSymbol':
-                            if ($currentChar != ' ') {
+                            if (!isset(
+                                static::$allowedSpaceSymbols[$currentChar]
+                            )) {
                                 return false;
                             }
                             break;
