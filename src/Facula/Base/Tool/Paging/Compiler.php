@@ -141,7 +141,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                                     self::$setting['Delimiter'][0]. $format['Tag'],
                                     '/'
                                 )
-                                . '\s(.*)\s'
+                                . '\s+(.*)\s+'
                                 . preg_quote(
                                     $format['Tag'] . self::$setting['Delimiter'][1],
                                     '/'
@@ -319,7 +319,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      */
     protected function doInclude($format, $pos)
     {
-        $param = explode(' ', $format, 2);
+        $param = preg_split('/\s+/', trim($format), 2);
 
         if (isset($this->pool['File']['Tpl'][$param[0]]['default'])) {
             $tplFileContent = file_get_contents(
@@ -388,7 +388,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
     {
         $wrapCode = false;
         $phpcode = '';
-        $formats = explode(' ', $format, 2);
+        $formats = preg_split('/\s+/', trim($format), 2);
 
         $params = new \Facula\Base\Tool\Paging\Compiler\Parameters(
             isset($formats[1]) ? $formats[1] : '',
@@ -883,7 +883,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      */
     protected function doLoop($format, $pos)
     {
-        $params = explode(' ', $format);
+        $params = preg_split('/\s+/', trim($format), 2);
         $matched = array();
         $phpcode = $unclosed = '';
 
@@ -1036,7 +1036,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      */
     protected function doLogic($format, $pos)
     {
-        $params = explode(' ', $format, 2);
+        $params = preg_split('/\s+/', trim($format), 2);
         $matched = array();
         $phpcode = $unclosed = '';
 
@@ -1231,7 +1231,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
      */
     protected function doCase($format, $pos)
     {
-        $params = explode(' ', $format, 2);
+        $params = preg_split('/\s+/', trim($format), 2);
         $matched = array();
         $phpcode = $unclosed = '';
 
