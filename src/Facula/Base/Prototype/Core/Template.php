@@ -163,7 +163,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
         $selectedLanguage = $clientLanguage = $errors = array();
 
         // Determine what language can be used for this client
-        if ($siteLanguage = \Facula\Framework::core('request')->getClientInfo('languages')) {
+        if ($clientLanguage = \Facula\Framework::core('request')->getClientInfo('languages')) {
             // Use $siteLanguage as the first param so we can follow clients priority
             $selectedLanguage = array_values(
                 array_intersect(
