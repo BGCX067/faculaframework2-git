@@ -876,6 +876,54 @@ class Framework
     }
 
     /**
+     * Magic to get function core directly from framework instance
+     *
+     * @param string $key Function core key name
+     *
+     * @return mixed Return the core object when succeed, throw a error otherwise
+     */
+    public function __get($key)
+    {
+        if (!isset($this->cores[$key])) {
+            throw new \Exception(
+                'Function core '
+                . $key
+                . ' not available. '
+                . 'You can only acquire following cores: '
+                . (implode(', ', array_keys($this->cores)))
+                . '.'
+            );
+        }
+
+        return $this->cores[$key];
+    }
+
+    /**
+     * Magic to add a new function core to framework
+     *
+     * @param string $key Function core key name
+     * @param string $key Function core class name
+     *
+     * @return void
+     */
+    public function __set($key, $val)
+    {
+        $this->initCore($key, $val);
+    }
+
+    /**
+     * Magic to check if function core exist
+     *
+     * @param string $key Function core key name
+     *
+     * @return mixed Return true when it's exist, false otherwise
+     */
+    public function __isset($key)
+    {
+        return isset($this->cores[$key]) ? true : false;
+    }
+
+    /**
      * Warm up initializer
      *
      * @return void
@@ -957,6 +1005,16 @@ class Framework
      */
     protected function initCore($coreName, $coreClass)
     {
+        if (!class_exists($coreClass)) {
+            throw new \Exception(
+                'Initializing core '
+                . $coreClass
+                . '. But the core class '
+                . $coreClass
+                . ' seems not exist.'
+            );
+        }
+
         $coreRef = new \ReflectionClass($coreClass);
 
         if (!$coreRef->implementsInterface('\Facula\Base\Implement\Factory\Core')) {

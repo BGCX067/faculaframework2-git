@@ -58,6 +58,9 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
     /** Assigned template data */
     protected $assigned = array();
 
+    /** File map that contains all template and language files */
+    protected static $fileMap = array();
+
     /**
      * Constructor
      *
@@ -129,61 +132,24 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             }
         }
 
-        // Scan for template files
-        $scanner = new \Facula\Base\Tool\File\ModuleScanner(
-            $this->configs['TplPool']
-        );
-
-        if ($files = $scanner->scan()) {
-            foreach ($files as $file) {
-                $fileNameSplit = explode('+', $file['Name'], 2);
-
-                switch ($file['Prefix']) {
-                    case 'language':
-                        $this->pool['File']['Lang'][$fileNameSplit[0]][] =
-                            $file['Path'];
-                        break;
-
-                    case 'template':
-                        if (isset($fileNameSplit[1])) { // If this is a ab testing file
-                            if (!isset($this->pool['File']['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]])) {
-                                $this->pool['File']['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]] =
-                                    $file['Path'];
-                            } else {
-                                throw new \Exception(
-                                    'Template file '
-                                    . $this->pool['File']['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]]
-                                    . ' conflicted with '
-                                    . $file['Path']
-                                    . '.'
-                                );
-
-                                return false;
-                            }
-                        } elseif (!isset($this->pool['File']['Tpl'][$file['Name']]['default'])) {
-                            // If not, save current file to the default
-                            $this->pool['File']['Tpl'][$file['Name']]['default'] = $file['Path'];
-                        } else {
-                            throw new \Exception(
-                                'Template file '
-                                . $this->pool['File']['Tpl'][$file['Name']]['default']
-                                . ' conflicted with '
-                                . $file['Path']
-                                . '.'
-                            );
-
-                            return false;
-                        }
-                        break;
-                }
-            }
-
-            if (!isset($this->pool['File']['Lang']['default'])) {
-                throw new \Exception(
-                    'Default file for language (language.default.txt) must be defined.'
-                );
-            }
+        if ($this->loadFileMap()) {
+            $this->pool['SupportedLanguages'] = array_keys(
+                static::$fileMap['Lang']
+            );
         }
+
+        $this->assigned['RootURL'] =
+            $facula->request->getClientInfo('rootURL');
+
+        $this->assigned['AbsRootURL'] =
+            $facula->request->getClientInfo('absRootURL');
+
+        /*
+        if (!isset($this->pool['File']['Lang']['default'])) {
+            throw new \Exception(
+                'Default file for language (language.default.txt) must be defined.'
+            );
+        }*/
     }
 
     /**
@@ -198,19 +164,13 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
         // Determine what language can be used for this client
         if ($siteLanguage = \Facula\Framework::core('request')->getClientInfo('languages')) {
-            if (isset($this->pool['File']['Lang'])) {
-                $clientLanguage = array_keys(
-                    $this->pool['File']['Lang']
-                );
-
-                // Use $siteLanguage as the first param so we can follow clients priority
-                $selectedLanguage = array_values(
-                    array_intersect(
-                        $siteLanguage,
-                        $clientLanguage
-                    )
-                );
-            }
+            // Use $siteLanguage as the first param so we can follow clients priority
+            $selectedLanguage = array_values(
+                array_intersect(
+                    $this->pool['SupportedLanguages'],
+                    $clientLanguage
+                )
+            );
         }
 
         if (isset($selectedLanguage[0][0])) {
@@ -221,8 +181,6 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
         // Set Essential assign value
         $this->assigned['Time'] = FACULA_TIME;
-        $this->assigned['RootURL'] = \Facula\Framework::core('request')->getClientInfo('rootURL');
-        $this->assigned['AbsRootURL'] = \Facula\Framework::core('request')->getClientInfo('absRootURL');
         $this->assigned['Message'] = array();
 
         \Facula\Framework::summonHook(
@@ -261,9 +219,9 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
      *
      * @return bool Always true
      */
-    public function inject($key, $templatecontent)
+    public function inject($key, $templateContent)
     {
-        $this->pool['Injected'][$key][] = $templatecontent;
+        $this->pool['Injected'][$key][] = $templateContent;
 
         return true;
     }
@@ -363,6 +321,147 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             $templateName,
             $templatePath
         );
+    }
+
+    /**
+     * Get a template file path from template file map
+     *
+     * @param string $template Name of template
+     * @param string $setName Name of the set in particular template series
+     *
+     * @return mixed Return the file path when succeed, false otherwise
+     */
+    protected function getTemplateFromMap($template, $setName = 'default')
+    {
+        $this->loadFileMap();
+
+        if (isset(static::$fileMap['Tpl'][$template][$setName])) {
+            return static::$fileMap['Tpl'][$template][$setName];
+        } elseif (isset(static::$fileMap['Tpl'][$template]['default'])) {
+            return static::$fileMap['Tpl'][$template]['default'];
+        }
+
+        return false;
+    }
+
+    /**
+     * Get a language file path from template file map
+     *
+     * @param string $languageCode Language code
+     *
+     * @return mixed Return an arrays contains all file paths when succeed, false otherwise
+     */
+    protected function getLanguageFormMap($languageCode)
+    {
+        $this->loadFileMap();
+
+        if (isset(static::$fileMap['Lang'][$languageCode])) {
+            return static::$fileMap['Lang'][$languageCode];
+        }
+
+        return false;
+    }
+
+    /**
+     * Load the file map data from cache or generated file
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    protected function loadFileMap()
+    {
+        $fileMap = array();
+        $fileMapFileName = $this->configs['Compiled']
+            . DIRECTORY_SEPARATOR
+            . 'fileMap.php';
+
+        if (!empty(static::$fileMap)) {
+            return true;
+        }
+
+        if (!$this->configs['Renew'] && is_readable($fileMapFileName)) {
+            require($fileMapFileName);
+
+            if (isset($fileMap)) {
+                static::$fileMap = $fileMap;
+
+                return true;
+            }
+        } else {
+            static::$fileMap = $fileMap = $this->generateFileMapData();
+
+            return file_put_contents(
+                $fileMapFileName,
+                static::$setting['TemplateFileSafeCode'][0]
+                . '$fileMap = '
+                . var_export($fileMap, true)
+                . '; '
+                . static::$setting['TemplateFileSafeCode'][1]
+            );
+        }
+
+        return false;
+    }
+
+    /**
+     * Scan template and language files to generate file map
+     *
+     * @return array Return the array of File map
+     */
+    protected function generateFileMapData()
+    {
+        $mappedFiles = array();
+        // Scan for template files
+
+        $scanner = new \Facula\Base\Tool\File\ModuleScanner(
+            $this->configs['TplPool']
+        );
+
+        if ($files = $scanner->scan()) {
+            foreach ($files as $file) {
+                $fileNameSplit = explode('+', $file['Name'], 2);
+
+                switch ($file['Prefix']) {
+                    case 'language':
+                        $mappedFiles['Lang'][$fileNameSplit[0]][] =
+                            $file['Path'];
+                        break;
+
+                    case 'template':
+                        if (isset($fileNameSplit[1])) { // If this is a ab testing file
+                            if (!isset($mappedFiles['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]])) {
+                                $mappedFiles['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]] =
+                                    $file['Path'];
+                            } else {
+                                throw new \Exception(
+                                    'Template file '
+                                    . $mappedFiles['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]]
+                                    . ' conflicted with '
+                                    . $file['Path']
+                                    . '.'
+                                );
+
+                                return false;
+                            }
+                        } elseif (!isset($mappedFiles['Tpl'][$file['Name']]['default'])) {
+                            // If not, save current file to the default
+                            $mappedFiles['Tpl'][$file['Name']]['default'] = $file['Path'];
+                        } else {
+                            throw new \Exception(
+                                'Template file '
+                                . $mappedFiles['Tpl'][$file['Name']]['default']
+                                . ' conflicted with '
+                                . $file['Path']
+                                . '.'
+                            );
+
+                            return false;
+                        }
+                        break;
+                }
+            }
+        }
+
+        return $mappedFiles;
     }
 
     /**
@@ -618,11 +717,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             && filemtime($compiledTpl) >= $this->configs['CacheVer']) {
             return $compiledTpl;
         } else {
-            if ($templateSet && isset($this->pool['File']['Tpl'][$templateName][$templateSet])) {
-                $templatePath = $this->pool['File']['Tpl'][$templateName][$templateSet];
-            } elseif (isset($this->pool['File']['Tpl'][$templateName]['default'])) {
-                $templatePath = $this->pool['File']['Tpl'][$templateName]['default'];
-            } else {
+            if (!$templatePath = $this->getTemplateFromMap($templateName, $templateSet)) {
                 \Facula\Framework::core('debug')->exception(
                     'ERROR_TEMPLATE_NOTFOUND|' . $templateName,
                     'template',
@@ -651,8 +746,10 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
      */
     public function importTemplateFile($name, $path, $templateSet = 'default')
     {
-        if (!isset($this->pool['File']['Tpl'][$name][$templateSet])) {
-            $this->pool['File']['Tpl'][$name][$templateSet] = $path;
+        $this->loadFileMap();
+
+        if (!isset(static::$fileMap['Tpl'][$name][$templateSet])) {
+            static::$fileMap['Tpl'][$name][$templateSet] = $path;
 
             return true;
         } else {
@@ -676,8 +773,10 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
      */
     public function importLanguageFile($languageCode, $path)
     {
-        if (isset($this->pool['File']['Lang'][$languageCode])) {
-            $this->pool['File']['Lang'][$languageCode][] = $path;
+        $this->loadFileMap();
+
+        if (isset(static::$fileMap['Lang'][$languageCode])) {
+            static::$fileMap['Lang'][$languageCode][] = $path;
 
             return true;
         } else {
@@ -737,7 +836,10 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             $errors
         );
 
-        $render = new $this->configs['Render']($compiledTpl, $this->assigned);
+        $render = new $this->configs['Render'](
+            $compiledTpl,
+            $this->assigned
+        );
 
         if (!($render instanceof \Facula\Base\Implement\Core\Template\Render)) {
             \Facula\Framework::core('debug')->exception(
@@ -765,6 +867,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
     {
         $sourceContent = $compiledContent = '';
         $errors = array();
+        $poolCompexted = array();
 
         \Facula\Framework::summonHook(
             'template_compile_*',
@@ -783,7 +886,14 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
         }
 
         if ($sourceContent = trim(file_get_contents($sourceTpl))) {
-            $compiler = new $this->configs['Compiler']($this->pool, $sourceContent);
+            $poolCompexted = $this->pool + array(
+                'File' => static::$fileMap
+            );
+
+            $compiler = new $this->configs['Compiler'](
+                $poolCompexted,
+                $sourceContent
+            );
 
             if (!($compiler instanceof \Facula\Base\Implement\Core\Template\Compiler)) {
                 \Facula\Framework::core('debug')->exception(
@@ -872,18 +982,18 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             );
 
             // Must load default lang first
-            foreach ($this->pool['File']['Lang']['default'] as $file) {
-                $langContent .= file_get_contents($file) . "\r\n";
+            foreach ($this->getLanguageFormMap('default') as $file) {
+                $langContent .= file_get_contents($file) . "\n";
             }
 
             // And then, the client lang
             if ($this->pool['Language'] != 'default') {
-                foreach ($this->pool['File']['Lang'][$this->pool['Language']] as $file) {
-                    $langContent .= file_get_contents($file) . "\r\n";
+                foreach ($this->getLanguageFormMap($this->pool['Language']) as $file) {
+                    $langContent .= file_get_contents($file) . "\n";
                 }
             }
 
-            $langMapPre = explode("\r\n", $langContent);
+            $langMapPre = explode("\n", $langContent);
 
             foreach ($langMapPre as $lang) {
                 $langMapTemp = explode('=', $lang, 2);
@@ -891,7 +1001,7 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                 if (isset($langMapTemp[1])) {
                     // If $langMapTemp[1] not set, may means this is just a comment.
                     $this->pool['LanguageMap'][trim($langMapTemp[0])] =
-                                                                    trim($langMapTemp[1]);
+                        trim($langMapTemp[1]);
                 }
             }
 
