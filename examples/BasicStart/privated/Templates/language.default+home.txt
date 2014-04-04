@@ -1,0 +1,9 @@
+TITLE_HOME = Welcome to Facula Framework
+TITLE_HOME_WELCOME = Oh hi {% $Guest['Name'] %}, Welcome to the Facula Framework demo project!
+
+TEXT_HOME_SYSINFO_INIT_TIME = Controller initialized on
+
+TEXT_HOME_FORM_FOTGETNAME = Forget my name
+TEXT_HOME_FORM_ENTERYOURNAME = Please enter your name
+TEXT_HOME_FORM_SETNAME = Set my name
+TEXT_HOME_FORM_CLEARSTATE = Clear framework state cache

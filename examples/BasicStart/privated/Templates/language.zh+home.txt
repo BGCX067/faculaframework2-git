@@ -1,0 +1,10 @@
+TITLE_HOME = 欢迎来到 Facula Framework
+TITLE_HOME_WELCOME = 哦，嗨 {% $Guest['Name'] %}, 欢迎来到 Facula Framework 测试项目!
+
+TEXT_HOME_SYSINFO_INIT_TIME = 控制器初始化于
+
+#MissedOnPurpose#TEXT_HOME_FORM_FOTGETNAME = Forget my name
+
+TEXT_HOME_FORM_ENTERYOURNAME = 请输入您的名称
+TEXT_HOME_FORM_SETNAME = 设置我的名称
+TEXT_HOME_FORM_CLEARSTATE = 清理框架状态缓存

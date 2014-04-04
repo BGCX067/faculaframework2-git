@@ -658,7 +658,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     case 'friendlyNumber':
                         if (isset($this->pool['LanguageMap']['FORMAT_NUMBER_HUNDRED']) &&
-                            isset($this->pool['LanguageMap']['FORMAT_NUMBER_THOURSAND']) &&
+                            isset($this->pool['LanguageMap']['FORMAT_NUMBER_THOUSAND']) &&
                             isset($this->pool['LanguageMap']['FORMAT_NUMBER_MILLION']) &&
                             isset($this->pool['LanguageMap']['FORMAT_NUMBER_BILLION']) &&
                             isset($this->pool['LanguageMap']['FORMAT_NUMBER_TRILLION']) &&
@@ -707,7 +707,7 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                                     . ' > 1000) { echo(round(('
                                     . $param[0]
                                     . ' / 1000) , 2) . \''
-                                    . $this->pool['LanguageMap']['FORMAT_NUMBER_THOURSAND']
+                                    . $this->pool['LanguageMap']['FORMAT_NUMBER_THOUSAND']
                                     . '\'); } elseif ('
                                     . $param[0]
                                     . ' > 100) { echo(round(('

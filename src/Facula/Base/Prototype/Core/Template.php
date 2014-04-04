@@ -132,7 +132,8 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             }
         }
 
-        if ($this->loadFileMap()) {
+        $this->pool['SupportedLanguages'] = array();
+        if ($this->loadFileMap() && isset(static::$fileMap['Lang'])) {
             $this->pool['SupportedLanguages'] = array_keys(
                 static::$fileMap['Lang']
             );
@@ -371,7 +372,9 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             return true;
         }
 
-        if (!$this->configs['Renew'] && is_readable($fileMapFileName)) {
+        if (!$this->configs['Renew']
+            && is_readable($fileMapFileName)
+            && filemtime($fileMapFileName) >= $this->configs['CacheVer']) {
             require($fileMapFileName);
 
             if (isset($fileMap)) {
@@ -436,6 +439,11 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             }
 
             static::$fileMap = $fileMap;
+
+            // Must. APC may not know the file has renewed if we just call file_put_content
+            if (file_exists($fileMapFileName)) {
+                unlink($fileMapFileName);
+            }
 
             return file_put_contents(
                 $fileMapFileName,

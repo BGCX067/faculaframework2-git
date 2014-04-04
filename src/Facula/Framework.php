@@ -28,7 +28,7 @@
 namespace Facula;
 
 /** Version of current Facula version */
-define('__FACULAVERSION__', '2 alpha 0.1.0');
+define('__FACULAVERSION__', '0.1.0-alpha');
 
 /** Root of Facula Framework */
 define('FACULA_ROOT', dirname(__FILE__));
@@ -77,7 +77,7 @@ class Framework
     public static $plate = array(
         'Author' => 'Rain Lee',
         'Reviser' => '',
-        'Updated' => '2013',
+        'Updated' => '2014',
         'Contact' => 'raincious@gmail.com',
         'Version' => __FACULAVERSION__,
     );
