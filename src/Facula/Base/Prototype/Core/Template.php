@@ -380,7 +380,62 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                 return true;
             }
         } else {
-            static::$fileMap = $fileMap = $this->generateFileMapData();
+            // Get file and build maps
+            foreach (array_merge(
+                $this->getMapDataFromHook(),
+                $this->getMapDataFromScanner()
+            ) as $importedFile) {
+                if (!isset(
+                    $importedFile['Name'],
+                    $importedFile['Prefix'],
+                    $importedFile['Path']
+                )) {
+                    continue;
+                }
+
+                $fileNameSplit = explode('+', $importedFile['Name'], 2);
+
+                switch ($importedFile['Prefix']) {
+                    case 'language':
+                        $fileMap['Lang'][$fileNameSplit[0]][] =
+                            $importedFile['Path'];
+                        break;
+
+                    case 'template':
+                        if (isset($fileNameSplit[1])) { // If this is a ab testing file
+                            if (!isset($fileMap['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]])) {
+                                $fileMap['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]] =
+                                    $importedFile['Path'];
+                            } else {
+                                throw new \Exception(
+                                    'Template file '
+                                    . $fileMap['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]]
+                                    . ' conflicted with '
+                                    . $importedFile['Path']
+                                    . '.'
+                                );
+
+                                return false;
+                            }
+                        } elseif (!isset($fileMap['Tpl'][$importedFile['Name']]['default'])) {
+                            // If not, save current file to the default
+                            $fileMap['Tpl'][$importedFile['Name']]['default'] = $importedFile['Path'];
+                        } else {
+                            throw new \Exception(
+                                'Template file '
+                                . $fileMap['Tpl'][$importedFile['Name']]['default']
+                                . ' conflicted with '
+                                . $importedFile['Path']
+                                . '.'
+                            );
+
+                            return false;
+                        }
+                        break;
+                }
+            }
+
+            static::$fileMap = $fileMap;
 
             return file_put_contents(
                 $fileMapFileName,
@@ -400,59 +455,26 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
      *
      * @return array Return the array of File map
      */
-    protected function generateFileMapData()
+    protected function getMapDataFromScanner()
     {
-        $mappedFiles = $errors = array();
+        $mappedFiles = array();
 
         // Scan for template files
         $scanner = new \Facula\Base\Tool\File\ModuleScanner(
             $this->configs['TplPool']
         );
 
-        if ($files = $scanner->scan()) {
-            foreach ($files as $file) {
-                $fileNameSplit = explode('+', $file['Name'], 2);
+        return $scanner->scan();
+    }
 
-                switch ($file['Prefix']) {
-                    case 'language':
-                        $mappedFiles['Lang'][$fileNameSplit[0]][] =
-                            $file['Path'];
-                        break;
-
-                    case 'template':
-                        if (isset($fileNameSplit[1])) { // If this is a ab testing file
-                            if (!isset($mappedFiles['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]])) {
-                                $mappedFiles['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]] =
-                                    $file['Path'];
-                            } else {
-                                throw new \Exception(
-                                    'Template file '
-                                    . $mappedFiles['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]]
-                                    . ' conflicted with '
-                                    . $file['Path']
-                                    . '.'
-                                );
-
-                                return false;
-                            }
-                        } elseif (!isset($mappedFiles['Tpl'][$file['Name']]['default'])) {
-                            // If not, save current file to the default
-                            $mappedFiles['Tpl'][$file['Name']]['default'] = $file['Path'];
-                        } else {
-                            throw new \Exception(
-                                'Template file '
-                                . $mappedFiles['Tpl'][$file['Name']]['default']
-                                . ' conflicted with '
-                                . $file['Path']
-                                . '.'
-                            );
-
-                            return false;
-                        }
-                        break;
-                }
-            }
-        }
+    /**
+     * Run template_import_files hook to get map data
+     *
+     * @return array Return the array of File map
+     */
+    protected function getMapDataFromHook()
+    {
+        $files = $errors = array();
 
         // Get files from hooks
         foreach (\Facula\Framework::summonHook(
@@ -460,64 +482,12 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             array(),
             $errors
         ) as $hook => $importedFiles) {
-            if (!is_array($importedFiles)) {
-                continue;
-            }
-
-            foreach ($importedFiles as $importedFile) {
-                if (!isset($importedFile['Type'])) {
-                    continue;
-                }
-
-                switch ($importedFile['Type']) {
-                    case 'Language':
-                        if (!isset($importedFile['Path'])) {
-                            continue;
-                        }
-
-                        if (!isset($importedFile['Code'][0])) {
-                            $importedFile['Code'] = 'default';
-                        }
-
-                        $mappedFiles['Lang'][$importedFile['Code']][] =
-                            $importedFile['Path'];
-                        break;
-
-                    case 'Template':
-                        if (!isset(
-                            $importedFile['Name'],
-                            $importedFile['Path']
-                        )) {
-                            continue;
-                        }
-
-                        if (!isset($importedFile['Set'][0])) {
-                            $importedFile['Set'] = 'default';
-                        }
-
-                        if (isset($mappedFiles['Tpl'][$importedFile['Name']][$importedFile['Set'][0]])) {
-                            throw new \Exception(
-                                'Template file '
-                                . $importedFile['Name']
-                                . ' conflicted with '
-                                . $mappedFiles['Tpl'][$importedFile['Name']][$importedFile['Set']]
-                                . '.'
-                            );
-
-                            return false;
-                        } else {
-                            $mappedFiles['Tpl'][$importedFile['Name']][$importedFile['Set']] =
-                                $importedFile['Path'];
-                        }
-                        break;
-
-                    default:
-                        break;
-                }
+            foreach ($importedFiles as $file) {
+                $files[] = $file;
             }
         }
 
-        return $mappedFiles;
+        return $files;
     }
 
     /**

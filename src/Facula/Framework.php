@@ -615,7 +615,6 @@ class Framework
         return false;
     }
 
-
     /**
      * Register a package(combination of namespaces, classes, and paths) into Framework
      *
