@@ -478,12 +478,22 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
         // Get files from hooks
         foreach (\Facula\Framework::summonHook(
-            'template_import_files',
+            'template_import_paths',
             array(),
             $errors
-        ) as $hook => $importedFiles) {
-            foreach ($importedFiles as $file) {
-                $files[] = $file;
+        ) as $hook => $importedPaths) {
+            if (!is_array($importedPaths)) {
+                continue;
+            }
+
+            foreach ($importedPaths as $path) {
+                $pathScanner = new \Facula\Base\Tool\File\ModuleScanner(
+                    $path
+                );
+
+                foreach ($pathScanner->scan() as $file) {
+                    $files[] = $file;
+                }
             }
         }
 
