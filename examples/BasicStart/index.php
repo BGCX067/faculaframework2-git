@@ -26,6 +26,13 @@
  */
 
 /**
+ * Check if example has disabled
+ */
+if (file_exists('..' . DIRECTORY_SEPARATOR . 'Lock')) {
+    exit('Example disabled. Remove Lock file to enable.');
+}
+
+/**
  * Require the framework
  */
 require(
