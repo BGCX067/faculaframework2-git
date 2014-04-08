@@ -806,7 +806,9 @@ abstract class ORM implements Implement, \ArrayAccess
 
         if (isset($this->data[static::$primary])) {
             // Must call the hook before we handle data
-            $this->onSave();
+            if (!$this->onSave()) {
+                return false;
+            }
 
             if (isset($this->dataOriginal[static::$primary])) {
                 $primaryKey = $this->dataOriginal[static::$primary];
@@ -917,7 +919,9 @@ abstract class ORM implements Implement, \ArrayAccess
         $data = $keys = array();
 
         // Must call the hook before we handle data
-        $this->onInsert();
+        if (!$this->onInsert()) {
+            return false;
+        }
 
         foreach ($this->data as $key => $val) {
             if (isset(static::$fields[$key])) {
@@ -960,7 +964,9 @@ abstract class ORM implements Implement, \ArrayAccess
         $result = null;
 
         if (isset($this->data[static::$primary])) {
-            $this->onDelete();
+            if (!$this->onDelete()) {
+                return false;
+            }
 
             if ($result = \Facula\Unit\Query\Factory::from(
                 static::$table,
@@ -991,27 +997,30 @@ abstract class ORM implements Implement, \ArrayAccess
     /**
      * Hook for data insert
      *
-     * @return void
+     * @return bool
      */
     protected function onInsert()
     {
+        return true;
     }
 
     /**
      * Hook for data update
      *
-     * @return void
+     * @return bool
      */
     protected function onSave()
     {
+        return true;
     }
 
     /**
      * Hook for data delete
      *
-     * @return void
+     * @return bool
      */
     protected function onDelete()
     {
+        return true;
     }
 }
