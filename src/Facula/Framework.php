@@ -345,14 +345,14 @@ class Framework
 
         $map = self::locateNamespace($splitedNamespace, false);
 
-        if (isset($map['Ref']['P'])) {
-            $fullPath = $map['Ref']['P']
+        if (isset($map['Path'])) {
+            $fullPath = $map['Path']
                         . DIRECTORY_SEPARATOR
                         . ($map['Remain'] ? implode(DIRECTORY_SEPARATOR, $map['Remain']) . DIRECTORY_SEPARATOR : '')
                         . $className
                         . '.' . static::$cfg['PHPExt'];
 
-            if ($map['Ref']['P'] && file_exists($fullPath)) {
+            if ($map['Path'] && file_exists($fullPath)) {
                 require($fullPath);
 
                 return true;
@@ -392,31 +392,6 @@ class Framework
                 );
                 $map['Ref']['R'] = true;
 
-                // Refresh unregisted sub namespaces
-                $reloadNS = function (&$curRoot, &$curPntRoot) use (&$reloadNS) {
-                    foreach ($curRoot as $subNamespaceKey => $subNamespace) {
-
-                        if (!isset($curRoot[$subNamespaceKey])) {
-                            break;
-                        }
-
-                        if (!$curRoot[$subNamespaceKey]['R']) {
-                            $curRoot[$subNamespaceKey]['P'] = $curPntRoot['P']
-                            . DIRECTORY_SEPARATOR
-                            . $subNamespaceKey;
-
-                            $reloadNS(
-                                $curRoot[$subNamespaceKey]['S'],
-                                $curRoot[$subNamespaceKey]
-                            );
-                        } else {
-                            break;
-                        }
-                    }
-                };
-
-                $reloadNS($map['Ref']['S'], $map['Ref']);
-
                 return true;
             } else {
                 throw new \Exception(
@@ -443,14 +418,19 @@ class Framework
      * Unregister a namespace prefix
      *
      * @param string $nsPrefix The prefix
+     * @param bool $vague Search namespace vaguely,
+     *              if you register a name say \Vendor\Level1 and unregister \Vendor\Level1\Level2,
+     *              Then $vague = true, the \Vendor\Level1 will be unregistered;
+     *              Then $vague = false, unregister will return false
+     *              because there is no \Vendor\Level1\Level2 registered;
      *
      * @return bool Return true when success, false otherwise.
      */
-    public static function unregisterNamespace($nsPrefix)
+    public static function unregisterNamespace($nsPrefix, $vague = false)
     {
         $map = self::locateNamespace(self::splitNamespace($nsPrefix), false);
 
-        if (isset($map['Ref'])) {
+        if (isset($map['Ref']) && (empty($map['Remain']) || !$vague)) {
             $map['Ref'] = null;
         } else {
             throw new \Exception('Trying unregister a namespace while it not existed.');
@@ -499,39 +479,54 @@ class Framework
     {
         $skiping = false;
         $splitedNS = $splitedRemainNS = $splitedNamespace;
-        $currentMapRef = $currentMapParentRef = null;
+        $currentMapRef = null;
+        $currentPath = '';
+        $remainPreRemoveNS = array();
 
         $mapSelectedRef = & static::$components['NSMap'];
 
         foreach ($splitedNS as $index => $namespace) {
-
             if (isset($mapSelectedRef[$namespace])) {
+                if (!$mapSelectedRef[$namespace]['P']) {
+                    $remainPreRemoveNS[] = $index;
+                } else {
+                    $currentPath = $mapSelectedRef[$namespace]['P'];
+
+                    if (isset($remainPreRemoveNS[0])) {
+
+                        foreach($remainPreRemoveNS as $removeIndex) {
+                            unset($splitedRemainNS[$removeIndex]);
+                        }
+
+                        $remainPreRemoveNS = array();
+                    }
+
+                    unset($splitedRemainNS[$index]);
+                }
+
                 $currentMapRef = & $mapSelectedRef[$namespace];
-                $currentMapParentRef = & $mapSelectedRef;
 
                 $mapSelectedRef = & $mapSelectedRef[$namespace]['S'];
             } elseif ($create) {
                 $mapSelectedRef[$namespace] = array(
                     'S' => array(),
-                    'P' => isset($currentMapRef['P']) ?
-                        ($currentMapRef['P'] . DIRECTORY_SEPARATOR . $namespace) : '',
+                    'P' => '',
                     'R' => false,
                 );
 
                 $currentMapRef = & $mapSelectedRef[$namespace];
-                $currentMapParentRef = & $mapSelectedRef;
 
-                $mapSelectedRef = &$mapSelectedRef[$namespace]['S'];
+                $mapSelectedRef = & $mapSelectedRef[$namespace]['S'];
+
+                unset($splitedRemainNS[$index]);
             } else {
                 break;
             }
-
-            unset($splitedRemainNS[$index]);
         }
 
         return array(
+            'Path' => $currentPath,
             'Ref' => & $currentMapRef,
-            'Parent' => & $currentMapParentRef,
             'Remain' => $splitedRemainNS,
         );
     }
