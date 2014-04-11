@@ -431,7 +431,11 @@ class Framework
         $map = self::locateNamespace(self::splitNamespace($nsPrefix), false);
 
         if (isset($map['Ref']) && (empty($map['Remain']) || !$vague)) {
-            $map['Ref'] = null;
+            if (!empty($map['Ref']['S'])) {
+                $map['Ref']['P'] = '';
+            } else {
+                $map['Ref'] = null;
+            }
         } else {
             throw new \Exception('Trying unregister a namespace while it not existed.');
 
