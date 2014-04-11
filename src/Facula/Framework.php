@@ -498,7 +498,7 @@ class Framework
 
                     if (isset($remainPreRemoveNS[0])) {
 
-                        foreach($remainPreRemoveNS as $removeIndex) {
+                        foreach ($remainPreRemoveNS as $removeIndex) {
                             unset($splitedRemainNS[$removeIndex]);
                         }
 
