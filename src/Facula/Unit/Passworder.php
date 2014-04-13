@@ -50,7 +50,6 @@ class Passworder
      */
     public function __construct($salt = '', $loop = 200, $cost = 10)
     {
-        $tempSalt = '';
         $this->hasher = new Hasher($salt, $loop);
 
         $this->cost = $cost > 1 ? $cost : 1;

@@ -142,6 +142,18 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Operato
                         if ($this->setting['MemoryLimit'] >=
                             ($imageInfo['Area'] * ($imageInfo['Channels'] + 1))) {
                             $imageRes = imagecreatefromgif($file);
+
+                            $imageInfo['Transparent'] = imagecolorallocatealpha(
+                                $imageRes,
+                                0,
+                                0,
+                                0,
+                                127
+                            );
+
+                            // GIF file needs color transparent.
+                            // because it doesn't have an alpha layer like PNG did.
+                            imagecolortransparent($imageRes, $imageInfo['Transparent']);
                         } else {
                             $this->error = 'ERROR_IMAGE_HANDLER_MEMORYLIMIT_EXCEED';
                         }
