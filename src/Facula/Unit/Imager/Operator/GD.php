@@ -424,13 +424,14 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Operato
             array(3.0, 6.0, 3.0),
             array(2.0, 3.0, 2.0)
         );
+        $div = array_sum(array_map('array_sum', $gaussian));
 
         if ($this->imageRes) {
             for ($i = 0; $i < $level; $i++) {
                 if (!imageconvolution(
                     $this->imageRes,
                     $gaussian,
-                    array_sum(array_map('array_sum', $gaussian)),
+                    $div,
                     0
                 )) {
                     return false;
@@ -453,17 +454,18 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Operato
     public function sharp($level = 1)
     {
         $shape = array(
-            array(-1.2, -1, -1.2),
-            array(-1, 20, -1),
-            array(-1.2, -1, -1.2)
+            array(0.0, -0.3, 0.0),
+            array(-0.3, 6.0, -0.3),
+            array(0.0, -0.3, 0.0)
         );
+        $div = array_sum(array_map('array_sum', $shape));
 
         if ($this->imageRes) {
             for ($i = 0; $i < $level; $i++) {
                 if (!imageconvolution(
                     $this->imageRes,
                     $shape,
-                    array_sum(array_map('array_sum', $shape)),
+                    $div,
                     0
                 )) {
                     return false;
