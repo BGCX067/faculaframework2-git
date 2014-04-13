@@ -68,7 +68,7 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
         if (!isset(self::$instances[$class])) {
             if (!class_exists($class)) {
                 throw new \Exception(
-                    'Facula core '
+                    'Facula function core '
                     . $class
                     . ' is not loadable.'
                     . 'Please make sure object file has been included before preform this task.'
@@ -77,67 +77,33 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
                 return false;
             }
 
-            // Create and check new instance
-            if ($caller::checkInstance(
-                self::$instances[$class] = new $class($cfg, $common, $parent)
-            )) {
-                return self::$instances[$class];
-            } else {
+            $classInterface = class_implements($class);
+            if (!isset($classInterface[static::$interface])) {
                 throw new \Exception(
-                    'An error happened when facula creating core '
+                    'Facula function core '
                     . $class
+                    . ' must implement interface '
+                    . static::$interface
                     . '.'
                 );
 
                 return false;
             }
+
+            if (!is_subclass_of($class, 'Facula\Base\Prototype\Core')) {
+                throw new \Exception(
+                    'Facula function core '
+                    . $class
+                    . ' must be extend from base class '
+                    . '\\Facula\\Base\\Prototype\\Core'
+                );
+
+                return false;
+            }
+
+            return (self::$instances[$class] = new $class($cfg, $common, $parent));
         }
 
         return self::$instances[$class];
-    }
-
-    /**
-     * Check if the instance is valid
-     *
-     * @param object $instance The function core instance
-     *
-     * @return bool Return true when the core is valid, false otherwise
-     */
-    final protected static function checkInstance($instance)
-    {
-        $classInstance = get_class($instance);
-        $classInterface = '';
-
-        if (!($instance instanceof \Facula\Base\Prototype\Core)) {
-            throw new \Exception(
-                'Facula core '
-                . $classInstance
-                . ' must be extend from base class '
-                . '\\Facula\\Base\\Prototype\\Core'
-            );
-
-            return false;
-        }
-
-        if (!isset(static::$interface)) {
-            return true;
-        } else {
-            $classInterface = static::$interface;
-        }
-
-        if ($instance instanceof $classInterface) {
-            return true;
-        } else {
-            throw new \Exception(
-                'Facula core '
-                . $classInstance
-                . ' needs to implements interface '
-                . $classInterface
-            );
-
-            return false;
-        }
-
-        return false;
     }
 }

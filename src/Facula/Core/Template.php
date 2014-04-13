@@ -33,8 +33,8 @@ namespace Facula\Core;
 class Template extends \Facula\Base\Factory\Core
 {
     /** Default class of the core */
-    protected static $default = '\Facula\Base\Entity\Core\Template';
+    protected static $default = 'Facula\Base\Entity\Core\Template';
 
     /** Default interface of the core */
-    protected static $interface = '\Facula\Base\Entity\Core\Template';
+    protected static $interface = 'Facula\Base\Implement\Core\Template';
 }

@@ -33,8 +33,8 @@ namespace Facula\Core;
 class Response extends \Facula\Base\Factory\Core
 {
     /** Default class of the core */
-    protected static $default = '\Facula\Base\Entity\Core\Response';
+    protected static $default = 'Facula\Base\Entity\Core\Response';
 
     /** Default interface of the core */
-    protected static $interface = '\Facula\Base\Entity\Core\Response';
+    protected static $interface = 'Facula\Base\Implement\Core\Response';
 }

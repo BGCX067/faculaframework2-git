@@ -33,8 +33,8 @@ namespace Facula\Core;
 class Debug extends \Facula\Base\Factory\Core
 {
     /** Default class of the core */
-    protected static $default = '\Facula\Base\Entity\Core\Debug';
+    protected static $default = 'Facula\Base\Entity\Core\Debug';
 
     /** Default interface of the core */
-    protected static $interface = '\Facula\Base\Entity\Core\Debug';
+    protected static $interface = 'Facula\Base\Implement\Core\Debug';
 }

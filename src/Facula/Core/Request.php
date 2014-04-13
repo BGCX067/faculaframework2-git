@@ -33,8 +33,8 @@ namespace Facula\Core;
 class Request extends \Facula\Base\Factory\Core
 {
     /** Default class of the core */
-    protected static $default = '\Facula\Base\Entity\Core\Request';
+    protected static $default = 'Facula\Base\Entity\Core\Request';
 
     /** Default interface of the core */
-    protected static $interface = '\Facula\Base\Entity\Core\Request';
+    protected static $interface = 'Facula\Base\Implement\Core\Request';
 }

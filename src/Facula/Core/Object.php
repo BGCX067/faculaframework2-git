@@ -33,8 +33,8 @@ namespace Facula\Core;
 class Object extends \Facula\Base\Factory\Core
 {
     /** Default class of the core */
-    protected static $default = '\Facula\Base\Entity\Core\Object';
+    protected static $default = 'Facula\Base\Entity\Core\Object';
 
     /** Default interface of the core */
-    protected static $interface = '\Facula\Base\Entity\Core\Object';
+    protected static $interface = 'Facula\Base\Implement\Core\Object';
 }

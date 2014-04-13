@@ -33,8 +33,8 @@ namespace Facula\Core;
 class Cache extends \Facula\Base\Factory\Core
 {
     /** Default class of the core */
-    protected static $default = '\Facula\Base\Entity\Core\Cache';
+    protected static $default = 'Facula\Base\Entity\Core\Cache';
 
     /** Default interface of the core */
-    protected static $interface = '\Facula\Base\Entity\Core\Cache';
+    protected static $interface = 'Facula\Base\Implement\Core\Cache';
 }

@@ -33,8 +33,8 @@ namespace Facula\Core;
 class PDO extends \Facula\Base\Factory\Core
 {
     /** Default class of the core */
-    protected static $default = '\Facula\Base\Entity\Core\PDO';
+    protected static $default = 'Facula\Base\Entity\Core\PDO';
 
     /** Default interface of the core */
-    protected static $interface = '\Facula\Base\Entity\Core\PDO';
+    protected static $interface = 'Facula\Base\Implement\Core\PDO';
 }
