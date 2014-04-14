@@ -116,13 +116,14 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
      * Upload the file
      *
      * @param string $localFile Path to the local file
+     * @param string $remoteFileName Name of the file on remote server
      * @param string $error A reference to get error detail
      *
      * @return void
      */
-    public function upload($localFile, &$error = '')
+    public function upload($localFile, $remoteFileName = '', &$error = '')
     {
-        $currentRemotePath = $remoteFileName = $resultPath = $fileExt = $cdError = '';
+        $currentRemotePath = $resultPath = $fileExt = $cdError = '';
         $success = false;
 
         if ($this->connection || $this->connect()) {
@@ -147,10 +148,12 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
                 } else {
                     $fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
 
-                    if (!$remoteFileName = md5_file($localFile)) {
-                        $remoteFileName = rand(0, 9999) . ($fileExt ? '.' . $fileExt : '');
-                    } else {
-                        $remoteFileName .= ($fileExt ? '.' . $fileExt : '');
+                    if (!$remoteFileName) {
+                        if (!$remoteFileName = md5_file($localFile)) {
+                            $remoteFileName = rand(0, 9999) . ($fileExt ? '.' . $fileExt : '');
+                        } else {
+                            $remoteFileName .= ($fileExt ? '.' . $fileExt : '');
+                        }
                     }
 
                     if (ftp_put($this->connection, $remoteFileName, $localFile, FTP_BINARY)) {

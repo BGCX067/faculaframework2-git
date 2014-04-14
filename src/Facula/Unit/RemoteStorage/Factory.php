@@ -117,11 +117,12 @@ class Factory extends \Facula\Base\Factory\Operator
      * Upload a file
      *
      * @param string $localFile Path to the file
+     * @param string $remoteFileName Name of this file on remote server
      * @param string $error Error detail
      *
      * @return mixed Return path on the remote server when success, false otherwise
      */
-    public static function upload($localFile, &$error = '')
+    public static function upload($localFile, $remoteFileName = '', &$error = '')
     {
         $handler = null;
         $operatorName = '';
@@ -140,7 +141,11 @@ class Factory extends \Facula\Base\Factory\Operator
                             );
 
                             if ($handler instanceof OperatorImplement) {
-                                if ($result = $handler->upload($localFile, $error)) {
+                                if ($result = $handler->upload(
+                                    $localFile,
+                                    $remoteFileName,
+                                    $error
+                                )) {
                                     static::$handler = $handler;
 
                                     return $result;

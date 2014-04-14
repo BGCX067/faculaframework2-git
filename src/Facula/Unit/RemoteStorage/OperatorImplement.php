@@ -33,5 +33,5 @@ namespace Facula\Unit\RemoteStorage;
 interface OperatorImplement
 {
     public function __construct(array $setting);
-    public function upload($localFile, &$error = '');
+    public function upload($localFile, $remoteFileName, &$error = '');
 }
