@@ -146,9 +146,9 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
                         false
                     );
                 } else {
-                    $fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
-
                     if (!$remoteFileName) {
+                        $fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
+
                         if (!$remoteFileName = md5_file($localFile)) {
                             $remoteFileName = rand(0, 9999) . ($fileExt ? '.' . $fileExt : '');
                         } else {

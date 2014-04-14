@@ -132,50 +132,60 @@ class Factory extends \Facula\Base\Factory\Operator
             // Create handler instance
             if (!static::$handler) {
                 foreach (static::$servers as $server) {
-                    if (isset($server['Type'][0])) {
-                        $operatorName = static::getOperator($server['Type']);
-
-                        if (class_exists($operatorName)) {
-                            $handler = new $operatorName(
-                                isset($server['Option']) ? $server['Option'] : array()
-                            );
-
-                            if ($handler instanceof OperatorImplement) {
-                                if ($result = $handler->upload(
-                                    $localFile,
-                                    $remoteFileName,
-                                    $error
-                                )) {
-                                    static::$handler = $handler;
-
-                                    return $result;
-                                } else {
-                                    unset($handler);
-                                }
-                            } else {
-                                \Facula\Framework::core('debug')->exception(
-                                    'ERROR_REMOTESTORAGE_INTERFACE_INVALID',
-                                    'remote storage',
-                                    true
-                                );
-                            }
-                        } else {
-                            \Facula\Framework::core('debug')->exception(
-                                'ERROR_REMOTESTORAGE_SERVER_TYPE_UNSUPPORTED',
-                                'remote storage',
-                                true
-                            );
-                        }
-                    } else {
+                    if (!isset($server['Type'][0])) {
                         \Facula\Framework::core('debug')->exception(
                             'ERROR_REMOTESTORAGE_SERVER_NOTYPE',
                             'remote storage',
                             true
                         );
+
+                        return false;
+                    }
+
+                    $operatorName = static::getOperator($server['Type']);
+
+                    if (!class_exists($operatorName)) {
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_REMOTESTORAGE_SERVER_TYPE_UNSUPPORTED',
+                            'remote storage',
+                            true
+                        );
+
+                        return false;
+                    }
+
+                    $handler = new $operatorName(
+                        isset($server['Option']) ? $server['Option'] : array()
+                    );
+
+                    if (!($handler instanceof OperatorImplement)) {
+                        \Facula\Framework::core('debug')->exception(
+                            'ERROR_REMOTESTORAGE_INTERFACE_INVALID',
+                            'remote storage',
+                            true
+                        );
+
+                        return false;
+                    }
+
+                    if ($result = $handler->upload(
+                        $localFile,
+                        $remoteFileName,
+                        $error
+                    )) {
+                        static::$handler = $handler;
+
+                        return $result;
+                    } else {
+                        unset($handler);
                     }
                 }
             } else {
-                return static::$handler->upload($localFile, $error);
+                return static::$handler->upload(
+                    $localFile,
+                    $remoteFileName,
+                    $error
+                );
             }
         } else {
             \Facula\Framework::core('debug')->exception(
