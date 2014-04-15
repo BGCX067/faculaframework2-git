@@ -857,6 +857,16 @@ class Framework
             $this->setting['Common']['AppVersion'] = isset($cfg['AppVersion'][0]) ? $cfg['AppVersion'] : '0.0';
             $this->setting['Common']['BootVersion'] = FACULA_TIME;
 
+            // Get some of the info of current PHP installation
+            $this->setting['Common']['PHP'] = array(
+                'SAPI' => strtolower(php_sapi_name()),
+                'UName' => php_uname(),
+                'Version' => strtolower(phpversion()),
+                'GroupID' => getmygid(),
+                'UserID' => getmyuid(),
+                'UserName' => get_current_user(),
+            );
+
             // Now we have settings, the first step: register namespace
             $this->registerAllNamespaces();
 

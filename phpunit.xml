@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/3.7/phpunit.xsd"
+         backupGlobals="true"
+         backupStaticAttributes="false"
+         bootstrap="Bootstrap.php"
+         cacheTokens="false"
+         colors="false"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         forceCoversAnnotation="true"
+         processIsolation="false"
+         stopOnError="true"
+         stopOnFailure="true"
+         stopOnIncomplete="true"
+         stopOnSkipped="true"
+         timeoutForSmallTests="1"
+         timeoutForMediumTests="10"
+         timeoutForLargeTests="60"
+         strict="true"
+         verbose="true">
+
+    <testsuites>
+        <testsuite name="Facula Framework Test Suites">
+            <directory suffix=".php">tests/Framework/*</directory>
+        </testsuite>
+
+        <testsuite name="Facula Framework Miscellaneous Units Test Suites">
+            <directory suffix=".php">tests/Units/*</directory>
+        </testsuite>
+    </testsuites>
+
+</phpunit>

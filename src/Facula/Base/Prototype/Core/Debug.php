@@ -41,6 +41,266 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
         'Version' => __FACULAVERSION__,
     );
 
+    /** Error message template */
+    protected static $errorMessageTemplate = array(
+        'line' => array(
+            'Code' => '
+                <div
+                    class="facula-error"
+                    style="
+                        clear: both;
+                        margin: 10px 0;
+                        font-size: 1em;
+                        color: #fff;
+                        padding: 20px;
+                        background: #9e2e2e;
+                ">
+                    <div
+                        class="icon"
+                        style="
+                            background: #8b3131;
+                            box-shadow: inset 0 0 5px #702d2d;
+                            border-radius: 10px;
+                            padding: 10px 20px;
+                            font-size: 30px;
+                            margin-right: 20px;
+                            float: left;
+                        "
+                    >!</div>
+
+                    <div class="message" style="padding: 5px; overflow: auto; zoom: 1;">
+                        <span class="title" style="font-size: 0.9em">
+                            An error occurred:
+                        </span>
+
+                        <div class="code" style="padding-top: 5px;">%Error:Code%</div>
+
+                        %Error:Detail%
+                    </div>
+                </div>
+            ',
+
+            'Banner' => array(
+                'Start' => '<ul class="trace">',
+                'End' => '</ul>',
+                'Code' => '
+                    <li class="item" style="margin-bottom: 10px;">
+                        <div class="item caller">
+                            %Error:Banner:Caller%
+                        </div>
+
+                        <div class="item file" style="font-size: 0.9em; color: #e96d6d;">
+                            %Error:Banner:File% (Line: %Error:Banner:Line%)
+                        </div>
+
+                        <div class="item plate" style="font-size: 0.9em;">
+                            Author: %Error:Banner:Plate:Author%,
+                            Reviser: %Error:Banner:Plate:Reviser%,
+                            Contact: %Error:Banner:Plate:Contact%,
+                            Updated: %Error:Banner:Plate:Updated%,
+                            Version: %Error:Banner:Plate:Version%
+                        </div>
+                    </li>
+                '
+            ),
+        ),
+
+        'page' => array(
+            'Code' => '
+                <!doctype html>
+                <html>
+                    <head>
+                        <title>Oops!</title>
+
+                        <style>
+                            body {
+                                width: 100%;
+                                margin: 0;
+                                padding: 0;
+                                background: #072731;
+                                color: #fff;
+                                font-size: 1em;
+                            }
+                            a {
+                                color: #fff;
+                            }
+                            h1 {
+                                margin: 15px 0;
+                            }
+                            #error {
+                                padding: 50px;
+                                background: #9e2e2e;
+                                box-shadow: 0 0 10px #3c0d0d;
+                            }
+
+                            #error .msg {
+                                overflow: hidden;
+                                zoom: 1;
+                            }
+                            #error .icon {
+                                display: block;
+                                width: 120px;
+                                height: 120px;
+                                line-height: 120px;
+                                font-style: normal;
+                                font-size: 100px;
+                                background: #8b3131;
+                                box-shadow: inset 0 0 5px #702d2d;
+                                border-radius: 10px;
+                                margin-right: 50px;
+                                text-align: center;
+                                float: left;
+                            }
+                            #error .suggestion {
+                                margin-top: 50px;
+                                padding: 20px 0 0 0;
+                            }
+                            #error .suggestions {
+                                margin-top: 20px;
+                                font-size: 0.9em;
+                            }
+                            #error .suggestions li {
+                                margin: 10px 0;
+                            }
+                            #info {
+                                padding: 50px;
+                            }
+                            #trace {
+                                list-style: none;
+                                padding: 0;
+                            }
+                            #trace li {
+                                margin-bottom: 50px;
+                                clear: both;
+                            }
+                            #trace .no {
+                                padding: 20px 25px;
+                                font-size: 20px;
+                                display: block;
+                                background: #19363f;
+                                margin: 0 20px 0 0;
+                                border-radius: 10%;
+                                font-style: normal;
+                                float: left;
+                            }
+                            #trace .detail {
+                                overflow: hidden;
+                                margin-left: 120px;
+                            }
+                            #trace .item {
+                                margin-bottom: 3px;
+                            }
+                            #trace .item.caller {
+                                font-size: 1.1em;
+                            }
+                            #trace .item.file {
+                                color: #2c4f5a;
+                            }
+                            #trace .item.plate {
+                                font-size: 0.8em;
+                            }
+                            #misc-info {
+                                padding: 50px;
+                                font-size: 0.8em;
+                                color: #405961;
+                            }
+                        </style>
+                    </head>
+
+                    <body>
+                        <div id="error">
+                            <i class="icon">!</i>
+
+                            <div class="msg">
+                                <h1>An error occurred</h1>
+
+                                %Error:Code%
+
+                                <div class="suggestion">
+                                    Our application made a serious mistake when try to display this page for you.
+                                    Please:
+
+                                    <ul class="suggestions">
+                                        <li>
+                                            <a href="javascript:history.go(0);">Reload</a>
+                                            this page see if this error disappears.
+                                        </li>
+
+                                        <li>
+                                            If this error screen still, may be, it take a while to fix.
+                                            So relax, have some fun at other places.
+                                        </li>
+
+                                        <li>
+                                            If you want to help, please contact web manager.
+                                            report this error with all information on this page.
+                                        </li>
+
+                                        <li>
+                                            If you are the web manager,
+                                            the information at below will help you fix this problem.
+                                        </li>
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div id="info">
+                            %Error:Detail%
+                        </div>
+
+                        <div id="misc-info">
+                            Happened: %Error:Time%,&nbsp;
+                            Debug: %Error:DebugStatus%,&nbsp;
+                            Initialized: %Error:BootVersion%,&nbsp;
+                            Application: %Error:AppName% (%Error:AppVersion%)
+                        </div>
+                    </body>
+                </html>
+            ',
+
+            'Banner' => array(
+                'Start' => '<ul id="trace">',
+                'End' => '</ul>',
+                'Code' => '
+                    <li>
+                        <i class="no">%Error:Banner:No%</i>
+                        <div class="detail">
+                            <div class="item caller">%Error:Banner:Caller%</div>
+
+                            <div class="item file">%Error:Banner:File% (Line: %Error:Banner:Line%)</div>
+
+                            <div class="item plate">
+                                Author: %Error:Banner:Plate:Author%,
+                                Reviser: %Error:Banner:Plate:Reviser%,
+                                Contact: %Error:Banner:Plate:Contact%,
+                                Updated: %Error:Banner:Plate:Updated%,
+                                Version: %Error:Banner:Plate:Version%
+                            </div>
+                        <div>
+                    </li>
+                '
+            ),
+        ),
+
+        'cli' => array(
+            'Code' => '
+                Error: %Error:Code%
+                ===========================================
+                %Error:Detail%
+            ',
+            'Banner' => array(
+                'Start' => '',
+                'End' => '',
+                'Code' => '
+                    > %Error:Banner:Caller%
+                    # %Error:Banner:File% (Line: %Error:Banner:Line%)
+                '
+            ),
+        ),
+    );
+
     /** All errors recorded in here */
     protected $errorRecords = array();
 
@@ -81,6 +341,14 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             ),
 
             'Debug' => !isset($cfg['Debug']) || $cfg['Debug'] ? true : false,
+
+            'SAPI' => $common['PHP']['SAPI'],
+
+            'BootVersion' => $common['BootVersion'],
+
+            'AppName' => $common['AppName'],
+
+            'AppVersion' => $common['AppVersion'],
         );
     }
 
@@ -560,104 +828,127 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      *
      * @return mixed
      */
-    protected function displayErrorBanner($message, array $backTraces, $returnCode = false, $callerOffset = 0)
-    {
-        $code = $file = '';
+    protected function displayErrorBanner(
+        $message,
+        array $backTraces,
+        $returnCode = false,
+        $callerOffset = 0
+    ) {
+        $detail = $templateString = $templateBanner = '';
         $line = 0;
 
-        if (!headers_sent($file, $line)) {
-            if ($this->configs['Debug']) {
-                $code = '<div class="facula-error" style="clear:both;">'
-                        . '<span class="title" style="clear:both;font-size:150%;">'
-                        . 'Facula Error: <strong>'
-                        . str_replace(
-                            array(
-                                FACULA_ROOT,
-                                PROJECT_ROOT
-                            ),
-                            array(
-                                '[Facula Dir]',
-                                '[Project Dir]'
-                            ),
-                            $message
-                        )
-                        . '</strong></span><ul>';
+        switch ($this->configs['SAPI']) {
+            case 'cli':
+                $templateString = static::$errorMessageTemplate['cli']['Code'];
+                $templateBanner = static::$errorMessageTemplate['cli']['Banner'];
+                break;
 
-                if ($traceSize = count($backTraces)) {
-                    $traceCallerOffset = $traceSize - ($callerOffset < $traceSize ? $callerOffset : 0);
-                    $tracesLoop = 0;
+            default:
+                if (!headers_sent()) {
+                    header('HTTP/1.0 500 Internal Server Error');
 
-                    foreach ($backTraces as $key => $val) {
-                        $tracesLoop++;
-                        $code .= '<li'
-                                . ($tracesLoop >= $traceCallerOffset
-                                ? ' class="current" style="margin:10px;padding:10px;background-color:#fcc;'
-                                . 'border-radius:5px;color:#a33;"' : ' style="padding:10px;"')
-                                . '><span style="line-height:1.5;"><span class="trace" style="display:block;'
-                                . 'font-size:120%;">'
-                                . str_replace(
-                                    array(
-                                        FACULA_ROOT,
-                                        PROJECT_ROOT
-                                    ),
-                                    array(
-                                        '[Facula Dir]',
-                                        '[Project Dir]'
-                                    ),
-                                    $val['caller']
-                                ) . '</span><span class="notice" style="display:block;margin-bottom:3px;'
-                                . 'font-size:60%;">Author: <u>' . $val['nameplate']['author']
-                                . '</u> Reviser: <u>'
-                                . $val['nameplate']['reviser']
-                                . '</u> '
-                                . ' Version: <u>'
-                                . $val['nameplate']['version']
-                                . '</u> Updated in: <u>'
-                                . $val['nameplate']['updated']
-                                . '</u> Contact: <u>'
-                                . ($val['nameplate']['contact'] ? $val['nameplate']['contact'] : 'Nobody')
-                                . '</u></span><span class="notice" '
-                                . 'style="display:block;font-size:60%;font-weight:bold;">Triggered in file: '
-                                . str_replace(
-                                    array(
-                                        FACULA_ROOT,
-                                        PROJECT_ROOT
-                                    ),
-                                    array(
-                                        '[Facula Dir]',
-                                        '[Project Dir]'
-                                    ),
-                                    $val['file']
-                                )
-                                . ' (line ' . $val['line'] . ')'
-                                . '</span></span></li>';
-                    }
+                    $templateString = static::$errorMessageTemplate['page']['Code'];
+                    $templateBanner = static::$errorMessageTemplate['page']['Banner'];
+                } else {
+                    $templateString = static::$errorMessageTemplate['line']['Code'];
+                    $templateBanner = static::$errorMessageTemplate['line']['Banner'];
                 }
+                break;
+        }
 
-                $code .= '</ul></div>';
-            } else {
-                $code = '<div class="facula-error-min" style="text-align:center;clear:both;">'
-                        . 'Sorry, we got a problem while cooking the page for you.</div>';
-            }
-
-            if ($returnCode) {
-                return $code;
-            } else {
-                echo($code);
-            }
-
-            return true;
-        } else {
-            $this->addLog(
-                'Error banner',
-                '0',
-                'Encountered an error but header already sent in file '
-                . $file
-                . ' line: '
-                . $line
+        if ($this->configs['Debug']) {
+            $detail = static::renderErrorDetailBanners(
+                $backTraces,
+                $templateBanner,
+                $callerOffset
             );
+        } else {
+            $detail = 'Debug disabled, error detail unavailable.';
+        }
+
+        $templateAssigns = array(
+            '%Error:Detail%' => $detail,
+
+            '%Error:Code%' => $message,
+
+            '%Error:Time%' => date(DATE_ATOM, FACULA_TIME),
+
+            '%Error:DebugStatus%' => $this->configs['Debug'] ? 'Enabled' : 'Disabled',
+
+            '%Error:BootVersion%' => date(DATE_ATOM, $this->configs['BootVersion']),
+
+            '%Error:AppName%' => $this->configs['AppName'],
+
+            '%Error:AppVersion%' => $this->configs['AppVersion'],
+        );
+
+        $displayContent = str_replace(
+            array_keys($templateAssigns),
+            array_values($templateAssigns),
+            $templateString
+        );
+
+        $displayContent = trim(
+            str_replace(array("\t", '  '), '', $displayContent)
+        );
+
+        if ($returnCode) {
+            return $displayContent;
+        } else {
+            echo $displayContent . "\r\n\r\n";
         }
 
         return false;
+    }
+
+    /**
+     * Display a error message to user
+     *
+     * @param array $backTraces Back traces information
+     * @param array $banner Banner setting
+     * @param integer $callerOffset Exclude debug functions in back traces result
+     *
+     * @return string The rendered result according back traces info and banner setting
+     */
+    protected static function renderErrorDetailBanners(
+        array $backTraces,
+        array $banner,
+        $callerOffset
+    ) {
+        $assigns = array();
+        $detail = '';
+
+        $detail = $banner['Start'];
+
+        if ($traceSize = count($backTraces)) {
+            $traceCallerOffset = $traceSize - ($callerOffset < $traceSize ? $callerOffset : 0);
+            $tracesLoop = 0;
+        }
+
+        foreach ($backTraces as $key => $val) {
+            $tracesLoop++;
+
+            $assigns = array(
+                '%Error:Banner:No%' => $tracesLoop,
+                '%Error:Banner:Caller%' => $val['caller'],
+                '%Error:Banner:File%' => $val['file'],
+                '%Error:Banner:Line%' => $val['line'],
+                '%Error:Banner:Plate:Author%' => $val['nameplate']['author'],
+                '%Error:Banner:Plate:Reviser%' => $val['nameplate']['reviser'],
+                '%Error:Banner:Plate:Contact%' => $val['nameplate']['contact'],
+                '%Error:Banner:Plate:Updated%' => $val['nameplate']['updated'],
+                '%Error:Banner:Plate:Version%' => $val['nameplate']['version'],
+            );
+
+            $detail .= str_replace(
+                array_keys($assigns),
+                array_values($assigns),
+                $banner['Code']
+            );
+        }
+
+        $detail .= $banner['End'];
+
+        return $detail;
     }
 }
