@@ -228,7 +228,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
 
                                         <li>
                                             If this error screen still, may be, it take a while to fix.
-                                            So relax, have some fun at other places.
+                                            So relax, have some fun in other places.
                                         </li>
 
                                         <li>
@@ -238,7 +238,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
 
                                         <li>
                                             If you are the web manager,
-                                            the information at below will help you fix this problem.
+                                            the information below will help you fix this problem.
                                         </li>
                                     </ul>
                                 </div>
