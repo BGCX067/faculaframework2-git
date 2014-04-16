@@ -865,6 +865,7 @@ class Framework
                 'GroupID' => getmygid(),
                 'UserID' => getmyuid(),
                 'UserName' => get_current_user(),
+                'ServerName' => gethostname(),
             );
 
             // Now we have settings, the first step: register namespace

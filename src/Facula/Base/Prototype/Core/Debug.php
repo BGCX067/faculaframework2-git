@@ -73,7 +73,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                             An error occurred:
                         </span>
 
-                        <div class="code" style="padding-top: 5px;">%Error:Code%</div>
+                        <div class="code" style="padding-top: 5px; word-wrap: break-word;">%Error:Code%</div>
 
                         %Error:Detail%
                     </div>
@@ -120,6 +120,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                                 background: #072731;
                                 color: #fff;
                                 font-size: 1em;
+                                word-wrap: break-word;
                             }
                             a {
                                 color: #fff;
@@ -186,6 +187,9 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                             #trace .detail {
                                 overflow: hidden;
                                 margin-left: 120px;
+                                zoom: 1;
+                                _display: inline;
+                                _margin-left: 30px;
                             }
                             #trace .item {
                                 margin-bottom: 3px;
@@ -217,7 +221,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                                 %Error:Code%
 
                                 <div class="suggestion">
-                                    Our application made a serious mistake when try to display this page for you.
+                                    Our application made a serious mistake when try to display that page for you.
                                     Please:
 
                                     <ul class="suggestions">
@@ -232,7 +236,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                                         </li>
 
                                         <li>
-                                            If you want to help, please contact web manager.
+                                            If you want to help, please contact our web manager.
                                             report this error with all information on this page.
                                         </li>
 
@@ -254,7 +258,8 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                             Happened: %Error:Time%,&nbsp;
                             Debug: %Error:DebugStatus%,&nbsp;
                             Initialized: %Error:BootVersion%,&nbsp;
-                            Application: %Error:AppName% (%Error:AppVersion%)
+                            Application: %Error:AppName% (%Error:AppVersion%),&nbsp;
+                            Server: %Error:ServerName%
                         </div>
                     </body>
                 </html>
@@ -267,9 +272,13 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                     <li>
                         <i class="no">%Error:Banner:No%</i>
                         <div class="detail">
-                            <div class="item caller">%Error:Banner:Caller%</div>
+                            <div class="item caller">
+                                %Error:Banner:Caller%
+                            </div>
 
-                            <div class="item file">%Error:Banner:File% (Line: %Error:Banner:Line%)</div>
+                            <div class="item file">
+                                %Error:Banner:File% (Line: %Error:Banner:Line%)
+                            </div>
 
                             <div class="item plate">
                                 Author: %Error:Banner:Plate:Author%,
@@ -278,7 +287,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                                 Updated: %Error:Banner:Plate:Updated%,
                                 Version: %Error:Banner:Plate:Version%
                             </div>
-                        <div>
+                        </div>
                     </li>
                 '
             ),
@@ -341,6 +350,8 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             ),
 
             'Debug' => !isset($cfg['Debug']) || $cfg['Debug'] ? true : false,
+
+            'ServerName' => $common['PHP']['ServerName'],
 
             'SAPI' => $common['PHP']['SAPI'],
 
@@ -785,9 +796,9 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                             . '(' : 'main (')
                             . (isset($val['args']) ? $this->getArgsType(', ', $val['args']) : '')
                             . ')',
-                'file' => isset($val['file']) ? $val['file'] : 'unknown',
+                'file' => isset($val['file']) ? $val['file'] : 'Unknown',
 
-                'line' => isset($val['line']) ? $val['line'] : 'unknown',
+                'line' => isset($val['line']) ? $val['line'] : 'Unknown',
 
                 'nameplate' => isset($val['class']) && isset($val['class']::$plate) ? array(
                     'author' => isset($val['class']::$plate['Author'][0])
@@ -804,11 +815,10 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
 
                     'version' => isset($val['class']::$plate['Version'][0])
                                 ? $val['class']::$plate['Version'] : 'Undeclared',
-
                 ) : array(
                     'author' => 'Nobody',
                     'reviser' => 'Nobody',
-                    'contact' => '',
+                    'contact' => 'No one',
                     'updated' => 'Undeclared',
                     'version' => 'Undeclared',
                 )
@@ -880,6 +890,8 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             '%Error:AppName%' => $this->configs['AppName'],
 
             '%Error:AppVersion%' => $this->configs['AppVersion'],
+
+            '%Error:ServerName%' => $this->configs['ServerName'],
         );
 
         $displayContent = str_replace(
