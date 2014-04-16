@@ -84,10 +84,9 @@ abstract class Operator
         if (isset(static::$operators[$operator])) {
             return static::$operators[$operator];
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_OPERATORFACTORY_OPERATOR_NOT_FOUND|' . get_called_class() . '::' . $operator,
-                'operator factory',
-                true
+                E_USER_ERROR
             );
         }
 

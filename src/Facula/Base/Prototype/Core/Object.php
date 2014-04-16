@@ -204,10 +204,9 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                 // Call init after instance has been created to pre init it
                 if (method_exists($newInstance, 'init')) {
                     if (!$newInstance->init()) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_OBJECT_NEWINSTNACE_INIT_FAILED|' . $object,
-                            'object',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -331,10 +330,9 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                         break;
 
                     default:
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_OBJECT_NEWINSTNACE_MAXPARAMEXCEEDED',
-                            'object',
-                            true
+                            E_USER_ERROR
                         );
                         break;
                 }
@@ -350,10 +348,9 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                 // Call init after instance has been created to pre init it
                 if (method_exists($newInstance, 'init')) {
                     if (!$newInstance->init()) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_OBJECT_NEWINSTNACE_INIT_FAILED|' . $object,
-                            'object',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -368,10 +365,9 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                 return $newInstance;
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_OBJECT_NEWINSTNACE_OBJECTNOTFOUND|' . $object,
-                'object',
-                true
+                E_USER_ERROR
             );
         }
 

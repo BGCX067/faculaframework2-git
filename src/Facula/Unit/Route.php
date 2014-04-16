@@ -236,10 +236,9 @@ abstract class Route
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_ROUTER_DEFAULT_HANDLER_EXISTED',
-                'router',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -261,10 +260,9 @@ abstract class Route
 
             return $handler();
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_ROUTER_DEFAULT_HANDLER_UNCALLABLE',
-                'router',
-                true
+                E_USER_ERROR
             );
 
             return false;
@@ -288,10 +286,9 @@ abstract class Route
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_ROUTER_ERROR_HANDLER_EXISTED',
-                'router',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -315,10 +312,9 @@ abstract class Route
 
             return $handler($type);
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_ROUTER_ERROR_HANDLER_UNCALLABLE',
-                'router',
-                true
+                E_USER_ERROR
             );
 
             return false;

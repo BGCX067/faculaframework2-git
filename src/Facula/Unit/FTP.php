@@ -106,10 +106,9 @@ class FTP
             if (self::$connection) {
                 return self::$instance;
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_FTP_NO_SERVER_AVAILABLE|' . self::$error,
-                    'ftp',
-                    true
+                    E_USER_ERROR
                 );
             }
         }
@@ -136,10 +135,9 @@ class FTP
         );
 
         if (!isset(self::$setting['Servers']) || !count(self::$setting['Servers'])) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_FTP_NO_SERVER',
-                'ftp',
-                true
+                E_USER_ERROR
             );
 
             return false;
@@ -352,10 +350,9 @@ class FTP
                 $server['Path'] . '/' . $remotePath,
                 $currentRemotePath
             )) {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_FTP_CHANGEDIR_FAILED',
-                    'ftp',
-                    true
+                    E_USER_ERROR
                 );
             }
 
@@ -366,10 +363,9 @@ class FTP
                     $resultPath = $currentRemotePath . '/' . $remoteFileName;
                 }
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_FTP_FILE_UNREADABLE|' . $localFile,
-                    'ftp',
-                    true
+                    E_USER_ERROR
                 );
             }
 

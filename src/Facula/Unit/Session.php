@@ -182,17 +182,15 @@ class Session
 
                 return true;
             } else {
-                self::$cores['debug']->exception(
+                trigger_error(
                     'ERROR_SESSION_SETREADER_ALREADY_EXISTED|' . $for,
-                    'session',
-                    true
+                    E_USER_ERROR
                 );
             }
         } elseif (self::$inited) {
-            self::$cores['debug']->exception(
+            trigger_error(
                 'ERROR_SESSION_SETREADER_NOT_INITED|' . $for,
-                'session',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -215,17 +213,15 @@ class Session
 
                 return true;
             } else {
-                self::$cores['debug']->exception(
+                trigger_error(
                     'ERROR_SESSION_SETWRITER_ALREADY_EXISTED|' . $for,
-                    'session',
-                    true
+                    E_USER_ERROR
                 );
             }
         } elseif (self::$inited) {
-            self::$cores['debug']->exception(
+            trigger_error(
                 'ERROR_SESSION_SETWRITER_NOT_INITED|' . $for,
-                'session',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -248,17 +244,15 @@ class Session
 
                 return true;
             } else {
-                self::$cores['debug']->exception(
+                trigger_error(
                     'ERROR_SESSION_SETGARBAGER_ALREADY_EXISTED|' . $for,
-                    'session',
-                    true
+                    E_USER_ERROR
                 );
             }
         } elseif (self::$inited) {
-            self::$cores['debug']->exception(
+            trigger_error(
                 'ERROR_SESSION_SETGARBAGER_NOT_INITED|' . $for,
-                'session',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -379,10 +373,9 @@ class Session
                         true
                     );
                 } else {
-                    self::$cores['debug']->exception(
+                    trigger_error(
                         'ERROR_SESSION_GET_CURRENT_KEY_FAILED|' . $for,
-                        'session',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;

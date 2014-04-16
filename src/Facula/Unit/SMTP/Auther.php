@@ -249,10 +249,9 @@ class Auther
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_SMTP_AUTHER_EXISTED',
-                'smtp',
-                true
+                E_USER_ERROR
             );
         }
 

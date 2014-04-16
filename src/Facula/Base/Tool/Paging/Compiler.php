@@ -167,10 +167,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                         $tempResult['StartPos'],
                         $this->tagPositionMaps
                     )) && is_bool($tempResult['Result'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_UNKNOWNERROR',
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
                         return false;
 
@@ -232,10 +231,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             if ((!$unclosedTag = $this->doCheckUnclosedTags())) {
                 return $content;
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_TEMPLATE_COMPILER_TAG_UNCLOSE|' . $unclosedTag,
-                    'template',
-                    true
+                    E_USER_ERROR
                 );
             }
         }
@@ -359,17 +357,15 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             if ($tplContent = $newCompiler->compile()) {
                 return $tplContent;
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_EMPTY|' . $param[0],
-                    'template',
-                    true
+                    E_USER_ERROR
                 );
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_NOTFOUND|' . $param[0],
-                'template',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -437,10 +433,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
         if (isset($this->pool['LanguageMap'][$format][0])) {
             return $this->pool['LanguageMap'][$format];
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_TEMPLATE_COMPILER_LANGUAGE_NOTFOUND|' . $format,
-                'template',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -462,10 +457,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
         if (isset($param[0])) {
             if (!$this->doCheckVariableName($param[0])) {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_TEMPLATE_COMPILER_VARIABLE_NAME_INVALID|' . $param[0],
-                    'template',
-                    true
+                    E_USER_ERROR
                 );
 
                 return false;
@@ -494,10 +488,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                                     . $param[0]
                                     . ')));';
                         } else {
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_TEMPLATE_COMPILER_VARIABLE_DATE_LANG_MISSED',
-                                'template',
-                                true
+                                E_USER_ERROR
                             );
 
                             return false;
@@ -563,10 +556,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                                     . '} $tempTime = 0;';
                         } else {
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYTIME_LANG_MISSED',
-                                'template',
-                                true
+                                E_USER_ERROR
                             );
 
                             return false;
@@ -598,10 +590,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                                     . $this->pool['LanguageMap']['FORMAT_FILESIZE_TRILLIONBYTES']
                                     . '\'); } $tempsize = 0;';
                         } else {
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_TEMPLATE_COMPILER_VARIABLE_BYTE_LANG_MISSED',
-                                'template',
-                                true
+                                E_USER_ERROR
                             );
 
                             return false;
@@ -718,10 +709,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                                     . $param[0]
                                     . '); }';
                         } else {
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYNUMBER_LANG_MISSED',
-                                'template',
-                                true
+                                E_USER_ERROR
                             );
 
                             return false;
@@ -755,10 +745,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
             return $phpcode;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_TEMPLATE_COMPILER_VARIABLE_MUST_DEFINED',
-                'template',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -863,10 +852,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
             return $phpcode;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_TEMPLATE_COMPILER_PAGER_FORMAT_INVALID|' . $format,
-                'template',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -893,10 +881,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     // Check if we already opened the tag
                     if (!isset($this->tagPositionMaps['Loop:' . $params[1]]['Start'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOOP_NOT_OPEN|' . $params[1],
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -904,10 +891,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     // Check if we already closed this loop
                     if (isset($this->tagPositionMaps['Loop:' . $params[1]]['End'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_CLOSED|' . $params[1],
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -916,10 +902,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     // Check if we already emptied this foreach
                     if (isset($this->tagPositionMaps['Loop:' . $params[1]]['Emptied'])
                         && $this->tagPositionMaps['Loop:' . $params[1]]['Emptied']) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_EMPTY|' . $params[1],
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -936,10 +921,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_INVALID|' . $format,
-                        'template',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
@@ -947,20 +931,18 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             case 'EOF':
                 if (isset($params[1]) && preg_match('/^([A-Za-z0-9]+)$/', $params[1], $matched)) {
                     if (!isset($this->tagPositionMaps['Loop:' . $params[1]]['Start'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOOP_NOT_OPEN|' . $params[1],
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Loop:' . $params[1]]['End'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOOP_ALREADY_CLOSED|' . $params[1],
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -980,10 +962,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_INVALID|' . $format,
-                        'template',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
@@ -1006,18 +987,16 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                         return $phpcode;
                     } else {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_EXISTED|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
                     }
 
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_TEMPLATE_COMPILER_LOOP_FORMAT_INVALID|' . $format,
-                        'template',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
@@ -1051,10 +1030,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     list($org, $name, $condition) = $matched;
 
                     if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -1062,20 +1040,18 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     if (isset($this->tagPositionMaps['Logic:' . $name]['Elsed'])
                         && $this->tagPositionMaps['Logic:' . $name]['Elsed']) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_ELSED|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Logic:' . $name]['End'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -1087,10 +1063,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format,
-                        'template',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
@@ -1105,10 +1080,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     list($org, $name) = $matched;
 
                     if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -1116,20 +1090,18 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     if (isset($this->tagPositionMaps['Logic:' . $name]['Elsed'])
                         && $this->tagPositionMaps['Logic:' . $name]['Elsed']) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_ELSED|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Logic:' . $name]['End'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -1142,10 +1114,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format,
-                        'template',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
@@ -1155,19 +1126,17 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     list($org, $name) = $matched;
 
                     if (!isset($this->tagPositionMaps['Logic:' . $name]['Start'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOGIC_NOT_OPEN|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Logic:' . $name]['End'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOGIC_ALREADY_CLOSED|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -1179,10 +1148,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format,
-                        'template',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
@@ -1201,18 +1169,16 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                         return $phpcode;
                     } else {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_EXISTED|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
                     }
 
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_TEMPLATE_COMPILER_LOGIC_FORMAT_INVALID|' . $format,
-                        'template',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
@@ -1245,20 +1211,18 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     list($org, $name, $value) = $matched;
 
                     if (!isset($this->tagPositionMaps['Case:' . $name]['Start'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_CASE_NOT_OPEN|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Case:' . $name]['End'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_CASE_ALREADY_CLOSED|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -1270,10 +1234,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_TEMPLATE_COMPILER_CASE_FORMAT_INVALID|' . $format,
-                        'template',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
@@ -1283,20 +1246,18 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                     list($org, $name) = $matched;
 
                     if (!isset($this->tagPositionMaps['Case:' . $name]['Start'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_CASE_NOT_OPEN|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
                     }
 
                     if (isset($this->tagPositionMaps['Case:' . $name]['End'])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_CASE_ALREADY_CLOSED|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -1308,10 +1269,9 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     return $phpcode;
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_TEMPLATE_COMPILER_CASE_FORMAT_INVALID|' . $format,
-                        'template',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
@@ -1331,18 +1291,16 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                         return $phpcode;
                     } else {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_TEMPLATE_COMPILER_CASE_FORMAT_EXISTED|' . $name,
-                            'template',
-                            true
+                            E_USER_ERROR
                         );
                     }
 
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_TEMPLATE_COMPILER_CASE_FORMAT_INVALID|' . $format,
-                        'template',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;

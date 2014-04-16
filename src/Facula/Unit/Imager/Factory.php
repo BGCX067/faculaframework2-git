@@ -67,10 +67,9 @@ class Factory extends \Facula\Base\Factory\Operator
             } elseif (extension_loaded('imagick')) {
                 $type = 'Imagick';
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_IMAGE_HANDLER_NOTFOUND',
-                    'imager',
-                    true
+                    E_USER_ERROR
                 );
 
                 return false;
@@ -96,10 +95,9 @@ class Factory extends \Facula\Base\Factory\Operator
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_IMAGE_HANDLER_NOTFOUND',
-                'imager',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -128,17 +126,15 @@ class Factory extends \Facula\Base\Factory\Operator
                     $error = $handler->getLastError();
                 }
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_IMAGE_HANDLER_INTERFACE_INVALID',
-                    'imager',
-                    true
+                    E_USER_ERROR
                 );
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_IMAGE_HANDLER_NOTSPECIFIED',
-                'imager',
-                true
+                E_USER_ERROR
             );
         }
 

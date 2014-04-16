@@ -46,10 +46,9 @@ class Render implements \Facula\Base\Implement\Core\Template\Render
     public function __construct(&$targetTpl, array &$assigned = array())
     {
         if ($oldContent = ob_get_clean()) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_TEMPLATE_RENDER_BUFFER_POLLUTED|' . htmlspecialchars($oldContent),
-                'template',
-                true
+                E_USER_ERROR
             );
 
             return false;

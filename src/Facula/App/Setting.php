@@ -108,10 +108,9 @@ abstract class Setting
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_SETTING_NAME_ALREADY_EXISTED|' . $settingName,
-                'setting',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -162,10 +161,9 @@ abstract class Setting
                 }
 
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_SETTING_ACCESS_DENIED|' . $accesser . ' -> ' . $settingName,
-                    'setting',
-                    true
+                    E_USER_ERROR
                 );
             }
         }

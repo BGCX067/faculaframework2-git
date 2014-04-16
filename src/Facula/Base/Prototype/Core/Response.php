@@ -433,14 +433,13 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_RESPONSE_ALREADY_RESPONSED|File: '
                 . $file
                 . ' Line: '
                 . $line
                 . ' Content: ' . substr(static::$content, 0, 32),
-                'data',
-                false
+                E_USER_ERROR
             );
         }
 

@@ -99,10 +99,9 @@ abstract class Container
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_CONTAINER_NAME_ALREADY_EXISTED|' . $name,
-                'container',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -247,10 +246,9 @@ abstract class Container
 
                 }
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_CONTAINER_ACCESS_DENIED|' . $accesser . ' -> ' . $name,
-                    'setting',
-                    true
+                    E_USER_ERROR
                 );
             }
         } elseif ($default && is_callable($default)) {

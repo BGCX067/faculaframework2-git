@@ -225,18 +225,16 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
         // Sec check: Request array element cannot exceed this
         if ((count($_GET) + count($_POST) +
             count($_COOKIE) + count($_SERVER)) > $this->configs['MaxRequestBlocks']) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_REQUEST_BLOCKS_OVERLIMIT',
-                'limit',
-                true
+                E_USER_ERROR
             );
         } elseif (isset($_SERVER['CONTENT_LENGTH'])
             && (int)($_SERVER['CONTENT_LENGTH']) > $this->configs['MaxDataSize']) {
             // Sec check: Request size cannot large than this
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_REQUEST_SIZE_OVERLIMIT',
-                'limit',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -327,10 +325,9 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
                         break;
                 }
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_REQUEST_HEADER_SIZE_OVERLIMIT|' . $key,
-                    'limit',
-                    true
+                    E_USER_ERROR
                 );
 
                 return false;

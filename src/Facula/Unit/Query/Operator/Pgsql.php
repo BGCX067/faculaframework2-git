@@ -79,10 +79,9 @@ class Pgsql implements \Facula\Unit\Query\OperatorImplement
                 break;
 
             default:
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_QUERY_MYSQL_UNKONWN_ACTION_TYPE|' . $this->query['Action'],
-                    'query',
-                    true
+                    E_USER_ERROR
                 );
                 break;
         }

@@ -124,10 +124,9 @@ class Formated
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_FORMATED_DEFAULT_TAG_EXISTED|' . $processerType[0],
-                'formated',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -371,10 +370,9 @@ class Formated
                 return true;
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_FORMATED_TAG_NOT_EXISTE|' . $processerType[0],
-                'formated',
-                true
+                E_USER_ERROR
             );
         }
 

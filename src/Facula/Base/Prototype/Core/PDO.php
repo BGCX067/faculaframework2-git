@@ -382,10 +382,9 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                         }
                     }
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_PDO_GETCONNECTION_SETTINGMISSION_TABLE',
-                        'data',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
@@ -417,10 +416,9 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                         }
                     }
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_PDO_GETCONNECTION_SETTINGMISSION_OPERATION',
-                        'data',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
@@ -466,27 +464,24 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                         }
                     }
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_PDO_GETCONNECTION_SETTINGMISSED_TABLEOPERATION',
-                        'data',
-                        true
+                        E_USER_ERROR
                     );
                 }
                 break;
 
             default:
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_PDO_UNKNOWNSELECTMETHOD|' . $this->configs['SelectMethod'],
-                    'data',
-                    true
+                    E_USER_ERROR
                 );
                 break;
         }
 
-        \Facula\Framework::core('debug')->exception(
+        trigger_error(
             'ERROR_PDO_NOSERVERAVAILABLE' . ($error ? '|' . $error : '|' . implode(',', $setting)),
-            'data',
-            true
+            E_USER_ERROR
         );
 
         return false;

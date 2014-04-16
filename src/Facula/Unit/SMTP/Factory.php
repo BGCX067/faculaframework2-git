@@ -112,10 +112,9 @@ class Factory extends \Facula\Base\Factory\Operator
                         if (\Facula\Unit\Validator::check($val['From'], 'email')) {
                             static::$config['Servers'][$key]['From'] = $val['From'];
                         } else {
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_SMTP_ADDRESS_FORM_INVALID|' . $val['From'],
-                                'smtp',
-                                true
+                                E_USER_ERROR
                             );
                         }
                     } else {
@@ -130,10 +129,9 @@ class Factory extends \Facula\Base\Factory\Operator
                         if (\Facula\Unit\Validator::check($val['ReplyTo'], 'email')) {
                             static::$config['Servers'][$key]['ReplyTo'] = $val['ReplyTo'];
                         } else {
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_SMTP_ADDRESS_REPLYTO_INVALID|' . $val['ReplyTo'],
-                                'smtp',
-                                true
+                                E_USER_ERROR
                             );
                         }
                     } else {
@@ -146,10 +144,9 @@ class Factory extends \Facula\Base\Factory\Operator
                         if (\Facula\Unit\Validator::check($val['ReturnTo'], 'email')) {
                             static::$config['Servers'][$key]['ReturnTo'] = $val['ReturnTo'];
                         } else {
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_SMTP_ADDRESS_RETURNTO_INVALID|' . $val['ReturnTo'],
-                                'smtp',
-                                true
+                                E_USER_ERROR
                             );
                         }
                     } else {
@@ -162,10 +159,9 @@ class Factory extends \Facula\Base\Factory\Operator
                         if (\Facula\Unit\Validator::check($val['ErrorTo'], 'email')) {
                             static::$config['Servers'][$key]['ErrorTo'] = $val['ErrorTo'];
                         } else {
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_SMTP_ADDRESS_ERRORTO_INVALID|' . $val['ErrorTo'],
-                                'smtp',
-                                true
+                                E_USER_ERROR
                             );
                         }
                     } else {
@@ -185,7 +181,7 @@ class Factory extends \Facula\Base\Factory\Operator
 
                 return true;
             } else {
-                \Facula\Framework::core('debug')->exception('ERROR_SMTP_NOSERVER', 'smtp', true);
+                trigger_error('ERROR_SMTP_NOSERVER', E_USER_ERROR);
             }
         }
 
@@ -259,17 +255,15 @@ class Factory extends \Facula\Base\Factory\Operator
                                     unset($currentServers[$serverkey]);
                                 }
                             } else {
-                                \Facula\Framework::core('debug')->exception(
+                                trigger_error(
                                     'ERROR_SMTP_OPERATOR_BASE_INVALID|' . $operaterClassName,
-                                    'smtp',
-                                    true
+                                    E_USER_ERROR
                                 );
                             }
                         } else {
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_SMTP_OPERATOR_NOTFOUND|' . $server['Type'],
-                                'smtp',
-                                true
+                                E_USER_ERROR
                             );
                         }
                     }
@@ -279,10 +273,9 @@ class Factory extends \Facula\Base\Factory\Operator
             }
 
             if ($error) {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_SMTP_OPERATOR_ERROR|' . $error,
-                    'smtp',
-                    false
+                    E_USER_ERROR
                 );
             }
 

@@ -246,10 +246,9 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             } elseif (isset($message['Message'])) {
                 $msgString = $message['Message'];
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_TEMPLATE_MESSAGE_NOCONTENT',
-                    'template',
-                    true
+                    E_USER_ERROR
                 );
 
                 return false;
@@ -699,10 +698,9 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                 }
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_TEMPLATE_CACHE_DISABLED',
-                'template',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -762,10 +760,9 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             return $compiledTpl;
         } else {
             if (!$templatePath = $this->getTemplateFromMap($templateName, $templateSet)) {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_TEMPLATE_NOTFOUND|' . $templateName,
-                    'template',
-                    true
+                    E_USER_ERROR
                 );
 
                 return false;
@@ -797,10 +794,9 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_TEMPLATE_IMPORT_TEMPLATE_EXISTED|' . $name,
-                'template',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -824,10 +820,9 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_TEMPLATE_IMPORT_LANGUAGE_UNSPPORTED|' . $name,
-                'template',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -886,10 +881,9 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
         );
 
         if (!($render instanceof \Facula\Base\Implement\Core\Template\Render)) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_TEMPLATE_RENDER_INVALID_INTERFACE',
-                'template',
-                true
+                E_USER_ERROR
             );
 
             return false;
@@ -940,10 +934,9 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             );
 
             if (!($compiler instanceof \Facula\Base\Implement\Core\Template\Compiler)) {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_TEMPLATE_COMPILER_INVALID_INTERFACE',
-                    'template',
-                    true
+                    E_USER_ERROR
                 );
 
                 return false;
@@ -973,17 +966,15 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                     . $compiledContent
                 );
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_TEMPLATE_COMPILE_FAILED|' . $sourceTpl,
-                    'template',
-                    true
+                    E_USER_ERROR
                 );
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_TEMPLATE_COMPILE_OPEN_FAILED|' . $sourceTpl,
-                'template',
-                true
+                E_USER_ERROR
             );
         }
 

@@ -140,10 +140,9 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
                     $error = 'ERROR_REMOTESTORAGE_ENTERDIR_FAILED'
                             . ($cdError ? '|' . $cdError : $cdError);
 
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_FTP_CHANGEDIR_FAILED',
-                        'ftp',
-                        false
+                        E_USER_ERROR
                     );
                 } else {
                     if (!$remoteFileName) {

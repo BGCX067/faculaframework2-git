@@ -322,8 +322,25 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     /** Instance setting for caching */
     protected $configs = array();
 
-    /** Custom handler for error catch */
-    protected $customHandler = null;
+    /** Error code to string converting table */
+    protected static $phpErrorCodeToStr = array(
+        E_ERROR => 'E_ERROR',
+        E_WARNING => 'E_WARNING',
+        E_PARSE => 'E_PARSE',
+        E_NOTICE => 'E_NOTICE',
+        E_CORE_ERROR => 'E_CORE_ERROR',
+        E_CORE_WARNING => 'E_CORE_WARNING',
+        E_COMPILE_ERROR => 'E_COMPILE_ERROR',
+        E_COMPILE_WARNING => 'E_COMPILE_WARNING',
+        E_USER_ERROR => 'E_USER_ERROR',
+        E_USER_WARNING => 'E_USER_WARNING',
+        E_USER_NOTICE => 'E_USER_NOTICE',
+        E_STRICT => 'E_STRICT',
+        E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
+        E_DEPRECATED => 'E_DEPRECATED',
+        E_USER_DEPRECATED => 'E_USER_DEPRECATED',
+        E_ALL => 'E_ALL',
+    );
 
     /**
      * Constructor
@@ -374,8 +391,15 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             $this->shutdownTask();
         }); // Experimentally use our own fatal reporter
 
-        set_error_handler(function ($errno, $errstr, $errfile, $errline, $errcontext) {
-            $this->errorHandler($errno, $errstr, $errfile, $errline, $errcontext);
+        set_error_handler(function ($errNo, $errStr, $errFile, $errLine, $errContext) {
+            $this->errorHandler(
+                $errNo,
+                $errStr,
+                $errFile,
+                $errLine,
+                $errContext,
+                $this->backTrace()
+            );
         }, E_ALL); // Use our own error reporter, just like PHP's E_ALL
 
         set_exception_handler(function ($exception) {
@@ -451,7 +475,9 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     public function addLog($type, $errorCode, $content = '', &$backTraces = array())
     {
         list($time, $micro) = explode('.', microtime(true) . '.' . 0, 3);
-        $date = date('l dS \of F Y h:i:s A', $time);
+
+        $date = date(DATE_ATOM, $time);
+
         $ip = \Facula\Framework::core('request')->getClientInfo('ip');
 
         if ($this->configs['LogRoot']) {
@@ -532,32 +558,6 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     }
 
     /**
-     * Register the error handler
-     *
-     * @param mixed $handler The handler in Closure or other callable data types.
-     *
-     * @return bool true success, false otherwise
-     */
-    public function registerHandler($handler)
-    {
-        if (!$this->customHandler) {
-            if (is_callable($handler)) {
-                $this->customHandler = $handler;
-
-                return true;
-            }
-        } else {
-            $this->exception(
-                'ERROR_HANDLER_ALREADY_REGISTERED',
-                'conflict',
-                true
-            );
-        }
-
-        return false;
-    }
-
-    /**
      * Enter or leave error block mode
      *
      * @param bool $enter Set true to enter error message block mode, false to leave block mode
@@ -591,51 +591,129 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      *
      * @return mixed Return the result of static::exception
      */
-    protected function errorHandler($errno, $errstr, $errfile, $errline, $errcontext)
-    {
-        $exit = false;
+    protected function errorHandler(
+        $errNo,
+        $errStr,
+        $errFile,
+        $errLine,
+        array $errContext = array(),
+        array $errTrace = array()
+    ) {
+        $errorInfo = array(
+            'Suspend' => true,
+            'Display' => true,
+            'Log' => true,
+            'Error' => array(
+                'Code' => isset(static::$phpErrorCodeToStr[$errNo]) ?
+                    static::$phpErrorCodeToStr[$errNo] : 'E_UNKNOWN',
 
-        switch ($errno) {
-            case E_ERROR:
-                $exit = true;
-                break;
+                'No' => $errNo,
 
+                'Message' => $errStr,
+
+                'File' => $errFile,
+
+                'Line' => $errLine,
+
+                'Trace' => $errTrace,
+
+                'Context' => $errContext
+            )
+        );
+
+        switch ($errNo) {
+            // Core errors, we cannot deal with it
             case E_PARSE:
-                $exit = true;
-                break;
-
-            case E_CORE_ERROR:
-                $exit = true;
-                break;
-
-            case E_CORE_WARNING:
-                $exit = true;
                 break;
 
             case E_COMPILE_ERROR:
-                $exit = true;
                 break;
 
             case E_COMPILE_WARNING:
-                $exit = true;
+                break;
+
+            case E_RECOVERABLE_ERROR:
+                break;
+
+            // Errors: All Need to be Suspend, Display, Log
+            case E_ERROR:
+                break;
+
+            case E_CORE_ERROR:
                 break;
 
             case E_USER_ERROR:
-                $exit = true;
+                break;
+
+
+            // Warning: All Need to be Log, Only Suspend, Display when Debug is on
+            case E_WARNING:
+                if (!$this->configs['Debug']) {
+                    $errorInfo['Suspend'] = false;
+                    $errorInfo['Display'] = false;
+                }
+                break;
+
+            case E_CORE_WARNING:
+                if (!$this->configs['Debug']) {
+                    $errorInfo['Suspend'] = false;
+                    $errorInfo['Display'] = false;
+                }
+                break;
+
+            case E_USER_WARNING:
+                if (!$this->configs['Debug']) {
+                    $errorInfo['Suspend'] = false;
+                    $errorInfo['Display'] = false;
+                }
+                break;
+
+
+            // Notice: All Need to be Log, Only Display when Debug is on, No Suspend
+            case E_NOTICE:
+                $errorInfo['Suspend'] = false;
+
+                if (!$this->configs['Debug']) {
+                    $errorInfo['Display'] = false;
+                }
+                break;
+
+            case E_USER_NOTICE:
+                $errorInfo['Suspend'] = false;
+
+                if (!$this->configs['Debug']) {
+                    $errorInfo['Display'] = false;
+                }
+                break;
+
+
+            // Deprecated: So as notice
+            case E_DEPRECATED:
+                $errorInfo['Suspend'] = false;
+
+                if (!$this->configs['Debug']) {
+                    $errorInfo['Display'] = false;
+                }
+                break;
+
+            case E_USER_DEPRECATED:
+                $errorInfo['Suspend'] = false;
+
+                if (!$this->configs['Debug']) {
+                    $errorInfo['Display'] = false;
+                }
+                break;
+
+            default:
                 break;
         }
 
+        if ($this->configs['ExitOnAnyError']) {
+            $errorInfo['Suspend'] = true;
+        }
+
         return $this->exception(
-            sprintf(
-                'Error code %s (%s) in file %s line %s',
-                'PHP('.$errno.')',
-                $errstr,
-                $errfile,
-                $errline
-            ),
-            'PHP|PHP:'
-            . $errno,
-            !$exit ? $this->configs['ExitOnAnyError'] : true
+            $errorInfo
         );
     }
 
@@ -644,23 +722,38 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      *
      * @param object $exception The instance of exception object
      *
-     * @return mixed Return the result of static::exception
+     * @return mixed Return false when $exception is not a instance of Exception,
+     *           otherwise, return the result of $this->errorHandler
      */
     protected function exceptionHandler($exception)
     {
-        return $this->exception(
-            'Exception: '
-            . $exception->getMessage(),
-            'Exception',
-            true,
-            $exception
+        if (!($exception instanceof \Exception)) {
+            $this->errorHandler(
+                '0',
+                $exception . ' must be instance of \\Exception',
+                '',
+                0,
+                array(),
+                $this->backTrace()
+            );
+
+            return false;
+        }
+
+        return $this->errorHandler(
+            $exception->getCode(),
+            '[' . get_class($exception) . ']: ' . $exception->getMessage(),
+            $exception->getFile(),
+            $exception->getLine(),
+            array(),
+            $this->backTrace($exception)
         );
     }
 
     /**
      * Fatal Handler
      *
-     * @return mixed Return false when no error picked up, otherwise, return the result of static::errorHandler
+     * @return mixed Return false when no error picked up, otherwise, return the result of $this->errorHandler
      */
     protected function fatalHandler()
     {
@@ -675,7 +768,14 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             $errline = $error['line'];
             $errstr  = $error['message'];
 
-            return $this->errorHandler($errno, $errstr, $errfile, $errline, null);
+            return $this->errorHandler(
+                $errno,
+                $errstr,
+                $errfile,
+                $errline,
+                array(),
+                $this->backTrace()
+            );
         }
 
         return false;
@@ -684,42 +784,43 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     /**
      * Processor of every exception
      *
-     * @param string $info Error message
-     * @param string $type Error type
-     * @param string $exit Will the error triggers exit? true to yes, others to no
-     * @param Exception $e Instance of Exception object
+     * @param string $errorInfo Error Info
      *
      * @return void
      */
-    public function exception($info, $type = '', $exit = false, \Exception $e = null)
+    protected function exception(array $errorInfo)
     {
         if (!$this->tempFullDisabled) {
-            $backTraces = array_reverse($this->backTrace($e));
 
-            $types = explode('|', $type, 2);
+            $backTraces = array_reverse($errorInfo['Error']['Trace']);
 
-            $this->addLog(
-                $types[0] ? $types[0] : 'Exception',
-                isset($types[1][0]) ? $types[1] : '',
-                $info,
-                $backTraces
-            );
+            if ($errorInfo['Log']) {
+                $this->addLog(
+                    $errorInfo['Error']['Code'],
+                    $errorInfo['Error']['No'],
+                    sprintf(
+                        '%s in %s, line %d',
+                        $errorInfo['Error']['Message'],
+                        $errorInfo['Error']['File'],
+                        $errorInfo['Error']['Line']
+                    ),
+                    $backTraces
+                );
+            }
 
-            if (!$this->tempDisabled) {
-                if ($this->customHandler) {
-                    $customHandler = $this->customHandler;
-                    $customHandler($info, $type, $backTraces, $exit, $this->configs['Debug']);
-                } else {
-                    if ($e) {
-                        $this->displayErrorBanner($e->getMessage(), $backTraces, false, 0);
-                    } else {
-                        $this->displayErrorBanner($info, $backTraces, false, 2);
-                    }
-                }
+            if (!$this->tempDisabled && $errorInfo['Display']) {
+                $this->displayErrorBanner(sprintf(
+                    '%s (%d): %s in %s, line %d',
+                    $errorInfo['Error']['Code'],
+                    $errorInfo['Error']['No'],
+                    $errorInfo['Error']['Message'],
+                    $errorInfo['Error']['File'],
+                    $errorInfo['Error']['Line']
+                ), $backTraces);
             }
         }
 
-        if ($exit) {
+        if ($errorInfo['Suspend']) {
             exit();
         }
     }
@@ -782,11 +883,11 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     /**
      * Perform a back trace
      *
-     * @param Exception $e The instance of Exception
+     * @param Exception $e The instance of an Exception object
      *
      * @return array Return the result of back trace
      */
-    protected function backTrace(\Exception $e = null)
+    protected function backTrace($e = null)
     {
         $result = array();
 
@@ -794,6 +895,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             $trace = $e->getTrace();
         } else {
             $trace = debug_backtrace();
+
             array_shift($trace);
         }
 
@@ -843,16 +945,12 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      *
      * @param string $message Error message
      * @param array $backTraces Back traces information
-     * @param bool $returnCode Return the html code instead to display them
-     * @param integer $callerOffset Exclude debug functions in back traces result
      *
      * @return mixed
      */
     protected function displayErrorBanner(
         $message,
-        array $backTraces,
-        $returnCode = false,
-        $callerOffset = 0
+        array $backTraces
     ) {
         $detail = $templateString = $templateBanner = '';
         $line = 0;
@@ -879,8 +977,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
         if ($this->configs['Debug']) {
             $detail = static::renderErrorDetailBanners(
                 $backTraces,
-                $templateBanner,
-                $callerOffset
+                $templateBanner
             );
         } else {
             $detail = 'Debug disabled, error detail unavailable.';
@@ -924,11 +1021,8 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             str_replace(array("\t", '  '), '', $displayContent)
         );
 
-        if ($returnCode) {
-            return $displayContent;
-        } else {
-            echo $displayContent . "\r\n\r\n";
-        }
+
+        echo $displayContent . "\r\n\r\n";
 
         return false;
     }
@@ -938,24 +1032,22 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      *
      * @param array $backTraces Back traces information
      * @param array $banner Banner setting
-     * @param integer $callerOffset Exclude debug functions in back traces result
      *
      * @return string The rendered result according back traces info and banner setting
      */
     protected static function renderErrorDetailBanners(
         array $backTraces,
-        array $banner,
-        $callerOffset
+        array $banner
     ) {
+        if (empty($backTraces)) {
+            return '';
+        }
+
         $assigns = array();
         $detail = '';
+        $tracesLoop = 0;
 
         $detail = $banner['Start'];
-
-        if ($traceSize = count($backTraces)) {
-            $traceCallerOffset = $traceSize - ($callerOffset < $traceSize ? $callerOffset : 0);
-            $tracesLoop = 0;
-        }
 
         foreach ($backTraces as $key => $val) {
             $tracesLoop++;

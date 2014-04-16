@@ -97,7 +97,7 @@ class Socket
                 return true;
             }
         } else {
-            \Facula\Framework::core('debug')->exception('ERROR_SMTP_SOCKET_DISABED', 'smtp', true);
+            trigger_error('ERROR_SMTP_SOCKET_DISABED', E_USER_ERROR);
         }
 
         return false;
@@ -233,10 +233,9 @@ class Socket
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_SMTP_SOCKET_RESPONSE_PARSER_EXISTED',
-                'smtp',
-                true
+                E_USER_ERROR
             );
         }
 

@@ -192,10 +192,9 @@ abstract class ORM implements Implement, \ArrayAccess
         if (isset($this->data[static::primary])) {
             return $this->data[static::primary];
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_ORM_GETPRIMARY_PRIMARYDATA_EMPTY',
-                'orm',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -513,10 +512,9 @@ abstract class ORM implements Implement, \ArrayAccess
         if (is_array($joinModels)) {
             foreach ($joinModels as $jMkey => $jMVal) {
                 if (!isset($jMVal['Field'][0])) {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_ORM_FETCHWITH_JOIN_FIELDNAME_NOTSET',
-                        'orm',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -524,10 +522,9 @@ abstract class ORM implements Implement, \ArrayAccess
                 }
 
                 if (!isset($jMVal['Model'][0])) {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_ORM_FETCHWITH_JOIN_MODELNAME_NOTSET',
-                        'orm',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -535,10 +532,9 @@ abstract class ORM implements Implement, \ArrayAccess
                 }
 
                 if (!isset($jMVal['Key'][0])) {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_ORM_FETCHWITH_JOIN_MODELKEYNAME_NOTSET',
-                        'orm',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -574,10 +570,9 @@ abstract class ORM implements Implement, \ArrayAccess
 
             return true;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_ORM_FETCHWITH_JOIN_WITH_INVALID',
-                'orm',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -898,10 +893,9 @@ abstract class ORM implements Implement, \ArrayAccess
                 return $result;
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET',
-                'orm',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -984,10 +978,9 @@ abstract class ORM implements Implement, \ArrayAccess
                 return $result;
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET',
-                'orm',
-                true
+                E_USER_ERROR
             );
         }
 

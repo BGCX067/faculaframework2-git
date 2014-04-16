@@ -33,8 +33,6 @@ namespace Facula\Base\Implement\Core;
 interface Debug
 {
     public function inited();
-    public function registerHandler($handler);
-    public function exception($info, $type = '', $exit = false, \Exception $e = null);
     public function criticalSection($enter, $fullEnter = false);
     public function addLog($type, $errorcode, $content, &$backtraces = array());
 }

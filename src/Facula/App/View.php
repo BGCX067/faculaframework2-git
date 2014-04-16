@@ -80,10 +80,9 @@ abstract class View
     {
         if (is_readable($targetTpl)) {
             if ($oldContent = ob_get_clean()) {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_VIEW_BUFFER_POLLUTED|' . htmlspecialchars($oldContent),
-                    'template',
-                    true
+                    E_USER_ERROR
                 );
 
                 return false;
@@ -101,10 +100,9 @@ abstract class View
 
             return ob_get_clean();
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_VIEW_TEMPLATE_FILENOTFOUND|' . $file,
-                'data',
-                true
+                E_USER_ERROR
             );
         }
 

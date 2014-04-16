@@ -205,10 +205,9 @@ abstract class Controller extends Setting
                 return true;
             }
         } else {
-            $this->debug->exception(
+            trigger_error(
                 'ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE',
-                'controller',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -237,10 +236,9 @@ abstract class Controller extends Setting
                 ));
             }
         } else {
-            $this->debug->exception(
+            trigger_error(
                 'ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE',
-                'controller',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -280,10 +278,9 @@ abstract class Controller extends Setting
                 }
             }
         } else {
-            $this->debug->exception(
+            trigger_error(
                 'ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE',
-                'controller',
-                true
+                E_USER_ERROR
             );
         }
 

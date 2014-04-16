@@ -133,10 +133,9 @@ class Factory extends \Facula\Base\Factory\Operator
             if (!static::$handler) {
                 foreach (static::$servers as $server) {
                     if (!isset($server['Type'][0])) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_REMOTESTORAGE_SERVER_NOTYPE',
-                            'remote storage',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -145,10 +144,9 @@ class Factory extends \Facula\Base\Factory\Operator
                     $operatorName = static::getOperator($server['Type']);
 
                     if (!class_exists($operatorName)) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_REMOTESTORAGE_SERVER_TYPE_UNSUPPORTED',
-                            'remote storage',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -159,10 +157,9 @@ class Factory extends \Facula\Base\Factory\Operator
                     );
 
                     if (!($handler instanceof OperatorImplement)) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_REMOTESTORAGE_INTERFACE_INVALID',
-                            'remote storage',
-                            true
+                            E_USER_ERROR
                         );
 
                         return false;
@@ -188,10 +185,9 @@ class Factory extends \Facula\Base\Factory\Operator
                 );
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_REMOTESTORAGE_FILE_UNREADABLE|' . $localFile,
-                'remote storage',
-                true
+                E_USER_ERROR
             );
         }
 

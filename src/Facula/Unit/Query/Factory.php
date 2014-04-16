@@ -183,10 +183,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                     break;
 
                 default:
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_PARSER_TYPE_INVALID|' . $type,
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
                     break;
             }
@@ -303,10 +302,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 return $this;
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -334,10 +332,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 return $this;
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -378,10 +375,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 return $this;
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -416,10 +412,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 return $this;
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -493,10 +488,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                                 $this->dataMap[$dataKey]['Value']
                             ); // With parser
                         } else {
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_QUERY_SAVEVALUE_PARSER_WRITER_NOTSET|' . $forField,
-                                'query',
-                                true
+                                E_USER_ERROR
                             );
                         }
 
@@ -505,18 +499,16 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
                 return $dataKey;
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_QUERY_SAVEVALUE_TYPE_UNKNOWN|'
                     . $this->query['Fields'][$forField],
-                    'query',
-                    true
+                    E_USER_ERROR
                 );
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_SAVEVALUE_FIELD_UNKNOWN|' . $forField,
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -538,10 +530,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
         $params = array();
 
         if (!isset(static::$queryOperators[$operator])) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_CONDITION_UNKNOWN_OPERATOR|' . $operator,
-                'query',
-                true
+                E_USER_ERROR
             );
 
             return false;
@@ -635,10 +626,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                         ),
                     );
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -655,10 +645,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                         ),
                     );
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -677,10 +666,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                         $params['Value'][] = $this->saveValue($val, $fieldName);
                     }
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -699,10 +687,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                         $params['Value'][] = $this->saveValue($val, $fieldName);
                     }
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -727,10 +714,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
         if (isset(static::$logicOperators[$logic])) {
             $params['Logic'] = static::$logicOperators[$logic];
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_CONDITION_UNKNOWN_LOGIC|' . $logic,
-                'query',
-                true
+                E_USER_ERROR
             );
 
             return false;
@@ -761,20 +747,18 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
         $condition = array();
 
         if (!isset($this->query['Where'])) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_WHERE_NOT_SUPPORTED',
-                'query',
-                true
+                E_USER_ERROR
             );
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_WHERE_FIELD_UNKOWN|' . $fieldName,
-                'query',
-                true
+                E_USER_ERROR
             );
 
             return false;
@@ -809,20 +793,18 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
         $condition = array();
 
         if (!isset($this->query['Having'])) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_HAVING_NOT_SUPPORTED',
-                'query',
-                true
+                E_USER_ERROR
             );
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_HAVING_FIELD_UNKOWN|' . $fieldName,
-                'query',
-                true
+                E_USER_ERROR
             );
 
             return false;
@@ -852,20 +834,18 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
     public function group($fieldName)
     {
         if (!isset($this->query['Group'])) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_GROUP_NOT_SUPPORTED',
-                'query',
-                true
+                E_USER_ERROR
             );
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_GROUP_FIELD_UNKOWN|' . $fieldName,
-                'query',
-                true
+                E_USER_ERROR
             );
 
             return false;
@@ -890,30 +870,27 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
     public function order($fieldName, $sort)
     {
         if (!isset($this->query['Order'])) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_ORDER_NOT_SUPPORTED',
-                'query',
-                true
+                E_USER_ERROR
             );
 
             return false;
         }
 
         if (!isset(static::$orderOperators[$sort])) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_ORDER_SORTOPERATOR_UNKOWN|' . $sort,
-                'query',
-                true
+                E_USER_ERROR
             );
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_ORDER_FIELD_UNKOWN|' . $fieldName,
-                'query',
-                true
+                E_USER_ERROR
             );
 
             return false;
@@ -943,10 +920,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 if (isset($values[$field]) || array_key_exists($field, $values)) {
                     $tempValueData[] = $this->saveValue($values[$field], $field);
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_VALUES_FIELD_NOTSET|' . $field,
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
                 }
             }
@@ -955,10 +931,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
             return $this;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_VALUES_NOT_SUPPORTED',
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -985,10 +960,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
             return $this;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_SETS_NOT_SUPPORTED',
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -1008,10 +982,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
             foreach ($values as $value) {
                 if (!is_array($value)) {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_CHANGE_OPERATOR_PARAM_INVALID',
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -1023,11 +996,10 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                     $value['Field'],
                     $value['Value']
                 )) {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_CHANGE_OPERATOR_PARAM_MISSING|Picked up only: '
                         . implode(', ', array_keys($values)),
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -1035,10 +1007,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 }
 
                 if (!isset(static::$mathOperators[$value['Operator']])) {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_CHANGE_OPERATOR_INVALID|' . $operator,
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -1046,10 +1017,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 }
 
                 if (!is_numeric($value['Value'])) {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_CHANGE_VALUE_NOT_NUMBER',
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -1065,10 +1035,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
             return $this;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_CHANGE_NOT_SUPPORTED',
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -1095,17 +1064,15 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
                 return $this;
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_QUERY_LIMIT_ALREADY_ASSIGNED',
-                    'query',
-                    true
+                    E_USER_ERROR
                 );
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_LIMIT_NOT_SUPPORTED',
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -1127,10 +1094,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
         )) {
             return $this->connection;
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_PDO_CONNECTION_FAILED',
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -1163,26 +1129,23 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                     if ($operator instanceof OperatorImplement) {
                         return ($this->operator = $operator);
                     } else {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_QUERY_BUILDER_INTERFACE_INVALID',
-                            'query',
-                            true
+                            E_USER_ERROR
                         );
                     }
 
                 } else {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_BUILDER_DRIVER_NOTSUPPORTED|'
                         . $this->connection->_connection['Driver'],
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
                 }
             } else {
-                \Facula\Framework::core('debug')->exception(
+                trigger_error(
                     'ERROR_QUERY_SQL_BUILDER_NEEDS_CONNECTION',
-                    'query',
-                    true
+                    E_USER_ERROR
                 );
             }
         } else {
@@ -1212,10 +1175,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
             // mistake. And the mistake may cause query poisoning or inject
             foreach ($requiredQueryParams as $param) {
                 if (empty($this->query[$param])) {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_PREPARE_PARAM_REQUIRED|' . $param,
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
 
                     return false;
@@ -1251,22 +1213,20 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                                             $this->dataMap[$paramKey]['Value'],
                                             $this->dataMap[$paramKey]['Type']
                                         )) {
-                                            \Facula\Framework::core('debug')->exception(
+                                            trigger_error(
                                                 'ERROR_QUERY_PREPARE_PARAM_BINDVALUE_FAILED|'
                                                 . ($paramKey
                                                 . ' = ('
                                                 . $this->dataMap[$paramKey]['Type']
                                                 . ')'
                                                 . $this->dataMap[$paramKey]['Value']),
-                                                'query',
-                                                true
+                                                E_USER_ERROR
                                             );
                                         }
                                     } else {
-                                        \Facula\Framework::core('debug')->exception(
+                                        trigger_error(
                                             'ERROR_QUERY_PREPARE_PARAM_NOTSET|' . $paramKey,
-                                            'query',
-                                            true
+                                            E_USER_ERROR
                                         );
                                     }
                                 }
@@ -1280,19 +1240,17 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                             }
                         }
                     } catch (PDOException $e) {
-                        \Facula\Framework::core('debug')->exception(
+                        trigger_error(
                             'ERROR_QUERY_PREPARE_FAILED|' . $e->getMessage(),
-                            'query',
-                            true
+                            E_USER_ERROR
                         );
                     }
                 }
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_PREPARE_MUST_INITED',
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -1349,10 +1307,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
                         case 'CLASS':
                             if (!class_exists($className)) {
-                                \Facula\Framework::core('debug')->exception(
+                                trigger_error(
                                     'ERROR_QUERY_FETCH_CLASS_NOTFOUND|' . $className,
-                                    'query',
-                                    true
+                                    E_USER_ERROR
                                 );
 
                                 return false;
@@ -1372,28 +1329,25 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                             break;
 
                         default:
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_QUERY_FETCH_UNKNOWN_MODE|' . $mode,
-                                'query',
-                                true
+                                E_USER_ERROR
                             );
 
                             return false;
                             break;
                     }
                 } catch (PDOException $e) {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_FETCH_FAILED|' . $e->getMessage(),
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
                 }
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_FETCH_NOT_SUPPORTED',
-                'query',
-                true
+                E_USER_ERROR
             );
         }
 
@@ -1482,29 +1436,26 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                             break;
 
                         default:
-                            \Facula\Framework::core('debug')->exception(
+                            trigger_error(
                                 'ERROR_QUERY_SAVE_METHOD_UNSUPPORTED|'
                                 . $this->query['Action'],
-                                'query',
-                                true
+                                E_USER_ERROR
                             );
 
                             break;
                     }
 
                 } catch (PDOException $e) {
-                    \Facula\Framework::core('debug')->exception(
+                    trigger_error(
                         'ERROR_QUERY_SAVE_FAILED|' . $e->getMessage(),
-                        'query',
-                        true
+                        E_USER_ERROR
                     );
                 }
             }
         } else {
-            \Facula\Framework::core('debug')->exception(
+            trigger_error(
                 'ERROR_QUERY_SAVE_NOT_SUPPORTED',
-                'query',
-                true
+                E_USER_ERROR
             );
         }
     }
