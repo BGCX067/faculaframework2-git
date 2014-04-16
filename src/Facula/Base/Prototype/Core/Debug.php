@@ -755,7 +755,17 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                 } elseif (is_resource($val)) {
                     $tmpstr .= 'resource ' . get_resource_type($val);
                 } elseif (is_string($val)) {
-                    $tmpstr .= '\'' . $val . '\'';
+                    $tmpstr .= '\'' . str_replace(
+                        array(
+                            PROJECT_ROOT,
+                            FACULA_ROOT,
+                        ),
+                        array(
+                            '[PROJECT]',
+                            '[FACULA]',
+                        ),
+                        $val
+                    ) . '\'';
                 } elseif (is_null($val)) {
                     $tmpstr .= 'null';
                 } else {
@@ -879,7 +889,17 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
         $templateAssigns = array(
             '%Error:Detail%' => $detail,
 
-            '%Error:Code%' => $message,
+            '%Error:Code%' => str_replace(
+                array(
+                    PROJECT_ROOT,
+                    FACULA_ROOT,
+                ),
+                array(
+                    '[PROJECT]',
+                    '[FACULA]',
+                ),
+                $message
+            ),
 
             '%Error:Time%' => date(DATE_ATOM, FACULA_TIME),
 
@@ -943,7 +963,18 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             $assigns = array(
                 '%Error:Banner:No%' => $tracesLoop,
                 '%Error:Banner:Caller%' => $val['caller'],
-                '%Error:Banner:File%' => $val['file'],
+                '%Error:Banner:File%' =>
+                    \Facula\Base\Tool\File\PathParser::replacePathPrefixes(
+                        array(
+                            PROJECT_ROOT,
+                            FACULA_ROOT,
+                        ),
+                        array(
+                            '[PROJECT]',
+                            '[FACULA]',
+                        ),
+                        $val['file']
+                    ),
                 '%Error:Banner:Line%' => $val['line'],
                 '%Error:Banner:Plate:Author%' => $val['nameplate']['author'],
                 '%Error:Banner:Plate:Reviser%' => $val['nameplate']['reviser'],

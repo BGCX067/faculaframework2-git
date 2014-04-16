@@ -82,6 +82,18 @@ class PathParser
         return $rightPath;
     }
 
+    /**
+    * Convert sub path string into valid path
+    *
+    * @param string $string String if the path
+    * @param string $find The list of invalid path separators
+    * @param string $replaceTo The right path separators
+    * @param integer $startPos Where we start from
+    * @param integer $endPos Where we end up
+    * @param integer $addEnding Add the ending path separators in result
+    *
+    * @return string Valid sub path
+    */
     protected static function replaceSub(
         $string,
         $find,
@@ -119,5 +131,51 @@ class PathParser
         }
 
         return $result;
+    }
+
+    /**
+    * Replace the prefix of a path
+    *
+    * @param string $prefix The prefix
+    * @param string $replaceTo Replace to
+    * @param string $path The path
+    *
+    * @return string Replaced path string
+    */
+    public static function replacePathPrefix($prefix, $replaceTo, $path)
+    {
+        $newPath = $path;
+
+        if (strpos($newPath, $prefix, 0) !== false) {
+            return $replaceTo . substr($newPath, strlen($prefix), strlen($newPath));
+        }
+
+        return $newPath;
+    }
+
+    /**
+    * Replace the prefixes of a path
+    *
+    * @param array $prefixes The prefixes
+    * @param array $replaceTo Replace to
+    * @param string $path The path
+    *
+    * @return string Replaced path string
+    */
+    public static function replacePathPrefixes(array $prefixes, array $replaceTo, $path)
+    {
+        foreach ($prefixes as $key => $prefix) {
+            if (!isset($replaceTo[$key])) {
+                continue;
+            }
+
+            $path = static::replacePathPrefix(
+                $prefix,
+                $replaceTo[$key],
+                $path
+            );
+        }
+
+        return $path;
     }
 }
