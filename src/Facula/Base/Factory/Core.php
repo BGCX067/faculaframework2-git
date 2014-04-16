@@ -27,12 +27,15 @@
 
 namespace Facula\Base\Factory;
 
+use Facula\Base\Error\Factory\Core as Error;
+use Facula\Base\Implement\Factory\Core as Implement;
+
 /**
  * Core Factory
  *
  * A base factory needs to be include by every core factories
  */
-abstract class Core implements \Facula\Base\Implement\Factory\Core
+abstract class Core implements Implement
 {
     /** Instances of function cores */
     private static $instances = array();
@@ -46,20 +49,26 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
      *
      * @return mixed Return a instance of function core when success, false otherwise
      */
-    final public static function getInstance(array $cfg, array $common, \Facula\Framework $parent)
-    {
+    final public static function getInstance(
+        array $cfg,
+        array $common,
+        \Facula\Framework $parent
+    ) {
         $caller = get_called_class();
-        // If $cfg['Core'] has beed set, means user wants to use their own core instead of default one
+        // If $cfg['Core'] has beed set, means user wants
+        // to use their own core instead of default one
 
         if (isset($cfg['Custom'][0])) {
             $class = $cfg['Custom'];
         } elseif (isset(static::$default)) {
             $class = static::$default;
         } else {
-            throw new \Exception(
-                'Producing core instance for '
-                . $caller
-                . '. But no class specified.'
+            new Error(
+                'CLASS_NOTFOUND',
+                array(
+                    $caller
+                ),
+                'ERROR'
             );
 
             return false;
@@ -67,11 +76,12 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
 
         if (!isset(self::$instances[$class])) {
             if (!class_exists($class)) {
-                throw new \Exception(
-                    'Facula function core '
-                    . $class
-                    . ' is not loadable.'
-                    . 'Please make sure object file has been included before preform this task.'
+                new Error(
+                    'CLASS_NOTLOAD',
+                    array(
+                        $class
+                    ),
+                    'ERROR'
                 );
 
                 return false;
@@ -79,29 +89,39 @@ abstract class Core implements \Facula\Base\Implement\Factory\Core
 
             $classInterface = class_implements($class);
             if (!isset($classInterface[static::$interface])) {
-                throw new \Exception(
-                    'Facula function core '
-                    . $class
-                    . ' must implement interface '
-                    . static::$interface
-                    . '.'
+                new Error(
+                    'CLASS_INTERFACE',
+                    array(
+                        $class,
+                        static::$interface
+                    ),
+                    'ERROR'
                 );
 
                 return false;
             }
 
-            if (!is_subclass_of($class, 'Facula\Base\Prototype\Core')) {
-                throw new \Exception(
-                    'Facula function core '
-                    . $class
-                    . ' must be extend from base class '
-                    . '\\Facula\\Base\\Prototype\\Core'
+            if (!is_subclass_of(
+                $class,
+                '\Facula\Base\Prototype\Core'
+            )) {
+                new Error(
+                    'CLASS_BASE',
+                    array(
+                        $class,
+                        '\\Facula\\Base\\Prototype\\Core'
+                    ),
+                    'ERROR'
                 );
 
                 return false;
             }
 
-            return (self::$instances[$class] = new $class($cfg, $common, $parent));
+            return (self::$instances[$class] = new $class(
+                $cfg,
+                $common,
+                $parent
+            ));
         }
 
         return self::$instances[$class];

@@ -27,6 +27,8 @@
 
 namespace Facula\Base\Factory;
 
+use Facula\Base\Error\Factory\Operator as Error;
+
 /**
  * Extends by operator based factory
  */
@@ -84,9 +86,13 @@ abstract class Operator
         if (isset(static::$operators[$operator])) {
             return static::$operators[$operator];
         } else {
-            trigger_error(
-                'ERROR_OPERATORFACTORY_OPERATOR_NOT_FOUND|' . get_called_class() . '::' . $operator,
-                E_USER_ERROR
+            new Error(
+                'OPERATOR_NOTFOUND',
+                array(
+                    $operator,
+                    get_called_class()
+                ),
+                'ERROR'
             );
         }
 

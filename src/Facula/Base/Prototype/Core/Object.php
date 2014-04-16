@@ -27,10 +27,14 @@
 
 namespace Facula\Base\Prototype\Core;
 
+use Facula\Base\Error\Core\Object as Error;
+use Facula\Base\Prototype\Core as Factory;
+use Facula\Base\Implement\Core\Object as Implement;
+
 /**
  * Prototype class for Object for make core remaking more easy
  */
-abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Object
+abstract class Object extends Factory implements Implement
 {
     /** Declare maintainer information */
     public static $plate = array(
@@ -123,7 +127,7 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                 if ($obj && $instance = unserialize($obj)) {
 
                     if ($this->configs['OCExpire']
-                        && $instance->cachedObjectSaveTime < $this->configs['OCExpire'] - FACULA_TIME) {
+                    && $instance->cachedObjectSaveTime < $this->configs['OCExpire'] - FACULA_TIME) {
                         return false;
                     }
 
@@ -204,9 +208,12 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                 // Call init after instance has been created to pre init it
                 if (method_exists($newInstance, 'init')) {
                     if (!$newInstance->init()) {
-                        trigger_error(
-                            'ERROR_OBJECT_NEWINSTNACE_INIT_FAILED|' . $object,
-                            E_USER_ERROR
+                        new Error(
+                            'OBJECT_CREATE_FAILED',
+                            array(
+                                $object
+                            ),
+                            'ERROR'
                         );
 
                         return false;
@@ -330,9 +337,12 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                         break;
 
                     default:
-                        trigger_error(
-                            'ERROR_OBJECT_NEWINSTNACE_MAXPARAMEXCEEDED',
-                            E_USER_ERROR
+                        new Error(
+                            'OBJECT_MAXPARAM_EXCEEDED',
+                            array(
+                                $object
+                            ),
+                            'ERROR'
                         );
                         break;
                 }
@@ -348,9 +358,12 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                 // Call init after instance has been created to pre init it
                 if (method_exists($newInstance, 'init')) {
                     if (!$newInstance->init()) {
-                        trigger_error(
-                            'ERROR_OBJECT_NEWINSTNACE_INIT_FAILED|' . $object,
-                            E_USER_ERROR
+                        new Error(
+                            'OBJECT_INIT_FAILED',
+                            array(
+                                $object
+                            ),
+                            'ERROR'
                         );
 
                         return false;
@@ -365,9 +378,12 @@ abstract class Object extends \Facula\Base\Prototype\Core implements \Facula\Bas
                 return $newInstance;
             }
         } else {
-            trigger_error(
-                'ERROR_OBJECT_NEWINSTNACE_OBJECTNOTFOUND|' . $object,
-                E_USER_ERROR
+            new Error(
+                'OBJECT_NOTFOUND',
+                array(
+                    $object
+                ),
+                'ERROR'
             );
         }
 

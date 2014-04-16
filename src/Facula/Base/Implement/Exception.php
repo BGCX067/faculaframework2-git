@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Debug Core Interface
+ * Exception Interface
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,22 +25,12 @@
  *
  */
 
-namespace Facula\Base\Implement\Core;
+namespace Facula\Base\Implement;
 
 /**
- * Interface that must be implemented by any Debug function core
+ * Interface that must be implemented by any Exceptions
  */
-interface Debug
+interface Exception
 {
-    public function inited();
-    public function criticalSection($enter, $fullEnter = false);
-    public function addLog($type, $errorcode, $content, &$backtraces = array());
-    public function error(
-        $errNo,
-        $errStr,
-        $errFile,
-        $errLine,
-        array $errContext = array(),
-        array $errTrace = array()
-    );
+
 }

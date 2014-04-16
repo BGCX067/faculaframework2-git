@@ -27,10 +27,14 @@
 
 namespace Facula\Base\Prototype\Core;
 
+use Facula\Base\Error\Core\Request as Error;
+use Facula\Base\Prototype\Core as Factory;
+use Facula\Base\Implement\Core\Request as Implement;
+
 /**
  * Prototype class for Request core for make core remaking more easy
  */
-abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Request
+abstract class Request extends Factory implements Implement
 {
     /** Declare maintainer information */
     public static $plate = array(
@@ -215,7 +219,7 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
     public function inited()
     {
         global $_GET, $_POST, $_COOKIE, $_SERVER;
-        $curXForwdPri = 0;
+        $curXForwdPri = $requestBlocks = 0;
 
         // Init all needed array if not set.
         if (!isset($_GET, $_POST, $_COOKIE, $_SERVER)) {
@@ -223,19 +227,35 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
         }
 
         // Sec check: Request array element cannot exceed this
-        if ((count($_GET) + count($_POST) +
-            count($_COOKIE) + count($_SERVER)) > $this->configs['MaxRequestBlocks']) {
-            trigger_error(
-                'ERROR_REQUEST_BLOCKS_OVERLIMIT',
-                E_USER_ERROR
+        $requestBlocks = count($_GET)
+                        + count($_POST)
+                        + count($_COOKIE)
+                        + count($_SERVER);
+
+        if ($requestBlocks > $this->configs['MaxRequestBlocks']) {
+            new Error(
+                'BLOCKS_OVERLIMIT',
+                array(
+                    $this->configs['MaxRequestBlocks'],
+                    $requestBlocks
+                ),
+                'ERROR'
             );
+
+            return false;
         } elseif (isset($_SERVER['CONTENT_LENGTH'])
-            && (int)($_SERVER['CONTENT_LENGTH']) > $this->configs['MaxDataSize']) {
+        && (int)($_SERVER['CONTENT_LENGTH']) > $this->configs['MaxDataSize']) {
             // Sec check: Request size cannot large than this
-            trigger_error(
-                'ERROR_REQUEST_SIZE_OVERLIMIT',
-                E_USER_ERROR
+            new Error(
+                'LENGTH_OVERLIMIT',
+                array(
+                    $this->configs['MaxDataSize'],
+                    $_SERVER['CONTENT_LENGTH']
+                ),
+                'ERROR'
             );
+
+            return false;
         }
 
         if ($this->configs['AutoMagicQuotes']) { // Impossible by now, remove all slash code back
@@ -325,9 +345,13 @@ abstract class Request extends \Facula\Base\Prototype\Core implements \Facula\Ba
                         break;
                 }
             } else {
-                trigger_error(
-                    'ERROR_REQUEST_HEADER_SIZE_OVERLIMIT|' . $key,
-                    E_USER_ERROR
+                new Error(
+                    'HEADERITEM_OVERLIMIT',
+                    array(
+                        $key,
+                        $this->configs['MaxHeaderSize']
+                    ),
+                    'ERROR'
                 );
 
                 return false;

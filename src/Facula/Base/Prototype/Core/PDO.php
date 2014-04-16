@@ -27,10 +27,14 @@
 
 namespace Facula\Base\Prototype\Core;
 
+use Facula\Base\Error\Core\PDO as Error;
+use Facula\Base\Prototype\Core as Factory;
+use Facula\Base\Implement\Core\PDO as Implement;
+
 /**
  * Prototype class for PDO core for make core remaking more easy
  */
-abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\PDO
+abstract class PDO extends Factory implements Implement
 {
     /** Declare maintainer information */
     public static $plate = array(
@@ -90,64 +94,41 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                             $this->pool['DBs'][$index] = array(
                                 'ID' => $index,
                                 'Driver' => $database['Driver'],
-                                'Connection' => isset($database['Connection'][0])
-                                                ?
-                                                $database['Connection']
-                                                :
-                                                'host'
-                                                ,
+                                'Connection' =>
+                                    isset($database['Connection'][0]) ?
+                                        $database['Connection'] : 'host',
 
-                                'Prefix' => isset($database['Prefix'][0])
-                                                ?
-                                                $database['Prefix']
-                                                :
-                                                null
-                                                ,
+                                'Prefix' =>
+                                    isset($database['Prefix'][0]) ?
+                                        $database['Prefix'] : null,
 
-                                'Username' => isset($database['Username'][0])
-                                                ?
-                                                $database['Username']
-                                                :
-                                                null
-                                                ,
+                                'Username' =>
+                                    isset($database['Username'][0]) ?
+                                        $database['Username'] : null,
 
-                                'Password' => isset($database['Password'][0])
-                                                ?
-                                                $database['Password']
-                                                :
-                                                null
-                                                ,
+                                'Password' =>
+                                    isset($database['Password'][0]) ?
+                                        $database['Password'] : null,
 
-                                'Timeout' => isset($database['Timeout'])
-                                                ?
-                                                $database['Timeout']
-                                                :
-                                                $this->configs['DefaultTimeout']
-                                                ,
+                                'Timeout' =>
+                                    isset($database['Timeout']) ?
+                                        $database['Timeout'] : $this->configs['DefaultTimeout'],
 
-                                'Wait' => isset($database['Wait'])
-                                                ?
-                                                $database['Wait']
-                                                :
-                                                $this->configs['WaitTimeout']
-                                                ,
+                                'Wait' =>
+                                    isset($database['Wait']) ?
+                                        $database['Wait'] : $this->configs['WaitTimeout'],
 
                                 'LstConnected' => 0,
 
-                                'Persistent' => isset($database['Persistent'])
-                                                ?
-                                                ($database['Persistent'] ? true : false)
-                                                :
-                                                false
-                                                ,
+                                'Persistent' =>
+                                    isset($database['Persistent']) ?
+                                        ($database['Persistent'] ? true : false)
+                                        :
+                                        false,
 
-                                'Options' => isset($database['Options'])
-                                                && is_array($database['Options'])
-                                                ?
-                                                $database['Options']
-                                                :
-                                                array()
-                                                ,
+                                'Options' =>
+                                    isset($database['Options']) && is_array($database['Options']) ?
+                                        $database['Options'] : array(),
                             );
 
                             // If needed, add current item to Table mapping for search filter.
@@ -162,10 +143,15 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                                         $this->pool['DBs'][$index]['Tables'][] = $table;
                                     }
                                 } else {
-                                    throw new \Exception(
-                                        'Specified database select method require table declaration'
-                                        . ' which is missing for database No.' . $index . '.'
+                                    new Error(
+                                        'TABLE_DECLARATION_NEEDED',
+                                        array(
+                                            $index
+                                        ),
+                                        'ERROR'
                                     );
+
+                                    return;
                                 }
                             }
 
@@ -173,7 +159,7 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                             if (($this->configs['SelectMethod'] == 'Operation'
                                 || $this->configs['SelectMethod'] == 'Table+Operation')) {
                                 if (isset($database['Operates'])
-                                    && is_array($database['Operates'])) {
+                                && is_array($database['Operates'])) {
                                     foreach ($database['Operates'] as $key => $operation) {
                                         $this->pool['OTDBs'][$operation][$index] =
                                             &$this->pool['DBs'][$index];
@@ -182,11 +168,15 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                                         $this->pool['DBs'][$index]['Operations'][] = $operation;
                                     }
                                 } else {
-                                    throw new \Exception(
-                                        'Specified database select method require'
-                                        . ' allowance setting which is missing for database'
-                                        . ' No.' . $index . '.'
+                                    new Error(
+                                        'OPERATION_DECLARATION_NEEDED',
+                                        array(
+                                            $index
+                                        ),
+                                        'ERROR'
                                     );
+
+                                    return;
                                 }
                             }
 
@@ -200,32 +190,48 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                             // DBP for sort the database item so we can shuffle it without disturb database index
                             $this->map['DBP'][$index] = &$this->pool['DBs'][$index];
                         } else {
-                            throw new \Exception(
-                                'Sorry, specified driver '
-                                . $database['Driver']
-                                . ' for database No.'
-                                . $index
-                                . ' is not supported on this server. It\'s only support: '
-                                . implode(', ', $supportedDrivers)
+                            new Error(
+                                'DRIVER_UNSUPPORTED',
+                                array(
+                                    $database['Driver'],
+                                    $index,
+                                    implode(', ', $supportedDrivers)
+                                ),
+                                'ERROR'
                             );
+
+                            return;
                         }
                     } else {
-                        throw new \Exception(
-                            'You must specify the PDO driver for database No.'
-                            . $index
-                            . '.'
+                        new Error(
+                            'DRIVER_DECLARATION_NEEDED',
+                            array(
+                                $index,
+                                implode(', ', $supportedDrivers)
+                            ),
+                            'ERROR'
                         );
+
+                        return;
                     }
                 }
             } else {
-                throw new \Exception(
-                    'Sorry, no database setting. So we can\'t set up for the PDO connection.'
+                new Error(
+                    'DBGROUP_DECLARATION_NEEDED',
+                    array(),
+                    'ERROR'
                 );
+
+                return;
             }
         } else {
-            throw new \Exception(
-                'PHP Data Object (PDO) interface not found. This server may not support it.'
+            new Error(
+                'PDO_UNSUPPORTED',
+                array(),
+                'ERROR'
             );
+
+            return;
         }
     }
 
@@ -382,10 +388,13 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                         }
                     }
                 } else {
-                    trigger_error(
-                        'ERROR_PDO_GETCONNECTION_SETTINGMISSION_TABLE',
-                        E_USER_ERROR
+                    new Error(
+                        'TABLE_SPECIFICATION_NEEDED',
+                        array(),
+                        'ERROR'
                     );
+
+                    return false;
                 }
                 break;
 
@@ -416,10 +425,13 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                         }
                     }
                 } else {
-                    trigger_error(
-                        'ERROR_PDO_GETCONNECTION_SETTINGMISSION_OPERATION',
-                        E_USER_ERROR
+                    new Error(
+                        'OPERATION_SPECIFICATION_NEEDED',
+                        array(),
+                        'ERROR'
                     );
+
+                    return false;
                 }
                 break;
 
@@ -464,24 +476,35 @@ abstract class PDO extends \Facula\Base\Prototype\Core implements \Facula\Base\I
                         }
                     }
                 } else {
-                    trigger_error(
-                        'ERROR_PDO_GETCONNECTION_SETTINGMISSED_TABLEOPERATION',
-                        E_USER_ERROR
+                    new Error(
+                        'TABLEOPERATION_SPECIFICATION_NEEDED',
+                        array(),
+                        'ERROR'
                     );
+
+                    return false;
                 }
                 break;
 
             default:
-                trigger_error(
-                    'ERROR_PDO_UNKNOWNSELECTMETHOD|' . $this->configs['SelectMethod'],
-                    E_USER_ERROR
+                new Error(
+                    'UNKNOWN_SELECTMETHOD_SPECIFIED',
+                    array(
+                        $this->configs['SelectMethod']
+                    ),
+                    'ERROR'
                 );
+
+                return false;
                 break;
         }
 
-        trigger_error(
-            'ERROR_PDO_NOSERVERAVAILABLE' . ($error ? '|' . $error : '|' . implode(',', $setting)),
-            E_USER_ERROR
+        new Error(
+            'DATABASE_ALL_UNAVAILABLE',
+            array(
+                ($error ? $error : 'No any error')
+            ),
+            'ERROR'
         );
 
         return false;

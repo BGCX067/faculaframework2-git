@@ -27,10 +27,14 @@
 
 namespace Facula\Base\Prototype\Core;
 
+use Facula\Base\Prototype\Core as Factory;
+use Facula\Base\Implement\Core\Debug as Implement;
+use Facula\Base\Tool\File\PathParser as PathParser;
+
 /**
  * Prototype class for Debug core for make core remaking more easy
  */
-abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Debug
+abstract class Debug extends Factory implements Implement
 {
     /** Declare maintainer information */
     public static $plate = array(
@@ -73,7 +77,10 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                             An error occurred:
                         </span>
 
-                        <div class="code" style="padding-top: 5px; word-wrap: break-word;">%Error:Code%</div>
+                        <div class="code" style="padding-top: 5px; word-wrap: break-word;">
+                            <p>%Error:Message:Code% (%Error:Message:No%) %Error:Message%</p>
+                            <p>File: %Error:Message:File% (line: %Error:Message:Line%)</p>
+                        </div>
 
                         %Error:Detail%
                     </div>
@@ -133,12 +140,25 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                                 background: #9e2e2e;
                                 box-shadow: 0 0 10px #3c0d0d;
                             }
-
-                            #error .msg {
+                            #error #e-msg {
                                 overflow: hidden;
                                 zoom: 1;
                             }
-                            #error .icon {
+                            #error #e-no {
+                                font-size: 0.9em;
+                                color: #e96d6d;
+                            }
+                            #error #e-f {
+                                font-size: 0.9em;
+                                color: #e96d6d;
+                                margin-top: 20px;
+                            }
+                            #error .ct {
+                                line-height: 1.5;
+                                padding: 0;
+                                margin: 0;
+                            }
+                            #error #e-icon {
                                 display: block;
                                 width: 120px;
                                 height: 120px;
@@ -152,29 +172,29 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                                 text-align: center;
                                 float: left;
                             }
-                            #error .suggestion {
+                            #error #e-sug {
                                 margin-top: 50px;
                                 padding: 20px 0 0 0;
                             }
-                            #error .suggestions {
+                            #error #e-sugs {
                                 margin-top: 20px;
                                 font-size: 0.9em;
                             }
-                            #error .suggestions li {
+                            #error #e-sugs li {
                                 margin: 10px 0;
                             }
-                            #info {
+                            #e-info {
                                 padding: 50px;
                             }
-                            #trace {
+                            #e-trace {
                                 list-style: none;
                                 padding: 0;
                             }
-                            #trace li {
+                            #e-trace li {
                                 margin-bottom: 50px;
                                 clear: both;
                             }
-                            #trace .no {
+                            #e-trace .no {
                                 padding: 20px 25px;
                                 font-size: 20px;
                                 display: block;
@@ -184,26 +204,26 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                                 font-style: normal;
                                 float: left;
                             }
-                            #trace .detail {
+                            #e-trace .detail {
                                 overflow: hidden;
                                 margin-left: 120px;
                                 zoom: 1;
                                 _display: inline;
                                 _margin-left: 30px;
                             }
-                            #trace .item {
+                            #e-trace .item {
                                 margin-bottom: 3px;
                             }
-                            #trace .item.caller {
+                            #e-trace .item.caller {
                                 font-size: 1.1em;
                             }
-                            #trace .item.file {
+                            #e-trace .item.file {
                                 color: #2c4f5a;
                             }
-                            #trace .item.plate {
+                            #e-trace .item.plate {
                                 font-size: 0.8em;
                             }
-                            #misc-info {
+                            #e-minfo {
                                 padding: 50px;
                                 font-size: 0.8em;
                                 color: #405961;
@@ -213,18 +233,23 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
 
                     <body>
                         <div id="error">
-                            <i class="icon">!</i>
+                            <i id="e-icon">!</i>
 
-                            <div class="msg">
+                            <div id="e-msg">
                                 <h1>An error occurred</h1>
 
-                                %Error:Code%
+                                <p id="e-no" class="ct">%Error:Message:Code% (%Error:Message:No%)</p>
+                                <p class="ct">%Error:Message%</p>
+                                <p id="e-f" class="ct">
+                                    %Error:Message:File% (line: %Error:Message:Line%)
+                                </p>
 
-                                <div class="suggestion">
-                                    Our application made a serious mistake when try to display that page for you.
+                                <div id="e-sug">
+                                    Our application made a serious mistake
+                                    when try to bring that page to you.
                                     Please:
 
-                                    <ul class="suggestions">
+                                    <ul id="e-sugs">
                                         <li>
                                             <a href="javascript:history.go(0);">Reload</a>
                                             this page see if this error disappears.
@@ -250,11 +275,11 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                             </div>
                         </div>
 
-                        <div id="info">
+                        <div id="e-info">
                             %Error:Detail%
                         </div>
 
-                        <div id="misc-info">
+                        <div id="e-minfo">
                             Happened: %Error:Time%,&nbsp;
                             Debug: %Error:DebugStatus%,&nbsp;
                             Initialized: %Error:BootVersion%,&nbsp;
@@ -266,7 +291,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             ',
 
             'Banner' => array(
-                'Start' => '<ul id="trace">',
+                'Start' => '<ul id="e-trace">',
                 'End' => '</ul>',
                 'Code' => '
                     <li>
@@ -295,7 +320,9 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
 
         'cli' => array(
             'Code' => '
-                Error: %Error:Code%
+                Error: %Error:Message:Code% (%Error:Message:No%)
+                Message: %Error:Message%
+                File: %Error:Message:File% (line: %Error:Message:Line%)
                 ===========================================
                 %Error:Detail%
             ',
@@ -354,19 +381,22 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     public function __construct(&$cfg, $common)
     {
         $this->configs = array(
-            'ExitOnAnyError' => isset($cfg['ExitOnAnyError'])
-                                ? $cfg['ExitOnAnyError'] : false,
+            'ExitOnAnyError' => isset($cfg['ExitOnAnyError']) ?
+                                $cfg['ExitOnAnyError'] : false,
 
-            'LogRoot' => isset($cfg['LogRoot']) && is_dir($cfg['LogRoot'])
-                        ? \Facula\Base\Tool\File\PathParser::get($cfg['LogRoot']) : '',
+            'LogRoot' => isset($cfg['LogRoot']) && is_dir($cfg['LogRoot']) ?
+                        PathParser::get($cfg['LogRoot']) : '',
 
             'LogServer' => array(
-                'Addr' => isset($cfg['LogServerInterface'][0]) ? $cfg['LogServerInterface'] : '',
+                'Addr' => isset($cfg['LogServerInterface'][0]) ?
+                    $cfg['LogServerInterface'] : '',
 
-                'Key' => isset($cfg['LogServerKey'][0]) ? $cfg['LogServerKey'] : '',
+                'Key' => isset($cfg['LogServerKey'][0]) ?
+                    $cfg['LogServerKey'] : '',
             ),
 
-            'Debug' => !isset($cfg['Debug']) || $cfg['Debug'] ? true : false,
+            'Debug' => !isset($cfg['Debug']) || $cfg['Debug'] ?
+                true : false,
 
             'ServerName' => $common['PHP']['ServerName'],
 
@@ -392,13 +422,17 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
         }); // Experimentally use our own fatal reporter
 
         set_error_handler(function ($errNo, $errStr, $errFile, $errLine, $errContext) {
+            $backTrace = $this->backTrace();
+
+            array_shift($backTrace);
+
             $this->errorHandler(
                 $errNo,
                 $errStr,
                 $errFile,
                 $errLine,
                 $errContext,
-                $this->backTrace()
+                $backTrace
             );
         }, E_ALL); // Use our own error reporter, just like PHP's E_ALL
 
@@ -474,7 +508,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      */
     public function addLog($type, $errorCode, $content = '', &$backTraces = array())
     {
-        list($time, $micro) = explode('.', microtime(true) . '.' . 0, 3);
+        $time = microtime(true);
 
         $date = date(DATE_ATOM, $time);
 
@@ -485,7 +519,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             $errorType = '[' . strtoupper($type) . ']' . ($errorCode ? ':' . $errorCode : '');
 
             $filename = 'log.' . $datefileName . '.php';
-            $format = "<?php exit(); ?> {$errorType} {$ip} ({$date}.{$micro}): {$content}";
+            $format = "<?php exit(); ?> {$errorType} {$ip} ({$date}): {$content}";
 
             return file_put_contents(
                 $this->configs['LogRoot']
@@ -507,6 +541,59 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
         );
 
         return true;
+    }
+
+    /**
+     * Enter or leave error block mode
+     *
+     * @param bool $enter Set true to enter error message block mode, false to leave block mode
+     * @param bool $fullEnter Set to true to enter error message and log block mode, false to leave it
+     *
+     * @return bool always true
+     */
+    public function criticalSection($enter, $fullEnter = false)
+    {
+        if ($enter) {
+            $this->tempDisabled = true;
+
+            if ($fullEnter) { // Disable all error message and logging
+                $this->tempFullDisabled = true;
+            }
+        } else {
+            $this->tempFullDisabled = $this->tempDisabled = false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Add a fully customized error message
+     *
+     * @param bool $errNo Error mumber
+     * @param bool $errStr Error message
+     * @param bool $errFile File trigger that error
+     * @param bool $errLine Line of that code trigger the error
+     * @param bool $errContext Dump information
+     * @param bool $errTrace Back trace information
+     *
+     * @return mixed The result of $this->errorHandler
+     */
+    public function error(
+        $errNo,
+        $errStr,
+        $errFile,
+        $errLine,
+        array $errContext = array(),
+        array $errTrace = array()
+    ) {
+        return $this->errorHandler(
+            $errNo,
+            '* ' . $errStr,
+            $errFile,
+            $errLine,
+            $errContext,
+            $this->convertBacktrace($errTrace)
+        );
     }
 
     /**
@@ -558,36 +645,14 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     }
 
     /**
-     * Enter or leave error block mode
-     *
-     * @param bool $enter Set true to enter error message block mode, false to leave block mode
-     * @param bool $fullEnter Set to true to enter error message and log block mode, false to leave it
-     *
-     * @return bool always true
-     */
-    public function criticalSection($enter, $fullEnter = false)
-    {
-        if ($enter) {
-            $this->tempDisabled = true;
-
-            if ($fullEnter) { // Disable all error message and logging
-                $this->tempFullDisabled = true;
-            }
-        } else {
-            $this->tempFullDisabled = $this->tempDisabled = false;
-        }
-
-        return true;
-    }
-
-    /**
      * Error Handler
      *
-     * @param bool $errno Error mumber
-     * @param bool $errstr Error message
-     * @param bool $errfile File trigger that error
-     * @param bool $errline Line of that code trigger the error
-     * @param bool $errcontext Dump information
+     * @param bool $errNo Error mumber
+     * @param bool $errStr Error message
+     * @param bool $errFile File trigger that error
+     * @param bool $errLine Line of that code trigger the error
+     * @param bool $errContext Dump information
+     * @param bool $errTrace Back trace information
      *
      * @return mixed Return the result of static::exception
      */
@@ -634,6 +699,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
 
             case E_RECOVERABLE_ERROR:
                 break;
+
 
             // Errors: All Need to be Suspend, Display, Log
             case E_ERROR:
@@ -723,7 +789,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      * @param object $exception The instance of exception object
      *
      * @return mixed Return false when $exception is not a instance of Exception,
-     *           otherwise, return the result of $this->errorHandler
+     *         otherwise, return the result of $this->errorHandler
      */
     protected function exceptionHandler($exception)
     {
@@ -753,28 +819,30 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     /**
      * Fatal Handler
      *
-     * @return mixed Return false when no error picked up, otherwise, return the result of $this->errorHandler
+     * @return mixed Return false when no error picked up, otherwise,
+     *         return the result of $this->errorHandler
      */
     protected function fatalHandler()
     {
-        $errfile = 'Unknown file';
-        $errstr  = '';
-        $errno   = E_CORE_ERROR;
-        $errline = 0;
+        $errFile = 'Unknown file';
+        $errStr  = '';
+        $errNo   = E_CORE_ERROR;
+        $errLine = 0;
+        $errTrace = array();
 
         if ($error = error_get_last()) {
-            $errno   = $error['type'];
-            $errfile = $error['file'];
-            $errline = $error['line'];
-            $errstr  = $error['message'];
+            $errNo   = $error['type'];
+            $errFile = $error['file'];
+            $errLine = $error['line'];
+            $errStr  = $error['message'];
 
             return $this->errorHandler(
-                $errno,
-                $errstr,
-                $errfile,
-                $errline,
+                $errNo,
+                $errStr,
+                $errFile,
+                $errLine,
                 array(),
-                $this->backTrace()
+                array()
             );
         }
 
@@ -809,14 +877,10 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             }
 
             if (!$this->tempDisabled && $errorInfo['Display']) {
-                $this->displayErrorBanner(sprintf(
-                    '%s (%d): %s in %s, line %d',
-                    $errorInfo['Error']['Code'],
-                    $errorInfo['Error']['No'],
-                    $errorInfo['Error']['Message'],
-                    $errorInfo['Error']['File'],
-                    $errorInfo['Error']['Line']
-                ), $backTraces);
+                $this->displayErrorBanner(
+                    $errorInfo['Error'],
+                    $backTraces
+                );
             }
         }
 
@@ -889,8 +953,6 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
      */
     protected function backTrace($e = null)
     {
-        $result = array();
-
         if ($e) {
             $trace = $e->getTrace();
         } else {
@@ -899,7 +961,21 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             array_shift($trace);
         }
 
-        foreach ($trace as $key => $val) {
+        return $this->convertBacktrace($trace);
+    }
+
+    /**
+     * Convert raw back trace result to debug trace format
+     *
+     * @param array $backTrace The result from debug_backtrace
+     *
+     * @return array Return the result of back trace
+     */
+    protected function convertBacktrace(array $backTrace)
+    {
+        $result = array();
+
+        foreach ($backTrace as $key => $val) {
             $result[] = array(
                 'caller' => (isset($val['class']) ?
                             $val['class']
@@ -943,13 +1019,13 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
     /**
      * Display a error message to user
      *
-     * @param string $message Error message
+     * @param array $errorDetail Error detail in array
      * @param array $backTraces Back traces information
      *
      * @return mixed
      */
     protected function displayErrorBanner(
-        $message,
+        $errorDetail,
         array $backTraces
     ) {
         $detail = $templateString = $templateBanner = '';
@@ -964,6 +1040,8 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
             default:
                 if (!headers_sent()) {
                     header('HTTP/1.0 500 Internal Server Error');
+                    header('Server: Facula');
+                    header('X-Powered-By: Facula ' . __FACULAVERSION__);
 
                     $templateString = static::$errorMessageTemplate['page']['Code'];
                     $templateBanner = static::$errorMessageTemplate['page']['Banner'];
@@ -986,7 +1064,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
         $templateAssigns = array(
             '%Error:Detail%' => $detail,
 
-            '%Error:Code%' => str_replace(
+            '%Error:Message%' => str_replace(
                 array(
                     PROJECT_ROOT,
                     FACULA_ROOT,
@@ -995,8 +1073,26 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                     '[PROJECT]',
                     '[FACULA]',
                 ),
-                $message
+                $errorDetail['Message']
             ),
+
+            '%Error:Message:Code%' => $errorDetail['Code'],
+
+            '%Error:Message:File%' => PathParser::replacePathPrefixes(
+                array(
+                    PROJECT_ROOT,
+                    FACULA_ROOT,
+                ),
+                array(
+                    '[PROJECT]',
+                    '[FACULA]',
+                ),
+                $errorDetail['File']
+            ),
+
+            '%Error:Message:Line%' => $errorDetail['Line'],
+
+            '%Error:Message:No%' => $errorDetail['No'],
 
             '%Error:Time%' => date(DATE_ATOM, FACULA_TIME),
 
@@ -1020,7 +1116,6 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
         $displayContent = trim(
             str_replace(array("\t", '  '), '', $displayContent)
         );
-
 
         echo $displayContent . "\r\n\r\n";
 
@@ -1056,7 +1151,7 @@ abstract class Debug extends \Facula\Base\Prototype\Core implements \Facula\Base
                 '%Error:Banner:No%' => $tracesLoop,
                 '%Error:Banner:Caller%' => $val['caller'],
                 '%Error:Banner:File%' =>
-                    \Facula\Base\Tool\File\PathParser::replacePathPrefixes(
+                    PathParser::replacePathPrefixes(
                         array(
                             PROJECT_ROOT,
                             FACULA_ROOT,

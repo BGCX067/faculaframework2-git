@@ -277,22 +277,24 @@ class Framework
     public static function registerScope($class, $file)
     {
         if (isset(static::$components['Scope'][$class])) {
-            throw new \Exception(
+            trigger_error(
                 'Trying register a class('
                 . $class
-                . ') to scope while it already registered.'
+                . ') to scope while it already registered.',
+                E_USER_ERROR
             );
 
             return false;
         }
 
         if (!is_readable($file)) {
-            throw new \Exception(
+            trigger_error(
                 'Trying register a class('
                 . $class
                 . '), but the class file('
                 . $file
-                . ') is not readable.'
+                . ') is not readable.',
+                E_USER_ERROR
             );
 
             return false;
@@ -315,10 +317,11 @@ class Framework
     public static function unregisterScope($class)
     {
         if (!isset(static::$components['Scope'][$class])) {
-            throw new \Exception(
+            trigger_error(
                 'Trying unregister a class('
                 . $class
-                . '), but the class was not found.'
+                . '), but the class was not found.',
+                E_USER_ERROR
             );
 
             return false;
@@ -394,20 +397,22 @@ class Framework
 
                 return true;
             } else {
-                throw new \Exception(
+                trigger_error(
                     'Trying register a namespace('
                     . $nsPrefix
-                    . ') while it already registered.'
+                    . ') while it already registered.',
+                E_USER_ERROR
                 );
             }
 
         } else {
-            throw new \Exception(
+            trigger_error(
                 'Path '
                 . $path
                 . ' for namespace '
                 . $nsPrefix
-                . ' not exist.'
+                . ' not exist.',
+                E_USER_ERROR
             );
         }
 
@@ -437,7 +442,10 @@ class Framework
                 $map['Ref'] = null;
             }
         } else {
-            throw new \Exception('Trying unregister a namespace while it not existed.');
+            trigger_error(
+                'Trying unregister a namespace while it not existed.',
+                E_USER_ERROR
+            );
 
             return false;
         }
@@ -547,12 +555,13 @@ class Framework
     public static function registerHook($hook, $processorName, $callback)
     {
         if (isset(static::$components['Hooks'][$hook][$processorName])) {
-            throw new \Exception(
+            trigger_error(
                 'Registering hook '
                 . $hook
                 . ' for '
                 . $processorName
-                . ', But seems it already registered'
+                . ', But seems it already registered',
+                E_USER_ERROR
             );
 
             return false;
@@ -560,12 +569,13 @@ class Framework
 
         if (is_callable($callback)) {
             if (!static::$instance && is_object($callback)) {
-                throw new \Exception(
+                trigger_error(
                     'Registering hook '
                     . $hook
                     . ' for '
                     . $processorName
-                    . '. But framework not ready.'
+                    . '. But framework not ready.',
+                    E_USER_ERROR
                 );
 
                 return false;
@@ -573,12 +583,13 @@ class Framework
 
             static::$components['Hooks'][$hook][$processorName] = $callback;
         } else {
-            throw new \Exception(
+            trigger_error(
                 'Registering hook '
                 . $hook
                 . ' for '
                 . $processorName
-                . '. But seems the callback function is not callable.'
+                . '. But seems the callback function is not callable.',
+                E_USER_ERROR
             );
 
             return false;
@@ -602,12 +613,13 @@ class Framework
 
             return true;
         } else {
-            throw new \Exception(
+            trigger_error(
                 'Unregistering hook '
                 . $hook
                 . ' for '
                 . $processorName
-                . '. But seems it not registered.'
+                . '. But seems it not registered.',
+                E_USER_ERROR
             );
         }
 
@@ -630,20 +642,22 @@ class Framework
                     . static::$cfg['PHPExt'];
 
         if (!is_dir($pkgPath)) {
-            throw new \Exception(
+            trigger_error(
                 'Package path '
                 . $pkgPath
-                . ' not existed.'
+                . ' not existed.',
+                E_USER_ERROR
             );
 
             return false;
         }
 
         if (!is_file($dclFile)) {
-            throw new \Exception(
+            trigger_error(
                 'Package declaration file '
                 . $dclFile
-                . ' not existed.'
+                . ' not existed.',
+                E_USER_ERROR
             );
 
             return false;
@@ -653,10 +667,11 @@ class Framework
         require($dclFile);
 
         if (!is_array($package)) {
-            throw new \Exception(
+            trigger_error(
                 'Informations in package declaration file '
                 . $dclFile
-                . ' is invalid.'
+                . ' is invalid.',
+                E_USER_ERROR
             );
 
             return false;
@@ -665,8 +680,9 @@ class Framework
         // Namespaces
         if (isset($package['Namespaces'])) {
             if (!is_array($package['Paths'])) {
-                throw new \Exception(
-                    'Package namespace declaration is invalid.'
+                trigger_error(
+                    'Package namespace declaration is invalid.',
+                    E_USER_ERROR
                 );
 
                 return false;
@@ -687,8 +703,9 @@ class Framework
         // Classes
         if (isset($package['Classes'])) {
             if (!is_array($package['Classes'])) {
-                throw new \Exception(
-                    'Package class declaration is invalid.'
+                trigger_error(
+                    'Package class declaration is invalid.',
+                    E_USER_ERROR
                 );
 
                 return false;
@@ -702,8 +719,9 @@ class Framework
         // Paths
         if (isset($package['Paths'])) {
             if (!is_array($package['Paths'])) {
-                throw new \Exception(
-                    'Package path declaration is invalid.'
+                trigger_error(
+                    'Package path declaration is invalid.',
+                    E_USER_ERROR
                 );
 
                 return false;
@@ -806,20 +824,22 @@ class Framework
             if (isset(static::$instance->cores[$coreName])) {
                 return static::$instance->cores[$coreName];
             } else {
-                throw new \Exception(
+                trigger_error(
                     'Function core '
                     . $coreName
                     . ' not available. '
                     . 'You can only acquire following cores: '
                     . (implode(', ', array_keys(static::$instance->cores)))
-                    . '.'
+                    . '.',
+                    E_USER_ERROR
                 );
             }
         } else {
-            throw new \Exception(
+            trigger_error(
                 'Facula must be initialized to get core '
                 . $coreName
-                . ' to work.'
+                . ' to work.',
+                E_USER_ERROR
             );
         }
 
@@ -894,13 +914,14 @@ class Framework
     public function __get($key)
     {
         if (!isset($this->cores[$key])) {
-            throw new \Exception(
+            trigger_error(
                 'Function core '
                 . $key
                 . ' not available. '
                 . 'You can only acquire following cores: '
                 . (implode(', ', array_keys($this->cores)))
-                . '.'
+                . '.',
+                E_USER_ERROR
             );
         }
 
@@ -942,10 +963,11 @@ class Framework
         // Initialize all cores
         foreach ($this->cores as $core) {
             if (!$core->inited()) {
-                throw new \Exception(
+                trigger_error(
                     'Warming up core '
                     . get_class($core)
-                    . '. But it returns false.'
+                    . '. But it returns false.',
+                    E_USER_ERROR
                 );
             }
         }
@@ -1015,22 +1037,24 @@ class Framework
     protected function initCore($coreName, $coreClass)
     {
         if (!class_exists($coreClass)) {
-            throw new \Exception(
+            trigger_error(
                 'Initializing core '
                 . $coreClass
                 . '. But the core class '
                 . $coreClass
-                . ' seems not exist.'
+                . ' seems not exist.',
+                E_USER_ERROR
             );
         }
 
         $coreRef = new \ReflectionClass($coreClass);
 
         if (!$coreRef->implementsInterface('\Facula\Base\Implement\Factory\Core')) {
-            throw new \Exception(
+            trigger_error(
                 'Initializing core '
                 . $coreClass
-                . '. But seems it not implement interface \\Facula\\Base\\Implement\\Factory\\Core.'
+                . '. But seems it not implement interface \\Facula\\Base\\Implement\\Factory\\Core.',
+                E_USER_ERROR
             );
 
             return false;
@@ -1042,10 +1066,11 @@ class Framework
             $this->exportCommonSetting(),
             $this
         )) {
-            throw new \Exception(
+            trigger_error(
                 'Initializing core '
                 . $coreClass
-                . '. But it returns false.'
+                . '. But it returns false.',
+                E_USER_ERROR
             );
 
             return false;
@@ -1176,10 +1201,11 @@ class Framework
         $declaredClasses = get_declared_classes();
 
         if (!is_readable($mainFile)) {
-            throw new \Exception(
+            trigger_error(
                 'Plugin file '
                 . $mainFile
-                . ' is not readable.'
+                . ' is not readable.',
+                E_USER_ERROR
             );
 
             return false;
@@ -1189,10 +1215,11 @@ class Framework
 
         foreach (array_diff(get_declared_classes(), $declaredClasses) as $key => $pluginClassname) {
             if (!static::registerScope($pluginClassname, $mainFile)) {
-                throw new \Exception(
+                trigger_error(
                     'Cannot register class scope for plugin class '
                     . $pluginClassname
-                    . '.'
+                    . '.',
+                    E_USER_ERROR
                 );
 
                 return false;
@@ -1201,19 +1228,21 @@ class Framework
             $plugRef = new \ReflectionClass($pluginClassname);
 
             if (!$plugRef->implementsInterface('\Facula\Base\Implement\Plugin')) {
-                throw new \Exception(
+                trigger_error(
                     'A facula plugin have to implement interface: '
-                    . '\\Facula\\Base\\Implement\\Plugin'
+                    . '\\Facula\\Base\\Implement\\Plugin',
+                    E_USER_ERROR
                 );
 
                 return false;
             }
 
             if (!is_array($invokeResult = $plugRef->getMethod('register')->invoke(null))) {
-                throw new \Exception(
+                trigger_error(
                     'Registering plugin '
                     . $pluginClassname
-                    . ', but registrant returns invalid result.'
+                    . ', but registrant returns invalid result.',
+                    E_USER_ERROR
                 );
 
                 return false;

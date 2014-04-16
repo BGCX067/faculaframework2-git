@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Exception Base Prototype
+ * Errors of Cache function core
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,23 +24,16 @@
  *
  */
 
-namespace Facula\Base\Prototype\Exception;
+namespace Facula\Base\Error\Core;
 
-/**
- * Base class of execption
- */
-abstract class Exception extends \Exception
+use Facula\Base\Prototype\Error as Base;
+
+class Cache extends Base
 {
-    public function __construct(
-        $message,
-        $code,
-        Exception $previous = null
-    ) {
-        parent::__construct($message, $code, $previous);
-    }
-
-    public function __toString()
-    {
-        return __CLASS__ . ': [' . $this->code . ']  ' . $this->message;
-    }
+    /** Error code to error message */
+    protected static $errorStrings = array(
+        'CACHEPATH_NOTFOUND' => '
+            Cache root %s must be set and existed.
+        ',
+    );
 }

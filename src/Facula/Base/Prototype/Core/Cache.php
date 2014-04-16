@@ -27,10 +27,15 @@
 
 namespace Facula\Base\Prototype\Core;
 
+use Facula\Base\Error\Core\Cache as Error;
+use Facula\Base\Prototype\Core as Factory;
+use Facula\Base\Implement\Core\Cache as Implement;
+use Facula\Base\Tool\File\PathParser as PathParser;
+
 /**
  * Prototype class for Cache core for make core remaking more easy
  */
-abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Cache
+abstract class Cache extends Factory implements Implement
 {
     /** Declare maintainer information */
     public static $plate = array(
@@ -64,9 +69,17 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
     public function __construct(&$cfg, $common)
     {
         if (isset($cfg['CacheRoot'][0]) && is_dir($cfg['CacheRoot'])) {
-            $this->configs['Root'] = \Facula\Base\Tool\File\PathParser::get($cfg['CacheRoot']);
+            $this->configs['Root'] = PathParser::get($cfg['CacheRoot']);
         } else {
-            throw new \Exception('Cache root must be set and existed.');
+            new Error(
+                'CACHEPATH_NOTFOUND',
+                array(
+                    $cfg['CacheRoot']
+                ),
+                'ERROR'
+            );
+
+            return;
         }
 
         $this->configs['BootVer'] = $common['BootVersion'];
@@ -101,7 +114,8 @@ abstract class Cache extends \Facula\Base\Prototype\Core implements \Facula\Base
             if (is_readable($file)) {
                 require($file);
 
-                if (($cache[0] && $cache[0] < FACULA_TIME) || $this->configs['BootVer'] > $cache[1]) {
+                if (($cache[0] && $cache[0] < FACULA_TIME)
+                || $this->configs['BootVer'] > $cache[1]) {
                     return false;
                 }
 

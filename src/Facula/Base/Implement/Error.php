@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Debug Core Interface
+ * Error Interface
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,22 +25,27 @@
  *
  */
 
-namespace Facula\Base\Implement\Core;
+namespace Facula\Base\Implement;
 
 /**
- * Interface that must be implemented by any Debug function core
+ * Interface that must be implemented by any Errors
  */
-interface Debug
+interface Error
 {
-    public function inited();
-    public function criticalSection($enter, $fullEnter = false);
-    public function addLog($type, $errorcode, $content, &$backtraces = array());
-    public function error(
-        $errNo,
-        $errStr,
-        $errFile,
-        $errLine,
-        array $errContext = array(),
-        array $errTrace = array()
+    public function __construct(
+        $errorCode,
+        array $assign,
+        $errorType = 'NOTICE'
     );
+
+    public function getTrace();
+    public function getFile();
+    public function getLine();
+    public function getClass();
+    public function getFunction();
+    public function getFunctionType();
+    public function getArgs();
+    public function getMessage();
+
+    public function setErrorString($key, $string);
 }
