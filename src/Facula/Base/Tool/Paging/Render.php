@@ -45,26 +45,7 @@ class Render implements \Facula\Base\Implement\Core\Template\Render
      */
     public function __construct(&$targetTpl, array &$assigned = array())
     {
-        if ($oldContent = ob_get_clean()) {
-            trigger_error(
-                'ERROR_TEMPLATE_RENDER_BUFFER_POLLUTED|' . htmlspecialchars($oldContent),
-                E_USER_ERROR
-            );
-
-            return false;
-        }
-
-        ob_start();
-
-        extract($assigned);
-
-        \Facula\Framework::core('debug')->criticalSection(true);
-
-        require($targetTpl);
-
-        \Facula\Framework::core('debug')->criticalSection(false);
-
-        $this->content = ob_get_clean();
+        $this->content = static::isolatedRender($targetTpl, $assigned);
 
         return true;
     }
@@ -77,5 +58,20 @@ class Render implements \Facula\Base\Implement\Core\Template\Render
     public function getResult()
     {
         return $this->content;
+    }
+
+    protected static function isolatedRender($targetTpl, array $assigned)
+    {
+        ob_start();
+
+        extract($assigned);
+
+        \Facula\Framework::core('debug')->criticalSection(true);
+
+        require($targetTpl);
+
+        \Facula\Framework::core('debug')->criticalSection(false);
+
+        return ob_get_clean();
     }
 }

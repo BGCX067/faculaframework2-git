@@ -238,8 +238,12 @@ abstract class Debug extends Factory implements Implement
                             <div id="e-msg">
                                 <h1>An error occurred</h1>
 
-                                <p id="e-no" class="ct">%Error:Message:Code:Html% (%Error:Message:No:Html%)</p>
-                                <p class="ct">%Error:Message:Html%</p>
+                                <p id="e-no" class="ct">
+                                    %Error:Message:Code:Html% (%Error:Message:No:Html%)
+                                </p>
+                                <p class="ct">
+                                    %Error:Message:Html%
+                                </p>
                                 <p id="e-f" class="ct">
                                     %Error:Message:File:Html% (line: %Error:Message:Line:Html%)
                                 </p>
@@ -381,7 +385,7 @@ abstract class Debug extends Factory implements Implement
     public function __construct(&$cfg, $common)
     {
         $this->configs = array(
-            'Strict' => isset($cfg['Strict']) && $cfg['Strict']?
+            'Strict' => isset($cfg['Strict']) && $cfg['Strict'] ?
                                 true : false,
 
             'LogRoot' => isset($cfg['LogRoot']) && is_dir($cfg['LogRoot']) ?
@@ -825,7 +829,7 @@ abstract class Debug extends Factory implements Implement
 
         return $this->errorHandler(
             $exception->getCode(),
-            '[' . get_class($exception) . ']: ' . $exception->getMessage(),
+            'Exposed exception: [' . get_class($exception) . ']: ' . $exception->getMessage(),
             $exception->getFile(),
             $exception->getLine(),
             array(),
@@ -1043,7 +1047,7 @@ abstract class Debug extends Factory implements Implement
         array $backTraces
     ) {
         $detail = $templateString = $templateBanner = '';
-        $line = 0;
+        $line = $bufferLevel = 0;
 
         switch ($this->configs['SAPI']) {
             case 'cli':

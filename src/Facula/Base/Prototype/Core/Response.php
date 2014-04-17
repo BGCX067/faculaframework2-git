@@ -317,33 +317,41 @@ abstract class Response extends Factory implements Implement
     {
         $file = $line = $oldBufferContent = $finalContent = '';
         $hookResult = null;
-        $finalContentLen = 0;
+        $finalContentLen = $bufferLevel = 0;
         $thereIndiscernible = false;
         $errors = array();
 
+        // If $type is empty, set it to htm as default
+        $type = $type ? $type : 'htm';
+
+        // Assume we will finish this application after output, calc belowing profile data
+        \Facula\Framework::$profile['MemoryUsage'] = memory_get_usage(true);
+        \Facula\Framework::$profile['MemoryPeak'] = memory_get_peak_usage(true);
+
+        \Facula\Framework::$profile['OutputTime'] = microtime(true);
+        \Facula\Framework::$profile['ProductionTime'] =
+            \Facula\Framework::$profile['OutputTime'] - \Facula\Framework::$profile['StartTime'];
+
+        // Check size of response_finished hook queue
+        if (\Facula\Framework::getHookSize('response_finished') > 0) {
+            ignore_user_abort(true);
+
+            $thereIndiscernible = true;
+        }
+
+        // Safely shutdown early output (May set by PHP itself when output_buffering = On)
+        while (($bufferLevel = ob_get_level()) != 0) {
+            new Error(
+                'BUFFER_POLLUTED',
+                array(
+                    $bufferLevel,
+                    ob_get_clean()
+                ),
+                'NOTICE'
+            );
+        }
+
         if (!headers_sent($file, $line)) {
-            // If $type is empty, set it to htm as default
-            $type = $type ? $type : 'htm';
-            $objCore = \Facula\Framework::core('object');
-
-            // Assume we will finish this application after output, calc belowing profile data
-            \Facula\Framework::$profile['MemoryUsage'] = memory_get_usage(true);
-            \Facula\Framework::$profile['MemoryPeak'] = memory_get_peak_usage(true);
-
-            \Facula\Framework::$profile['OutputTime'] = microtime(true);
-            \Facula\Framework::$profile['ProductionTime'] =
-                \Facula\Framework::$profile['OutputTime'] - \Facula\Framework::$profile['StartTime'];
-
-            // Check size of response_finished hook queue
-            if (\Facula\Framework::getHookSize('response_finished') > 0) {
-                ignore_user_abort(true);
-
-                $thereIndiscernible = true;
-            }
-
-            // Safely shutdown early output (May set by PHP itself when output_buffering = On)
-            $oldBufferContent = ob_get_clean();
-
             // Start buffer to output
             ob_start();
 

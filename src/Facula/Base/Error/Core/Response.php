@@ -38,7 +38,13 @@ class Response extends Base
     protected static $errorStrings = array(
         'RESPONSE_OVERSEND' => '
             The application already responded to the request in file %s (line %d).
-            Client may already disconnected from server, so application denied to send another response.
+            Client connection status may already changed due to the response,
+            so application denied to send another response.
+        ',
+
+        'BUFFER_POLLUTED' => '
+            Level %d output buffer has been polluted with content: %s.
+            This buffer will be discard.
         ',
     );
 }

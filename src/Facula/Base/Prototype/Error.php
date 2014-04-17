@@ -29,14 +29,46 @@ namespace Facula\Base\Prototype;
 
 /**
  * Base class of error
+ *
+ * Notice that, Error is a mechanism specify for indicate
+ * the interior error status of the application.
+ *
+ * It's not made for displaying any message to end user.
+ *
+ * For example, you can use Error when some problem be caused
+ * by operations that initiated by application, like critical
+ * fail on configuration reading or failed to connect some
+ * server.
+ *
+ * Display an friendly and beautiful error message to user to
+ * to teach them how to use your application however is Template
+ * and Response's job.
+ *
+ * See the insertMessage method in Template function core for the
+ * detail.
  */
 abstract class Error implements \Facula\Base\Implement\Error
 {
     /** Error type to php error type */
     protected static $errorTypes = array(
+        // Something seriously bad, application must halt on this type
+        // For example, setting failed, cannot read or write some
+        // unrecoverable data, like configuration files.
         'ERROR' => E_USER_ERROR,
+
+        // Here is some problem, but not cause serious effect.
+        // For example, load data from interior source (a variable)
+        // and the data is empty. The application will go on and
+        // pass this type, but be careful, return a false when needed
         'WARNING' => E_USER_WARNING,
+
+        // There is a problem that fully recoverable, it may caused by
+        // an uncontrollable factor like Internet connection or another
+        // server. This type will not cause any bad effect to the
+        // application. If it did, the following code will eliminate that.
         'NOTICE' => E_USER_NOTICE,
+
+        // Tell user something will be removed in the future so as PHP did.
         'DEPRECATED' => E_USER_DEPRECATED,
     );
 

@@ -80,5 +80,9 @@ class PDO extends Base
             All specified databases is unavailable.
             Last error: %s;
         ',
+
+        'DATABASE_UNAVAILABLE' => '
+            Database No. %d is unavailable. Returning error: %s
+        ',
     );
 }

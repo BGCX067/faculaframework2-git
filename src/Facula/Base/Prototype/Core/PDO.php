@@ -504,7 +504,7 @@ abstract class PDO extends Factory implements Implement
             array(
                 ($error ? $error : 'No any error')
             ),
-            'ERROR'
+            'WARNING'
         );
 
         return false;
@@ -547,11 +547,12 @@ abstract class PDO extends Factory implements Implement
 
             try {
                 $dbh = new \PDO(
-                    $this->pool['DBs'][$dbIndex]['Driver'] . ':' . $this->pool['DBs'][$dbIndex]['Connection'],
+                    $this->pool['DBs'][$dbIndex]['Driver']
+                    . ':' . $this->pool['DBs'][$dbIndex]['Connection'],
                     $this->pool['DBs'][$dbIndex]['Username'],
                     $this->pool['DBs'][$dbIndex]['Password'],
                     array(
-                        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_WARNING,
+                        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
                         \PDO::ATTR_TIMEOUT => $this->pool['DBs'][$dbIndex]['Timeout'],
                         \PDO::ATTR_PERSISTENT => $this->pool['DBs'][$dbIndex]['Persistent']
                     ) + $this->pool['DBs'][$dbIndex]['Options']
@@ -566,6 +567,8 @@ abstract class PDO extends Factory implements Implement
                         . $dbIndex
                         . ' Error: '
                         . $e->getMessage();
+
+                new Error('DATABASE_UNAVAILABLE', array($dbIndex, $error), 'NOTICE');
             }
 
             // Exit Critical Section, restore error caught
@@ -575,8 +578,6 @@ abstract class PDO extends Factory implements Implement
                 $this->map['DBConn'][$dbIndex]['Connection'] = &$dbh;
 
                 return $this->map['DBConn'][$dbIndex]['Connection'];
-            } else {
-                \Facula\Framework::core('debug')->addLog('data', $error);
             }
         } else {
             return $this->map['DBConn'][$dbIndex]['Connection'];

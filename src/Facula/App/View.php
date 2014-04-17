@@ -27,13 +27,32 @@
 
 namespace Facula\App;
 
+use Facula\Base\Exception\App\View as Exception;
+
 /**
  * Base view
  */
-abstract class View
+class View
 {
+    protected $file = '';
+
     /** Assigned variable for templating */
-    private static $assigned = array();
+    private $assigned = array();
+
+    public static function template($templateFile) {
+        return new static($templateFile);
+    }
+
+    protected function __construct($templateFile)
+    {
+        if (!is_readable($templateFile)) {
+            throw new Exception\TemplateFileNotFound($templateFile);
+
+            return false;
+        }
+
+        $this->file = $templateFile;
+    }
 
     /**
      * Assign a variable into template
@@ -41,25 +60,25 @@ abstract class View
      * @param string $key Key name for the variable
      * @param string $val Value of the variable
      *
-     * @return mixed The assigned value
+     * @return object Return current instance.
      */
-    public static function assign($key, $val)
+    public function assign($key, $val)
     {
-        return self::$assigned[$key] = $val;
+        $this->assigned[$key] = $val;
+
+        return $this;
     }
 
     /**
      * Render and display the page
      *
-     * @param string $path The path to template file
-     *
      * @return bool Return true when succeed, false otherwise
      */
-    public static function display($path)
+    public function display()
     {
         $content = '';
 
-        if ($content = self::render($path)) {
+        if ($content = self::render($this->file, $this->assigned)) {
             \Facula\Framework::core('response')->setContent($content);
             \Facula\Framework::core('response')->send();
 
@@ -73,39 +92,22 @@ abstract class View
      * Render the page
      *
      * @param string $targetTpl The path to template file
+     * @param array $assigned Assigned data
      *
-     * @return mixed Return the rendered content when succeed, false otherwise
+     * @return mixed Return the content in ob buffer.
      */
-    private static function render($targetTpl)
+    protected static function render($targetTpl, array $assigned)
     {
-        if (is_readable($targetTpl)) {
-            if ($oldContent = ob_get_clean()) {
-                trigger_error(
-                    'ERROR_VIEW_BUFFER_POLLUTED|' . htmlspecialchars($oldContent),
-                    E_USER_ERROR
-                );
+        ob_start();
 
-                return false;
-            }
+        extract($assigned);
 
-            ob_start();
+        \Facula\Framework::core('debug')->criticalSection(true);
 
-            extract(self::$assigned);
+        require($targetTpl);
 
-            \Facula\Framework::core('debug')->criticalSection(true);
+        \Facula\Framework::core('debug')->criticalSection(false);
 
-            require($targetTpl);
-
-            \Facula\Framework::core('debug')->criticalSection(false);
-
-            return ob_get_clean();
-        } else {
-            trigger_error(
-                'ERROR_VIEW_TEMPLATE_FILENOTFOUND|' . $file,
-                E_USER_ERROR
-            );
-        }
-
-        return false;
+        return ob_get_clean();
     }
 }

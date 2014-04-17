@@ -145,7 +145,9 @@ abstract class Setting
                         if (!isset(self::$registered[$settingName]['Result'])) {
                             $operator = self::$registered[$settingName]['Operator'];
 
-                            self::$registered[$settingName]['Result'] = $operator();
+                            if ((self::$registered[$settingName]['Result'] = $operator()) === false) {
+                                throw new Exception\OperatorFailed($settingName);
+                            }
                         }
 
                         return self::$registered[$settingName]['Result'];

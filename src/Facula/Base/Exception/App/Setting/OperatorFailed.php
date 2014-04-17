@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Errors of Base Exception
+ * OperatorFailed Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,19 +25,16 @@
  *
  */
 
-namespace Facula\Base\Error\Base;
+namespace Facula\Base\Exception\App\Container;
 
-use Facula\Base\Prototype\Error as Base;
+use Facula\Base\Prototype\Exception as Base;
 
 /**
- * Errors for Base exception
+ * OperatorFailed Exception
  */
-class Exception extends Base
+class OperatorFailed extends Base
 {
-    /** Error code to error message */
-    protected static $errorStrings = array(
-        'OBJECT_CREATE_FAILED' => '
-            Failed on creating new instance of "%s".
-        ',
-    );
+    protected static $exceptionMessage = '
+        Data operator for "%s" has failed.
+    ';
 }
