@@ -401,7 +401,7 @@ class Framework
                     'Trying register a namespace('
                     . $nsPrefix
                     . ') while it already registered.',
-                E_USER_ERROR
+                    E_USER_ERROR
                 );
             }
 

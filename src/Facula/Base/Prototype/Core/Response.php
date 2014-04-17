@@ -27,10 +27,14 @@
 
 namespace Facula\Base\Prototype\Core;
 
+use Facula\Base\Error\Core\Response as Error;
+use Facula\Base\Prototype\Core as Factory;
+use Facula\Base\Implement\Core\Response as Implement;
+
 /**
  * Prototype class for Response core for make core remaking more easy
  */
-abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Response
+abstract class Response extends Factory implements Implement
 {
     /** Declare maintainer information */
     public static $plate = array(
@@ -433,14 +437,16 @@ abstract class Response extends \Facula\Base\Prototype\Core implements \Facula\B
 
             return true;
         } else {
-            trigger_error(
-                'ERROR_RESPONSE_ALREADY_RESPONSED|File: '
-                . $file
-                . ' Line: '
-                . $line
-                . ' Content: ' . substr(static::$content, 0, 32),
-                E_USER_ERROR
+            new Error(
+                'RESPONSE_OVERSEND',
+                array(
+                    $file,
+                    $line
+                ),
+                'ERROR'
             );
+
+            return false;
         }
 
         return false;

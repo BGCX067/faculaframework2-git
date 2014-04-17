@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Errors of Cache function core
  *
@@ -28,12 +29,15 @@ namespace Facula\Base\Error\Core;
 
 use Facula\Base\Prototype\Error as Base;
 
+/**
+ * Errors for Cache function core
+ */
 class Cache extends Base
 {
     /** Error code to error message */
     protected static $errorStrings = array(
         'CACHEPATH_NOTFOUND' => '
-            Cache root %s must be set and existed.
+            "CacheRoot" must be set and existed.
         ',
     );
 }

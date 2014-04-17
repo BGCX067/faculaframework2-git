@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Errors of Core Factory
  *
@@ -28,6 +29,9 @@ namespace Facula\Base\Error\Factory;
 
 use Facula\Base\Prototype\Error as Base;
 
+/**
+ * Errors for Core factory
+ */
 class Core extends Base
 {
     /** Error code to error message */

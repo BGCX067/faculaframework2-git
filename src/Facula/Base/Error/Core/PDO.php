@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Errors of PDO function core
  *
@@ -28,6 +29,9 @@ namespace Facula\Base\Error\Core;
 
 use Facula\Base\Prototype\Error as Base;
 
+/**
+ * Errors for PDO function core
+ */
 class PDO extends Base
 {
     /** Error code to error message */
@@ -73,7 +77,7 @@ class PDO extends Base
         ',
 
         'DATABASE_ALL_UNAVAILABLE' => '
-            All specified database is unavailable.
+            All specified databases is unavailable.
             Last error: %s;
         ',
     );

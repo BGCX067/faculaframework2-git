@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Errors of Request function core
  *
@@ -28,6 +29,9 @@ namespace Facula\Base\Error\Core;
 
 use Facula\Base\Prototype\Error as Base;
 
+/**
+ * Errors for Request function core
+ */
 class Request extends Base
 {
     /** Error code to error message */

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Errors of Operator Factory
  *
@@ -28,6 +29,9 @@ namespace Facula\Base\Error\Factory;
 
 use Facula\Base\Prototype\Error as Base;
 
+/**
+ * Errors for Operator factory
+ */
 class Operator extends Base
 {
     /** Error code to error message */

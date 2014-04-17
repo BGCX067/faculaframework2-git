@@ -27,10 +27,15 @@
 
 namespace Facula\Base\Prototype\Core;
 
+use Facula\Base\Error\Core\Template as Error;
+use Facula\Base\Prototype\Core as Factory;
+use Facula\Base\Implement\Core\Template as Implement;
+use Facula\Base\Tool\File\PathParser as PathParser;
+
 /**
  * Prototype class for Template core for make core remaking more easy
  */
-abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\Base\Implement\Core\Template
+abstract class Template extends Factory implements Implement
 {
     /** Declare maintainer information */
     public static $plate = array(
@@ -61,6 +66,19 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
     /** File map that contains all template and language files */
     protected static $fileMap = array();
 
+    /** Interfaces of sub operators */
+    protected static $operators = array(
+        'Render' => array(
+            'Class' => '\Facula\Base\Tool\Paging\Render',
+            'Interface' => '\Facula\Base\Implement\Core\Template\Render'
+        ),
+
+        'Compiler' => array(
+            'Class' => '\Facula\Base\Tool\Paging\Compiler',
+            'Interface' => '\Facula\Base\Implement\Core\Template\Compiler'
+        ),
+    );
+
     /**
      * Constructor
      *
@@ -77,11 +95,11 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
         $this->configs = array(
             'Cache' => isset($cfg['CacheTemplate'])
-                        && \Facula\Base\Tool\File\PathParser::get($cfg['CacheTemplate'])
+                        && PathParser::get($cfg['CacheTemplate'])
                         ? true : false,
 
             'Compress' => isset($cfg['CompressOutput'])
-                        && \Facula\Base\Tool\File\PathParser::get($cfg['CompressOutput'])
+                        && PathParser::get($cfg['CompressOutput'])
                         ? true : false,
 
             'Renew' => isset($cfg['ForceRenew'])
@@ -90,11 +108,11 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
             'Render' => isset($cfg['Render'][0])
                         && class_exists($cfg['Render'])
-                        ? $cfg['Render'] : '\Facula\Base\Tool\Paging\Render',
+                        ? $cfg['Render'] : static::$operators['Render']['Class'],
 
             'Compiler' => isset($cfg['Compiler'][0])
                         && class_exists($cfg['Compiler'])
-                        ? $cfg['Compiler'] : '\Facula\Base\Tool\Paging\Compiler',
+                        ? $cfg['Compiler'] : static::$operators['Compiler']['Class'],
 
             'CacheTTL' => isset($cfg['CacheMaxLifeTime'])
                         ? (int)($cfg['CacheMaxLifeTime']) : null,
@@ -104,31 +122,45 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
         // TemplatePool
         if (isset($cfg['TemplatePool'][0]) && is_dir($cfg['TemplatePool'])) {
-            $this->configs['TplPool'] = \Facula\Base\Tool\File\PathParser::get(
+            $this->configs['TplPool'] = PathParser::get(
                 $cfg['TemplatePool']
             );
         } else {
-            throw new \Exception('TemplatePool must be defined and existed.');
+            new Error(
+                'PATH_TEMPLATEPOOL_NOTFOUND',
+                array(),
+                'ERROR'
+            );
+
+            return;
         }
 
         // CompiledTemplate
         if (isset($cfg['CompiledTemplate'][0]) && is_dir($cfg['CompiledTemplate'])) {
-            $this->configs['Compiled'] = \Facula\Base\Tool\File\PathParser::get($cfg['CompiledTemplate']);
+            $this->configs['Compiled'] = PathParser::get($cfg['CompiledTemplate']);
         } else {
-            throw new \Exception(
-                'CompiledTemplate must be defined and existed.'
+            new Error(
+                'PATH_COMPILEDTEMPLATE_NOTFOUND',
+                array(),
+                'ERROR'
             );
+
+            return;
         }
 
         if ($this->configs['Cache']) {
             if (isset($cfg['CachePath']) && is_dir($cfg['CachePath'])) {
-                $this->configs['Cached'] = \Facula\Base\Tool\File\PathParser::get(
+                $this->configs['Cached'] = PathParser::get(
                     $cfg['CachePath']
                 );
             } else {
-                throw new \Exception(
-                    'CachePath must be defined and existed.'
+                new Error(
+                    'PATH_COMPILEDTEMPLATE_NOTFOUND',
+                    array(),
+                    'ERROR'
                 );
+
+                return;
             }
         }
 
@@ -246,9 +278,10 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             } elseif (isset($message['Message'])) {
                 $msgString = $message['Message'];
             } else {
-                trigger_error(
-                    'ERROR_TEMPLATE_MESSAGE_NOCONTENT',
-                    E_USER_ERROR
+                new Error(
+                    'MESSAGE_NOCONTENT',
+                    array(),
+                    'WARNING'
                 );
 
                 return false;
@@ -698,10 +731,13 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                 }
             }
         } else {
-            trigger_error(
-                'ERROR_TEMPLATE_CACHE_DISABLED',
-                E_USER_ERROR
+            new Error(
+                'CACHE_DISABLE',
+                array(),
+                'ERROR'
             );
+
+            return false;
         }
 
         return false;
@@ -760,9 +796,12 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             return $compiledTpl;
         } else {
             if (!$templatePath = $this->getTemplateFromMap($templateName, $templateSet)) {
-                trigger_error(
-                    'ERROR_TEMPLATE_NOTFOUND|' . $templateName,
-                    E_USER_ERROR
+                new Error(
+                    'TEMPLATE_NOTFOUND',
+                    array(
+                        $templateName
+                    ),
+                    'ERROR'
                 );
 
                 return false;
@@ -794,9 +833,13 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
             return true;
         } else {
-            trigger_error(
-                'ERROR_TEMPLATE_IMPORT_TEMPLATE_EXISTED|' . $name,
-                E_USER_ERROR
+            new Error(
+                'TEMPLATE_IMPORTING_EXISTED',
+                array(
+                    $name,
+                    $templateSet,
+                ),
+                'WARNING'
             );
         }
 
@@ -820,9 +863,16 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
             return true;
         } else {
-            trigger_error(
-                'ERROR_TEMPLATE_IMPORT_LANGUAGE_UNSPPORTED|' . $name,
-                E_USER_ERROR
+            new Error(
+                'LANGUAGE_IMPORTING_UNSUPPORTED',
+                array(
+                    $languageCode,
+                    implode(
+                        ', ',
+                        array_keys(static::$fileMap['Lang'])
+                    )
+                ),
+                'WARNING'
             );
         }
 
@@ -880,10 +930,14 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             $this->assigned
         );
 
-        if (!($render instanceof \Facula\Base\Implement\Core\Template\Render)) {
-            trigger_error(
-                'ERROR_TEMPLATE_RENDER_INVALID_INTERFACE',
-                E_USER_ERROR
+        if (!($render instanceof static::$operators['Render']['Interface'])) {
+            new Error(
+                'RENDER_INTERFACE',
+                array(
+                    $this->configs['Render'],
+                    static::$operators['Render']['Interface'],
+                ),
+                'ERROR'
             );
 
             return false;
@@ -923,6 +977,18 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
             $this->loadLangMap();
         }
 
+        if (!is_readable($sourceTpl)) {
+            new Error(
+                'COMPILE_FILE_NOTFOUND',
+                array(
+                    $sourceTpl,
+                ),
+                'ERROR'
+            );
+
+            return false;
+        }
+
         if ($sourceContent = trim(file_get_contents($sourceTpl))) {
             $poolCompexted = $this->pool + array(
                 'File' => static::$fileMap
@@ -933,10 +999,14 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                 $sourceContent
             );
 
-            if (!($compiler instanceof \Facula\Base\Implement\Core\Template\Compiler)) {
-                trigger_error(
-                    'ERROR_TEMPLATE_COMPILER_INVALID_INTERFACE',
-                    E_USER_ERROR
+            if (!($compiler instanceof static::$operators['Compiler']['Interface'])) {
+                new Error(
+                    'COMPILER_INTERFACE',
+                    array(
+                        $this->configs['Render'],
+                        static::$operators['Compiler']['Interface'],
+                    ),
+                    'ERROR'
                 );
 
                 return false;
@@ -966,15 +1036,21 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
                     . $compiledContent
                 );
             } else {
-                trigger_error(
-                    'ERROR_TEMPLATE_COMPILE_FAILED|' . $sourceTpl,
-                    E_USER_ERROR
+                new Error(
+                    'COMPILER_FAILED',
+                    array(
+                        $sourceTpl,
+                    ),
+                    'WARNING'
                 );
             }
         } else {
-            trigger_error(
-                'ERROR_TEMPLATE_COMPILE_OPEN_FAILED|' . $sourceTpl,
-                E_USER_ERROR
+            new Error(
+                'COMPILE_FILE_EMPTY',
+                array(
+                    $sourceTpl,
+                ),
+                'WARNING'
             );
         }
 
@@ -1018,13 +1094,35 @@ abstract class Template extends \Facula\Base\Prototype\Core implements \Facula\B
 
             // Must load default lang first
             foreach ($this->getLanguageFormMap('default') as $file) {
-                $langContent .= file_get_contents($file) . "\n";
+                if (is_readable($file)) {
+                    $langContent .= file_get_contents($file) . "\n";
+                } else {
+                    new Error(
+                        'LANGUAGE_DEFAULT_FILE_NOTFOUND',
+                        array(
+                            $file,
+                        ),
+                        'ERROR'
+                    );
+
+                    return false;
+                }
             }
 
             // And then, the client lang
             if ($this->pool['Language'] != 'default') {
                 foreach ($this->getLanguageFormMap($this->pool['Language']) as $file) {
-                    $langContent .= file_get_contents($file) . "\n";
+                    if (is_readable($file)) {
+                        $langContent .= file_get_contents($file) . "\n";
+                    } else {
+                        new Error(
+                            'LANGUAGE_FILE_NOTFOUND',
+                            array(
+                                $file,
+                            ),
+                            'WARNING'
+                        );
+                    }
                 }
             }
 

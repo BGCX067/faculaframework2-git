@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Exception Base Prototype
+ * Errors of Response function core
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,14 +25,20 @@
  *
  */
 
-namespace Facula\Base\Prototype;
+namespace Facula\Base\Error\Core;
 
-use \Facula\Base\Implement\Exception as Implement;
+use Facula\Base\Prototype\Error as Base;
 
 /**
- * Base class of execption
+ * Errors for Response function core
  */
-abstract class Exception extends \Exception implements Implement
+class Response extends Base
 {
-
+    /** Error code to error message */
+    protected static $errorStrings = array(
+        'RESPONSE_OVERSEND' => '
+            The application already responded to the request in file %s (line %d).
+            Client may already disconnected from server, so application denied to send another response.
+        ',
+    );
 }

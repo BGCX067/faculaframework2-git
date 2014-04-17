@@ -73,9 +73,7 @@ abstract class Cache extends Factory implements Implement
         } else {
             new Error(
                 'CACHEPATH_NOTFOUND',
-                array(
-                    $cfg['CacheRoot']
-                ),
+                array(),
                 'ERROR'
             );
 

@@ -78,8 +78,8 @@ abstract class Debug extends Factory implements Implement
                         </span>
 
                         <div class="code" style="padding-top: 5px; word-wrap: break-word;">
-                            <p>%Error:Message:Code% (%Error:Message:No%) %Error:Message%</p>
-                            <p>File: %Error:Message:File% (line: %Error:Message:Line%)</p>
+                            <p>%Error:Message:Code:Html% (%Error:Message:No:Html%) %Error:Message%</p>
+                            <p>File: %Error:Message:File:Html% (line: %Error:Message:Line:Html%)</p>
                         </div>
 
                         %Error:Detail%
@@ -93,19 +93,19 @@ abstract class Debug extends Factory implements Implement
                 'Code' => '
                     <li class="item" style="margin-bottom: 10px;">
                         <div class="item caller">
-                            %Error:Banner:Caller%
+                            %Error:Banner:Caller:Html%
                         </div>
 
                         <div class="item file" style="font-size: 0.9em; color: #e96d6d;">
-                            %Error:Banner:File% (Line: %Error:Banner:Line%)
+                            %Error:Banner:File:Html% (Line: %Error:Banner:Line:Html%)
                         </div>
 
                         <div class="item plate" style="font-size: 0.9em;">
-                            Author: %Error:Banner:Plate:Author%,
-                            Reviser: %Error:Banner:Plate:Reviser%,
-                            Contact: %Error:Banner:Plate:Contact%,
-                            Updated: %Error:Banner:Plate:Updated%,
-                            Version: %Error:Banner:Plate:Version%
+                            Author: %Error:Banner:Plate:Author:Html%,
+                            Reviser: %Error:Banner:Plate:Reviser:Html%,
+                            Contact: %Error:Banner:Plate:Contact:Html%,
+                            Updated: %Error:Banner:Plate:Updated:Html%,
+                            Version: %Error:Banner:Plate:Version:Html%
                         </div>
                     </li>
                 '
@@ -238,10 +238,10 @@ abstract class Debug extends Factory implements Implement
                             <div id="e-msg">
                                 <h1>An error occurred</h1>
 
-                                <p id="e-no" class="ct">%Error:Message:Code% (%Error:Message:No%)</p>
-                                <p class="ct">%Error:Message%</p>
+                                <p id="e-no" class="ct">%Error:Message:Code:Html% (%Error:Message:No:Html%)</p>
+                                <p class="ct">%Error:Message:Html%</p>
                                 <p id="e-f" class="ct">
-                                    %Error:Message:File% (line: %Error:Message:Line%)
+                                    %Error:Message:File:Html% (line: %Error:Message:Line:Html%)
                                 </p>
 
                                 <div id="e-sug">
@@ -283,8 +283,8 @@ abstract class Debug extends Factory implements Implement
                             Happened: %Error:Time%,&nbsp;
                             Debug: %Error:DebugStatus%,&nbsp;
                             Initialized: %Error:BootVersion%,&nbsp;
-                            Application: %Error:AppName% (%Error:AppVersion%),&nbsp;
-                            Server: %Error:ServerName%
+                            Application: %Error:AppName:Html% (%Error:AppVersion:Html%),&nbsp;
+                            Server: %Error:ServerName:Html%
                         </div>
                     </body>
                 </html>
@@ -298,19 +298,19 @@ abstract class Debug extends Factory implements Implement
                         <i class="no">%Error:Banner:No%</i>
                         <div class="detail">
                             <div class="item caller">
-                                %Error:Banner:Caller%
+                                %Error:Banner:Caller:Html%
                             </div>
 
                             <div class="item file">
-                                %Error:Banner:File% (Line: %Error:Banner:Line%)
+                                %Error:Banner:File:Html% (Line: %Error:Banner:Line:Html%)
                             </div>
 
                             <div class="item plate">
-                                Author: %Error:Banner:Plate:Author%,
-                                Reviser: %Error:Banner:Plate:Reviser%,
-                                Contact: %Error:Banner:Plate:Contact%,
-                                Updated: %Error:Banner:Plate:Updated%,
-                                Version: %Error:Banner:Plate:Version%
+                                Author: %Error:Banner:Plate:Author:Html%,
+                                Reviser: %Error:Banner:Plate:Reviser:Html%,
+                                Contact: %Error:Banner:Plate:Contact:Html%,
+                                Updated: %Error:Banner:Plate:Updated:Html%,
+                                Version: %Error:Banner:Plate:Version:Html%
                             </div>
                         </div>
                     </li>
@@ -381,8 +381,8 @@ abstract class Debug extends Factory implements Implement
     public function __construct(&$cfg, $common)
     {
         $this->configs = array(
-            'ExitOnAnyError' => isset($cfg['ExitOnAnyError']) ?
-                                $cfg['ExitOnAnyError'] : false,
+            'Strict' => isset($cfg['Strict']) && $cfg['Strict']?
+                                true : false,
 
             'LogRoot' => isset($cfg['LogRoot']) && is_dir($cfg['LogRoot']) ?
                         PathParser::get($cfg['LogRoot']) : '',
@@ -712,24 +712,27 @@ abstract class Debug extends Factory implements Implement
                 break;
 
 
-            // Warning: All Need to be Log, Only Suspend, Display when Debug is on
+            // Warning: All Need to be Log, Only Display when Debug is on, No Suspend
             case E_WARNING:
+                $errorInfo['Suspend'] = false;
+
                 if (!$this->configs['Debug']) {
-                    $errorInfo['Suspend'] = false;
                     $errorInfo['Display'] = false;
                 }
                 break;
 
             case E_CORE_WARNING:
+                $errorInfo['Suspend'] = false;
+
                 if (!$this->configs['Debug']) {
-                    $errorInfo['Suspend'] = false;
                     $errorInfo['Display'] = false;
                 }
                 break;
 
             case E_USER_WARNING:
+                $errorInfo['Suspend'] = false;
+
                 if (!$this->configs['Debug']) {
-                    $errorInfo['Suspend'] = false;
                     $errorInfo['Display'] = false;
                 }
                 break;
@@ -774,8 +777,22 @@ abstract class Debug extends Factory implements Implement
                 break;
         }
 
-        if ($this->configs['ExitOnAnyError']) {
+        // Avoid some declaration according to criticalSection
+        if ($this->tempFullDisabled) { // No log, no display
+            $errorInfo['Log'] = false;
+            $errorInfo['Display'] = false;
+        } elseif ($this->tempDisabled) { // No display
+            $errorInfo['Display'] = false;
+        }
+
+        // However, if Strict Mode is on, display all error, log it and suspend the application.
+        if ($this->configs['Strict']) {
+            $errorInfo['Log'] = true;
             $errorInfo['Suspend'] = true;
+            $errorInfo['Display'] = true;
+
+            $errorInfo['Error']['Message'] =
+                '! ' . $errorInfo['Error']['Message'];
         }
 
         return $this->exception(
@@ -858,30 +875,27 @@ abstract class Debug extends Factory implements Implement
      */
     protected function exception(array $errorInfo)
     {
-        if (!$this->tempFullDisabled) {
+        $backTraces = array_reverse($errorInfo['Error']['Trace']);
 
-            $backTraces = array_reverse($errorInfo['Error']['Trace']);
+        if ($errorInfo['Log']) {
+            $this->addLog(
+                $errorInfo['Error']['Code'],
+                $errorInfo['Error']['No'],
+                sprintf(
+                    '%s in %s, line %d',
+                    $errorInfo['Error']['Message'],
+                    $errorInfo['Error']['File'],
+                    $errorInfo['Error']['Line']
+                ),
+                $backTraces
+            );
+        }
 
-            if ($errorInfo['Log']) {
-                $this->addLog(
-                    $errorInfo['Error']['Code'],
-                    $errorInfo['Error']['No'],
-                    sprintf(
-                        '%s in %s, line %d',
-                        $errorInfo['Error']['Message'],
-                        $errorInfo['Error']['File'],
-                        $errorInfo['Error']['Line']
-                    ),
-                    $backTraces
-                );
-            }
-
-            if (!$this->tempDisabled && $errorInfo['Display']) {
-                $this->displayErrorBanner(
-                    $errorInfo['Error'],
-                    $backTraces
-                );
-            }
+        if ($errorInfo['Display']) {
+            $this->displayErrorBanner(
+                $errorInfo['Error'],
+                $backTraces
+            );
         }
 
         if ($errorInfo['Suspend']) {
@@ -1061,50 +1075,74 @@ abstract class Debug extends Factory implements Implement
             $detail = 'Debug disabled, error detail unavailable.';
         }
 
+        $errorMessage = str_replace(
+            array(
+                PROJECT_ROOT,
+                FACULA_ROOT,
+            ),
+            array(
+                '[PROJECT]',
+                '[FACULA]',
+            ),
+            $errorDetail['Message']
+        );
+
+        $errorFile = PathParser::replacePathPrefixes(
+            array(
+                PROJECT_ROOT,
+                FACULA_ROOT,
+            ),
+            array(
+                '[PROJECT]',
+                '[FACULA]',
+            ),
+            $errorDetail['File']
+        );
+
         $templateAssigns = array(
             '%Error:Detail%' => $detail,
 
-            '%Error:Message%' => str_replace(
-                array(
-                    PROJECT_ROOT,
-                    FACULA_ROOT,
-                ),
-                array(
-                    '[PROJECT]',
-                    '[FACULA]',
-                ),
-                $errorDetail['Message']
-            ),
-
-            '%Error:Message:Code%' => $errorDetail['Code'],
-
-            '%Error:Message:File%' => PathParser::replacePathPrefixes(
-                array(
-                    PROJECT_ROOT,
-                    FACULA_ROOT,
-                ),
-                array(
-                    '[PROJECT]',
-                    '[FACULA]',
-                ),
-                $errorDetail['File']
-            ),
-
-            '%Error:Message:Line%' => $errorDetail['Line'],
-
-            '%Error:Message:No%' => $errorDetail['No'],
-
             '%Error:Time%' => date(DATE_ATOM, FACULA_TIME),
+            '%Error:BootVersion%' => date(DATE_ATOM, $this->configs['BootVersion']),
 
             '%Error:DebugStatus%' => $this->configs['Debug'] ? 'Enabled' : 'Disabled',
 
-            '%Error:BootVersion%' => date(DATE_ATOM, $this->configs['BootVersion']),
 
             '%Error:AppName%' => $this->configs['AppName'],
-
             '%Error:AppVersion%' => $this->configs['AppVersion'],
-
             '%Error:ServerName%' => $this->configs['ServerName'],
+
+            '%Error:Message%' => $errorMessage,
+            '%Error:Message:Code%' => $errorDetail['Code'],
+            '%Error:Message:File%' => $errorFile,
+            '%Error:Message:Line%' => $errorDetail['Line'],
+            '%Error:Message:No%' => $errorDetail['No'],
+
+
+            '%Error:AppName:Html%' =>
+                htmlspecialchars($this->configs['AppName'], ENT_QUOTES),
+
+            '%Error:AppVersion:Html%' =>
+                htmlspecialchars($this->configs['AppVersion'], ENT_QUOTES),
+
+            '%Error:ServerName:Html%' =>
+                htmlspecialchars($this->configs['ServerName'], ENT_QUOTES),
+
+
+            '%Error:Message:Html%' =>
+                htmlspecialchars($errorMessage, ENT_QUOTES),
+
+            '%Error:Message:Code:Html%' =>
+                htmlspecialchars($errorDetail['Code'], ENT_QUOTES),
+
+            '%Error:Message:File:Html%' =>
+                htmlspecialchars($errorFile, ENT_QUOTES),
+
+            '%Error:Message:Line:Html%' =>
+                htmlspecialchars($errorDetail['Line'], ENT_QUOTES),
+
+            '%Error:Message:No:Html%' =>
+                htmlspecialchars($errorDetail['No'], ENT_QUOTES),
         );
 
         $displayContent = str_replace(
@@ -1139,7 +1177,7 @@ abstract class Debug extends Factory implements Implement
         }
 
         $assigns = array();
-        $detail = '';
+        $detail = $tempFilePath = '';
         $tracesLoop = 0;
 
         $detail = $banner['Start'];
@@ -1147,27 +1185,56 @@ abstract class Debug extends Factory implements Implement
         foreach ($backTraces as $key => $val) {
             $tracesLoop++;
 
+            $tempFilePath = PathParser::replacePathPrefixes(
+                array(
+                    PROJECT_ROOT,
+                    FACULA_ROOT,
+                ),
+                array(
+                    '[PROJECT]',
+                    '[FACULA]',
+                ),
+                $val['file']
+            );
+
             $assigns = array(
                 '%Error:Banner:No%' => $tracesLoop,
+
                 '%Error:Banner:Caller%' => $val['caller'],
-                '%Error:Banner:File%' =>
-                    PathParser::replacePathPrefixes(
-                        array(
-                            PROJECT_ROOT,
-                            FACULA_ROOT,
-                        ),
-                        array(
-                            '[PROJECT]',
-                            '[FACULA]',
-                        ),
-                        $val['file']
-                    ),
+                '%Error:Banner:File%' => $tempFilePath,
                 '%Error:Banner:Line%' => $val['line'],
+
                 '%Error:Banner:Plate:Author%' => $val['nameplate']['author'],
                 '%Error:Banner:Plate:Reviser%' => $val['nameplate']['reviser'],
                 '%Error:Banner:Plate:Contact%' => $val['nameplate']['contact'],
                 '%Error:Banner:Plate:Updated%' => $val['nameplate']['updated'],
                 '%Error:Banner:Plate:Version%' => $val['nameplate']['version'],
+
+
+                '%Error:Banner:Caller:Html%' =>
+                    htmlspecialchars($val['caller'], ENT_QUOTES),
+
+                '%Error:Banner:File:Html%' =>
+                    htmlspecialchars($tempFilePath, ENT_QUOTES),
+
+                '%Error:Banner:Line:Html%' =>
+                    htmlspecialchars($val['line'], ENT_QUOTES),
+
+
+                '%Error:Banner:Plate:Author:Html%' =>
+                    htmlspecialchars($val['nameplate']['author'], ENT_QUOTES),
+
+                '%Error:Banner:Plate:Reviser:Html%' =>
+                    htmlspecialchars($val['nameplate']['reviser'], ENT_QUOTES),
+
+                '%Error:Banner:Plate:Contact:Html%' =>
+                    htmlspecialchars($val['nameplate']['contact'], ENT_QUOTES),
+
+                '%Error:Banner:Plate:Updated:Html%' =>
+                    htmlspecialchars($val['nameplate']['updated'], ENT_QUOTES),
+
+                '%Error:Banner:Plate:Version:Html%' =>
+                    htmlspecialchars($val['nameplate']['version'], ENT_QUOTES),
             );
 
             $detail .= str_replace(

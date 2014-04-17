@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Errors of Object function core
  *
@@ -28,26 +29,29 @@ namespace Facula\Base\Error\Core;
 
 use Facula\Base\Prototype\Error as Base;
 
+/**
+ * Errors for Object function core
+ */
 class Object extends Base
 {
     /** Error code to error message */
     protected static $errorStrings = array(
         'OBJECT_CREATE_FAILED' => '
-            Failed on creating new instance of %s.
+            Failed on creating new instance of "%s".
         ',
 
         'OBJECT_MAXPARAM_EXCEEDED' => '
-            Can\'t create new instance of %s,
+            Can\'t create new instance of "%s",
             The parameters has exceeded the max limit.
         ',
 
         'OBJECT_INIT_FAILED' => '
-            Can\'t initialize %s.
+            Can\'t initialize "%s".
             The Initializer method returned false result.
         ',
 
         'OBJECT_NOTFOUND' => '
-            Can\'t create %s.
+            Can\'t create "%s".
             The class of this object can\'t be found.
         ',
     );
