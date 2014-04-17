@@ -315,9 +315,9 @@ abstract class Response extends Factory implements Implement
      */
     public function send($type = 'htm', $persistConn = false)
     {
-        $file = $line = $oldBufferContent = $finalContent = '';
+        $file = $line = $lastBufferContent = $oldBufferContent = $finalContent = '';
         $hookResult = null;
-        $finalContentLen = $bufferLevel = 0;
+        $finalContentLen = $lastBufferLevel = 0;
         $thereIndiscernible = false;
         $errors = array();
 
@@ -339,13 +339,19 @@ abstract class Response extends Factory implements Implement
             $thereIndiscernible = true;
         }
 
-        // Safely shutdown early output (May set by PHP itself when output_buffering = On)
-        while (($bufferLevel = ob_get_level()) != 0) {
+        // Safely shutdown early output
+        while (($lastBufferContent = ob_get_clean()) !== false) {
+            // Avoid the buffer may set by PHP itself when output_buffering = On
+            if (($lastBufferLevel = ob_get_level()) <= 1
+            && !isset($lastBufferContent[0])) {
+                break;
+            }
+
             new Error(
                 'BUFFER_POLLUTED',
                 array(
-                    $bufferLevel,
-                    ob_get_clean()
+                    $lastBufferLevel,
+                    $lastBufferContent
                 ),
                 'NOTICE'
             );
