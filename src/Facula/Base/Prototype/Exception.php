@@ -27,12 +27,63 @@
 
 namespace Facula\Base\Prototype;
 
-use \Facula\Base\Implement\Exception as Implement;
+use Facula\Base\Implement\Exception as Implement;
 
 /**
  * Base class of execption
  */
 abstract class Exception extends \Exception implements Implement
 {
+    /** Default exception message */
+    protected static $exceptionMessage = 'Exception without message.';
 
+    /** Default exception level */
+    protected static $exceptionLevel = E_USER_ERROR;
+
+    /**
+     * Constructor
+     *
+     * Parameters will be use for the second parameter vsprintf.
+     * to formating the error message.
+     *
+     * @return void
+     */
+    final public function __construct()
+    {
+        $message = $tempMessage = '';
+
+        $message = vsprintf(
+            static::$exceptionMessage,
+            func_get_args()
+        );
+
+        while (true) {
+            $tempMessage = str_replace(
+                array("\n", "\r", '  '),
+                ' ',
+                $message
+            );
+
+            if ($tempMessage == $message) {
+                break;
+            }
+
+            $message = $tempMessage;
+        }
+
+        return parent::__construct(
+            trim($message),
+            static::$exceptionLevel
+        );
+    }
+
+    /**
+     * Convert object to string
+     *
+     * @return string Return the error message
+     */
+    final public function __toString()
+    {
+        return __CLASS__ . ':[ ' . $this->code . ']: ' . $this->message;
+    }
 }

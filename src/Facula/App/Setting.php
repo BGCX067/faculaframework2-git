@@ -27,6 +27,8 @@
 
 namespace Facula\App;
 
+use Facula\Base\Exception\App\Setting as Exception;
+
 /**
  * Setting Container
  */
@@ -108,10 +110,7 @@ abstract class Setting
 
             return true;
         } else {
-            trigger_error(
-                'ERROR_SETTING_NAME_ALREADY_EXISTED|' . $settingName,
-                E_USER_ERROR
-            );
+            throw new Exception\AlreadyExisted($settingName);
         }
 
         return false;
@@ -157,16 +156,16 @@ abstract class Setting
                         break;
 
                     default:
+                        throw new Exception\InvalidDataType($settingName);
                         break;
                 }
 
             } else {
-                trigger_error(
-                    'ERROR_SETTING_ACCESS_DENIED|' . $accesser . ' -> ' . $settingName,
-                    E_USER_ERROR
-                );
+                throw new Exception\AccessDenied($settingName, $accesser);
             }
         }
+
+        throw new Exception\NotFound($settingName);
 
         return null;
     }

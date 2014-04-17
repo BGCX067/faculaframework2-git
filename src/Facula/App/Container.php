@@ -27,6 +27,8 @@
 
 namespace Facula\App;
 
+use Facula\Base\Exception\App\Container as Exception;
+
 /**
  * IoC Container
  */
@@ -99,10 +101,7 @@ abstract class Container
 
             return true;
         } else {
-            trigger_error(
-                'ERROR_CONTAINER_NAME_ALREADY_EXISTED|' . $name,
-                E_USER_ERROR
-            );
+            throw new Exception\AlreadyExisted($name);
         }
 
         return false;
@@ -117,8 +116,11 @@ abstract class Container
      *
      * @return mixed Return value from injected function
      */
-    public static function resolve($name, $args = array(), \Closure $default = null)
-    {
+    public static function resolve(
+        $name,
+        $args = array(),
+        \Closure $default = null
+    ) {
         $accesser = '';
 
         if (isset(self::$contains[$name])) {
@@ -246,13 +248,12 @@ abstract class Container
 
                 }
             } else {
-                trigger_error(
-                    'ERROR_CONTAINER_ACCESS_DENIED|' . $accesser . ' -> ' . $name,
-                    E_USER_ERROR
-                );
+                throw new Exception\AccessDenied($name, $accesser);
             }
         } elseif ($default && is_callable($default)) {
             return $default();
+        } else {
+            throw new Exception\NotFound($name);
         }
 
         return false;

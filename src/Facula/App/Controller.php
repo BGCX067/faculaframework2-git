@@ -27,11 +27,68 @@
 
 namespace Facula\App;
 
+use Facula\Base\Exception\App\Controller as Exception;
+
 /**
  * Base Controller
  */
 abstract class Controller extends Setting
 {
+    public $cachedObjectFilePath = '';
+    public $cachedObjectSaveTime = 0;
+
+    private $cores = array();
+
+    /**
+     * Magic method get to get cores
+     *
+     * @param string $key The key name function core
+     *
+     * @return mixed Return the function core if found, null otherwise.
+     */
+    public function __get($key)
+    {
+        if (isset($this->cores[$key])) {
+            return $this->cores[$key];
+        }
+
+        switch ($key) {
+            case 'debug':
+                throw new Exception\DebugCoreInactive();
+                break;
+
+            case 'object':
+                throw new Exception\ObjectCoreInactive();
+                break;
+
+            case 'request':
+                throw new Exception\RequestCoreInactive();
+                break;
+
+            case 'response':
+                throw new Exception\ResponseCoreInactive();
+                break;
+
+            case 'template':
+                throw new Exception\TemplateCoreInactive();
+                break;
+
+            case 'pdo':
+                throw new Exception\PDOCoreInactive();
+                break;
+
+            case 'cache':
+                throw new Exception\CacheCoreInactive();
+                break;
+
+            default:
+                throw new Exception\CoreInactive($key);
+                break;
+        }
+
+        return null;
+    }
+
     /**
      * A initializer method that will be auto automatically call by Object core
      *
@@ -41,9 +98,7 @@ abstract class Controller extends Setting
      */
     final public function init()
     {
-        foreach (\Facula\Framework::getAllCores() as $coreName => $coreReference) {
-            $this->$coreName = $coreReference;
-        }
+        $this->cores = \Facula\Framework::getAllCores();
 
         return true;
     }
@@ -158,7 +213,8 @@ abstract class Controller extends Setting
                 break;
         }
 
-        return $this->response->setHeader('Location: ' . $rootUrl . $addr) && $this->response->send() ? true : false;
+        return $this->response->setHeader('Location: ' . $rootUrl . $addr) && $this->response->send() ?
+            true : false;
     }
 
     /**
@@ -200,15 +256,8 @@ abstract class Controller extends Setting
      */
     final protected function assign($key, $val)
     {
-        if (isset($this->template)) {
-            if ($this->template->assign($key, $val)) {
-                return true;
-            }
-        } else {
-            trigger_error(
-                'ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE',
-                E_USER_ERROR
-            );
+        if ($this->template->assign($key, $val)) {
+            return true;
         }
 
         return false;
@@ -227,19 +276,12 @@ abstract class Controller extends Setting
             return false;
         }
 
-        if ($this->template) {
-            if (is_array($msg)) {
-                return $this->template->insertMessage($msg);
-            } else {
-                return $this->template->insertMessage(array(
-                    'Message' => $msg,
-                ));
-            }
+        if (is_array($msg)) {
+            return $this->template->insertMessage($msg);
         } else {
-            trigger_error(
-                'ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE',
-                E_USER_ERROR
-            );
+            return $this->template->insertMessage(array(
+                'Message' => $msg,
+            ));
         }
 
         return false;
@@ -265,23 +307,16 @@ abstract class Controller extends Setting
     ) {
         $content = '';
 
-        if (isset($this->template)) {
-            if ($content = $this->template->render(
-                $tplName,
-                $tplSet,
-                $cacheExpired,
-                $cacheExpiredCallback,
-                $factor
-            )) {
-                if ($this->response->setContent($content)) {
-                    return $this->response->send();
-                }
+        if ($content = $this->template->render(
+            $tplName,
+            $tplSet,
+            $cacheExpired,
+            $cacheExpiredCallback,
+            $factor
+        )) {
+            if ($this->response->setContent($content)) {
+                return $this->response->send();
             }
-        } else {
-            trigger_error(
-                'ERROR_CONTROLLER_CORE_INACTIVE_TEMPLATE',
-                E_USER_ERROR
-            );
         }
 
         return false;

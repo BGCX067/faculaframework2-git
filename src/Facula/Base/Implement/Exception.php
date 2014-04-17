@@ -32,5 +32,6 @@ namespace Facula\Base\Implement;
  */
 interface Exception
 {
-
+    public function __construct();
+    public function __toString();
 }

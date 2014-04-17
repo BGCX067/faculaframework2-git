@@ -47,5 +47,5 @@ interface Error
     public function getArgs();
     public function getMessage();
 
-    public function setErrorString($key, $string);
+    public static function setErrorString($key, $string);
 }

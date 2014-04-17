@@ -28,7 +28,7 @@
 namespace Facula\Base\Prototype;
 
 /**
- * Base class of execption
+ * Base class of error
  */
 abstract class Error implements \Facula\Base\Implement\Error
 {
@@ -169,7 +169,7 @@ abstract class Error implements \Facula\Base\Implement\Error
      *
      * @return string Trimmed string
      */
-    protected static function trimErrorMessage($string)
+    final protected static function trimErrorMessage($string)
     {
         $newString = $string;
 
@@ -188,9 +188,9 @@ abstract class Error implements \Facula\Base\Implement\Error
 
             if ($newString == $string) {
                 break;
-            } else {
-                $string = $newString;
             }
+
+            $string = $newString;
         }
 
         return trim($newString);
@@ -204,7 +204,7 @@ abstract class Error implements \Facula\Base\Implement\Error
      *
      * @return bool Return true when success, fail otherwise.
      */
-    final public function setErrorString($key, $string)
+    final public static function setErrorString($key, $string)
     {
         if (isset(static::$errorStrings[$key])) {
             static::$errorStrings[$key] = $string;
@@ -227,7 +227,7 @@ abstract class Error implements \Facula\Base\Implement\Error
      *
      * @return array The trace information
      */
-    public function getTrace()
+    final public function getTrace()
     {
         return $this->trace;
     }
@@ -237,7 +237,7 @@ abstract class Error implements \Facula\Base\Implement\Error
      *
      * @return string File name when it has, empty string otherwise
      */
-    public function getFile()
+    final public function getFile()
     {
         return $this->file;
     }
@@ -247,7 +247,7 @@ abstract class Error implements \Facula\Base\Implement\Error
      *
      * @return integer Error line when it has, 0 otherwise
      */
-    public function getLine()
+    final public function getLine()
     {
         return $this->line;
     }
@@ -257,7 +257,7 @@ abstract class Error implements \Facula\Base\Implement\Error
      *
      * @return string caller class name when it has, empty string otherwise
      */
-    public function getClass()
+    final public function getClass()
     {
         return $this->class;
     }
@@ -267,7 +267,7 @@ abstract class Error implements \Facula\Base\Implement\Error
      *
      * @return string caller function name when it has, empty string otherwise
      */
-    public function getFunction()
+    final public function getFunction()
     {
         return $this->function;
     }
@@ -277,7 +277,7 @@ abstract class Error implements \Facula\Base\Implement\Error
      *
      * @return string caller function type name when it has, empty string otherwise
      */
-    public function getFunctionType()
+    final public function getFunctionType()
     {
         return $this->functionType;
     }
@@ -287,7 +287,7 @@ abstract class Error implements \Facula\Base\Implement\Error
      *
      * @return string caller function arguments name when it has, empty string otherwise
      */
-    public function getArgs()
+    final public function getArgs()
     {
         return $this->args;
     }
@@ -297,7 +297,7 @@ abstract class Error implements \Facula\Base\Implement\Error
      *
      * @return string Formated error message
      */
-    public function getMessage()
+    final public function getMessage()
     {
         return $this->message;
     }
