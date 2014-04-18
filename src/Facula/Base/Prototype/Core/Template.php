@@ -924,12 +924,12 @@ abstract class Template extends Factory implements Implement
                 $this->assigned
             );
 
-            if (!($render instanceof static::$operators['Render']['Interface'])) {
+            if (!($render instanceof static::$operatorsImpl['Render'])) {
                 new Error(
                     'RENDER_INTERFACE',
                     array(
                         $this->configs['Render'],
-                        static::$operators['Render']['Interface'],
+                        static::$operatorsImpl['Render'],
                     ),
                     'ERROR'
                 );
@@ -1021,12 +1021,12 @@ abstract class Template extends Factory implements Implement
                     $sourceContent
                 );
 
-                if (!($compiler instanceof static::$operators['Compiler']['Interface'])) {
+                if (!($compiler instanceof static::$operatorsImpl['Compiler'])) {
                     new Error(
                         'COMPILER_INTERFACE',
                         array(
                             $this->configs['Render'],
-                            static::$operators['Compiler']['Interface'],
+                            static::$operatorsImpl['Compiler'],
                         ),
                         'ERROR'
                     );
