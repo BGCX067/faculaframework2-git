@@ -51,6 +51,15 @@ abstract class Operator
             static::$operators[$operator] = $operatorClass;
 
             return true;
+        } else {
+            new Error(
+                'OPERATOR_ALREAY_EXISTED',
+                array(
+                    $operator,
+                    get_called_class()
+                ),
+                'ERROR'
+            );
         }
 
         return false;

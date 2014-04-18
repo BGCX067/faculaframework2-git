@@ -67,16 +67,9 @@ abstract class Template extends Factory implements Implement
     protected static $fileMap = array();
 
     /** Interfaces of sub operators */
-    protected static $operators = array(
-        'Render' => array(
-            'Class' => '\Facula\Base\Tool\Paging\Render',
-            'Interface' => '\Facula\Base\Implement\Core\Template\Render'
-        ),
-
-        'Compiler' => array(
-            'Class' => '\Facula\Base\Tool\Paging\Compiler',
-            'Interface' => '\Facula\Base\Implement\Core\Template\Compiler'
-        ),
+    protected static $operatorsImpl = array(
+        'Render' => '\Facula\Base\Implement\Core\Template\Render',
+        'Compiler' => '\Facula\Base\Implement\Core\Template\Compiler'
     );
 
     /**
@@ -95,27 +88,24 @@ abstract class Template extends Factory implements Implement
 
         $this->configs = array(
             'Cache' => isset($cfg['CacheTemplate'])
-                        && PathParser::get($cfg['CacheTemplate'])
-                        ? true : false,
+                        && PathParser::get($cfg['CacheTemplate']) ?
+                        true : false,
 
             'Compress' => isset($cfg['CompressOutput'])
-                        && PathParser::get($cfg['CompressOutput'])
-                        ? true : false,
+                        && PathParser::get($cfg['CompressOutput']) ?
+                        true : false,
 
-            'Renew' => isset($cfg['ForceRenew'])
-                        && $cfg['ForceRenew']
-                        ? true : false,
+            'Renew' => isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ?
+                        true : false,
 
-            'Render' => isset($cfg['Render'][0])
-                        && class_exists($cfg['Render'])
-                        ? $cfg['Render'] : static::$operators['Render']['Class'],
+            'Render' => isset($cfg['Render'][0]) && class_exists($cfg['Render']) ?
+                        $cfg['Render'] : '',
 
-            'Compiler' => isset($cfg['Compiler'][0])
-                        && class_exists($cfg['Compiler'])
-                        ? $cfg['Compiler'] : static::$operators['Compiler']['Class'],
+            'Compiler' => isset($cfg['Compiler'][0]) && class_exists($cfg['Compiler']) ?
+                        $cfg['Compiler'] : '',
 
-            'CacheTTL' => isset($cfg['CacheMaxLifeTime'])
-                        ? (int)($cfg['CacheMaxLifeTime']) : null,
+            'CacheTTL' => isset($cfg['CacheMaxLifeTime']) ?
+                        (int)($cfg['CacheMaxLifeTime']) : null,
 
             'CacheVer' => $common['BootVersion'],
         );
@@ -928,25 +918,53 @@ abstract class Template extends Factory implements Implement
             $errors
         );
 
-        $render = new $this->configs['Render'](
-            $compiledTpl,
-            $this->assigned
-        );
-
-        if (!($render instanceof static::$operators['Render']['Interface'])) {
-            new Error(
-                'RENDER_INTERFACE',
-                array(
-                    $this->configs['Render'],
-                    static::$operators['Render']['Interface'],
-                ),
-                'ERROR'
+        if ($this->configs['Render']) {
+            $render = new $this->configs['Render'](
+                $compiledTpl,
+                $this->assigned
             );
 
-            return false;
+            if (!($render instanceof static::$operators['Render']['Interface'])) {
+                new Error(
+                    'RENDER_INTERFACE',
+                    array(
+                        $this->configs['Render'],
+                        static::$operators['Render']['Interface'],
+                    ),
+                    'ERROR'
+                );
+
+                return false;
+            }
+
+            return $render->getResult();
         }
 
-        return $render->getResult();
+        return static::renderPage($compiledTpl, $this->assigned);
+    }
+
+    /**
+     * The default render when no render has set
+     *
+     * @param string $compiledTpl Path to the compiled template file
+     * @param array $assigned Assigned data
+     *
+     * @return mixed Return the rendered content when succeed, or false otherwise.
+     */
+    protected static function renderPage($compiledTpl, $assigned)
+    {
+        ob_start();
+
+        extract($assigned);
+        unset($assigned);
+
+        \Facula\Framework::core('debug')->criticalSection(true);
+
+        require($compiledTpl);
+
+        \Facula\Framework::core('debug')->criticalSection(false);
+
+        return ob_get_clean();
     }
 
     /**
@@ -997,25 +1015,31 @@ abstract class Template extends Factory implements Implement
                 'File' => static::$fileMap
             );
 
-            $compiler = new $this->configs['Compiler'](
-                $poolCompexted,
-                $sourceContent
-            );
-
-            if (!($compiler instanceof static::$operators['Compiler']['Interface'])) {
-                new Error(
-                    'COMPILER_INTERFACE',
-                    array(
-                        $this->configs['Render'],
-                        static::$operators['Compiler']['Interface'],
-                    ),
-                    'ERROR'
+            if ($this->configs['Compiler']) {
+                $compiler = new $this->configs['Compiler'](
+                    $poolCompexted,
+                    $sourceContent
                 );
 
-                return false;
+                if (!($compiler instanceof static::$operators['Compiler']['Interface'])) {
+                    new Error(
+                        'COMPILER_INTERFACE',
+                        array(
+                            $this->configs['Render'],
+                            static::$operators['Compiler']['Interface'],
+                        ),
+                        'ERROR'
+                    );
+
+                    return false;
+                }
+
+                $compiledContent = $compiler->compile();
+            } else {
+                $compiledContent = static::compilePage($poolCompexted, $sourceContent);
             }
 
-            if ($compiledContent = $compiler->compile()) {
+            if ($compiledContent) {
                 if ($this->configs['Compress']) {
                     $compiledContent = str_replace(
                         array('  ', "\r", "\n", "\t"),
@@ -1058,6 +1082,29 @@ abstract class Template extends Factory implements Implement
         }
 
         return false;
+    }
+
+    /**
+     * The default compiler when no compiler has set
+     *
+     * @param array $poolCompexted The data needed to compile the template file
+     * @param string $sourceContent Content of source template file
+     *
+     * @return string Return the rendered content
+     */
+    protected static function compilePage($poolCompexted, $sourceContent)
+    {
+        if (isset($poolCompexted['LanguageMap'])) {
+            foreach ($poolCompexted['LanguageMap'] as $langKey => $langString) {
+                $sourceContent = str_replace(
+                    '<!-- Lang:' . $langKey . ' -->',
+                    $langString,
+                    $sourceContent
+                );
+            }
+        }
+
+        return $sourceContent;
     }
 
     /**

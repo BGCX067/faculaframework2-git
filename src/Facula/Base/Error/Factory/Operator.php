@@ -39,5 +39,9 @@ class Operator extends Base
         'OPERATOR_NOTFOUND' => '
             The operator "%s" not found in object "%s".
         ',
+
+        'OPERATOR_ALREAY_EXISTED' => '
+            The operator "%s" for "%s" already been registered.
+        ',
     );
 }

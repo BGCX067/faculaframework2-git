@@ -48,8 +48,6 @@ class Factory extends BaseFactory
     /** Declare default operators */
     protected static $operators = array(
         'GD' => '\Facula\Unit\Imager\Operator\GD',
-        'Gmagick' => '\Facula\Unit\Imager\Operator\Gmagick',
-        'Imagick' => '\Facula\Unit\Imager\Operator\Imagick',
     );
 
     /**
