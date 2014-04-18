@@ -1,7 +1,7 @@
 <?php
 
 /**
- * CacheCoreInactive Exception
+ * NotDirectory Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,18 +25,18 @@
  *
  */
 
-namespace Facula\Base\Exception\App\Controller;
+namespace Facula\Base\Exception\Tool\File\ModuleScanner;
 
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * CacheCoreInactive Exception
+ * NotDirectory Exception
  */
-class CacheCoreInactive extends Base
+class NotDirectory extends Base
 {
     protected static $exceptionMessage = '
-        You want to use cache function core,
-        but it\'s seems not active.
-        To enable, please add it into your framework configuration.
+        Accessing %s, but it\'s seems not a directory.
     ';
+
+    protected static $exceptionLevel = E_USER_WARNING;
 }

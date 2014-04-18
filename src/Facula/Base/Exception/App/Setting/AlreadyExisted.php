@@ -35,7 +35,7 @@ use Facula\Base\Prototype\Exception as Base;
 class AlreadyExisted extends Base
 {
     protected static $exceptionMessage = '
-        You want to register %s to container,
+        You want to register "%s" to setting container,
         but the name already been taken.
     ';
 }

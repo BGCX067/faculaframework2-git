@@ -37,7 +37,7 @@ class Operator extends Base
     /** Error code to error message */
     protected static $errorStrings = array(
         'OPERATOR_NOTFOUND' => '
-            The operator %s not found in class %s.
+            The operator "%s" not found in object "%s".
         ',
     );
 }

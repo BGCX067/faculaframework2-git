@@ -30,6 +30,7 @@ namespace Facula\Base\Prototype\Core;
 use Facula\Base\Error\Core\Request as Error;
 use Facula\Base\Prototype\Core as Factory;
 use Facula\Base\Implement\Core\Request as Implement;
+use Facula\Base\Tool\PHP\Ini as Ini;
 
 /**
  * Prototype class for Request core for make core remaking more easy
@@ -118,17 +119,17 @@ abstract class Request extends Factory implements Implement
         }
 
         if (isset($cfg['MaxDataSize'])) {
-            // give memory_limit * 0.8 because our app needs memory to run, so memory
-            // cannot be 100%ly use for save request data;
+            // give memory_limit * 0.6 because we needs memory to run other stuffs, so memory
+            // cannot be 100%ly use for handle request data;
             $this->configs['MaxDataSize'] = min(
                 (int)($cfg['MaxDataSize']),
-                \Facula\Base\Tool\Misc\PHPIni::convertIniUnit(ini_get('post_max_size')),
-                \Facula\Base\Tool\Misc\PHPIni::convertIniUnit(ini_get('memory_limit')) * 0.8
+                Ini::getBytes('post_max_size', '1M'),
+                Ini::getBytes('memory_limit', '3M') * 0.6
             );
         } else {
             $this->configs['MaxDataSize'] = min(
-                \Facula\Base\Tool\Misc\PHPIni::convertIniUnit(ini_get('post_max_size')),
-                \Facula\Base\Tool\Misc\PHPIni::convertIniUnit(ini_get('memory_limit')) * 0.8
+                Ini::getBytes('post_max_size', '1M'),
+                Ini::getBytes('memory_limit', '3M') * 0.6
             );
         }
 
@@ -151,9 +152,17 @@ abstract class Request extends Factory implements Implement
                         FILTER_VALIDATE_IP,
                         $this->configs['TPVerifyFlags']
                     )) {
-                        throw new \Exception($proxyIP . ' not a valid IP for proxy server.');
-                        break;
-                        break;
+                        new Error(
+                            'PROXYADDR_INVALID',
+                            array(
+                                $proxyIP
+                            ),
+                            'ERROR'
+                        );
+
+                        return false;
+
+                        break 2;
                     }
                 }
 

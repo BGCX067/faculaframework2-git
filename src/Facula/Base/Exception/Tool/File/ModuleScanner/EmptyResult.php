@@ -1,7 +1,7 @@
 <?php
 
 /**
- * CacheCoreInactive Exception
+ * EmptyResult Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,18 +25,19 @@
  *
  */
 
-namespace Facula\Base\Exception\App\Controller;
+namespace Facula\Base\Exception\Tool\File\ModuleScanner;
 
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * CacheCoreInactive Exception
+ * EmptyResult Exception
  */
-class CacheCoreInactive extends Base
+class EmptyResult extends Base
 {
     protected static $exceptionMessage = '
-        You want to use cache function core,
-        but it\'s seems not active.
-        To enable, please add it into your framework configuration.
+        Directory scan is expensive, so it can\'t be pointless,
+        like scanning %s for pick up nothing.
     ';
+
+    protected static $exceptionLevel = E_USER_NOTICE;
 }

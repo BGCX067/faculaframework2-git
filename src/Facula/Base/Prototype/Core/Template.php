@@ -442,12 +442,14 @@ abstract class Template extends Factory implements Implement
                                 $fileMap['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]] =
                                     $importedFile['Path'];
                             } else {
-                                throw new \Exception(
-                                    'Template file '
-                                    . $fileMap['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]]
-                                    . ' conflicted with '
-                                    . $importedFile['Path']
-                                    . '.'
+                                new Error(
+                                    'TEMPLATE_CONFLICT_SET',
+                                    array(
+                                        $importedFile['Path'],
+                                        $fileNameSplit[1],
+                                        $fileMap['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]]
+                                    ),
+                                    'ERROR'
                                 );
 
                                 return false;
@@ -456,12 +458,13 @@ abstract class Template extends Factory implements Implement
                             // If not, save current file to the default
                             $fileMap['Tpl'][$importedFile['Name']]['default'] = $importedFile['Path'];
                         } else {
-                            throw new \Exception(
-                                'Template file '
-                                . $fileMap['Tpl'][$importedFile['Name']]['default']
-                                . ' conflicted with '
-                                . $importedFile['Path']
-                                . '.'
+                            new Error(
+                                'TEMPLATE_CONFLICT',
+                                array(
+                                    $importedFile['Path'],
+                                    $fileMap['Tpl'][$importedFile['Name']]['default']
+                                ),
+                                'ERROR'
                             );
 
                             return false;

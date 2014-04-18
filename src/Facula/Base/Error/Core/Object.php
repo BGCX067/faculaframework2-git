@@ -41,13 +41,13 @@ class Object extends Base
         ',
 
         'OBJECT_MAXPARAM_EXCEEDED' => '
-            Can\'t create new instance of "%s",
+            Can\'t create new instance for "%s",
             The parameters has exceeded the max limit.
         ',
 
         'OBJECT_INIT_FAILED' => '
             Can\'t initialize "%s".
-            The Initializer method returned false result.
+            The Initializer method returned a fail signal.
         ',
 
         'OBJECT_NOTFOUND' => '

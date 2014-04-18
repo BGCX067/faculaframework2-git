@@ -56,6 +56,14 @@ class Template extends Base
             The template "%s" can\'t be found in template declaration.
         ',
 
+        'TEMPLATE_CONFLICT' => '
+            The template file %s is conflicted with %s.
+        ',
+
+        'TEMPLATE_CONFLICT_SET' => '
+            The template file %s in set "%s" is conflicted with %s.
+        ',
+
         'TEMPLATE_IMPORTING_EXISTED' => '
             The importing template "%s" for set "%s" is conflicting with existing one.
             Please use other name or set to import.

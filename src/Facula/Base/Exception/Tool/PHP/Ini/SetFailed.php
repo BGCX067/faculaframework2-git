@@ -1,7 +1,7 @@
 <?php
 
 /**
- * CacheCoreInactive Exception
+ * SetFailed Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,18 +25,16 @@
  *
  */
 
-namespace Facula\Base\Exception\App\Controller;
+namespace Facula\Base\Exception\Tool\PHP\Ini;
 
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * CacheCoreInactive Exception
+ * SetFailed Exception
  */
-class CacheCoreInactive extends Base
+class SetFailed extends Base
 {
     protected static $exceptionMessage = '
-        You want to use cache function core,
-        but it\'s seems not active.
-        To enable, please add it into your framework configuration.
+        Set setting "%s" to "%s" has failed.
     ';
 }

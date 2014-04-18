@@ -37,22 +37,22 @@ class Core extends Base
     /** Error code to error message */
     protected static $errorStrings = array(
         'CLASS_NOTFOUND' => '
-            Producing core instance for %s, but no class specified.
+            Producing function core instance for "%s", but no class specified.
         ',
 
         'CLASS_NOTLOAD' => '
-            Facula function core %s is not loadable.
-            Please make sure object file has been included before preform this task.
+            Facula function core "%s" is not loadable.
+            Please make sure object file has been included before preform this action.
         ',
 
         'CLASS_INTERFACE' => '
-            Facula function core %s
-            must implement interface %s.
+            Function core "%s"
+            must implement interface "%s".
         ',
 
         'CLASS_BASE' => '
-            Facula function core %s
-            must be extend from base class %s.
+            Function core "%s"
+            must be extended from base class "%s".
         ',
     );
 }

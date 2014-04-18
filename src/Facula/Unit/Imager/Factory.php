@@ -27,10 +27,13 @@
 
 namespace Facula\Unit\Imager;
 
+use Facula\Base\Factory\Operator as BaseFactory;
+use Facula\Base\Tool\PHP\Ini as Ini;
+
 /**
  * Imager Factory
  */
-class Factory extends \Facula\Base\Factory\Operator
+class Factory extends BaseFactory
 {
     /** Handler class name */
     private static $handlerClassName = '';
@@ -82,9 +85,8 @@ class Factory extends \Facula\Base\Factory\Operator
             self::$handlerClassName = $className;
 
             static::$setting = array(
-                'MemoryLimit' => (int)((\Facula\Base\Tool\Misc\PHPIni::convertIniUnit(
-                    ini_get('memory_limit')
-                ) * 0.8) - memory_get_peak_usage()),
+                'MemoryLimit' =>
+                    (Ini::getBytes('memory_limit', '3M') - memory_get_peak_usage()) * 0.9,
 
                 'Font' => isset($setting['Font']) && is_readable($setting['Font'])
                     ? static::$setting['Font'] : null,

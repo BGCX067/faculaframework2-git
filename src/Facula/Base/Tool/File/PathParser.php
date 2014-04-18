@@ -50,7 +50,8 @@ class PathParser
     public static function get($path)
     {
         // Check type of this path
-        if (($uriPos = strpos($path, '://')) !== false) { // 1: URI: http://123.com/dir/ (file://c/system32/)
+        if (($uriPos = strpos($path, '://')) !== false) {
+            // 1: URI: http://123.com/dir/ (file://c/system32/)
             $rightPath = static::replaceSub(
                 $path,
                 static::$config['Separators'],
@@ -59,7 +60,8 @@ class PathParser
                 strlen($path),
                 !static::$config['NoEnding']
             );
-        } elseif (($uriPos = strpos($path, '\\\\')) !== false && $uriPos == 0) { // 2: Samba server addr \\123.com\dir\
+        } elseif (($uriPos = strpos($path, '\\\\')) !== false && $uriPos == 0) {
+            // 2: Samba server addr \\123.com\dir\
             $rightPath = static::replaceSub(
                 $path,
                 static::$config['Separators'],
@@ -68,7 +70,8 @@ class PathParser
                 strlen($path),
                 !static::$config['NoEnding']
             );
-        } else { // Normal file system path
+        } else {
+            // Normal file system path
             $rightPath = static::replaceSub(
                 $path,
                 static::$config['Separators'],

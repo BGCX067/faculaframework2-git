@@ -37,20 +37,24 @@ class Request extends Base
     /** Error code to error message */
     protected static $errorStrings = array(
         'BLOCKS_OVERLIMIT' => '
-            The size limit of request block has been exceeded.
-            You can only send less than %d blocks,
-            We currently got totally %d.
+            Request block has exceeded the limit.
+            You can only send less than %d blocks in your total request,
+            but got %d.
         ',
 
         'LENGTH_OVERLIMIT' => '
-            The size limit of request body has been exceeded.
-            You can only send less than %d bytes,
-            but you are sending %d bytes.
+            Request body has exceeded the length limit.
+            You can only send less than %d bytes in request body,
+            but there are %d bytes sent by your client.
         ',
 
         'HEADERITEM_OVERLIMIT' => '
-            The size limit of header item %s has been exceeded.
-            The header item must less than %d characters.
+            Header data "%s" has exceeded the header length limit.
+            A header item must shorter than %d character.
+        ',
+
+        'PROXYADDR_INVALID' => '
+            The IP address "%s" seems not a valid address.
         ',
     );
 }

@@ -37,22 +37,22 @@ class PDO extends Base
     /** Error code to error message */
     protected static $errorStrings = array(
         'TABLE_DECLARATION_NEEDED' => '
-            Specified database select method require Table declaration,
+            Specified database select method require "Table" declaration,
             which is missing for database No. %d.
         ',
 
         'OPERATION_DECLARATION_NEEDED' => '
-            Specified database select method require Operation declaration,
+            Specified database select method require "Operation" declaration,
             which is missing for database No. %d.
         ',
 
         'DRIVER_UNSUPPORTED' => '
             Sorry, specified driver %s for database No. %d is not supported on this server.
-            You can only use following: %s.
+            You can only use one of following drivers on this server: %s.
         ',
 
         'DRIVER_DECLARATION_NEEDED' => '
-            You must specify the PDO driver for database No. %d,
+            You must specify the PDO driver for database No. %d
             from one of following drivers: %s
         ',
 
@@ -61,19 +61,19 @@ class PDO extends Base
         ',
 
         'TABLE_SPECIFICATION_NEEDED' => '
-            You need to specify the Table you want to operate with before perform this action.
+            You need to specify the "Table" you want to operate with before perform this action.
         ',
 
         'OPERATION_SPECIFICATION_NEEDED' => '
-            You need to specify the Operation you want to before perform this action.
+            You need to specify the "Operation" you want to before perform this action.
         ',
 
         'TABLEOPERATION_SPECIFICATION_NEEDED' => '
-            You need to specify the target Table and Operation before performing this action.
+            You need to specify the target "Table" and "Operation" before performing this action.
         ',
 
         'UNKNOWN_SELECTMETHOD_SPECIFIED' => '
-            %s is an unknown select method. Please correct it in your configuration.
+            "%s" is an unknown select method. Please correct it in your configuration.
         ',
 
         'DATABASE_ALL_UNAVAILABLE' => '

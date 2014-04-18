@@ -27,6 +27,8 @@
 
 namespace Facula\Base\Tool\File;
 
+use Facula\Base\Exception\Tool\File\ModuleScanner as Exception;
+
 /**
  * Use to scan Facula components
  */
@@ -47,7 +49,7 @@ class ModuleScanner
         if (is_dir($path)) {
             $this->path = realpath($path);
         } else {
-            throw new \Exception($path . ' is not a directory.');
+            throw new Exception\NotDirectory($path);
         }
     }
 
@@ -109,6 +111,10 @@ class ModuleScanner
                         break;
                 }
             }
+        }
+
+        if (empty($modules)) {
+            throw new Exception\EmptyResult($this->path);
         }
 
         return $modules;

@@ -35,7 +35,7 @@ use Facula\Base\Prototype\Exception as Base;
 class AccessDenied extends Base
 {
     protected static $exceptionMessage = '
-        You want to access %s from %s,
+        You want to access "%s" from "%s",
         but it doesn\'t have permission to do it.
     ';
 }

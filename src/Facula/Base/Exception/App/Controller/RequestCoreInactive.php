@@ -35,7 +35,7 @@ use Facula\Base\Prototype\Exception as Base;
 class RequestCoreInactive extends Base
 {
     protected static $exceptionMessage = '
-        You want to use request core,
+        You want to use request function core,
         but it\'s seems not active.
         To enable, please add it into your framework configuration.
     ';

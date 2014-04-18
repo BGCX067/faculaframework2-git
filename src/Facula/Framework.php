@@ -1266,9 +1266,13 @@ class Framework
         $modules = array();
 
         foreach ($paths as $path) {
-            $scanner = new \Facula\Base\Tool\File\ModuleScanner($path);
+            $scanner = new \Facula\Base\Tool\File\ModuleScanner(
+                \Facula\Base\Tool\File\PathParser::get($path)
+            );
 
-            // Must use array_merge. Yes, it's slow but we need it for auto resolve reindex problem
+            // Must use array_merge.
+            // Yes, it's slow but we need it for auto resolve reindex problem
+            // AND we just call this once -- on the framework init
             $modules = array_merge($modules, $scanner->scan());
         }
 

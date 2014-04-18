@@ -35,6 +35,6 @@ use Facula\Base\Prototype\Exception as Base;
 class OperatorFailed extends Base
 {
     protected static $exceptionMessage = '
-        Data operator for "%s" has failed.
+        Data operator of "%s" has returned a fail signal.
     ';
 }
