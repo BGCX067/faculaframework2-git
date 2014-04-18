@@ -27,10 +27,13 @@
 
 namespace Facula\Base\Tool\Paging;
 
+use Facula\Base\Implement\Core\Template\Compiler as Implement;
+use Facula\Base\Error\Tool\Paging\Compiler as Error;
+
 /**
  * Provide a space to compile Facula pages
  */
-class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
+class Compiler implements Implement
 {
     /*
         Format rules and parse priority:
@@ -167,14 +170,18 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                         $tempResult['StartPos'],
                         $this->tagPositionMaps
                     )) && is_bool($tempResult['Result'])) {
-                        trigger_error(
-                            'ERROR_TEMPLATE_COMPILER_UNKNOWNERROR',
-                            E_USER_ERROR
+                        new Error(
+                            'TAGPARSER_FAILED',
+                            array(
+                                $format['Tag'],
+                                substr($content, $tempResult['StartPos'], $tempResult['EndPos'])
+                            ),
+                            'ERROR'
                         );
+
                         return false;
 
-                        break;
-                        break;
+                        break 2;
                     }
 
                     $tempResult['ResultLen'] = strlen($tempResult['Result']);
@@ -231,9 +238,12 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             if ((!$unclosedTag = $this->doCheckUnclosedTags())) {
                 return $content;
             } else {
-                trigger_error(
-                    'ERROR_TEMPLATE_COMPILER_TAG_UNCLOSE|' . $unclosedTag,
-                    E_USER_ERROR
+                new Error(
+                    'TAG_UNCLOSED',
+                    array(
+                        $unclosedTag
+                    ),
+                    'ERROR'
                 );
             }
         }
@@ -357,15 +367,23 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
             if ($tplContent = $newCompiler->compile()) {
                 return $tplContent;
             } else {
-                trigger_error(
-                    'ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_EMPTY|' . $param[0],
-                    E_USER_ERROR
+                new Error(
+                    'TAG_INCLUDE_EMPTY',
+                    array(
+                        $param[0]
+                    ),
+                    'ERROR'
                 );
+
+                return false;
             }
         } else {
-            trigger_error(
-                'ERROR_TEMPLATE_COMPILER_INCLUDE_TPL_NOTFOUND|' . $param[0],
-                E_USER_ERROR
+            new Error(
+                'TAG_INCLUDE_NOTFOUND',
+                array(
+                    $param[0]
+                ),
+                'ERROR'
             );
         }
 
@@ -433,9 +451,12 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
         if (isset($this->pool['LanguageMap'][$format][0])) {
             return $this->pool['LanguageMap'][$format];
         } else {
-            trigger_error(
-                'ERROR_TEMPLATE_COMPILER_LANGUAGE_NOTFOUND|' . $format,
-                E_USER_ERROR
+            new Error(
+                'TAG_LANGUAGE_NOTFOUND',
+                array(
+                    $format
+                ),
+                'ERROR'
             );
         }
 
@@ -457,9 +478,12 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
         if (isset($param[0])) {
             if (!$this->doCheckVariableName($param[0])) {
-                trigger_error(
-                    'ERROR_TEMPLATE_COMPILER_VARIABLE_NAME_INVALID|' . $param[0],
-                    E_USER_ERROR
+                new Error(
+                    'VARIABLE_NAME_INVALID',
+                    array(
+                        $param[0]
+                    ),
+                    'ERROR'
                 );
 
                 return false;
@@ -488,9 +512,15 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                                     . $param[0]
                                     . ')));';
                         } else {
-                            trigger_error(
-                                'ERROR_TEMPLATE_COMPILER_VARIABLE_DATE_LANG_MISSED',
-                                E_USER_ERROR
+                            new Error(
+                                'LANG_DATE_MISSED',
+                                array(
+                                    $param[1],
+                                    implode(', ', array(
+                                        'FORMAT_DATE_' . $param[2],
+                                    )),
+                                ),
+                                'ERROR'
                             );
 
                             return false;
@@ -556,9 +586,23 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                                     . '} $tempTime = 0;';
                         } else {
-                            trigger_error(
-                                'ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYTIME_LANG_MISSED',
-                                E_USER_ERROR
+                            new Error(
+                                'LANG_FRIENDLYTIME_MISSED',
+                                array(
+                                    $param[1],
+                                    implode(', ', array(
+                                        'FORMAT_TIME_DEFAULT',
+                                        'FORMAT_TIME_BEFORE_DAY',
+                                        'FORMAT_TIME_BEFORE_HR',
+                                        'FORMAT_TIME_BEFORE_MIN',
+                                        'FORMAT_TIME_BEFORE_SND',
+                                        'FORMAT_TIME_AFTER_SND',
+                                        'FORMAT_TIME_AFTER_MIN',
+                                        'FORMAT_TIME_AFTER_HR',
+                                        'FORMAT_TIME_AFTER_DAY',
+                                    )),
+                                ),
+                                'ERROR'
                             );
 
                             return false;
@@ -590,9 +634,19 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                                     . $this->pool['LanguageMap']['FORMAT_FILESIZE_TRILLIONBYTES']
                                     . '\'); } $tempsize = 0;';
                         } else {
-                            trigger_error(
-                                'ERROR_TEMPLATE_COMPILER_VARIABLE_BYTE_LANG_MISSED',
-                                E_USER_ERROR
+                            new Error(
+                                'LANG_BYTE_MISSED',
+                                array(
+                                    $param[1],
+                                    implode(', ', array(
+                                        'FORMAT_FILESIZE_BYTES',
+                                        'FORMAT_FILESIZE_KILOBYTES',
+                                        'FORMAT_FILESIZE_MEGABYTES',
+                                        'FORMAT_FILESIZE_GIGABYTES',
+                                        'FORMAT_FILESIZE_TRILLIONBYTES',
+                                    )),
+                                ),
+                                'ERROR'
                             );
 
                             return false;
@@ -709,9 +763,22 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
                                     . $param[0]
                                     . '); }';
                         } else {
-                            trigger_error(
-                                'ERROR_TEMPLATE_COMPILER_VARIABLE_FRIENDLYNUMBER_LANG_MISSED',
-                                E_USER_ERROR
+                            new Error(
+                                'LANG_FRIENDLYNUMBER_MISSED',
+                                array(
+                                    $param[1],
+                                    implode(', ', array(
+                                        'FORMAT_NUMBER_HUNDRED',
+                                        'FORMAT_NUMBER_THOUSAND',
+                                        'FORMAT_NUMBER_MILLION',
+                                        'FORMAT_NUMBER_BILLION',
+                                        'FORMAT_NUMBER_TRILLION',
+                                        'FORMAT_NUMBER_QUADRILLION',
+                                        'FORMAT_NUMBER_QUINTILLION',
+                                        'FORMAT_NUMBER_SEXTILLION',
+                                    )),
+                                ),
+                                'ERROR'
                             );
 
                             return false;
@@ -745,9 +812,10 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
             return $phpcode;
         } else {
-            trigger_error(
-                'ERROR_TEMPLATE_COMPILER_VARIABLE_MUST_DEFINED',
-                E_USER_ERROR
+            new Error(
+                'VARIABLE_MUST_DEFINED',
+                array(),
+                'ERROR'
             );
         }
 
@@ -852,9 +920,10 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
             return $phpcode;
         } else {
-            trigger_error(
-                'ERROR_TEMPLATE_COMPILER_PAGER_FORMAT_INVALID|' . $format,
-                E_USER_ERROR
+            new Error(
+                'TAG_PAGER_FORMAT_INVALID',
+                array(),
+                'ERROR'
             );
         }
 
@@ -881,9 +950,10 @@ class Compiler implements \Facula\Base\Implement\Core\Template\Compiler
 
                     // Check if we already opened the tag
                     if (!isset($this->tagPositionMaps['Loop:' . $params[1]]['Start'])) {
-                        trigger_error(
-                            'ERROR_TEMPLATE_COMPILER_LOOP_NOT_OPEN|' . $params[1],
-                            E_USER_ERROR
+                        new Error(
+                            'TAG_PAGER_FORMAT_INVALID',
+                            array(),
+                            'ERROR'
                         );
 
                         return false;
