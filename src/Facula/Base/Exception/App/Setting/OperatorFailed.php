@@ -25,7 +25,7 @@
  *
  */
 
-namespace Facula\Base\Exception\App\Container;
+namespace Facula\Base\Exception\App\Setting;
 
 use Facula\Base\Prototype\Exception as Base;
 
