@@ -74,14 +74,6 @@ class Template extends Base
             This application currently only support following language codes: %s.
         ',
 
-        'RENDER_INTERFACE' => '
-            The template render "%s" must implement interface "%s".
-        ',
-
-        'COMPILER_INTERFACE' => '
-            The template compiler "%s" must implement interface "%s".
-        ',
-
         'COMPILER_FAILED' => '
             Compiler has failed on compiling file %s.
         ',
@@ -100,6 +92,22 @@ class Template extends Base
 
         'LANGUAGE_DEFAULT_FILE_NOTFOUND' => '
             Trying to load default language file %s, but the file seems not existed.
+        ',
+
+        'RENDER_CLASS_NOTFOUND' => '
+            Template render class "%s" was not found.
+        ',
+
+        'RENDER_INTERFACE_INVALID' => '
+            Template render class "%s" must implement interface "%s".
+        ',
+
+        'COMPILER_CLASS_NOTFOUND' => '
+            Template compiler class "%s" was not found.
+        ',
+
+        'COMPILER_INTERFACE_INVALID' => '
+            Template compiler class "%s" must implement interface "%s".
         ',
     );
 }

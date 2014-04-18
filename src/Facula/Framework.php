@@ -100,15 +100,15 @@ class Framework
 
         // Framework namespace
         'FWNS' => array(
-            '\Facula' => FACULA_ROOT,
+            'Facula' => FACULA_ROOT,
         ),
 
         // Cores that needed for every boot time
         'RequiredCores' => array(
-            'debug' => '\Facula\Core\Debug',
-            'object' => '\Facula\Core\Object',
-            'request' => '\Facula\Core\Request',
-            'response' => '\Facula\Core\Response'
+            'debug' => 'Facula\Core\Debug',
+            'object' => 'Facula\Core\Object',
+            'request' => 'Facula\Core\Request',
+            'response' => 'Facula\Core\Response'
         ),
     );
 
@@ -1049,11 +1049,12 @@ class Framework
 
         $coreRef = new \ReflectionClass($coreClass);
 
-        if (!$coreRef->implementsInterface('\Facula\Base\Implement\Factory\Core')) {
+        if (!$coreRef->implementsInterface('Facula\Base\Implement\Factory\Core')) {
             trigger_error(
                 'Initializing core '
                 . $coreClass
-                . '. But seems it not implement interface \\Facula\\Base\\Implement\\Factory\\Core.',
+                . '. But seems it not implement interface '
+                . 'Facula\\Base\\Implement\\Factory\\Core.',
                 E_USER_ERROR
             );
 
@@ -1227,10 +1228,10 @@ class Framework
 
             $plugRef = new \ReflectionClass($pluginClassname);
 
-            if (!$plugRef->implementsInterface('\Facula\Base\Implement\Plugin')) {
+            if (!$plugRef->implementsInterface('Facula\Base\Implement\Plugin')) {
                 trigger_error(
                     'A facula plugin have to implement interface: '
-                    . '\\Facula\\Base\\Implement\\Plugin',
+                    . 'Facula\\Base\\Implement\\Plugin',
                     E_USER_ERROR
                 );
 

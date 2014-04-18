@@ -32,6 +32,6 @@ namespace Facula\Base\Implement\Core\Template;
  */
 interface Compiler
 {
-    public function __construct(array &$pool, &$sourceTpl);
+    public function __construct(array &$pool, &$sourceContent);
     public function compile();
 }

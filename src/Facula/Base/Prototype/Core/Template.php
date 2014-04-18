@@ -68,8 +68,8 @@ abstract class Template extends Factory implements Implement
 
     /** Interfaces of sub operators */
     protected static $operatorsImpl = array(
-        'Render' => '\Facula\Base\Implement\Core\Template\Render',
-        'Compiler' => '\Facula\Base\Implement\Core\Template\Compiler'
+        'Render' => 'Facula\Base\Implement\Core\Template\Render',
+        'Compiler' => 'Facula\Base\Implement\Core\Template\Compiler'
     );
 
     /**
@@ -84,31 +84,93 @@ abstract class Template extends Factory implements Implement
     public function __construct(&$cfg, $common, $facula)
     {
         $files = $fileNameSplit = array();
+
         // General settings
-
         $this->configs = array(
-            'Cache' => isset($cfg['CacheTemplate'])
-                        && PathParser::get($cfg['CacheTemplate']) ?
-                        true : false,
+            'Cache' =>
+                isset($cfg['CacheTemplate']) && $cfg['CacheTemplate'] ?
+                    true : false,
 
-            'Compress' => isset($cfg['CompressOutput'])
-                        && PathParser::get($cfg['CompressOutput']) ?
-                        true : false,
+            'Compress' =>
+                isset($cfg['CompressOutput']) && PathParser::get($cfg['CompressOutput']) ?
+                    true : false,
 
-            'Renew' => isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ?
-                        true : false,
+            'Renew' =>
+                isset($cfg['ForceRenew']) && $cfg['ForceRenew'] ?
+                    true : false,
 
-            'Render' => isset($cfg['Render'][0]) && class_exists($cfg['Render']) ?
-                        $cfg['Render'] : '',
-
-            'Compiler' => isset($cfg['Compiler'][0]) && class_exists($cfg['Compiler']) ?
-                        $cfg['Compiler'] : '',
-
-            'CacheTTL' => isset($cfg['CacheMaxLifeTime']) ?
-                        (int)($cfg['CacheMaxLifeTime']) : null,
+            'CacheTTL' =>
+                isset($cfg['CacheMaxLifeTime']) ?
+                    (int)($cfg['CacheMaxLifeTime']) : null,
 
             'CacheVer' => $common['BootVersion'],
         );
+
+        // Use custom render
+        if (isset($cfg['Render'][0])) {
+            if (!class_exists($cfg['Render'])) {
+                new Error(
+                    'RENDER_CLASS_NOTFOUND',
+                    array(
+                        $cfg['Render']
+                    ),
+                    'ERROR'
+                );
+
+                return;
+            }
+
+            if (!class_implements(
+                $cfg['Render'],
+                static::$operatorsImpl['Render']
+            )) {
+                new Error(
+                    'RENDER_INTERFACE_INVALID',
+                    array(
+                        $cfg['Render'],
+                        static::$operatorsImpl['Render']
+                    ),
+                    'ERROR'
+                );
+
+                return;
+            }
+
+            $this->configs['Render'] = $cfg['Render'];
+        }
+
+        // Use custom compiler
+        if (isset($cfg['Compiler'][0])) {
+            if (!class_exists($cfg['Compiler'])) {
+                new Error(
+                    'COMPILER_CLASS_NOTFOUND',
+                    array(
+                        $cfg['Compiler']
+                    ),
+                    'ERROR'
+                );
+
+                return;
+            }
+
+            if (!class_implements(
+                $cfg['Compiler'],
+                static::$operatorsImpl['Compiler']
+            )) {
+                new Error(
+                    'COMPILER_INTERFACE_INVALID',
+                    array(
+                        $cfg['Compiler'],
+                        static::$operatorsImpl['Compiler']
+                    ),
+                    'ERROR'
+                );
+
+                return;
+            }
+
+            $this->configs['Compiler'] = $cfg['Compiler'];
+        }
 
         // TemplatePool
         if (isset($cfg['TemplatePool'][0]) && is_dir($cfg['TemplatePool'])) {
@@ -138,6 +200,7 @@ abstract class Template extends Factory implements Implement
             return;
         }
 
+        // Check if cache path has set
         if ($this->configs['Cache']) {
             if (isset($cfg['CachePath']) && is_dir($cfg['CachePath'])) {
                 $this->configs['Cached'] = PathParser::get(
@@ -918,24 +981,11 @@ abstract class Template extends Factory implements Implement
             $errors
         );
 
-        if ($this->configs['Render']) {
+        if (isset($this->configs['Render'])) {
             $render = new $this->configs['Render'](
                 $compiledTpl,
                 $this->assigned
             );
-
-            if (!($render instanceof static::$operatorsImpl['Render'])) {
-                new Error(
-                    'RENDER_INTERFACE',
-                    array(
-                        $this->configs['Render'],
-                        static::$operatorsImpl['Render'],
-                    ),
-                    'ERROR'
-                );
-
-                return false;
-            }
 
             return $render->getResult();
         }
@@ -1010,78 +1060,70 @@ abstract class Template extends Factory implements Implement
             return false;
         }
 
-        if ($sourceContent = trim(file_get_contents($sourceTpl))) {
-            $poolCompexted = $this->pool + array(
-                'File' => static::$fileMap
-            );
-
-            if ($this->configs['Compiler']) {
-                $compiler = new $this->configs['Compiler'](
-                    $poolCompexted,
-                    $sourceContent
-                );
-
-                if (!($compiler instanceof static::$operatorsImpl['Compiler'])) {
-                    new Error(
-                        'COMPILER_INTERFACE',
-                        array(
-                            $this->configs['Render'],
-                            static::$operatorsImpl['Compiler'],
-                        ),
-                        'ERROR'
-                    );
-
-                    return false;
-                }
-
-                $compiledContent = $compiler->compile();
-            } else {
-                $compiledContent = static::compilePage($poolCompexted, $sourceContent);
-            }
-
-            if ($compiledContent) {
-                if ($this->configs['Compress']) {
-                    $compiledContent = str_replace(
-                        array('  ', "\r", "\n", "\t"),
-                        '',
-                        $compiledContent
-                    );
-                }
-
-                \Facula\Framework::core('debug')->criticalSection(true);
-
-                if (file_exists($resultTpl)) {
-                    unlink($resultTpl);
-                }
-
-                \Facula\Framework::core('debug')->criticalSection(false);
-
-                return file_put_contents(
-                    $resultTpl,
-                    static::$setting['TemplateFileSafeCode'][0]
-                    . static::$setting['TemplateFileSafeCode'][1]
-                    . $compiledContent
-                );
-            } else {
-                new Error(
-                    'COMPILER_FAILED',
-                    array(
-                        $sourceTpl,
-                    ),
-                    'WARNING'
-                );
-            }
-        } else {
+        if (!$sourceContent = trim(file_get_contents($sourceTpl))) {
             new Error(
                 'COMPILE_FILE_EMPTY',
                 array(
                     $sourceTpl,
                 ),
-                'WARNING'
+                'ERROR'
+            );
+
+            return false;
+        }
+
+        $poolCompexted = $this->pool + array(
+            'File' => static::$fileMap
+        );
+
+        if (isset($this->configs['Compiler'])) {
+            $compiler = new $this->configs['Compiler'](
+                $poolCompexted,
+                $sourceContent
+            );
+
+            $compiledContent = $compiler->compile();
+        } else {
+            $compiledContent = static::compilePage(
+                $poolCompexted,
+                $sourceContent
             );
         }
 
-        return false;
+        if (!$compiledContent) {
+            new Error(
+                'COMPILER_FAILED',
+                array(
+                    $sourceTpl,
+                ),
+                'ERROR'
+            );
+
+            return false;
+        }
+
+        if ($this->configs['Compress']) {
+            $compiledContent = str_replace(
+                array('  ', "\r", "\n", "\t"),
+                '',
+                $compiledContent
+            );
+        }
+
+        \Facula\Framework::core('debug')->criticalSection(true);
+
+        if (file_exists($resultTpl)) {
+            unlink($resultTpl);
+        }
+
+        \Facula\Framework::core('debug')->criticalSection(false);
+
+        return file_put_contents(
+            $resultTpl,
+            static::$setting['TemplateFileSafeCode'][0]
+            . static::$setting['TemplateFileSafeCode'][1]
+            . $compiledContent
+        );
     }
 
     /**
