@@ -1078,7 +1078,8 @@ abstract class Template extends Factory implements Implement
             return false;
         }
 
-        if (!$sourceContent = trim(file_get_contents($sourceTpl))) {
+        // Do not use trim here as compiler may need those info
+        if (!$sourceContent = file_get_contents($sourceTpl)) {
             new Error(
                 'COMPILE_FILE_EMPTY',
                 array(
@@ -1097,15 +1098,15 @@ abstract class Template extends Factory implements Implement
         if (isset($this->configs['Compiler'])) {
             $compiler = $this->configs['Compiler'];
 
-            $compiledContent = $compiler::compile(
+            $compiledContent = trim($compiler::compile(
                 $poolCompexted,
                 $sourceContent
-            )->result();
+            )->result());
         } else {
-            $compiledContent = static::compilePage(
+            $compiledContent = trim(static::compilePage(
                 $poolCompexted,
                 $sourceContent
-            );
+            ));
         }
 
         if (!$compiledContent) {
