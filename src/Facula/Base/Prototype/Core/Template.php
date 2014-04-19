@@ -1098,15 +1098,15 @@ abstract class Template extends Factory implements Implement
         if (isset($this->configs['Compiler'])) {
             $compiler = $this->configs['Compiler'];
 
-            $compiledContent = trim($compiler::compile(
+            $compiledContent = $compiler::compile(
                 $poolCompexted,
                 $sourceContent
-            )->result());
+            )->result();
         } else {
-            $compiledContent = trim(static::compilePage(
+            $compiledContent = static::compilePage(
                 $poolCompexted,
                 $sourceContent
-            ));
+            );
         }
 
         if (!$compiledContent) {
@@ -1141,7 +1141,7 @@ abstract class Template extends Factory implements Implement
             $resultTpl,
             static::$setting['TemplateFileSafeCode'][0]
             . static::$setting['TemplateFileSafeCode'][1]
-            . $compiledContent
+            . trim($compiledContent)
         );
     }
 
