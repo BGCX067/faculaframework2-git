@@ -46,6 +46,7 @@ interface Error
     public function getFunctionType();
     public function getArgs();
     public function getMessage();
+    public function getAssigned($index);
 
     public static function setErrorString($key, $string);
 }

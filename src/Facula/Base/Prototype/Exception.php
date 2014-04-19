@@ -40,6 +40,9 @@ abstract class Exception extends \Exception implements Implement
     /** Default exception level */
     protected static $exceptionLevel = E_USER_ERROR;
 
+    /** Error parameters */
+    private $parameters = array();
+
     /**
      * Constructor
      *
@@ -52,9 +55,11 @@ abstract class Exception extends \Exception implements Implement
     {
         $message = $tempMessage = '';
 
+        $this->parameters = func_get_args();
+
         $message = vsprintf(
             static::$exceptionMessage,
-            func_get_args()
+            $this->parameters
         );
 
         while (true) {
@@ -85,5 +90,19 @@ abstract class Exception extends \Exception implements Implement
     final public function __toString()
     {
         return __CLASS__ . ':[ ' . $this->code . ']: ' . $this->message;
+    }
+
+    /**
+     * Get parameter by index
+     *
+     * @return mixed The parameter data
+     */
+    final public function getParameter($index)
+    {
+        if (isset($this->parameters[$index])) {
+            return $this->parameters[$index];
+        }
+
+        return null;
     }
 }

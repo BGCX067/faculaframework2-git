@@ -32,9 +32,10 @@ namespace Facula\Base\Implement\Core\Template;
  */
 interface Render
 {
-    public function __construct(
+    public static function render(
         &$targetTpl,
         array &$assigned = array()
     );
-    public function getResult();
+
+    public function result();
 }

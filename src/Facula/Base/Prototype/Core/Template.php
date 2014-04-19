@@ -967,6 +967,7 @@ abstract class Template extends Factory implements Implement
      */
     protected function doRender($templateName, $compiledTpl)
     {
+        $renderedResult = '';
         $errors = array();
 
         \Facula\Framework::summonHook(
@@ -982,15 +983,32 @@ abstract class Template extends Factory implements Implement
         );
 
         if (isset($this->configs['Render'])) {
-            $render = new $this->configs['Render'](
+            $render = $this->configs['Compiler'];
+
+            $renderedResult = $render::render(
+                $compiledTpl,
+                $this->assigned
+            )->result();
+        } else {
+            $renderedResult = static::renderPage(
                 $compiledTpl,
                 $this->assigned
             );
-
-            return $render->getResult();
         }
 
-        return static::renderPage($compiledTpl, $this->assigned);
+        if (!$renderedResult) {
+            new Error(
+                'RENDER_FAILED',
+                array(
+                    $compiledTpl,
+                ),
+                'ERROR'
+            );
+
+            return false;
+        }
+
+        return $renderedResult;
     }
 
     /**
@@ -1077,12 +1095,12 @@ abstract class Template extends Factory implements Implement
         );
 
         if (isset($this->configs['Compiler'])) {
-            $compiler = new $this->configs['Compiler'](
+            $compiler = $this->configs['Compiler'];
+
+            $compiledContent = $compiler::compile(
                 $poolCompexted,
                 $sourceContent
-            );
-
-            $compiledContent = $compiler->compile();
+            )->result();
         } else {
             $compiledContent = static::compilePage(
                 $poolCompexted,

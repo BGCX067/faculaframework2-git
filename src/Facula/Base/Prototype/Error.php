@@ -102,6 +102,9 @@ abstract class Error implements \Facula\Base\Implement\Error
     /** Error message */
     protected $message = '';
 
+    /** Error assigned */
+    protected $assigned = array();
+
     /**
      * Constructor of an error
      *
@@ -168,10 +171,12 @@ abstract class Error implements \Facula\Base\Implement\Error
         $this->trace = $backTrace;
         $this->lastTrace = $backTrace[0];
 
+        $this->assigned = $errorAssign;
+
         if (isset(static::$errorStrings[$errorCode])) {
             $this->message = $this->trimErrorMessage(vsprintf(
                 static::$errorStrings[$errorCode],
-                $errorAssign
+                $this->assigned
             ));
         } else {
             $this->message = $errorCode;
@@ -332,5 +337,19 @@ abstract class Error implements \Facula\Base\Implement\Error
     final public function getMessage()
     {
         return $this->message;
+    }
+
+    /**
+     * Get assigned data
+     *
+     * @return mixed Return assigned data
+     */
+    final public function getAssigned($index)
+    {
+        if (isset($this->assigned[$index])) {
+            return $this->assigned[$index];
+        }
+
+        return null;
     }
 }

@@ -74,6 +74,10 @@ class Template extends Base
             This application currently only support following language codes: %s.
         ',
 
+        'RENDER_FAILED' => '
+            Render has failed on rendering file %s.
+        ',
+
         'COMPILER_FAILED' => '
             Compiler has failed on compiling file %s.
         ',
