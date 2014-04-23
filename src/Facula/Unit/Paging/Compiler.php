@@ -32,7 +32,7 @@ use Facula\Base\Implement\Core\Template\Compiler as Implement;
 use Facula\Base\Exception\Factory\Operator as OperatorException;
 use Facula\Unit\Paging\Compiler\OperatorImplement as OperatorImplement;
 use Facula\Unit\Paging\Compiler\Exception\Compiler as Exception;
-use Facula\Unit\Paging\Compiler\Exception\Coupler as CouplerException;
+use Facula\Unit\Paging\Compiler\Exception\Parser as ParserException;
 use Facula\Unit\Paging\Compiler\Tool\Parser as Parser;
 use Facula\Unit\Paging\Compiler\Error\Compiler as Error;
 
@@ -81,6 +81,15 @@ class Compiler extends Base implements Implement
 
     /** Source to be parsed and compiled */
     protected $sourceContent = '';
+
+    /** The length of source content */
+    protected $sourceContentLen = 0;
+
+    /** Line map for position to line & column convert */
+    protected $sourceContentLineMap = array();
+
+    /** Lines of source content */
+    protected $sourceContentLines = 0;
 
     /** Data that needed for compile */
     protected $sourcePool = array();
@@ -194,7 +203,24 @@ class Compiler extends Base implements Implement
      */
     protected function __construct(&$pool, &$sourceContent)
     {
+        $searchContent = 0;
+
         $this->sourceContent = $sourceContent;
+        $this->sourceContentLen = strlen($sourceContent);
+        $this->sourceContentLines = count($this->sourceContentLineMap);
+
+        $searchContent = $sourceContent . "\n";
+
+        while (($this->sourceContentLines = strpos(
+            $searchContent,
+            "\n",
+            $this->sourceContentLines
+        )) !== false) {
+            $this->sourceContentLineMap[] = $this->sourceContentLines;
+
+            $this->sourceContentLines++;
+        }
+
         $this->sourcePool = $pool;
     }
 
@@ -212,11 +238,8 @@ class Compiler extends Base implements Implement
             'Column' => 0,
         );
 
-        $lines = count($this->sourceContentLineMap);
-        $lineMaxIndex = $lines - 1;
-
         if ($pos > $this->sourceContentLen) {
-            $result['Line'] = $lines;
+            $result['Line'] = $this->sourceContentLines;
             $result['Column'] = $this->sourceContentLen - 1;
         }
 
@@ -251,12 +274,94 @@ class Compiler extends Base implements Implement
      */
     protected function parse()
     {
+        $errorLine = array();
+
         try {
             $parser = new Parser($this->sourceContent);
 
-            $parser->parse();
-        } catch (\Exception $e) {
-            exit($e->getMessage());
+            foreach ($parser->parse() as $tag) {
+
+            }
+        } catch (ParserException\MaxNestLevelReached $e) {
+            $errorLine = $this->getLineByPosition(
+                $e->getParameter(1)
+            );
+
+            throw new Exception\MaxNestLevelReached(
+                $e->getParameter(0),
+                $errorLine['Line'],
+                $errorLine['Column']
+            );
+        } catch (ParserException\UnexpectedClosingTag $e) {
+            $errorLine = $this->getLineByPosition(
+                $e->getParameter(1)
+            );
+
+            throw new Exception\UnexpectedClosingTag(
+                $e->getParameter(0),
+                $errorLine['Line'],
+                $errorLine['Column']
+            );
+        } catch (ParserException\UnexpectedEndOfAClosingTag $e) {
+            $errorLine = $this->getLineByPosition(
+                $e->getParameter(1)
+            );
+
+            throw new Exception\UnexpectedEndOfAClosingTag(
+                $e->getParameter(0),
+                $errorLine['Line'],
+                $errorLine['Column']
+            );
+        } catch (ParserException\UnexpectedEndOfAnMiddleTag $e) {
+            $errorLine = $this->getLineByPosition(
+                $e->getParameter(1)
+            );
+
+            throw new Exception\UnexpectedEndOfAnMiddleTag(
+                $e->getParameter(0),
+                $errorLine['Line'],
+                $errorLine['Column']
+            );
+        } catch (ParserException\UnexpectedEndOfAnOpeningTag $e) {
+            $errorLine = $this->getLineByPosition(
+                $e->getParameter(1)
+            );
+
+            throw new Exception\UnexpectedEndOfAnOpeningTag(
+                $e->getParameter(0),
+                $errorLine['Line'],
+                $errorLine['Column']
+            );
+        } catch (ParserException\UnexpectedMiddleTag $e) {
+            $errorLine = $this->getLineByPosition(
+                $e->getParameter(1)
+            );
+
+            throw new Exception\UnexpectedMiddleTag(
+                $e->getParameter(0),
+                $errorLine['Line'],
+                $errorLine['Column']
+            );
+        } catch (ParserException\UnexpectedOpeningTag $e) {
+            $errorLine = $this->getLineByPosition(
+                $e->getParameter(1)
+            );
+
+            throw new Exception\UnexpectedOpeningTag(
+                $e->getParameter(0),
+                $errorLine['Line'],
+                $errorLine['Column']
+            );
+        } catch (ParserException\TagNeedToBeClosed $e) {
+            $errorLine = $this->getLineByPosition(
+                $e->getParameter(1)
+            );
+
+            throw new Exception\TagNeedToBeClosed(
+                $e->getParameter(0),
+                $errorLine['Line'],
+                $errorLine['Column']
+            );
         }
 
         return false;
