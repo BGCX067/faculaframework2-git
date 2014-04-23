@@ -1,7 +1,7 @@
 <?php
 
 /**
- * TemplateCoreInactive Exception
+ * Template Tag Parser
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,18 +25,19 @@
  *
  */
 
-namespace Facula\Base\Exception\App\Controller;
+namespace Facula\Unit\Paging\Compiler\Operator;
 
-use Facula\Base\Prototype\Exception as Base;
+use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
 
 /**
- * TemplateCoreInactive Exception
+ * Include tag parser
  */
-class TemplateCoreInactive extends Base
+class Template implements Implement
 {
-    protected static $exceptionMessage = '
-        You want to use template function core,
-        but it\'s seems not active.
-        To enable, please add it into your framework configuration.
-    ';
+    public static function register()
+    {
+        return array(
+            'Tag' => 'template',
+        );
+    }
 }

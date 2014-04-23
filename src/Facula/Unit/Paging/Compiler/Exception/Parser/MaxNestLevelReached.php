@@ -1,7 +1,7 @@
 <?php
 
 /**
- * TemplateCoreInactive Exception
+ * MaxNestLevelReached Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,18 +25,16 @@
  *
  */
 
-namespace Facula\Base\Exception\App\Controller;
+namespace Facula\Unit\Paging\Compiler\Exception\Parser;
 
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * TemplateCoreInactive Exception
+ * MaxNestLevelReached Exception
  */
-class TemplateCoreInactive extends Base
+class MaxNestLevelReached extends Base
 {
     protected static $exceptionMessage = '
-        You want to use template function core,
-        but it\'s seems not active.
-        To enable, please add it into your framework configuration.
+        "%s" reached the max nest level at position %d.
     ';
 }

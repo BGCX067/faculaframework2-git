@@ -1,7 +1,7 @@
 <?php
 
 /**
- * TemplateCoreInactive Exception
+ * MiddleTagParentTagIsInline Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,18 +25,16 @@
  *
  */
 
-namespace Facula\Base\Exception\App\Controller;
+namespace Facula\Unit\Paging\Compiler\Exception\Parser;
 
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * TemplateCoreInactive Exception
+ * MiddleTagParentTagIsInline Exception
  */
-class TemplateCoreInactive extends Base
+class MiddleTagParentTagIsInline extends Base
 {
     protected static $exceptionMessage = '
-        You want to use template function core,
-        but it\'s seems not active.
-        To enable, please add it into your framework configuration.
+        You can\'t register child tag "%s" to a inline tag "%s".
     ';
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * TemplateCoreInactive Exception
+ * Errors of Cache function core
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,18 +25,19 @@
  *
  */
 
-namespace Facula\Base\Exception\App\Controller;
+namespace Facula\Unit\Paging\Compiler\Error;
 
-use Facula\Base\Prototype\Exception as Base;
+use Facula\Base\Prototype\Error as Base;
 
 /**
- * TemplateCoreInactive Exception
+ * Errors for Cache function core
  */
-class TemplateCoreInactive extends Base
+class Factory extends Base
 {
-    protected static $exceptionMessage = '
-        You want to use template function core,
-        but it\'s seems not active.
-        To enable, please add it into your framework configuration.
-    ';
+    /** Error code to error message */
+    protected static $errorStrings = array(
+        'OPERATOR_NOT_FOUND' => '
+            Tag operator "%s" was not found.
+        ',
+    );
 }

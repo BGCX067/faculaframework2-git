@@ -1,7 +1,7 @@
 <?php
 
 /**
- * TemplateCoreInactive Exception
+ * Page Compiler
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,18 +25,9 @@
  *
  */
 
-namespace Facula\Base\Exception\App\Controller;
+namespace Facula\Unit\Paging\Compiler;
 
-use Facula\Base\Prototype\Exception as Base;
-
-/**
- * TemplateCoreInactive Exception
- */
-class TemplateCoreInactive extends Base
+interface OperatorImplement
 {
-    protected static $exceptionMessage = '
-        You want to use template function core,
-        but it\'s seems not active.
-        To enable, please add it into your framework configuration.
-    ';
+    public static function register();
 }

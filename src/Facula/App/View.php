@@ -39,10 +39,25 @@ class View
     /** Assigned variable for templating */
     private $assigned = array();
 
-    public static function template($templateFile) {
+    /**
+     * Select a tempalte file and render it
+     *
+     * @param string $templateFile Template file
+     *
+     * @return object Return new instance view instance
+     */
+    public static function template($templateFile)
+    {
         return new static($templateFile);
     }
 
+    /**
+     * Init the view
+     *
+     * @param string $templateFile Template file
+     *
+     * @return void
+     */
     protected function __construct($templateFile)
     {
         if (!is_readable($templateFile)) {

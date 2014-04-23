@@ -1,7 +1,7 @@
 <?php
 
 /**
- * TemplateCoreInactive Exception
+ * TagParentExisted Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,18 +25,18 @@
  *
  */
 
-namespace Facula\Base\Exception\App\Controller;
+namespace Facula\Unit\Paging\Compiler\Exception\Parser;
 
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * TemplateCoreInactive Exception
+ * TagParentExisted Exception
  */
-class TemplateCoreInactive extends Base
+class TagParentExisted extends Base
 {
     protected static $exceptionMessage = '
-        You want to use template function core,
-        but it\'s seems not active.
-        To enable, please add it into your framework configuration.
+        Registering "%s" to "%s".
+        But there are exact same tag already registered as main tag.
+        So, you can\'t register that tag name.
     ';
 }
