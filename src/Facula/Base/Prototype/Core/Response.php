@@ -383,7 +383,7 @@ abstract class Response extends Factory implements Implement
             // Hide server software information by replace it.
             if ($this->configs['NoExposure']) {
                 header('Server: Facula');
-                header('X-Powered-By: Facula ' . __FACULAVERSION__);
+                header('X-Powered-By: facula ' . __FACULAVERSION__ . ' with YOU');
                 header('X-Powered-For: ' . $this->configs['AppVersion']);
             }
 

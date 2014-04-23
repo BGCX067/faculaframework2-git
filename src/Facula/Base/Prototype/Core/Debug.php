@@ -1046,7 +1046,7 @@ abstract class Debug extends Factory implements Implement
         $errorDetail,
         array $backTraces
     ) {
-        $detail = $templateString = $templateBanner = '';
+        $detail = $templateString = $templateBanner = $errorMessage = '';
         $line = $bufferLevel = 0;
 
         switch ($this->configs['SAPI']) {
@@ -1075,21 +1075,23 @@ abstract class Debug extends Factory implements Implement
                 $backTraces,
                 $templateBanner
             );
+
+            $errorMessage = str_replace(
+                array(
+                    PROJECT_ROOT,
+                    FACULA_ROOT,
+                ),
+                array(
+                    '[PROJECT]',
+                    '[FACULA]',
+                ),
+                $errorDetail['Message']
+            );
         } else {
             $detail = 'Debug disabled, error detail unavailable.';
-        }
 
-        $errorMessage = str_replace(
-            array(
-                PROJECT_ROOT,
-                FACULA_ROOT,
-            ),
-            array(
-                '[PROJECT]',
-                '[FACULA]',
-            ),
-            $errorDetail['Message']
-        );
+            $errorMessage = 'That\'s all we can tell.';
+        }
 
         $errorFile = PathParser::replacePathPrefixes(
             array(
