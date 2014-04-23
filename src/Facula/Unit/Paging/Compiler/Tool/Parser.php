@@ -609,19 +609,15 @@ class Parser
     /**
      * Parse and get result.
      *
-     * @return mixed Return the array of parsed result when succeed, false otherwise
+     * @return array Return the array of parsed results
      */
     public function parse()
     {
         if (!$this->tagPositionRaw = $this->getTagPositions()) {
-            return false;
+            return array();
         }
 
-        if ($paired = $this->pairing()) {
-            return $this->assemble($paired);
-        }
-
-        return false;
+        return $this->assemble($this->pairing());
     }
 
     /**
@@ -981,7 +977,7 @@ class Parser
      *
      * @return array Return the assembled array
      */
-    protected function assemble(array &$pairedRaw)
+    protected function assemble(array $pairedRaw)
     {
         $result = $tempResult = array();
 
