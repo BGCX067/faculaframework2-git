@@ -28,20 +28,59 @@
 namespace Facula\Unit\Paging\Compiler\Operator;
 
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
+use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 
 /**
  * Logic tag parse
  */
 class Logic implements Implement
 {
+    protected $data = '';
+    protected $mainParameter = null;
+    protected $endParameter = '';
+
+    protected $parameters = array(
+
+    );
+
     public static function register()
     {
         return array(
-            'Tag' => 'if',
             'Middles' => array(
                 'else' => false,
-                'elseif' => true,
+
             ),
         );
+    }
+
+    public function setParameter($type, $param)
+    {
+        switch ($type) {
+            case 'Main':
+                $this->mainParameter = new Parameter($param, $this->parameters);
+                break;
+
+            case 'End':
+                $this->endParameter = new Parameter($param, $this->parameters);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    public function setData($data)
+    {
+        $this->data = $data;
+    }
+
+    public function setMiddle($tag, $param, $data)
+    {
+
+    }
+
+    public function compile()
+    {
+
     }
 }

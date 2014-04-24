@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Template Tag Parser
+ * MaxTagLimitReached Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,17 +25,16 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler\Operator;
+namespace Facula\Unit\Paging\Compiler\Exception\Parser;
 
-use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
+use Facula\Base\Prototype\Exception as Base;
 
 /**
- * Include tag parser
+ * MaxTagLimitReached Exception
  */
-class Template implements Implement
+class MaxTagLimitReached extends Base
 {
-    public static function register()
-    {
-        return array();
-    }
+    protected static $exceptionMessage = '
+        "%s" reached the max amount limit of tags at position %d.
+    ';
 }

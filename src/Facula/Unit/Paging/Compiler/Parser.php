@@ -25,7 +25,7 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler\Tool;
+namespace Facula\Unit\Paging\Compiler;
 
 use Facula\Unit\Paging\Compiler\Exception\Parser as Exception;
 
@@ -81,395 +81,50 @@ class Parser
     const TAG_ARR_IDX_END_OFFSET = 6;
 
     /** Opening delimiter, like <tag */
-    protected static $delimiterStart = '<';
+    protected $delimiterStart = '<';
 
     /** Ending delimiter, like > or /> */
-    protected static $delimiterEnd = '>';
+    protected $delimiterEnd = '>';
 
     /** The ending qualifier of the closing tag */
-    protected static $tagEnderSymbol = '/';
+    protected $tagEnderSymbol = '/';
 
-    /** The character of white space */
-    protected static $tagBlankSymbol = ' ';
+    /** The characters list of white spaces */
+    protected $tagBlankSymbols = array(
+        ' ' => true,
+        "\r" => true,
+        "\n" => true,
+        "\t" => true
+    );
 
     /** The character of escape */
-    protected static $tagSkipperSymbol = '\\';
+    protected $tagSkipperSymbol = '\\';
 
     /** Container of all registered tags */
-    protected static $registeredTags = array();
+    protected $registeredTags = array();
 
     /** Container of all registered tags */
-    protected static $tagSeekTable = array();
+    protected $tagSeekTable = array();
 
     /** Container of all ending (not closing) tags */
-    protected static $tagEndSeekTable = array();
+    protected $tagEndSeekTable = array();
 
     /** Container of all tags, indexed by search key string, like <tag or </tag */
-    protected static $tagSeekArbitTab = array();
-
-    /** Contains all tags positions */
-    protected $tagPositionRaw = array();
+    protected $tagSeekArbitTab = array();
 
     /** Max nest level, over this level will throw a error, 0 = not limited */
     protected $maxNests = 0;
 
-    /**
-     * Method for configure parser
-     *
-     * @param array $config Configure array
-     *
-     * @return bool Always true
-     */
-    public static function config(array $config)
-    {
-        if (isset($config['DelimiterStart'][0])) {
-            static::$delimiterStart = $config['DelimiterStart'];
-        }
+    /** Max limit of how many tag we can pick up */
+    protected $maxTags = 0;
 
-        if (isset($config['DelimiterEnd'][0])) {
-            static::$delimiterEnd = $config['DelimiterEnd'];
-        }
-
-        if (isset($config['TagEnderSymbol'][0])) {
-            static::$tagEnderSymbol = $config['TagEnderSymbol'][0];
-        }
-
-        if (isset($config['TagBlankSymbol'][0])) {
-            static::$tagBlankSymbol = $config['TagBlankSymbol'][0];
-        }
-
-        if (isset($config['TagSkipperSymbol'][0])) {
-            static::$tagSkipperSymbol = $config['TagSkipperSymbol'][0];
-        }
-
-        return true;
-    }
-
-    /**
-     * Register a tag into parser
-     *
-     * @param string $tagName The name of the tag
-     * @param bool $inline Is this an inline tag?
-     *
-     * @return bool Return true when succeed, false otherwise
-     */
-    public static function registerTag($tagName, $inline)
-    {
-        $addingTag = array();
-
-        if (isset(static::$registeredTags[$tagName])) {
-            throw new Exception\TagAlreadyRegistered($tagName);
-
-            return false;
-        }
-
-        $addingTag['Tag'] = $tagName;
-        $addingTag['Inline'] = $inline;
-        $addingTag['Middle'] = array();
-
-        if ($inline) {
-            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN] =
-                static::$delimiterStart . $tagName . static::$tagBlankSymbol;
-
-            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END] =
-                static::$tagBlankSymbol . static::$tagEnderSymbol . static::$delimiterEnd;
-
-            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN] = '';
-
-            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END] = '';
-        } else {
-            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN] =
-                static::$delimiterStart . $tagName . static::$tagBlankSymbol;
-
-            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END] =
-                static::$delimiterEnd;
-
-            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN] =
-                static::$delimiterStart . static::$tagEnderSymbol . $tagName;
-
-            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END] =
-                static::$delimiterEnd;
-        }
-
-        // Length
-        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN_LENGTH] =
-            strlen($addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]);
-
-        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END_LENGTH] =
-            strlen($addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]);
-
-        $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN_LENGTH] =
-            strlen($addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN]);
-
-        $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END_LENGTH] =
-            strlen($addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END]);
-
-        // Offset
-        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN_OFFSET] =
-            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN_LENGTH] - 1;
-
-        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END_OFFSET] =
-            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END_LENGTH] - 1;
-
-        $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN_OFFSET] =
-            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN_LENGTH] - 1;
-
-        $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END_OFFSET] =
-            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END_LENGTH] - 1;
-
-        // Add to register
-        static::$registeredTags[$tagName] = $addingTag;
-
-        // Add tag to seek table
-        if ($inline) {
-            static::$tagSeekArbitTab[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]][$tagName]
-                =
-            static::$tagSeekTable[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]]
-                = array(
-                    'Tag' => $tagName,
-                    'Key' => $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN],
-                    'KeyLen' => strlen(
-                        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]
-                    ),
-                    'Type' => static::TAG_TYPE_PASS_BEGIN,
-                    'Expecting' => static::setTagExpect(static::TAG_TYPE_PASS_BEGIN),
-                );
-
-            static::$tagSeekArbitTab[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]][$tagName]
-                =
-            static::$tagEndSeekTable[$tagName]['Pass']
-                = array(
-                    'Tag' => $tagName,
-                    'Key' => $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END],
-                    'KeyLen' => strlen(
-                        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]
-                    ),
-                    'Type' => static::TAG_TYPE_PASS_END,
-                    'Expecting' => static::setTagExpect(static::TAG_TYPE_PASS_END),
-                );
-        } else {
-            static::$tagSeekArbitTab[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]][$tagName]
-                =
-            static::$tagSeekTable[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]]
-                = array(
-                    'Tag' => $tagName,
-                    'Key' => $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN],
-                    'KeyLen' => strlen(
-                        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]
-                    ),
-                    'Type' => static::TAG_TYPE_OPENER_BEGIN,
-                    'Expecting' => static::setTagExpect(static::TAG_TYPE_OPENER_BEGIN),
-                );
-
-            static::$tagSeekArbitTab[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]][$tagName]
-                =
-            static::$tagEndSeekTable[$tagName]['Open']
-                = array(
-                    'Tag' => $tagName,
-                    'Key' => $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END],
-                    'KeyLen' => strlen(
-                        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]
-                    ),
-                    'Type' => static::TAG_TYPE_OPENER_END,
-                    'Expecting' => static::setTagExpect(static::TAG_TYPE_OPENER_END),
-                );
-
-            static::$tagSeekArbitTab[$addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN]][$tagName]
-                =
-            static::$tagSeekTable[$addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN]]
-                = array(
-                    'Tag' => $tagName,
-                    'Key' => $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN],
-                    'KeyLen' => strlen(
-                        $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN]
-                    ),
-                    'Type' => static::TAG_TYPE_CLOSER_BEGIN,
-                    'Expecting' => static::setTagExpect(static::TAG_TYPE_CLOSER_BEGIN),
-                );
-
-            static::$tagSeekArbitTab[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]][$tagName]
-                =
-            static::$tagEndSeekTable[$tagName]['Close']
-                = array(
-                    'Tag' => $tagName,
-                    'Key' => $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END],
-                    'KeyLen' => strlen(
-                        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]
-                    ),
-                    'Type' => static::TAG_TYPE_CLOSER_END,
-                    'Expecting' => static::setTagExpect(static::TAG_TYPE_CLOSER_END),
-                );
-        }
-
-        return true;
-    }
-
-    /**
-     * Register child tag into the main tag
-     *
-     * @param string $middleTagOf The name of main tag
-     * @param string $tagName The name of the tag
-     * @param bool $hasParamter This tag will have parameter or not
-     *
-     * @return bool Return true when succeed, false otherwise
-     */
-    public static function registerMiddleTag($middleTagOf, $tagName, $hasParamter)
-    {
-        $fragedTag = array();
-
-        if (!isset(static::$registeredTags[$middleTagOf])) {
-            throw new Exception\MiddleTagParentNotFound($tagName, $middleTagOf);
-
-            return false;
-        }
-
-        if (isset(static::$registeredTags[$tagName])) {
-            throw new Exception\TagParentExisted($tagName, $middleTagOf);
-
-            return false;
-        }
-
-        if (isset(static::$registeredTags[$middleTagOf]['Middle'][$tagName])) {
-            throw new Exception\MiddleTagAleadyReigstered($tagName, $middleTagOf);
-
-            return false;
-        }
-
-        if (static::$registeredTags[$middleTagOf]['Inline']) {
-            throw new Exception\MiddleTagParentTagIsInline($tagName, $middleTagOf);
-
-            return false;
-        }
-
-        static::$registeredTags[$middleTagOf]['Middle'][$tagName] = $hasParamter;
-
-        if ($hasParamter) {
-            $fragedTag[static::TAG_ARR_IDX_BEGIN] =
-                static::$delimiterStart
-                . $tagName
-                . static::$tagBlankSymbol;
-
-            $fragedTag[static::TAG_ARR_IDX_END] =
-                static::$tagBlankSymbol
-                . static::$tagEnderSymbol
-                . static::$delimiterEnd;
-        } else {
-            $fragedTag[static::TAG_ARR_IDX_BEGIN] =
-                static::$delimiterStart
-                . $tagName
-                . static::$tagBlankSymbol
-                . static::$tagEnderSymbol
-                . static::$delimiterEnd;
-
-            $fragedTag[static::TAG_ARR_IDX_END] = '';
-        }
-
-        // Length
-        $fragedTag[static::TAG_ARR_IDX_BEGIN_LENGTH] =
-            strlen($fragedTag[static::TAG_ARR_IDX_BEGIN]);
-
-        $fragedTag[static::TAG_ARR_IDX_END_LENGTH] =
-            strlen($fragedTag[static::TAG_ARR_IDX_END]);
-
-        // Offset
-        $fragedTag[static::TAG_ARR_IDX_BEGIN_OFFSET] =
-            $fragedTag[static::TAG_ARR_IDX_BEGIN_LENGTH] - 1;
-
-        $fragedTag[static::TAG_ARR_IDX_END_OFFSET] =
-            $fragedTag[static::TAG_ARR_IDX_END_LENGTH] - 1;
-
-        static::$registeredTags[$middleTagOf]['Fraged']['Middle'][$tagName] = $fragedTag;
-
-        if ($hasParamter) {
-            static::$tagSeekArbitTab[$fragedTag[static::TAG_ARR_IDX_BEGIN]][$tagName]
-                =
-            static::$tagSeekTable[$fragedTag[static::TAG_ARR_IDX_BEGIN]]
-                = array(
-                    'Tag' => $tagName,
-                    'Key' => $fragedTag[static::TAG_ARR_IDX_BEGIN],
-                    'KeyLen' => strlen(
-                        $fragedTag[static::TAG_ARR_IDX_BEGIN]
-                    ),
-                    'Type' => static::TAG_TYPE_MIDDLE_BEGIN,
-                    'Expecting' => static::setTagExpect(static::TAG_TYPE_MIDDLE_BEGIN),
-                );
-
-            static::$tagSeekArbitTab[$fragedTag[static::TAG_ARR_IDX_END]][$tagName]
-                =
-            static::$tagEndSeekTable[$tagName]['Close']
-                = array(
-                    'Tag' => $tagName,
-                    'Key' => $fragedTag[static::TAG_ARR_IDX_END],
-                    'KeyLen' => strlen(
-                        $fragedTag[static::TAG_ARR_IDX_END]
-                    ),
-                    'Type' => static::TAG_TYPE_MIDDLE_END,
-                    'Expecting' => static::setTagExpect(static::TAG_TYPE_MIDDLE_END),
-                );
-        } else {
-            static::$tagSeekArbitTab[$fragedTag[static::TAG_ARR_IDX_BEGIN]][$tagName]
-                =
-            static::$tagSeekTable[$fragedTag[static::TAG_ARR_IDX_BEGIN]]
-                = array(
-                    'Tag' => $tagName,
-                    'Key' => $fragedTag[static::TAG_ARR_IDX_BEGIN],
-                    'KeyLen' => strlen(
-                        $fragedTag[static::TAG_ARR_IDX_BEGIN]
-                    ),
-                    'Type' => static::TAG_TYPE_MIDDLE_PASS,
-                    'Expecting' => static::setTagExpect(static::TAG_TYPE_MIDDLE_PASS),
-                );
-        }
-
-        return true;
-    }
-
-    /**
-     * Get all positions of a string in another string
-     *
-     * @param string $key The key to search
-     * @param string $content The string to be search
-     * @param integer $startFrom Where to start from
-     * @param array $exclude Don't pickup the position in this array
-     *
-     * @return array Return the search array contains all position
-     */
-    protected static function getAllPositionsFromString(
-        $key,
-        &$content,
-        $startFrom,
-        array &$exclude
-    ) {
-        $result = array();
-        $cursorPos = $startFrom;
-        $keyLenOffset = strlen($key) - 1;
-
-        while (($cursorPos = strpos($content, $key, $cursorPos)) !== false) {
-            if (isset($exclude[$cursorPos])) {
-                $cursorPos++;
-
-                continue;
-            }
-
-            if ($cursorPos < 1
-            || $content[$cursorPos - 1] != static::$tagSkipperSymbol) {
-                for ($markOut = $cursorPos + $keyLenOffset; $markOut >= $cursorPos; $markOut--) {
-                    $exclude[$markOut] = true;
-                }
-
-                $result[] = $cursorPos;
-            }
-
-            $cursorPos++;
-        }
-
-        return $result;
-    }
+    /** How many tag we already picked up */
+    protected $pickedTags = 0;
 
     /**
      * Set expecting mark to a tag
      *
-     * @param integer $key Type of tag
+     * @param integer $type Type of tag
      *
      * @return array Return array of expect table in $Type => true | false
      */
@@ -597,13 +252,40 @@ class Parser
      *
      * @param string $content Content that will be parse
      * @param integer $maxNests Max nest level
+     * @param array $config Configuration array
      *
      * @return void
      */
-    public function __construct(&$content, $maxNests = 0)
+    public function __construct(&$content, array $config = array())
     {
         $this->content = &$content;
-        $this->maxNests = $maxNests;
+
+        if (isset($config['DelimiterStart'][0])) {
+            $this->delimiterStart = $config['DelimiterStart'];
+        }
+
+        if (isset($config['DelimiterEnd'][0])) {
+            $this->delimiterEnd = $config['DelimiterEnd'];
+        }
+
+        if (isset($config['TagEnderSymbol'][0])) {
+            $this->tagEnderSymbol = $config['TagEnderSymbol'][0];
+        }
+
+        if (isset($config['TagSkipperSymbol'][0])) {
+            $this->tagSkipperSymbol = $config['TagSkipperSymbol'][0];
+        }
+
+        if (isset($config['MaxNests'])) {
+            $this->maxNests = $config['MaxNests'];
+        }
+
+        if (isset($config['MaxTags'])) {
+            // Almost tag has 4 positions: Open.Begin Open.End Close.Begin Close.End
+            // only middle pass don't (it only have Open.Begin Close.End)
+            // So number 4 is, well, usable
+            $this->maxTags = $config['MaxTags'] * 4;
+        }
     }
 
     /**
@@ -613,11 +295,349 @@ class Parser
      */
     public function parse()
     {
-        if (!$this->tagPositionRaw = $this->getTagPositions()) {
-            return array();
+        return $this->assemble($this->pairing($this->getTagPositions()));
+    }
+
+    /**
+     * Register a tag into parser
+     *
+     * @param string $tagName The name of the tag
+     * @param bool $inline Is this an inline tag?
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    public function registerTag($tagName, $inline)
+    {
+        $addingTag = array();
+
+        if (isset($this->registeredTags[$tagName])) {
+            throw new Exception\TagAlreadyRegistered($tagName);
+
+            return false;
         }
 
-        return $this->assemble($this->pairing());
+        $addingTag['Tag'] = $tagName;
+        $addingTag['Inline'] = $inline;
+        $addingTag['Middle'] = array();
+
+        if ($inline) {
+            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN] =
+                $this->delimiterStart . $tagName;
+
+            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END] =
+                $this->tagEnderSymbol . $this->delimiterEnd;
+
+            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN] = '';
+
+            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END] = '';
+        } else {
+            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN] =
+                $this->delimiterStart . $tagName;
+
+            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END] =
+                $this->delimiterEnd;
+
+            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN] =
+                $this->delimiterStart . $this->tagEnderSymbol . $tagName;
+
+            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END] =
+                $this->delimiterEnd;
+        }
+
+        // Length
+        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN_LENGTH] =
+            strlen($addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]);
+
+        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END_LENGTH] =
+            strlen($addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]);
+
+        $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN_LENGTH] =
+            strlen($addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN]);
+
+        $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END_LENGTH] =
+            strlen($addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END]);
+
+        // Offset
+        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN_OFFSET] =
+            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN_LENGTH] - 1;
+
+        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END_OFFSET] =
+            $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END_LENGTH] - 1;
+
+        $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN_OFFSET] =
+            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN_LENGTH] - 1;
+
+        $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END_OFFSET] =
+            $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_END_LENGTH] - 1;
+
+        // Add to register
+        $this->registeredTags[$tagName] = $addingTag;
+
+        // Add tag to seek table
+        if ($inline) {
+            $this->tagSeekArbitTab[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]][$tagName]
+                =
+            $this->tagSeekTable[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]]
+                = array(
+                    'Tag' => $tagName,
+                    'Key' => $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN],
+                    'KeyLen' => strlen(
+                        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]
+                    ),
+                    'Type' => static::TAG_TYPE_PASS_BEGIN,
+                    'Expecting' => static::setTagExpect(static::TAG_TYPE_PASS_BEGIN),
+                );
+
+            $this->tagSeekArbitTab[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]][$tagName]
+                =
+            $this->tagEndSeekTable[$tagName]['Pass']
+                = array(
+                    'Tag' => $tagName,
+                    'Key' => $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END],
+                    'KeyLen' => strlen(
+                        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]
+                    ),
+                    'Type' => static::TAG_TYPE_PASS_END,
+                    'Expecting' => static::setTagExpect(static::TAG_TYPE_PASS_END),
+                );
+        } else {
+            $this->tagSeekArbitTab[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]][$tagName]
+                =
+            $this->tagSeekTable[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]]
+                = array(
+                    'Tag' => $tagName,
+                    'Key' => $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN],
+                    'KeyLen' => strlen(
+                        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_BEGIN]
+                    ),
+                    'Type' => static::TAG_TYPE_OPENER_BEGIN,
+                    'Expecting' => static::setTagExpect(static::TAG_TYPE_OPENER_BEGIN),
+                );
+
+            $this->tagSeekArbitTab[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]][$tagName]
+                =
+            $this->tagEndSeekTable[$tagName]['Open']
+                = array(
+                    'Tag' => $tagName,
+                    'Key' => $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END],
+                    'KeyLen' => strlen(
+                        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]
+                    ),
+                    'Type' => static::TAG_TYPE_OPENER_END,
+                    'Expecting' => static::setTagExpect(static::TAG_TYPE_OPENER_END),
+                );
+
+            $this->tagSeekArbitTab[$addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN]][$tagName]
+                =
+            $this->tagSeekTable[$addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN]]
+                = array(
+                    'Tag' => $tagName,
+                    'Key' => $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN],
+                    'KeyLen' => strlen(
+                        $addingTag['Fraged']['Close'][static::TAG_ARR_IDX_BEGIN]
+                    ),
+                    'Type' => static::TAG_TYPE_CLOSER_BEGIN,
+                    'Expecting' => static::setTagExpect(static::TAG_TYPE_CLOSER_BEGIN),
+                );
+
+            $this->tagSeekArbitTab[$addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]][$tagName]
+                =
+            $this->tagEndSeekTable[$tagName]['Close']
+                = array(
+                    'Tag' => $tagName,
+                    'Key' => $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END],
+                    'KeyLen' => strlen(
+                        $addingTag['Fraged']['Open'][static::TAG_ARR_IDX_END]
+                    ),
+                    'Type' => static::TAG_TYPE_CLOSER_END,
+                    'Expecting' => static::setTagExpect(static::TAG_TYPE_CLOSER_END),
+                );
+        }
+
+        return true;
+    }
+
+    /**
+     * Register child tag into the main tag
+     *
+     * @param string $middleTagOf The name of main tag
+     * @param string $tagName The name of the tag
+     * @param bool $hasParamter This tag will have parameter or not
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    public function registerMiddleTag($middleTagOf, $tagName, $hasParamter)
+    {
+        $fragedTag = array();
+
+        if (!isset($this->registeredTags[$middleTagOf])) {
+            throw new Exception\MiddleTagParentNotFound($tagName, $middleTagOf);
+
+            return false;
+        }
+
+        if (isset($this->registeredTags[$tagName])) {
+            throw new Exception\TagParentExisted($tagName, $middleTagOf);
+
+            return false;
+        }
+
+        if (isset($this->registeredTags[$middleTagOf]['Middle'][$tagName])) {
+            throw new Exception\MiddleTagAleadyReigstered($tagName, $middleTagOf);
+
+            return false;
+        }
+
+        if ($this->registeredTags[$middleTagOf]['Inline']) {
+            throw new Exception\MiddleTagParentTagIsInline($tagName, $middleTagOf);
+
+            return false;
+        }
+
+        $this->registeredTags[$middleTagOf]['Middle'][$tagName] = $hasParamter;
+
+        if ($hasParamter) {
+            $fragedTag[static::TAG_ARR_IDX_BEGIN] =
+                $this->delimiterStart
+                . $tagName;
+
+            $fragedTag[static::TAG_ARR_IDX_END] =
+                $this->delimiterEnd;
+        } else {
+            $fragedTag[static::TAG_ARR_IDX_BEGIN] =
+                $this->delimiterStart
+                . $tagName
+                . $this->delimiterEnd;
+
+            $fragedTag[static::TAG_ARR_IDX_END] = '';
+        }
+
+        // Length
+        $fragedTag[static::TAG_ARR_IDX_BEGIN_LENGTH] =
+            strlen($fragedTag[static::TAG_ARR_IDX_BEGIN]);
+
+        $fragedTag[static::TAG_ARR_IDX_END_LENGTH] =
+            strlen($fragedTag[static::TAG_ARR_IDX_END]);
+
+        // Offset
+        $fragedTag[static::TAG_ARR_IDX_BEGIN_OFFSET] =
+            $fragedTag[static::TAG_ARR_IDX_BEGIN_LENGTH] - 1;
+
+        $fragedTag[static::TAG_ARR_IDX_END_OFFSET] =
+            $fragedTag[static::TAG_ARR_IDX_END_LENGTH] - 1;
+
+        $this->registeredTags[$middleTagOf]['Fraged']['Middle'][$tagName] = $fragedTag;
+
+        if ($hasParamter) {
+            $this->tagSeekArbitTab[$fragedTag[static::TAG_ARR_IDX_BEGIN]][$tagName]
+                =
+            $this->tagSeekTable[$fragedTag[static::TAG_ARR_IDX_BEGIN]]
+                = array(
+                    'Tag' => $tagName,
+                    'Key' => $fragedTag[static::TAG_ARR_IDX_BEGIN],
+                    'KeyLen' => strlen(
+                        $fragedTag[static::TAG_ARR_IDX_BEGIN]
+                    ),
+                    'Type' => static::TAG_TYPE_MIDDLE_BEGIN,
+                    'Expecting' => static::setTagExpect(static::TAG_TYPE_MIDDLE_BEGIN),
+                );
+
+            $this->tagSeekArbitTab[$fragedTag[static::TAG_ARR_IDX_END]][$tagName]
+                =
+            $this->tagEndSeekTable[$tagName]['Close']
+                = array(
+                    'Tag' => $tagName,
+                    'Key' => $fragedTag[static::TAG_ARR_IDX_END],
+                    'KeyLen' => strlen(
+                        $fragedTag[static::TAG_ARR_IDX_END]
+                    ),
+                    'Type' => static::TAG_TYPE_MIDDLE_END,
+                    'Expecting' => static::setTagExpect(static::TAG_TYPE_MIDDLE_END),
+                );
+        } else {
+            $this->tagSeekArbitTab[$fragedTag[static::TAG_ARR_IDX_BEGIN]][$tagName]
+                =
+            $this->tagSeekTable[$fragedTag[static::TAG_ARR_IDX_BEGIN]]
+                = array(
+                    'Tag' => $tagName,
+                    'Key' => $fragedTag[static::TAG_ARR_IDX_BEGIN],
+                    'KeyLen' => strlen(
+                        $fragedTag[static::TAG_ARR_IDX_BEGIN]
+                    ),
+                    'Type' => static::TAG_TYPE_MIDDLE_PASS,
+                    'Expecting' => static::setTagExpect(static::TAG_TYPE_MIDDLE_PASS),
+                );
+        }
+
+        return true;
+    }
+
+    /**
+     * Get all positions of a string in another string
+     *
+     * @param array $targetTagInfo the info of the tag that will be searched
+     * @param string $content The string to be search
+     * @param integer $startFrom Where to start from
+     * @param array $exclude Don't pickup the position in this array
+     *
+     * @return array Return the search array contains all position
+     */
+    protected function getAllPositionsFromString(
+        array $targetTagInfo,
+        &$content,
+        $startFrom,
+        array &$exclude
+    ) {
+        $result = array();
+        $cursorPos = $startFrom;
+        $keyLenOffset = $targetTagInfo['KeyLen'] - 1;
+
+        while (($cursorPos = strpos($content, $targetTagInfo['Key'], $cursorPos)) !== false) {
+            if (isset($exclude[$cursorPos])) {
+                $cursorPos++;
+
+                continue;
+            }
+
+            if ($cursorPos < 1
+            || $content[$cursorPos - 1] != $this->tagSkipperSymbol) {
+                switch ($targetTagInfo['Type']) {
+                    case static::TAG_TYPE_PASS_BEGIN:
+                    case static::TAG_TYPE_OPENER_BEGIN:
+                    case static::TAG_TYPE_MIDDLE_BEGIN:
+                        if (isset($content[$cursorPos + $targetTagInfo['KeyLen']])
+                        && !isset($this->tagBlankSymbols[$content[$cursorPos + $targetTagInfo['KeyLen']]])) {
+                            $cursorPos++;
+
+                            continue 2;
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+
+                if ($this->maxTags
+                && $this->maxTags < $this->pickedTags++) {
+                    throw new Exception\MaxTagLimitReached(
+                        $targetTagInfo['Tag'],
+                        $cursorPos
+                    );
+
+                    break;
+                }
+
+                for ($markOut = $cursorPos + $keyLenOffset; $markOut >= $cursorPos; $markOut--) {
+                    $exclude[$markOut] = true;
+                }
+
+                $result[] = $cursorPos;
+            }
+
+            $cursorPos++;
+        }
+
+        return $result;
     }
 
     /**
@@ -631,10 +651,10 @@ class Parser
         $totalPositions = $resultPositions = $tagSearchTab = array();
         $expectedEndingTag = $tagSearchExcludes = $nest = array();
 
-        foreach (static::$tagSeekArbitTab as $tagKey => $tags) {
+        foreach ($this->tagSeekArbitTab as $tagKey => $tags) {
             foreach ($tags as $tagName => $tagProperty) {
                 $tagSearchTab[$tagProperty['KeyLen']][$tagKey]
-                    = & static::$tagSeekArbitTab[$tagKey][$tagName];
+                    = & $this->tagSeekArbitTab[$tagKey][$tagName];
             }
         }
 
@@ -644,8 +664,8 @@ class Parser
         // Pick up all start and end positions
         foreach ($tagSearchTab as $keyLength => $tagInfos) {
             foreach ($tagInfos as $tag => $tagInfo) {
-                foreach (static::getAllPositionsFromString(
-                    $tagInfo['Key'],
+                foreach ($this->getAllPositionsFromString(
+                    $tagInfo,
                     $this->content,
                     0,
                     $tagSearchExcludes
@@ -653,39 +673,39 @@ class Parser
                     switch ($tagInfo['Type']) {
                         case static::TAG_TYPE_PASS_BEGIN:
                             $totalPositions[$tagPosition]
-                                = & static::$tagSeekTable[$tagInfo['Key']];
+                                = & $this->tagSeekTable[$tagInfo['Key']];
 
                             $expectedEnding[$tagPosition] =
-                                static::$tagEndSeekTable[$tagInfo['Tag']]['Pass'];
+                                $this->tagEndSeekTable[$tagInfo['Tag']]['Pass'];
                             break;
 
                         case static::TAG_TYPE_OPENER_BEGIN:
                             $totalPositions[$tagPosition]
-                                = & static::$tagSeekTable[$tagInfo['Key']];
+                                = & $this->tagSeekTable[$tagInfo['Key']];
 
                             $expectedEnding[$tagPosition] =
-                                static::$tagEndSeekTable[$tagInfo['Tag']]['Open'];
+                                $this->tagEndSeekTable[$tagInfo['Tag']]['Open'];
                             break;
 
                         case static::TAG_TYPE_CLOSER_BEGIN:
                             $totalPositions[$tagPosition]
-                                = & static::$tagSeekTable[$tagInfo['Key']];
+                                = & $this->tagSeekTable[$tagInfo['Key']];
 
                             $expectedEnding[$tagPosition] =
-                                static::$tagEndSeekTable[$tagInfo['Tag']]['Close'];
+                                $this->tagEndSeekTable[$tagInfo['Tag']]['Close'];
                             break;
 
                         case static::TAG_TYPE_MIDDLE_BEGIN:
                             $totalPositions[$tagPosition]
-                                = & static::$tagSeekTable[$tagInfo['Key']];
+                                = & $this->tagSeekTable[$tagInfo['Key']];
 
                             $expectedEnding[$tagPosition] =
-                                static::$tagEndSeekTable[$tagInfo['Tag']]['Close'];
+                                $this->tagEndSeekTable[$tagInfo['Tag']]['Close'];
                             break;
 
                         case static::TAG_TYPE_MIDDLE_PASS:
                             $totalPositions[$tagPosition]
-                                = & static::$tagSeekTable[$tagInfo['Key']];
+                                = & $this->tagSeekTable[$tagInfo['Key']];
 
                             $expectedEnding[$tagPosition] = array();
                             break;
@@ -736,8 +756,8 @@ class Parser
                         break;
                 }
             } elseif (isset($nest[$nestLevel])) {
-                if (isset(static::$tagSeekArbitTab[$tagInfo][$nest[$nestLevel]['TagInfo']['Tag']])) {
-                    if (static::$tagSeekArbitTab[$tagInfo][$nest[$nestLevel]['TagInfo']['Tag']]['Key']
+                if (isset($this->tagSeekArbitTab[$tagInfo][$nest[$nestLevel]['TagInfo']['Tag']])) {
+                    if ($this->tagSeekArbitTab[$tagInfo][$nest[$nestLevel]['TagInfo']['Tag']]['Key']
                     == $nest[$nestLevel]['ExpectedEnding']['Key']) {
                         $resultPositions[$position] = $nest[$nestLevel]['ExpectedEnding'];
                         unset($nest[$nestLevel--]);
@@ -754,9 +774,11 @@ class Parser
     /**
      * Pairing all begin and ending tags
      *
+     * @param array $tagPositionRaw All positions with tag info
+     *
      * @return mixed Return the array of paired result when succeed, false otherwise
      */
-    protected function pairing()
+    protected function pairing(array $tagPositionRaw)
     {
         $nestLevel = $tagPaired = 0;
         $nest = $paired = $tempMiddleTags = $middleTags = array();
@@ -767,7 +789,7 @@ class Parser
         );
         $lastType = null;
 
-        foreach ($this->tagPositionRaw as $position => $current) {
+        foreach ($tagPositionRaw as $position => $current) {
             switch ($current['Type']) {
                 // Opening a new tag
                 case static::TAG_TYPE_PASS_BEGIN:
@@ -843,7 +865,7 @@ class Parser
 
                     unset($nest[$nestLevel]['LastExpecting']);
 
-                    $paired[$nestLevel . '.' . $tagPaired++] = $nest[$nestLevel];
+                    $paired[(int)($nestLevel . '.' . $tagPaired++)] = $nest[$nestLevel];
 
                     unset($nest[$nestLevel]);
 
@@ -890,7 +912,7 @@ class Parser
                     if (!$nestLevel
                     || !$nest[$nestLevel]['LastExpecting'][$current['Type']]
                     || !isset(
-                        static::$registeredTags[$nest[$nestLevel]['Tag']]['Middle'][$current['Tag']]
+                        $this->registeredTags[$nest[$nestLevel]['Tag']]['Middle'][$current['Tag']]
                     )) {
                         throw new Exception\UnexpectedMiddleTag(
                             $current['Tag'],
@@ -911,7 +933,7 @@ class Parser
                     if (!$nestLevel
                     || !$nest[$nestLevel]['LastExpecting'][$current['Type']]
                     || !isset(
-                        static::$registeredTags[$nest[$nestLevel]['Tag']]['Middle'][$current['Tag']]
+                        $this->registeredTags[$nest[$nestLevel]['Tag']]['Middle'][$current['Tag']]
                     )) {
                         throw new Exception\UnexpectedEndOfAnMiddleTag(
                             $current['Tag'],
@@ -975,6 +997,8 @@ class Parser
     /**
      * Assemble paired array to output format
      *
+     * @param array $pairedRaw The paired tag data in array
+     *
      * @return array Return the assembled array
      */
     protected function assemble(array $pairedRaw)
@@ -1002,6 +1026,9 @@ class Parser
             $tempResult['Parameter']['Main'][1] =
                 $paired['Position']['Opener']['End'];
 
+            $tempResult['Parameter']['Main'][2] =
+                $tempResult['Parameter']['Main'][1] - $tempResult['Parameter']['Main'][0];
+
             // Parameter: End
             if ($paired['Position']['Closer']['StarterLen']) { // If it don't have the ending starter
                 $tempResult['Parameter']['End'][0] =
@@ -1009,15 +1036,17 @@ class Parser
 
                 $tempResult['Parameter']['End'][1] =
                     $paired['Position']['Closer']['End'];
+
+                $tempResult['Parameter']['End'][2] =
+                    $tempResult['Parameter']['End'][1] - $tempResult['Parameter']['End'][0];
             } else {
-                $tempResult['Parameter']['End'] = array(0, 0);
+                $tempResult['Parameter']['End'] = array(0, 0, 0);
             }
 
             if (!empty($paired['Position']['Middle'])) {
-                $tempResult['DataMethod'] = 'Middle';
-
                 $tempResult['Data']['Field'] = array(
                     $paired['Position']['Opener']['End'] + $paired['Position']['Opener']['EnderLen'],
+                    0,
                     0
                 );
 
@@ -1026,19 +1055,27 @@ class Parser
                     if (!$midKey) {
                         $tempResult['Data']['Field'][1] =
                             $midVal[1];
+
+                        $tempResult['Data']['Field'][2] =
+                            $midVal[1] - $tempResult['Data']['Field'][0];
                     } elseif ($lastMid) {
                         $lastMid['Data'][1]
                             = $midVal[1];
+
+                        $lastMid['Data'][2]
+                            = $midVal[1] - $lastMid['Data'][0];
                     }
 
                     $tempResult['Data']['Middle'][$midVal[0]][$midKey]
                         = array(
                             'Parameter' => array(
                                 $midVal[3],
-                                $midVal[2]
+                                $midVal[2],
+                                $midVal[2] - $midVal[3]
                             ),
                             'Data' => array(
                                 $midVal[4],
+                                0,
                                 0
                             ),
                         );
@@ -1048,10 +1085,17 @@ class Parser
 
                 $lastMid['Data'][1]
                     = $paired['Position']['Closer']['Start'];
+
+                $lastMid['Data'][2]
+                    = $lastMid['Data'][1] - $lastMid['Data'][0];
+
+                unset($lastMid); // Unlink, or array will be cleared in next round
             } else {
                 $tempResult['Data']['Field'] = array(
                     $paired['Position']['Opener']['End'] + $paired['Position']['Opener']['EnderLen'],
+                    $paired['Position']['Closer']['Start'],
                     $paired['Position']['Closer']['Start']
+                    - ($paired['Position']['Opener']['End'] + $paired['Position']['Opener']['EnderLen'])
                 );
             }
 

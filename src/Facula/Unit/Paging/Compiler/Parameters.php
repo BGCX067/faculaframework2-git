@@ -25,7 +25,7 @@
  *
  */
 
-namespace Facula\Base\Tool\Paging\Compiler;
+namespace Facula\Unit\Paging\Compiler;
 
 /**
  * Parse the compiler's tag, get tag properties.

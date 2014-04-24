@@ -28,19 +28,89 @@
 namespace Facula\Unit\Paging\Compiler\Operator;
 
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
+use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 
 /**
  * Loop tag parse
  */
 class Loop implements Implement
 {
+    protected $data = '';
+    protected $mainParameter = null;
+    protected $endParameter = '';
+
+    protected $parameters = array(
+        'var' => 'default',
+        'name' => 'default',
+    );
+
+    protected $middles = array();
+
     public static function register()
     {
         return array(
-            'Tag' => 'loop',
             'Middles' => array(
                 'empty' => false,
             ),
         );
+    }
+
+    public function setParameter($type, $param)
+    {
+        switch ($type) {
+            case 'Main':
+                $this->mainParameter = new Parameter($param, $this->parameters);
+                break;
+
+            case 'End':
+                $this->endParameter = new Parameter($param, $this->parameters);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    public function setData($data)
+    {
+        $this->data = $data;
+    }
+
+    public function setMiddle($tag, $param, $data)
+    {
+        $this->middles[$tag][] = $data;
+    }
+
+    public function compile()
+    {
+        $empty = '';
+
+        if (!$varName = $this->mainParameter->get('var')) {
+            return ''; // ERROR
+        }
+
+        if (!$varKeyName = $this->mainParameter->get('name')) {
+            return ''; // ERROR
+        }
+
+        $php = '<?php if (isset(' . $varName . ') && empty(' . $varName . ')) { ';
+        $php .= 'foreach(' . $varName . ' as $_' . $varKeyName . ' => $' . $varKeyName . ') { ?> ';
+        $php .= $this->data;
+
+        if (isset($this->middles['empty'])) {
+            foreach ($this->middles['empty'] as $codes) {
+                $empty .= $codes;
+            }
+        }
+
+        if (!$empty) {
+            $php .= '<?php }} ?>';
+        } else {
+            $php .= ' <?php }} else { ?>';
+            $php .= $empty;
+            $php .= ' <?php } ?>';
+        }
+
+        return $php;
     }
 }
