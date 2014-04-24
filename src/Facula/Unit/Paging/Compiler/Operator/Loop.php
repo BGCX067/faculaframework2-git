@@ -28,16 +28,20 @@
 namespace Facula\Unit\Paging\Compiler\Operator;
 
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
+use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 use Facula\Unit\Paging\Compiler\Parameters as Parameter;
+use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 
 /**
  * Loop tag parse
  */
-class Loop implements Implement
+class Loop extends Base implements Implement
 {
+    protected $pool = array();
+
     protected $data = '';
     protected $mainParameter = null;
-    protected $endParameter = '';
+    protected $endParameter = null;
 
     protected $parameters = array(
         'var' => 'default',
@@ -53,6 +57,11 @@ class Loop implements Implement
                 'empty' => false,
             ),
         );
+    }
+
+    public function __construct()
+    {
+
     }
 
     public function setParameter($type, $param)
@@ -85,16 +94,16 @@ class Loop implements Implement
     {
         $empty = '';
 
-        if (!$varName = $this->mainParameter->get('var')) {
-            return ''; // ERROR
+        if (!$varName = $this->convertVariableName($this->mainParameter->get('var'))) {
+            throw new Exception\VariableNameInvaild($this->mainParameter->get('var'));
         }
 
-        if (!$varKeyName = $this->mainParameter->get('name')) {
-            return ''; // ERROR
+        if (!$varKeyName = $this->isStandardString($this->mainParameter->get('name'))) {
+            throw new Exception\NameInvaild($this->mainParameter->get('name'));
         }
 
         $php = '<?php if (isset(' . $varName . ') && empty(' . $varName . ')) { ';
-        $php .= 'foreach(' . $varName . ' as $_' . $varKeyName . ' => $' . $varKeyName . ') { ?> ';
+        $php .= 'foreach (' . $varName . ' as $_' . $varKeyName . ' => $' . $varKeyName . ') { ?> ';
         $php .= $this->data;
 
         if (isset($this->middles['empty'])) {

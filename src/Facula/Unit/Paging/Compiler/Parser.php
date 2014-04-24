@@ -780,8 +780,8 @@ class Parser
      */
     protected function pairing(array $tagPositionRaw)
     {
-        $nestLevel = $tagPaired = 0;
-        $nest = $paired = $tempMiddleTags = $middleTags = array();
+        $nestLevel = 0;
+        $nest = $paired = $tempMiddleTags = $middleTags = $nestLevels = array();
         $last = array(
             'Tag' => null,
             'Type' => null,
@@ -865,7 +865,7 @@ class Parser
 
                     unset($nest[$nestLevel]['LastExpecting']);
 
-                    $paired[(int)($nestLevel . '.' . $tagPaired++)] = $nest[$nestLevel];
+                    $nestLevels[$nestLevel][] = $nest[$nestLevel];
 
                     unset($nest[$nestLevel]);
 
@@ -989,9 +989,15 @@ class Parser
             );
         }
 
-        krsort($paired);
+        krsort($nestLevels);
 
-        return array_values($paired);
+        foreach ($nestLevels as $nests) {
+            foreach ($nests as $tag) {
+                $paired[] = $tag;
+            }
+        }
+
+        return $paired;
     }
 
     /**

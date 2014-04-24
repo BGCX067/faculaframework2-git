@@ -80,6 +80,9 @@ class Compiler extends Base implements Implement
     /** Tag handlers */
     protected static $tagHandlers = array();
 
+    /** Shared data pool between tag handlers */
+    protected $pool = array();
+
     /** Instance of content parser */
     protected $parser = null;
 
@@ -224,8 +227,6 @@ class Compiler extends Base implements Implement
      */
     public static function compileTag(array $tagParameters, &$content)
     {
-        // print_r($tagParameters);
-
         $result = '';
         $class = '';
         $handler = new static::$tagHandlers[$tagParameters['Tag']]();
@@ -482,10 +483,17 @@ class Compiler extends Base implements Implement
         while (($tag = array_shift($tags)) !== null) {
             $oldLength = $tag['End'] - $tag['Start'];
 
-            $newResult = static::compileTag(
+            if (!($newResult = static::compileTag(
                 $tag,
                 $result
-            );
+            )) && (is_bool($newResult) || is_null($newResult))) {
+                throw new Exception\TagCompileEmptyResult(
+                    $tag['Tag'],
+                    $tag['Start']
+                );
+
+                return false;
+            }
 
             $newLength = strlen($newResult);
 

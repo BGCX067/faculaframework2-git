@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Page Compiler
+ * VariableNameInvaild Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,16 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler;
+namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
 
-interface OperatorImplement
+use Facula\Base\Prototype\Exception as Base;
+
+/**
+ * VariableNameInvaild Exception
+ */
+class VariableNameInvaild extends Base
 {
-    public static function register();
-
-    public function __construct();
-    public function setParameter($type, $param);
-    public function setData($data);
-    public function setMiddle($tag, $param, $data);
-
-    public function compile();
+    protected static $exceptionMessage = '
+        The variable name "%s" is invalid.
+    ';
 }

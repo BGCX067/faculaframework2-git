@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Page Compiler
+ * Operator Base
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -27,14 +27,37 @@
 
 namespace Facula\Unit\Paging\Compiler;
 
-interface OperatorImplement
+abstract class OperatorBase
 {
-    public static function register();
+    protected function convertVariableName($string)
+    {
+        if (!$string) {
+            return false;
+        }
 
-    public function __construct();
-    public function setParameter($type, $param);
-    public function setData($data);
-    public function setMiddle($tag, $param, $data);
+        if ($string[0] == '$') {
+            if (!$this->isStandardString($string)) {
+                return false;
+            }
 
-    public function compile();
+            return $string;
+        }
+
+        $varNameArray = explode('.', $string);
+
+        $varName = '$' . array_shift($varNameArray);
+
+        if (!empty($varNameArray)) {
+            foreach ($varNameArray as $arrayTable) {
+                $varName .= '[\'' . $arrayTable . '\']';
+            }
+        }
+
+        return $varName;
+    }
+
+    protected function isStandardString($string)
+    {
+        return \Facula\Unit\Validator::check($string, 'alphanumber');
+    }
 }
