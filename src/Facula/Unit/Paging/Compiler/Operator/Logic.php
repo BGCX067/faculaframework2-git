@@ -30,16 +30,20 @@ namespace Facula\Unit\Paging\Compiler\Operator;
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
 use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
+use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 
 /**
  * Logic tag parse
  */
-class Logic implements Implement
+class Logic extends Base implements Implement
 {
+    /** Wrapped Data in the tags */
     protected $data = '';
-    protected $mainParameter = '';
-    protected $endParameter = '';
 
+    /** Parameter object for main parameter */
+    protected $mainParameter = '';
+
+    /** Tag parameter template */
     protected $parameters = array(
         'var' => 'variable', // var="$variable"
 
@@ -48,16 +52,22 @@ class Logic implements Implement
         'unequals' => 'variable', // var="$variable" unequal="$someothervar"
 
         // variable compare to another value
-        'is' => 'variable', // var="$variable" is="$someothervar"
-        'not' => 'variable', // var="$variable" not="$someothervar"
+        'is' => 'default', // var="$variable" is="someothervar"
+        'not' => 'default', // var="$variable" not="someothervar"
 
         // variable compare to another token (true | false | null)
         'fits' => 'default', // var="$variable" fits="true"
         'unfits' => 'default', // var="$variable" unfits="false"
     );
 
+    /** Data of child tags */
     protected $middles = array();
 
+    /**
+     * Return the tag registration information
+     *
+     * @return array Return registration information of this tag compiler
+     */
     public static function register()
     {
         return array(
@@ -68,11 +78,26 @@ class Logic implements Implement
         );
     }
 
+    /**
+     * Constructor
+     *
+     * Do some necessary initialize
+     *
+     * @return void
+     */
     public function __construct()
     {
-
+        return;
     }
 
+    /**
+     * Set parameter info of current tag to tag compiler
+     *
+     * @param string $type Tag type
+     * @param string $param The parameter that will be set
+     *
+     * @return void
+     */
     public function setParameter($type, $param)
     {
         switch ($type) {
@@ -83,32 +108,51 @@ class Logic implements Implement
                 );
                 break;
 
-            case 'End':
-                $this->endParameter = new Parameter(
-                    $param,
-                    $this->parameters
-                );
-                break;
-
             default:
                 break;
         }
     }
 
+    /**
+     * Set wrapped data of current tag to tag compiler
+     *
+     * @param string $data Data
+     *
+     * @return void
+     */
     public function setData($data)
     {
         $this->data = $data;
     }
 
+    /**
+     * Set child code data of current tag to tag compiler
+     *
+     * @param string $tag The tag name
+     * @param string $param Tag parameter
+     * @param string $data Wrapped data of current child tag
+     *
+     * @return void
+     */
     public function setMiddle($tag, $param, $data)
     {
         $this->middles[$tag][] = array(
-            'Parameter' => trim($param),
+            'Parameter' => new Parameter(
+                $param,
+                $this->parameters
+            ),
             'Data' => $data,
         );
     }
 
-    public function getIsDataFitType($type)
+    /**
+     * Get actual value according to type of fits / unfits parameter
+     *
+     * @param string $type The fitting type
+     *
+     * @return string Actual value that will be used in IF expression
+     */
+    protected function getIsDataFitType($type)
     {
         $result = '';
 
@@ -126,86 +170,179 @@ class Logic implements Implement
                 break;
 
             default:
+                throw new Exception\LogicUnknownDataFitType($type);
                 break;
         }
 
         return $result;
     }
 
+    /**
+     * Compile parameter to IF expression
+     *
+     * @param Facula\Unit\Paging\Compiler\Parameters $parameters The parameter will be used to compile
+     *
+     * @return array Result of compiled parameters including isset check syntaxes.
+     */
     protected function compileParameters(
         Parameter $parameters
     ) {
-        $php = '';
-        $stacks = array();
-        $lastVarName = '';
+        $phpIsset = $lastVarName = '';
+        $stacks = $varNames = $logicStack = array();
         $params = $parameters->fetch();
 
-        if (isset($params[0]) && !$params[0]['Tag'] !== 'var') {
-            throw new Exception\LogicFirstParamaterMustBeVar();
-        }
+        if (isset($params[0])) {
+            if ($params[0]['Tag'] != 'var') {
+                throw new Exception\LogicFirstParamaterMustBeVar();
+            }
 
-        foreach ($parameters->fetch() as $params) {
-            switch ($params['Tag']) {
-                case 'var':
-                    $lastVarName = $params['Data'];
-                    break;
+            foreach ($parameters->fetch() as $param) {
+                switch ($param['Tag']) {
+                    case 'var':
+                        $varNames[] = $param['Data'];
+                        $lastVarName = $param['Data'];
+                        break;
 
-                case 'fits':
-                    $stacks[$lastVarName][] = array(
-                        'Tag' =>
-                            $params['Tag'],
+                    case 'fits':
+                    case 'unfits':
+                        $stacks[] = array(
+                            'Tag' =>
+                                $param['Tag'],
 
-                        'Data' =>
-                            $this->getIsDataFitType($params['Data']),
-                    );
-                    break;
+                            'Var' =>
+                                $lastVarName,
 
-                case 'unfits':
-                    $stacks[$lastVarName][] = array(
-                        'Tag' =>
-                            $params['Tag'],
+                            'Data' =>
+                                $this->getIsDataFitType($param['Data']),
+                        );
+                        break;
 
-                        'Data' =>
-                            $this->getIsDataFitType($params['Data']),
-                    );
-                    break;
+                    case 'equals':
+                    case 'unequals':
+                        $varNames[] = $param['Data'];
 
-                default:
-                    $stacks[$lastVarName][] =
-                        $params;
+                    default:
+                        $stacks[] = array(
+                            'Tag' =>
+                                $param['Tag'],
+
+                            'Var' =>
+                                $lastVarName,
+
+                            'Data' =>
+                                $param['Data'],
+                        );
+                            $param;
+                        break;
+                }
+            }
+
+            // I'll do this with violence
+            // Syntax to check if variable has set.
+            foreach ($varNames as $varName) {
+                try {
+                    $this->setMutex('unsetVarCheck:' . $varName);
+
+                    $phpIsset .= 'if (!isset(' . $varName . ')) { ';
+                    $phpIsset .= $varName . ' = null; ';
+                    $phpIsset .= '} ';
+                } catch (Exception\MutexExisted $e) {
+                    // It's fine.
+                }
+            }
+
+            // The IF Logic syntax
+            foreach ($stacks as $stack) {
+                switch ($stack['Tag']) {
+                    case 'equals':
+                        $logicStack[] =
+                            '(' . $stack['Var'] . ' == ' . $stack['Data'] . ')';
+                        break;
+
+                    case 'unequals':
+                        $logicStack[] =
+                            '(' . $stack['Var'] . ' != ' . $stack['Data'] . ')';
+                        break;
+
+                    case 'is':
+                        $logicStack[] =
+                            '(' . $stack['Var']
+                            . ' == "'
+                            . str_replace('"', '\"', $stack['Data'])
+                            . '")';
+                        break;
+
+                    case 'not':
+                        $logicStack[] =
+                            '(' . $stack['Var']
+                            . ' != "'
+                            . str_replace('"', '\"', $stack['Data'])
+                            . '")';
+                        break;
+
+                    case 'fits':
+                        $logicStack[] =
+                            '(' . $stack['Var'] . ' === ' . $stack['Data'] . ')';
+                        break;
+
+                    case 'unfits':
+                        $logicStack[] =
+                            '(' . $stack['Var'] . ' !== ' . $stack['Data'] . ')';
+                        break;
+
+                    default:
+                        break;
+                }
             }
         }
 
-
+        return array(
+            'Check' => $phpIsset,
+            'Logic' => implode(' && ', $logicStack),
+        );
     }
 
+    /**
+     * Compile the tag data and return result
+     *
+     * @return string Compiled result of the tag wrapper
+     */
     public function compile()
     {
-        if (!$this->mainParameter) {
-            throw new Exception\LogicExpressionInvalid(
-                $this->mainParameter
-            );
-        }
+        $php = $phpChecker = '';
+        $middleParameters = array();
 
-        $php = '<?php if (' . $this->compileParameters($this->mainParameter) . ') { ?>';
+        $mainParameter = $this->compileParameters($this->mainParameter);
 
-        if (isset($this->middles['elseif'])) {
-            foreach ($this->middles['elseif'] as $elseif) {
-                $php .= '<?php } elseif (' . $elseif['Parameter'] . ') { ?>';
-                $php .= $elseif['Data'];
+        if ($mainParameter['Logic']) {
+            $phpChecker .= '<?php ' . $mainParameter['Check'];
+            $php .= '<?php if (' . $mainParameter['Logic'] . ') { ?>';
+
+            if (isset($this->middles['elseif'])) {
+                foreach ($this->middles['elseif'] as $elseif) {
+                    $middleParameters =
+                        $this->compileParameters($elseif['Parameter']);
+
+                    $phpChecker .=
+                        $middleParameters['Check'];
+
+                    $php .= '<?php } elseif (' . $middleParameters['Logic'] . ') { ?>';
+                    $php .= $elseif['Data'];
+                }
             }
-        }
 
-        if (isset($this->middles['else'])) {
-            $php .= '<?php } else { ?>';
+            if (isset($this->middles['else'])) {
+                $php .= '<?php } else { ?>';
 
-            foreach ($this->middles['else'] as $else) {
-                $php .= $else['Data'];
+                foreach ($this->middles['else'] as $else) {
+                    $php .= $else['Data'];
+                }
             }
+
+            $phpChecker .= '?>';
+            $php .= '<?php } ?>';
         }
 
-        $php .= '<?php } ?>';
-
-        return $php;
+        return $phpChecker . $php;
     }
 }

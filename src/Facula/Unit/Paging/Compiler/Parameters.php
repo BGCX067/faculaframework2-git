@@ -233,23 +233,23 @@ class Parameters extends Base
                 continue;
             }
 
-            $paramTempValue = $this->getParamAfterPos(
+            if (($paramTempValue = $this->getParamAfterPos(
                 $mark['TagNameEndPos'],
                 $currenPos
-            );
+            )) !== false) {
+                $operatorClass = static::getOperator(
+                    $this->paramTpl[$mark['TagName']]
+                );
 
-            $operatorClass = static::getOperator(
-                $this->paramTpl[$mark['TagName']]
-            );
+                $operator = new $operatorClass($paramTempValue);
 
-            $operator = new $operatorClass($paramTempValue);
+                $this->paramDatas[$paramParsed] = array(
+                    'Tag' => $mark['TagName'],
+                    'Data' => $operator->result()
+                );
 
-            $this->paramDatas[$paramParsed] = array(
-                'Tag' => $mark['TagName'],
-                'Data' => $operator->result()
-            );
-
-            $tag[$mark['TagName']][] = & $this->paramDatas[$paramParsed++]['Data'];
+                $tag[$mark['TagName']][] = & $this->paramDatas[$paramParsed++]['Data'];
+            }
         }
 
         return $tag;

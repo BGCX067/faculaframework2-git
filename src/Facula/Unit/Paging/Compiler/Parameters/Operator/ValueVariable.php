@@ -51,8 +51,15 @@ class ValueVariable implements Implement
             return false;
         }
 
+        if (!isset($string[0])) {
+            throw new Exception\EmptyVariableName();
+
+            return;
+        }
+
         if ($string[0] == '$') {
-            if (!Validator::check($string, 'alphanumber')) {
+            if ((isset($string[1]) && is_numeric($string[1]))
+            || !Validator::check($string, 'alphanumber')) {
                 throw new Exception\InvalidVariableName(
                     $string
                 );
@@ -60,18 +67,25 @@ class ValueVariable implements Implement
                 return;
             }
 
-            $this->var = $varName;
+            $varName = $string;
+        } else {
+            if (is_numeric($string[0])
+            || !preg_match('/^([a-zA-Z0-9\.]+)$/', $string)) {
+                throw new Exception\InvalidVariableName(
+                    $string
+                );
 
-            return;
-        }
+                return;
+            }
 
-        $varNameArray = explode('.', $string);
+            $varNameArray = explode('.', $string);
 
-        $varName = '$' . array_shift($varNameArray);
+            $varName = '$' . array_shift($varNameArray);
 
-        if (!empty($varNameArray)) {
-            foreach ($varNameArray as $arrayTable) {
-                $varName .= '[\'' . $arrayTable . '\']';
+            if (!empty($varNameArray)) {
+                foreach ($varNameArray as $arrayTable) {
+                    $varName .= '[\'' . $arrayTable . '\']';
+                }
             }
         }
 

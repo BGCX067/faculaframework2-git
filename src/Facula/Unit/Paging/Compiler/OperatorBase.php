@@ -43,7 +43,7 @@ abstract class OperatorBase
      */
     public static function init()
     {
-        self::$mutex = array();
+
     }
 
     /**
@@ -51,7 +51,7 @@ abstract class OperatorBase
      *
      * @return void
      */
-    public static function flush()
+    final public static function flush()
     {
         self::$mutex = array();
     }
@@ -63,7 +63,7 @@ abstract class OperatorBase
      *
      * @return bool Return true when succeed, false otherwise
      */
-    protected function setMutex($name) {
+    final protected function setMutex($name) {
         if (isset(self::$mutex[$name])) {
             throw new Exception\MutexExisted($name);
 
