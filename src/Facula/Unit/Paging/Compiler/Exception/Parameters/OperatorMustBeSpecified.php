@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Interface of Page Compiler Operator
+ * OperatorMustBeSpecified Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,16 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler;
+namespace Facula\Unit\Paging\Compiler\Exception\Parameters;
 
-interface OperatorImplement
+use Facula\Base\Prototype\Exception as Base;
+
+/**
+ * OperatorMustBeSpecified Exception
+ */
+class OperatorMustBeSpecified extends Base
 {
-    public static function register();
-
-    public function __construct();
-    public function setParameter($type, $param);
-    public function setData($data);
-    public function setMiddle($tag, $param, $data);
-
-    public function compile();
+    protected static $exceptionMessage = '
+        Parameter type for "%s" must be specified.
+    ';
 }

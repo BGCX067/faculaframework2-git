@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Logic Tag Parser
+ * Logic Tag Compiler
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -28,23 +28,35 @@
 namespace Facula\Unit\Paging\Compiler\Operator;
 
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
-use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 
 /**
  * Logic tag parse
  */
-class Logic extends Base implements Implement
+class Logic implements Implement
 {
     protected $data = '';
     protected $mainParameter = '';
     protected $endParameter = '';
 
-    protected $parameters = array();
+    protected $parameters = array(
+        'var' => 'variable', // var="$variable"
 
-    protected $middles = array(
-        );
+        // variable compare to another variable
+        'equals' => 'variable', // var="$variable" equal="$someothervar"
+        'unequals' => 'variable', // var="$variable" unequal="$someothervar"
+
+        // variable compare to another value
+        'is' => 'variable', // var="$variable" is="$someothervar"
+        'not' => 'variable', // var="$variable" not="$someothervar"
+
+        // variable compare to another token (true | false | null)
+        'fits' => 'default', // var="$variable" fits="true"
+        'unfits' => 'default', // var="$variable" unfits="false"
+    );
+
+    protected $middles = array();
 
     public static function register()
     {
@@ -65,11 +77,17 @@ class Logic extends Base implements Implement
     {
         switch ($type) {
             case 'Main':
-                $this->mainParameter = $param;
+                $this->mainParameter = new Parameter(
+                    $param,
+                    $this->parameters
+                );
                 break;
 
             case 'End':
-                $this->endParameter = $param;
+                $this->endParameter = new Parameter(
+                    $param,
+                    $this->parameters
+                );
                 break;
 
             default:
@@ -90,6 +108,77 @@ class Logic extends Base implements Implement
         );
     }
 
+    public function getIsDataFitType($type)
+    {
+        $result = '';
+
+        switch ($type) {
+            case 'false':
+                $result = 'false';
+                break;
+
+            case 'true':
+                $result = 'true';
+                break;
+
+            case 'null':
+                $result = 'null';
+                break;
+
+            default:
+                break;
+        }
+
+        return $result;
+    }
+
+    protected function compileParameters(
+        Parameter $parameters
+    ) {
+        $php = '';
+        $stacks = array();
+        $lastVarName = '';
+        $params = $parameters->fetch();
+
+        if (isset($params[0]) && !$params[0]['Tag'] !== 'var') {
+            throw new Exception\LogicFirstParamaterMustBeVar();
+        }
+
+        foreach ($parameters->fetch() as $params) {
+            switch ($params['Tag']) {
+                case 'var':
+                    $lastVarName = $params['Data'];
+                    break;
+
+                case 'fits':
+                    $stacks[$lastVarName][] = array(
+                        'Tag' =>
+                            $params['Tag'],
+
+                        'Data' =>
+                            $this->getIsDataFitType($params['Data']),
+                    );
+                    break;
+
+                case 'unfits':
+                    $stacks[$lastVarName][] = array(
+                        'Tag' =>
+                            $params['Tag'],
+
+                        'Data' =>
+                            $this->getIsDataFitType($params['Data']),
+                    );
+                    break;
+
+                default:
+                    $stacks[$lastVarName][] =
+                        $params;
+            }
+        }
+
+
+    }
+
     public function compile()
     {
         if (!$this->mainParameter) {
@@ -98,7 +187,7 @@ class Logic extends Base implements Implement
             );
         }
 
-        $php = '<?php if (' . trim($this->mainParameter) . ') { ?>';
+        $php = '<?php if (' . $this->compileParameters($this->mainParameter) . ') { ?>';
 
         if (isset($this->middles['elseif'])) {
             foreach ($this->middles['elseif'] as $elseif) {

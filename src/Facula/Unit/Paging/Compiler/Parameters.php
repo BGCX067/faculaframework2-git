@@ -27,11 +27,39 @@
 
 namespace Facula\Unit\Paging\Compiler;
 
+use Facula\Unit\Paging\Compiler\Exception\Parameters as Exception;
+use Facula\Base\Factory\Operator as Base;
+use Facula\Base\Exception\Factory\Operator as OperatorFactoryException;
+
 /**
  * Parse the compiler's tag, get tag properties.
  */
-class Parameters
+class Parameters extends Base
 {
+    /** Operators of tag verify */
+    protected static $operators = array(
+        'default' =>
+            'Facula\Unit\Paging\Compiler\Parameters\Operator\ValueDefault',
+
+        'integer' =>
+            'Facula\Unit\Paging\Compiler\Parameters\Operator\ValueInteger',
+
+        'bool' =>
+            'Facula\Unit\Paging\Compiler\Parameters\Operator\ValueBool',
+
+        'float' =>
+            'Facula\Unit\Paging\Compiler\Parameters\Operator\ValueFloat',
+
+        'variable' =>
+            'Facula\Unit\Paging\Compiler\Parameters\Operator\ValueVariable',
+
+        'alphaNumber' =>
+            'Facula\Unit\Paging\Compiler\Parameters\Operator\ValueAlphaNumber',
+    );
+
+    protected static $operatorInterface =
+        'Facula\Unit\Paging\Compiler\Parameters\OperatorImplement';
+
     /** The tag properties in string */
     protected $paramStr = '';
 
@@ -52,6 +80,9 @@ class Parameters
 
     /** Result properties */
     protected $params = array();
+
+    /** Result property data */
+    protected $paramDatas = array();
 
     /** Assignment Symbol (=) */
     protected static $valueAssignSymbol = '=';
@@ -90,6 +121,37 @@ class Parameters
         $this->paramStr = $parameters;
         $this->paramLen = strlen($parameters);
         $this->paramTpl = $parameterTemplate;
+
+        $operatorClass = '';
+
+        foreach ($parameterTemplate as $key => $operatorName) {
+            try {
+                $operatorClass = static::getOperator($operatorName);
+
+                if (!class_exists($operatorClass)) {
+                    throw new Exception\OperatorClassNotFound(
+                        $operatorClass,
+                        $operatorName
+                    );
+
+                    return;
+                }
+
+                if (!class_implements($operatorClass, static::$operatorInterface)) {
+                    throw new Exception\OperatorInterfaceInvalid(
+                        $operatorClass,
+                        $operatorName,
+                        static::$operatorInterface
+                    );
+
+                    return;
+                }
+            } catch (OperatorFactoryException\OperatorNotFound $e) {
+                throw new Exception\OperatorMustBeSpecified($key);
+
+                return;
+            }
+        }
 
         $this->params = $this->parseParameter();
     }
@@ -145,45 +207,49 @@ class Parameters
     }
 
     /**
+     * Fetch all parameters ordered by position
+     *
+     * @return array Return all parameters
+     */
+    public function fetch()
+    {
+        return $this->paramDatas;
+    }
+
+    /**
      * Parse parameter according to the parameter string
      *
      * @return array Return parsed tags and property value as array
      */
     protected function parseParameter()
     {
-        $currenPos = 0;
+        $currenPos = $paramParsed = 0;
         $tag = array();
-        $paramValue = $paramTempValue = '';
+        $operatorClass = $paramValue = $paramTempValue = '';
+        $operator = null;
 
-        foreach ($this->getTagNamePositions() as $postion) {
-            if ($currenPos > $postion['TagNameStartPos']) {
+        foreach ($this->getTagNamePositions() as $position => $mark) {
+            if ($currenPos > $mark['TagNameStartPos']) {
                 continue;
             }
 
             $paramTempValue = $this->getParamAfterPos(
-                $postion['TagNameEndPos'],
+                $mark['TagNameEndPos'],
                 $currenPos
             );
 
-            switch ($this->paramTpl[$postion['TagName']]) {
-                case 'bool':
-                    $paramValue = $paramTempValue ? true : false;
-                    break;
+            $operatorClass = static::getOperator(
+                $this->paramTpl[$mark['TagName']]
+            );
 
-                case 'integer':
-                    $paramValue = (int)$paramTempValue;
-                    break;
-                case 'float':
-                    $paramValue = (float)$paramTempValue;
-                    break;
+            $operator = new $operatorClass($paramTempValue);
 
-                default:
-                    $paramValue = $paramTempValue;
-                    break;
-            }
+            $this->paramDatas[$paramParsed] = array(
+                'Tag' => $mark['TagName'],
+                'Data' => $operator->result()
+            );
 
-            $tag[$postion['TagName']][] = $paramValue;
-
+            $tag[$mark['TagName']][] = & $this->paramDatas[$paramParsed++]['Data'];
         }
 
         return $tag;

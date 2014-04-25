@@ -1,7 +1,7 @@
 <?php
 
 /**
- * VariableNameInvaild Exception
+ * Default parameter parser
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,36 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
+namespace Facula\Unit\Paging\Compiler\Parameters\Operator;
 
-use Facula\Base\Prototype\Exception as Base;
+use Facula\Unit\Paging\Compiler\Parameters\OperatorImplement as Implement;
 
 /**
- * VariableNameInvaild Exception
+ * Default Parameters
  */
-class VariableNameInvaild extends Base
+class ValueDefault implements Implement
 {
-    protected static $exceptionMessage = '
-        The variable name "%s" is invalid.
-    ';
+    protected $var = '';
+
+    /**
+     * Constructor
+     *
+     * @param mixed $var The var to be converted in to parameter format
+     *
+     * @return void
+     */
+    public function __construct($var)
+    {
+        $this->var = $var;
+    }
+
+    /**
+     * Get convert result
+     *
+     * @return mixed Return the result of the convert
+     */
+    public function result()
+    {
+        return $this->var;
+    }
 }

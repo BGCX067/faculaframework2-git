@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Interface of Page Compiler Operator
+ * Interface of Parameters Operators
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,10 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler;
+namespace Facula\Unit\Paging\Compiler\Parameters;
 
 interface OperatorImplement
 {
-    public static function register();
-
-    public function __construct();
-    public function setParameter($type, $param);
-    public function setData($data);
-    public function setMiddle($tag, $param, $data);
-
-    public function compile();
+    public function __construct($var);
+    public function result();
 }

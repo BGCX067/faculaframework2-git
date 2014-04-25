@@ -1,7 +1,7 @@
 <?php
 
 /**
- * LogicExpressionInvalid Exception
+ * OperatorClassNotFound Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,16 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
+namespace Facula\Unit\Paging\Compiler\Exception\Parameters;
 
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * LogicExpressionInvalid Exception
+ * OperatorClassNotFound Exception
  */
-class LogicExpressionInvalid extends Base
+class OperatorClassNotFound extends Base
 {
     protected static $exceptionMessage = '
-        Logic expression "%s" is invalid.
+        Failed to found the class "%s" of parameter handler "%s".
     ';
 }

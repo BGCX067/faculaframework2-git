@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Base of Page Compiler Operator
+ * Bool parameter parser
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,53 +25,36 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler;
+namespace Facula\Unit\Paging\Compiler\Parameters\Operator;
 
-use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
+use Facula\Unit\Paging\Compiler\Parameters\OperatorImplement as Implement;
 
 /**
- * Base of operators
+ * Default Parameters
  */
-abstract class OperatorBase
+class ValueBool implements Implement
 {
-    private static $mutex = array();
+    protected $var = '';
 
     /**
-     * Static init of operator base
+     * Constructor
+     *
+     * @param mixed $var The var to be converted in to parameter format
      *
      * @return void
      */
-    public static function init()
+    public function __construct($var)
     {
-        self::$mutex = array();
+        $this->var = $var == 'yes' ? true : false;
     }
 
     /**
-     * Static data release of operator base
+     * Get convert result
      *
-     * @return void
+     * @return mixed Return the result of the convert
      */
-    public static function flush()
+    public function result()
     {
-        self::$mutex = array();
-    }
-
-    /**
-     * Set a tag for mutex
-     *
-     * @param string $name The name of the mutex
-     *
-     * @return bool Return true when succeed, false otherwise
-     */
-    protected function setMutex($name) {
-        if (isset(self::$mutex[$name])) {
-            throw new Exception\MutexExisted($name);
-
-            return false;
-        }
-
-        self::$mutex[$name] = true;
-
-        return true;
+        return $this->var;
     }
 }

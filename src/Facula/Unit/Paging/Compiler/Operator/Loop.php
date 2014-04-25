@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Loop Tag Parser
+ * Loop Tag Compiler
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -28,28 +28,38 @@
 namespace Facula\Unit\Paging\Compiler\Operator;
 
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
-use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
+use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 
 /**
  * Loop tag parse
  */
 class Loop extends Base implements Implement
 {
-    protected $pool = array();
-
+    /** Wrapped Data in the tags */
     protected $data = '';
+
+    /** Parameter object for main parameter */
     protected $mainParameter = null;
+
+    /** Parameter object for ending parameter */
     protected $endParameter = null;
 
+    /** Tag parameter template */
     protected $parameters = array(
-        'var' => 'default',
-        'name' => 'default',
+        'var' => 'variable',
+        'name' => 'alphaNumber',
     );
 
+    /** Data of child tags */
     protected $middles = array();
 
+    /**
+     * Return the tag registration information
+     *
+     * @return array Return registration information of this tag compiler
+     */
     public static function register()
     {
         return array(
@@ -59,11 +69,26 @@ class Loop extends Base implements Implement
         );
     }
 
+    /**
+     * Constructor
+     *
+     * Do some necessary initialize
+     *
+     * @return void
+     */
     public function __construct()
     {
-
+        return;
     }
 
+    /**
+     * Set parameter info of current tag to tag compiler
+     *
+     * @param string $type Tag type
+     * @param string $param The parameter that will be set
+     *
+     * @return void
+     */
     public function setParameter($type, $param)
     {
         switch ($type) {
@@ -80,26 +105,50 @@ class Loop extends Base implements Implement
         }
     }
 
+    /**
+     * Set wrapped data of current tag to tag compiler
+     *
+     * @param string $data Data
+     *
+     * @return void
+     */
     public function setData($data)
     {
         $this->data = $data;
     }
 
+    /**
+     * Set child code data of current tag to tag compiler
+     *
+     * @param string $tag The tag name
+     * @param string $param Tag parameter
+     * @param string $data Wrapped data of current child tag
+     *
+     * @return void
+     */
     public function setMiddle($tag, $param, $data)
     {
         $this->middles[$tag][] = $data;
     }
 
+    /**
+     * Compile the tag data and return result
+     *
+     * @return string Compiled result of the tag wrapper
+     */
     public function compile()
     {
         $empty = '';
 
-        if (!$varName = $this->convertVariableName($this->mainParameter->get('var'))) {
-            throw new Exception\VariableNameInvaild($this->mainParameter->get('var'));
-        }
+        $varName = $this->mainParameter->get('var');
+        $varKeyName = $this->mainParameter->get('name');
 
-        if (!$varKeyName = $this->isStandardString($this->mainParameter->get('name'))) {
-            throw new Exception\NameInvaild($this->mainParameter->get('name'));
+        try {
+            $this->setMutex($varKeyName);
+        } catch (Exception\MutexExisted $e) {
+            throw new Exception\NameAlreadyExisted(
+                $e->getParameter(0)
+            );
         }
 
         $php = '<?php if (isset(' . $varName . ') && empty(' . $varName . ')) { ';

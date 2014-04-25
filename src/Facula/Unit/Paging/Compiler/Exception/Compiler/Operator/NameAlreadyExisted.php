@@ -1,7 +1,7 @@
 <?php
 
 /**
- * NameInvaild Exception
+ * NameAlreadyExisted Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -30,11 +30,12 @@ namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * NameInvaild Exception
+ * NameAlreadyExisted Exception
  */
-class NameInvaild extends Base
+class NameAlreadyExisted extends Base
 {
     protected static $exceptionMessage = '
-        The name "%s" is invalid.
+        The name "%s" already use by another tag in current template.
+        You can\'t re-use that.
     ';
 }

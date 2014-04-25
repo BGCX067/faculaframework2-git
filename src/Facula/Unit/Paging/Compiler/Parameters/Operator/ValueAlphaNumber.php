@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Base of Page Compiler Operator
+ * Variable parameter parser
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,53 +25,44 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler;
+namespace Facula\Unit\Paging\Compiler\Parameters\Operator;
 
-use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
+use Facula\Unit\Paging\Compiler\Parameters\OperatorImplement as Implement;
+use Facula\Unit\Paging\Compiler\Exception\Parameters as Exception;
+use Facula\Unit\Validator as Validator;
 
 /**
- * Base of operators
+ * Default Parameters
  */
-abstract class OperatorBase
+class ValueAlphaNumber implements Implement
 {
-    private static $mutex = array();
+    protected $var = '';
 
     /**
-     * Static init of operator base
+     * Constructor
+     *
+     * @param mixed $var The var to be converted in to parameter format
      *
      * @return void
      */
-    public static function init()
+    public function __construct($var)
     {
-        self::$mutex = array();
-    }
+        if (!Validator::check($var, 'alphanumber')) {
+            throw new Exception\InvalidAlphaNumberString($var);
 
-    /**
-     * Static data release of operator base
-     *
-     * @return void
-     */
-    public static function flush()
-    {
-        self::$mutex = array();
-    }
-
-    /**
-     * Set a tag for mutex
-     *
-     * @param string $name The name of the mutex
-     *
-     * @return bool Return true when succeed, false otherwise
-     */
-    protected function setMutex($name) {
-        if (isset(self::$mutex[$name])) {
-            throw new Exception\MutexExisted($name);
-
-            return false;
+            return;
         }
 
-        self::$mutex[$name] = true;
+        $this->var = $var;
+    }
 
-        return true;
+    /**
+     * Get convert result
+     *
+     * @return mixed Return the result of the convert
+     */
+    public function result()
+    {
+        return $this->var;
     }
 }

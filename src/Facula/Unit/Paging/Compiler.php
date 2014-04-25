@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Page Compiler Container
+ * Page Compiler
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -31,13 +31,14 @@ use Facula\Base\Factory\Operator as Base;
 use Facula\Base\Implement\Core\Template\Compiler as Implement;
 use Facula\Base\Exception\Factory\Operator as OperatorException;
 use Facula\Unit\Paging\Compiler\OperatorImplement as OperatorImplement;
+use Facula\Unit\Paging\Compiler\OperatorBase as OperatorBase;
 use Facula\Unit\Paging\Compiler\Exception\Compiler as Exception;
 use Facula\Unit\Paging\Compiler\Exception\Parser as ParserException;
 use Facula\Unit\Paging\Compiler\Parser as Parser;
 use Facula\Unit\Paging\Compiler\Error\Compiler as Error;
 
 /**
- * Provide a space to compile Facula pages
+ * Compile a string in to formated content
  */
 class Compiler extends Base implements Implement
 {
@@ -480,6 +481,8 @@ class Compiler extends Base implements Implement
         $tags = $this->parse();
         $tag = array();
 
+        OperatorBase::init();
+
         while (($tag = array_shift($tags)) !== null) {
             $oldLength = $tag['End'] - $tag['Start'];
 
@@ -580,6 +583,8 @@ class Compiler extends Base implements Implement
 
             $resultLen += $newPosShift;
         }
+
+        OperatorBase::flush();
 
         return $result;
     }
