@@ -33,7 +33,7 @@ use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 use Facula\Unit\Paging\Compiler as Compiler;
 
 /**
- * Template tag parse
+ * Template tag compiler
  */
 class Template implements Implement
 {
@@ -163,6 +163,13 @@ class Template implements Implement
         return;
     }
 
+    /**
+     * Get the set & to pair
+     *
+     * @param Parameter $parameter The parameter object which contains parameters
+     *
+     * @return array The array of paired set / to set
+     */
     protected function getSetTo(
         Parameter $parameter
     ) {

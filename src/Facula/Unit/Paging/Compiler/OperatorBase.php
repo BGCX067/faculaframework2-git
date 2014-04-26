@@ -28,12 +28,17 @@
 namespace Facula\Unit\Paging\Compiler;
 
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
+use Facula\Base\Factory\Operator as Base;
 
 /**
  * Base of operators
  */
-abstract class OperatorBase
+abstract class OperatorBase extends Base
 {
+    /** Preset a empty operator array */
+    protected static $operators = array();
+
+    /** Mutex tags */
     private static $mutex = array();
 
     /**
@@ -41,7 +46,7 @@ abstract class OperatorBase
      *
      * @return void
      */
-    public static function init()
+    final public static function init()
     {
 
     }

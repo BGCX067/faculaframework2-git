@@ -33,7 +33,7 @@ use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 
 /**
- * Loop tag parse
+ * Loop tag compiler
  */
 class Loop extends Base implements Implement
 {

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Case Tag Compiler
+ * Language Tag Compiler
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -28,30 +28,21 @@
 namespace Facula\Unit\Paging\Compiler\Operator;
 
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
-use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 
 /**
- * Case tag compiler
+ * Language tag compiler
  */
-class Casing implements Implement
+class Language implements Implement
 {
     /** Wrapped Data in the tags */
     protected $data = '';
 
-    /** Parameter object for main parameter */
-    protected $mainParameter = null;
+    /** The language code */
+    protected $langCode = '';
 
-    /** Parameter object for ending parameter */
-    protected $endParameter = null;
-
-    /** Tag parameter template */
-    protected $parameters = array(
-        'var' => 'variable',
-    );
-
-    /** Data of child tags */
-    protected $middles = array();
+    /** Data needed for compile */
+    protected $pool = array();
 
     /**
      * Return the tag registration information
@@ -60,11 +51,7 @@ class Casing implements Implement
      */
     public static function register()
     {
-        return array(
-            'Middles' => array(
-                'when' => true,
-            ),
-        );
+        return array();
     }
 
     /**
@@ -94,7 +81,7 @@ class Casing implements Implement
     {
         switch ($type) {
             case 'Main':
-                $this->mainParameter = new Parameter($param, $this->parameters);
+                $this->langCode = trim($param);
                 break;
 
             default:
@@ -111,7 +98,7 @@ class Casing implements Implement
      */
     public function setData($data)
     {
-        $this->data = $data;
+        return;
     }
 
     /**
@@ -125,10 +112,7 @@ class Casing implements Implement
      */
     public function setMiddle($tag, $param, $data)
     {
-        $this->middles[$tag][] = array(
-            $param,
-            $data
-        );
+        return;
     }
 
     /**
@@ -138,22 +122,12 @@ class Casing implements Implement
      */
     public function compile()
     {
-        $varName = $this->mainParameter->get('var');
-        $php = '<?php if (isset(' . $varName . ')) { ';
-        $php .= 'switch (' . $varName . ') { ';
-
-        if (isset($this->middles['when'])) {
-            foreach ($this->middles['when'] as $when) {
-                $php .= ' case \''
-                    . str_replace('\'', '\\\'', $when[0])
-                    . '\': ?>'
-                    . $when[1]
-                    . '<?php break; ';
-            }
+        if (!isset($this->pool['LanguageMap'][$this->langCode])) {
+            throw new Exception\LanguageCodeNotFound(
+                $this->langCode
+            );
         }
 
-        $php .= ' default: ?>' . $this->data . '<?php break; }} ?>';
-
-        return $php;
+        return $this->pool['LanguageMap'][$this->langCode];
     }
 }

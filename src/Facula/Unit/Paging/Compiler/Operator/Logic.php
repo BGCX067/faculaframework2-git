@@ -33,7 +33,7 @@ use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 
 /**
- * Logic tag parse
+ * Logic tag compiler
  */
 class Logic extends Base implements Implement
 {

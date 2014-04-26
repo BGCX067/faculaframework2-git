@@ -54,16 +54,14 @@ class Compiler extends Base implements Implement
 
     /** per-defined tag handlers */
     protected static $operators = array(
-        /*
-        'inject' => 'Facula\Unit\Paging\Compiler\Operator\Inject',
-        'language' => 'Facula\Unit\Paging\Compiler\Operator\Language',
-        'variable' => 'Facula\Unit\Paging\Compiler\Operator\Variable',
-        'pager' => 'Facula\Unit\Paging\Compiler\Operator\Pager',
-        */
+        'var' => 'Facula\Unit\Paging\Compiler\Operator\Variable',
         'loop' => 'Facula\Unit\Paging\Compiler\Operator\Loop',
         'if' => 'Facula\Unit\Paging\Compiler\Operator\Logic',
         'case' => 'Facula\Unit\Paging\Compiler\Operator\Casing',
         'template' => 'Facula\Unit\Paging\Compiler\Operator\Template',
+        'lang' => 'Facula\Unit\Paging\Compiler\Operator\Language',
+        'inject' => 'Facula\Unit\Paging\Compiler\Operator\Inject',
+        'pager' => 'Facula\Unit\Paging\Compiler\Operator\Pager',
     );
 
     /** Interface that needs to be implemented by tag handlers */
