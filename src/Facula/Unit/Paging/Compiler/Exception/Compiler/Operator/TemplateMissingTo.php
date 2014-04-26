@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Interface of Page Compiler Operator
+ * TemplateMissingTo Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,17 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler;
+namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
 
-interface OperatorImplement
+use Facula\Base\Prototype\Exception as Base;
+
+/**
+ * TemplateMissingTo Exception
+ */
+class TemplateMissingTo extends Base
 {
-    public static function register();
-
-    public function __construct(array $pool, array $config);
-    public function setParameter($type, $param);
-    public function setData($data);
-    public function setMiddle($tag, $param, $data);
-
-    public function compile();
+    protected static $exceptionMessage = '
+        A "set" parameter has been declared without "to" parameter.
+        We can\'t set "%s" to nothing.
+    ';
 }

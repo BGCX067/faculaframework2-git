@@ -83,11 +83,14 @@ class Logic extends Base implements Implement
      *
      * Do some necessary initialize
      *
+     * @param array $pool Data that may needed for tag compile
+     * @param array $config The config of main compiler
+     *
      * @return void
      */
-    public function __construct()
+    public function __construct(array $pool, array $config)
     {
-        return;
+        $this->pool = $pool;
     }
 
     /**

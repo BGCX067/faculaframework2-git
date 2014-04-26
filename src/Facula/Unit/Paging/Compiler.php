@@ -55,23 +55,15 @@ class Compiler extends Base implements Implement
     /** per-defined tag handlers */
     protected static $operators = array(
         /*
-
         'inject' => 'Facula\Unit\Paging\Compiler\Operator\Inject',
         'language' => 'Facula\Unit\Paging\Compiler\Operator\Language',
         'variable' => 'Facula\Unit\Paging\Compiler\Operator\Variable',
         'pager' => 'Facula\Unit\Paging\Compiler\Operator\Pager',
-        'loop' => 'Facula\Unit\Paging\Compiler\Operator\Loop',
-
-
-        'template' => 'Facula\Unit\Paging\Compiler\Operator\Template',
         */
         'loop' => 'Facula\Unit\Paging\Compiler\Operator\Loop',
         'if' => 'Facula\Unit\Paging\Compiler\Operator\Logic',
-
-
-        /*
-        'case' => 'Facula\Unit\Paging\Compiler\Operator\Case',
-        */
+        'case' => 'Facula\Unit\Paging\Compiler\Operator\Casing',
+        'template' => 'Facula\Unit\Paging\Compiler\Operator\Template',
     );
 
     /** Interface that needs to be implemented by tag handlers */
@@ -223,28 +215,33 @@ class Compiler extends Base implements Implement
      * Compile a tag according to tag parameters
      *
      * @param array $tagParameters Tag parameters in array
+     * @param string $content Dynamic content that changing during compile
+     * @param array $pool Pool data that will be use in tag compile
      *
      * @return string Return the compile result of the tag
      */
-    public static function compileTag(array $tagParameters, &$content)
+    public static function compileTag(array $tagParameters, &$content, array $pool)
     {
         $result = '';
         $class = '';
-        $handler = new static::$tagHandlers[$tagParameters['Tag']]();
+        $handler = new static::$tagHandlers[$tagParameters['Tag']](
+            $pool,
+            static::$config
+        );
 
         if (isset($tagParameters['Parameter']['Main'])) {
-            $handler->setParameter('Main', substr($content,
+            $handler->setParameter('Main', ltrim(substr($content,
                 $tagParameters['Parameter']['Main'][0],
                 $tagParameters['Parameter']['Main'][2]
-            ));
+            )), ' ');
         }
 
         if (isset($tagParameters['Parameter']['End'])
         && $tagParameters['Parameter']['End'][2]) {
-            $handler->setParameter('End', substr($content,
+            $handler->setParameter('End', ltrim(substr($content,
                 $tagParameters['Parameter']['End'][0],
                 $tagParameters['Parameter']['End'][2]
-            ));
+            )), ' ');
         }
 
         if (isset($tagParameters['Data']['Field'])
@@ -263,11 +260,11 @@ class Compiler extends Base implements Implement
                         !$middlesVal['Parameter'][2] ?
                             ''
                         :
-                            substr(
+                            ltrim(substr(
                                 $content,
                                 $middlesVal['Parameter'][0],
                                 $middlesVal['Parameter'][2]
-                            )
+                            ), ' ')
                         ,
                         !$middlesVal['Data'][2] ?
                             ''
@@ -488,7 +485,8 @@ class Compiler extends Base implements Implement
 
             if (!($newResult = static::compileTag(
                 $tag,
-                $result
+                $result,
+                $this->sourcePool
             )) && (is_bool($newResult) || is_null($newResult))) {
                 throw new Exception\TagCompileEmptyResult(
                     $tag['Tag'],

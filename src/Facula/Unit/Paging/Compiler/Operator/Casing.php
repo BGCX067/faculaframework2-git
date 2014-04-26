@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Template Tag Compiler
+ * Case Tag Compiler
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -30,12 +30,11 @@ namespace Facula\Unit\Paging\Compiler\Operator;
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
 use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
-use Facula\Unit\Paging\Compiler as Compiler;
 
 /**
- * Template tag parse
+ * Case tag parse
  */
-class Template implements Implement
+class Casing implements Implement
 {
     /** Wrapped Data in the tags */
     protected $data = '';
@@ -48,16 +47,8 @@ class Template implements Implement
 
     /** Tag parameter template */
     protected $parameters = array(
-        'name' => 'default',
-        'set' => 'default',
-        'to' => 'default',
+        'var' => 'variable',
     );
-
-    /** Data needed for compile */
-    protected $pool = array();
-
-    /** config needed for compile */
-    protected $backSlash = array();
 
     /** Data of child tags */
     protected $middles = array();
@@ -69,7 +60,11 @@ class Template implements Implement
      */
     public static function register()
     {
-        return array();
+        return array(
+            'Middles' => array(
+                'when' => true,
+            ),
+        );
     }
 
     /**
@@ -85,36 +80,6 @@ class Template implements Implement
     public function __construct(array $pool, array $config)
     {
         $this->pool = $pool;
-
-        // There tree type of ending
-
-        // Begin: \{
-        $this->backSlash['Search'][] =
-            $config['Skipper'] . $config['Delimiter']['Begin'];
-
-        $this->backSlash['Replace'][] =
-            $config['Delimiter']['Begin'];
-
-        // Pass Ending: \/}
-        $this->backSlash['Search'][] =
-            $config['Skipper'] . $config['Ender'] . $config['Delimiter']['End'];
-
-        $this->backSlash['Replace'][] =
-            $config['Ender'] . $config['Delimiter']['End'];
-
-        // Half Ending: \}
-        $this->backSlash['Search'][] =
-            $config['Skipper'] . $config['Delimiter']['End'];
-
-        $this->backSlash['Replace'][] =
-            $config['Delimiter']['End'];
-
-        // Full Ending: \}
-        $this->backSlash['Search'][] =
-            $config['Skipper'] . $config['Delimiter']['Begin'] . $config['Ender'];
-
-        $this->backSlash['Replace'][] =
-            $config['Delimiter']['Begin'] . $config['Ender'];
     }
 
     /**
@@ -160,52 +125,10 @@ class Template implements Implement
      */
     public function setMiddle($tag, $param, $data)
     {
-        return;
-    }
-
-    protected function getSetTo(
-        Parameter $parameter
-    ) {
-        $result = array();
-        $sets = $parameter->getAll('set');
-        $tos = $parameter->getAll('to');
-        $setCount = count($sets);
-        $toCount = count($tos);
-
-        if ($toCount != $setCount) {
-            throw new Exception\TemplateMissingSetOrTo(
-                $setCount,
-                $toCount
-            );
-
-            return false;
-        }
-
-        foreach ($sets as $key => $set) {
-            if (!isset($tos[$key])) {
-                throw new Exception\TemplateMissingTo(
-                    $set
-                );
-            }
-
-            if (!$set) {
-                throw new Exception\TemplateSetIsEmpty(
-                    $key + 1
-                );
-            }
-
-            $result[str_replace(
-                $this->backSlash['Search'],
-                $this->backSlash['Replace'],
-                $set
-            )] = str_replace(
-                $this->backSlash['Search'],
-                $this->backSlash['Replace'],
-                $tos[$key]
-            );
-        }
-
-        return $result;
+        $this->middles[$tag][] = array(
+            $param,
+            $data
+        );
     }
 
     /**
@@ -215,27 +138,22 @@ class Template implements Implement
      */
     public function compile()
     {
-        $templateContent = $compiler = '';
-        $sets = $this->getSetTo($this->mainParameter);
+        $varName = $this->mainParameter->get('var');
+        $php = '<?php if (isset(' . $varName . ')) { ';
+        $php .= 'switch (' . $varName . ') { ';
 
-        $templateName = $this->mainParameter->get('name');
-
-        if (!isset($this->pool['File']['Tpl'][$templateName]['default'])) {
-            throw new Exception\TemplateNotFound($templateName);
-
-            return false;
+        if (isset($this->middles['when'])) {
+            foreach ($this->middles['when'] as $when) {
+                $php .= ' case \''
+                    . str_replace('\'', '\\\'', $when[0])
+                    . '\': ?>'
+                    . $when[1]
+                    . '<?php break; ';
+            }
         }
 
-        $templateContent = str_replace(
-            array_keys($sets),
-            array_values($sets),
-            file_get_contents(
-                $this->pool['File']['Tpl'][$templateName]['default']
-            )
-        );
+        $php .= ' default: ?>' . $this->data . '<?php break; }} ?>';
 
-        $compiler = Compiler::compile($this->pool, $templateContent);
-
-        return $compiler->result();
+        return $php;
     }
 }

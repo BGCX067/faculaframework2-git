@@ -74,11 +74,14 @@ class Loop extends Base implements Implement
      *
      * Do some necessary initialize
      *
+     * @param array $pool Data that may needed for tag compile
+     * @param array $config The config of main compiler
+     *
      * @return void
      */
-    public function __construct()
+    public function __construct(array $pool, array $config)
     {
-        return;
+        $this->pool = $pool;
     }
 
     /**
@@ -151,7 +154,7 @@ class Loop extends Base implements Implement
             );
         }
 
-        $php = '<?php if (isset(' . $varName . ') && empty(' . $varName . ')) { ';
+        $php = '<?php if (isset(' . $varName . ') && is_array(' . $varName . ')) { ';
         $php .= 'foreach (' . $varName . ' as $_' . $varKeyName . ' => $' . $varKeyName . ') { ?> ';
         $php .= $this->data;
 
