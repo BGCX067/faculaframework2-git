@@ -983,7 +983,7 @@ abstract class Template extends Factory implements Implement
         );
 
         if (isset($this->configs['Render'])) {
-            $render = $this->configs['Compiler'];
+            $render = $this->configs['Render'];
 
             $renderedResult = $render::render(
                 $compiledTpl,

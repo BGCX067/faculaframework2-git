@@ -37,6 +37,13 @@ class Render implements Implement
     /** Rendered content */
     private $content = '';
 
+    public static function render(
+        &$targetTpl,
+        array &$assigned = array()
+    ) {
+        return new static($targetTpl, $assigned);
+    }
+
     /**
      * Constructor of Render
      *
@@ -57,7 +64,7 @@ class Render implements Implement
      *
      * @return string Rendered content
      */
-    public function getResult()
+    public function result()
     {
         return $this->content;
     }
@@ -67,7 +74,7 @@ class Render implements Implement
         ob_start();
 
         extract($assigned);
-        unlink($assigned);
+        unset($assigned);
 
         \Facula\Framework::core('debug')->criticalSection(true);
 
