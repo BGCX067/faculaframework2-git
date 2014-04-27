@@ -63,7 +63,7 @@ class Variable extends Base implements Implement
             'Facula\Unit\Paging\Compiler\Operator\Variable\Operator\Defaults',
 
         'date' =>
-            'Facula\Unit\Paging\Compiler\Operator\Variable\Operator\Date',
+            'Facula\Unit\Paging\Compiler\Operator\Variable\Operator\Dates',
 
         'friendlyTime' =>
             'Facula\Unit\Paging\Compiler\Operator\Variable\Operator\FriendlyTime',

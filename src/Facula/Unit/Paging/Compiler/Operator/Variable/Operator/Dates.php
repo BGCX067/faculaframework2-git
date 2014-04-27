@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Tag Compiler of Default Variables
+ * Tag Compiler of Dates Variables
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -28,11 +28,12 @@
 namespace Facula\Unit\Paging\Compiler\Operator\Variable\Operator;
 
 use Facula\Unit\Paging\Compiler\Operator\Variable\OperatorImplement as Implement;
+use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 
 /**
- * Default variables compiler
+ * Dates variables compiler
  */
-class Defaults implements Implement
+class Dates implements Implement
 {
     /**
      * Convert variable format
@@ -45,6 +46,29 @@ class Defaults implements Implement
      */
     public static function convert($varName, array $parameter, array $pool)
     {
-        return '<?php echo(htmlspecialchars(' . $varName . ', ENT_QUOTES)); ?>';
+        $phpCode = '';
+
+        if (!isset($parameter[0]) || !$parameter[0]) {
+            throw new Exception\VariableDateMustSet(
+                $varName
+            );
+
+            return $phpCode;
+        }
+
+        if (isset($pool['LanguageMap']['FORMAT_DATE_' . $parameter[0]])) {
+            $phpCode .= '<?php echo(date(\''
+                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_DATE_' . $parameter[0]])
+                    . '\', (int)('
+                    . $varName
+                    . '))); ?>';
+        } else {
+            throw new Exception\VariableDateFormatNotFound(
+                $parameter[0],
+                $varName
+            );
+        }
+
+        return $phpCode;
     }
 }

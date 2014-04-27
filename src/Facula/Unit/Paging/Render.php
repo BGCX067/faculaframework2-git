@@ -25,7 +25,7 @@
  *
  */
 
-namespace Facula\Unit\Paging\Render;
+namespace Facula\Unit\Paging;
 
 use Facula\Base\Implement\Core\Template\Render as Implement;
 

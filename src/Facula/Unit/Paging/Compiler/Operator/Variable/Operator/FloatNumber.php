@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Tag Compiler of Default Variables
+ * Tag Compiler of FloatNumber Variables
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -30,9 +30,9 @@ namespace Facula\Unit\Paging\Compiler\Operator\Variable\Operator;
 use Facula\Unit\Paging\Compiler\Operator\Variable\OperatorImplement as Implement;
 
 /**
- * Default variables compiler
+ * FloatNumber variables compiler
  */
-class Defaults implements Implement
+class FloatNumber implements Implement
 {
     /**
      * Convert variable format
@@ -45,6 +45,16 @@ class Defaults implements Implement
      */
     public static function convert($varName, array $parameter, array $pool)
     {
-        return '<?php echo(htmlspecialchars(' . $varName . ', ENT_QUOTES)); ?>';
+        $decimals = 2;
+
+        if (isset($parameter[0]) && $parameter[0]) {
+            $decimals = (int)$parameter[0];
+        }
+
+        return '<?php echo(number_format('
+                . $varName
+                . ', '
+                . (isset($decimals) ? (int)($decimals) : 2)
+                . ')); ?>';
     }
 }

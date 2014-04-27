@@ -724,7 +724,7 @@ abstract class Template extends Factory implements Implement
                                 if (($renderCachedContent = $this->doRender(
                                     $templateName,
                                     $cachedTmpPage
-                                ))) {
+                                )) !== false) {
                                     \Facula\Framework::core('debug')->criticalSection(true);
 
                                     unlink($cachedTmpPage);
@@ -1109,7 +1109,7 @@ abstract class Template extends Factory implements Implement
             );
         }
 
-        if (!$compiledContent) {
+        if ($compiledContent === false) {
             new Error(
                 'COMPILER_FAILED',
                 array(

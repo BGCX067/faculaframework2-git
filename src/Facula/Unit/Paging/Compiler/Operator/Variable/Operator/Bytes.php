@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Tag Compiler of FriendlyTime Variables
+ * Tag Compiler of Bytes Variables
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -31,9 +31,9 @@ use Facula\Unit\Paging\Compiler\Operator\Variable\OperatorImplement as Implement
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 
 /**
- * FriendlyTime variables compiler
+ * Bytes variables compiler
  */
-class FriendlyTime implements Implement
+class Bytes implements Implement
 {
     /**
      * Convert variable format
@@ -59,7 +59,7 @@ class FriendlyTime implements Implement
             isset($pool['LanguageMap']['FORMAT_TIME_AFTER_DAY'])) {
 
             $phpCode .= '<?php '
-                    . '$tempTime = $Time - (int)(' . $varName . ');'
+                    . '$tempTime = $Time - (' . $varName. ');'
                     // If small than 0, means after time
                     . 'if ($tempTime < 0) { $tempTime = abs($tempTime); '
 

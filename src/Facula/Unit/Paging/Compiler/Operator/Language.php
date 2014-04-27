@@ -29,6 +29,7 @@ namespace Facula\Unit\Paging\Compiler\Operator;
 
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
+use Facula\Unit\Paging\Compiler as Compiler;
 
 /**
  * Language tag compiler
@@ -128,6 +129,9 @@ class Language implements Implement
             );
         }
 
-        return $this->pool['LanguageMap'][$this->langCode];
+        return Compiler::compile(
+            $this->pool,
+            $this->pool['LanguageMap'][$this->langCode]
+        )->result();
     }
 }

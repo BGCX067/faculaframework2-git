@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Tag Compiler of Default Variables
+ * Tag Compiler of JsonData Variables
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -30,9 +30,9 @@ namespace Facula\Unit\Paging\Compiler\Operator\Variable\Operator;
 use Facula\Unit\Paging\Compiler\Operator\Variable\OperatorImplement as Implement;
 
 /**
- * Default variables compiler
+ * JsonData variables compiler
  */
-class Defaults implements Implement
+class JsonData implements Implement
 {
     /**
      * Convert variable format
@@ -45,6 +45,6 @@ class Defaults implements Implement
      */
     public static function convert($varName, array $parameter, array $pool)
     {
-        return '<?php echo(htmlspecialchars(' . $varName . ', ENT_QUOTES)); ?>';
+        return '<?php echo(htmlspecialchars(json_encode(' . $varName . '))); ?>';
     }
 }

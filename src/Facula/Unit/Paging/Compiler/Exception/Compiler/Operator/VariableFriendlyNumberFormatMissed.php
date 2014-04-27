@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Tag Compiler of Default Variables
+ * VariableFriendlyNumberFormatMissed Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,26 +25,17 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler\Operator\Variable\Operator;
+namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
 
-use Facula\Unit\Paging\Compiler\Operator\Variable\OperatorImplement as Implement;
+use Facula\Base\Prototype\Exception as Base;
 
 /**
- * Default variables compiler
+ * VariableFriendlyNumberFormatMissed Exception
  */
-class Defaults implements Implement
+class VariableFriendlyNumberFormatMissed extends Base
 {
-    /**
-     * Convert variable format
-     *
-     * @param string $varName Name of the variable
-     * @param array $parameter Array contains format parameters
-     * @param array $pool Data that may needed for compile
-     *
-     * @return string Compiled PHP code
-     */
-    public static function convert($varName, array $parameter, array $pool)
-    {
-        return '<?php echo(htmlspecialchars(' . $varName . ', ENT_QUOTES)); ?>';
-    }
+    protected static $exceptionMessage = '
+        Variable FriendlyNumber format of "%s" has missed.
+        Following format must be declared for FriendlyNumber format: %s.
+    ';
 }
