@@ -195,11 +195,13 @@ class Compiler extends Base implements Implement
         foreach (static::$tagHandlers as $tag => $class) {
             $registerData = $class::register();
 
-            if (isset($registerData['Middles']) && is_array($registerData['Middles'])) {
+            if (isset($registerData['Wrapped']) && $registerData['Wrapped']) {
                 $parser->registerTag($tag, false);
 
-                foreach ($registerData['Middles'] as $midTag => $hasParameter) {
-                    $parser->registerMiddleTag($tag, $midTag, $hasParameter);
+                if (isset($registerData['Middles']) && is_array($registerData['Middles'])) {
+                    foreach ($registerData['Middles'] as $midTag => $hasParameter) {
+                        $parser->registerMiddleTag($tag, $midTag, $hasParameter);
+                    }
                 }
             } else {
                 $parser->registerTag($tag, true);

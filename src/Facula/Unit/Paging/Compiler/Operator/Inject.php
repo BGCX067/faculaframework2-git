@@ -55,7 +55,12 @@ class Inject implements Implement
      */
     public static function register()
     {
-        return array();
+        return array(
+            'Wrapped' => true,
+            'Middles' => array(
+                'empty' => false,
+            ),
+        );
     }
 
     /**
@@ -116,7 +121,7 @@ class Inject implements Implement
      */
     public function setMiddle($tag, $param, $data)
     {
-        return;
+        $this->middles[$tag][] = $data;
     }
 
     /**
@@ -127,9 +132,15 @@ class Inject implements Implement
     public function compile()
     {
         $php = '';
-        if (isset($this->pool['Injected'][$this->injectAreaName])) {
+
+        if (isset($this->pool['Injected'][$this->injectAreaName])
+        && !empty($this->pool['Injected'][$this->injectAreaName])) {
             foreach ($this->pool['Injected'][$this->injectAreaName] as $injected) {
                 $php .= Compiler::compile($this->pool, $injected)->result();
+            }
+        } elseif (isset($this->middles['empty'])) {
+            foreach ($this->middles['empty'] as $empty) {
+                $php .= $empty;
             }
         }
 

@@ -61,6 +61,7 @@ class Casing implements Implement
     public static function register()
     {
         return array(
+            'Wrapped' => true,
             'Middles' => array(
                 'when' => true,
             ),

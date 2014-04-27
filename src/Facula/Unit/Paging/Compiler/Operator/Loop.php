@@ -63,6 +63,7 @@ class Loop extends Base implements Implement
     public static function register()
     {
         return array(
+            'Wrapped' => true,
             'Middles' => array(
                 'empty' => false,
             ),

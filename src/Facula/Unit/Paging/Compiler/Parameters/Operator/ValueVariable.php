@@ -58,8 +58,8 @@ class ValueVariable implements Implement
         }
 
         if ($string[0] == '$') {
-            if ((isset($string[1]) && is_numeric($string[1]))
-            || !Validator::check($string, 'alphanumber')) {
+            if (!isset($string[1])
+            || !preg_match('/^\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$/', $string)) {
                 throw new Exception\InvalidVariableName(
                     $string
                 );
@@ -69,8 +69,7 @@ class ValueVariable implements Implement
 
             $varName = $string;
         } else {
-            if (is_numeric($string[0])
-            || !preg_match('/^([a-zA-Z0-9\.]+)$/', $string)) {
+            if (is_numeric($string[0])) {
                 throw new Exception\InvalidVariableName(
                     $string
                 );
@@ -78,13 +77,21 @@ class ValueVariable implements Implement
                 return;
             }
 
-            $varNameArray = explode('.', $string);
+            $varNameArray = explode('.', str_replace('\\.', "\0", $string));
 
             $varName = '$' . array_shift($varNameArray);
 
+            if (!preg_match('/^\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$/', $varName)) {
+                throw new Exception\InvalidVariableName(
+                    $string
+                );
+
+                return;
+            }
+
             if (!empty($varNameArray)) {
                 foreach ($varNameArray as $arrayTable) {
-                    $varName .= '[\'' . $arrayTable . '\']';
+                    $varName .= '[\'' . str_replace("\0", '.', $arrayTable) . '\']';
                 }
             }
         }

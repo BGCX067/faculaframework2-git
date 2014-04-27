@@ -71,6 +71,7 @@ class Logic extends Base implements Implement
     public static function register()
     {
         return array(
+            'Wrapped' => true,
             'Middles' => array(
                 'else' => false,
                 'elseif' => true,
@@ -173,7 +174,11 @@ class Logic extends Base implements Implement
                 break;
 
             default:
-                throw new Exception\LogicUnknownDataFitType($type);
+                if (is_numeric($type)) {
+                    $result = $type;
+                } else {
+                    throw new Exception\LogicUnknownDataFitType($type);
+                }
                 break;
         }
 
@@ -320,6 +325,7 @@ class Logic extends Base implements Implement
         if ($mainParameter['Logic']) {
             $phpChecker .= '<?php ' . $mainParameter['Check'];
             $php .= '<?php if (' . $mainParameter['Logic'] . ') { ?>';
+            $php .= $this->data;
 
             if (isset($this->middles['elseif'])) {
                 foreach ($this->middles['elseif'] as $elseif) {

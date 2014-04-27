@@ -69,6 +69,14 @@ class Render implements Implement
         return $this->content;
     }
 
+    /**
+     * Provide an clean environment to render the page
+     *
+     * @param string $targetTpl The compiled PHP resulting file that will be rendered
+     * @param array $assigned Assigned data
+     *
+     * @return string The rendered result
+     */
     protected static function isolatedRender($targetTpl, array $assigned)
     {
         ob_start();

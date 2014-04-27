@@ -761,8 +761,6 @@ class Parser
                     == $nest[$nestLevel]['ExpectedEnding']['Key']) {
                         $resultPositions[$position] = $nest[$nestLevel]['ExpectedEnding'];
                         unset($nest[$nestLevel--]);
-                    } else {
-                        echo " nop!";
                     }
                 }
             }
@@ -981,6 +979,7 @@ class Parser
 
             $nest[$nestLevel]['LastExpecting'] = $current['Expecting'];
         }
+
 
         if (!empty($nest)) {
             throw new Exception\TagNeedToBeClosed(
