@@ -27,6 +27,8 @@
 
 namespace Facula\Unit\Query\Operator;
 
+use Facula\Unit\Query\Exception\Operator as Exception;
+
 /**
  * Query PostgreSQL
  */
@@ -79,10 +81,8 @@ class Pgsql implements \Facula\Unit\Query\OperatorImplement
                 break;
 
             default:
-                trigger_error(
-                    'ERROR_QUERY_MYSQL_UNKONWN_ACTION_TYPE|' . $this->query['Action'],
-                    E_USER_ERROR
-                );
+                throw new Exception\PgSQLUnknownActionType($this->query['Action']);
+
                 break;
         }
 

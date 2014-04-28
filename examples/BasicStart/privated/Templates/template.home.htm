@@ -1,51 +1,51 @@
 <!doctype html>
 <html>
     <head>
-        <title>{! TITLE_HOME !}</title>
+        <title>{lang TITLE_HOME /}</title>
 
-        <link rel="stylesheet" type="text/css" href="{% $RootURL %}/assets/common.css">
+        <link rel="stylesheet" type="text/css" href="{var RootURL /}/assets/common.css">
     </head>
 
     <body>
         <!-- NOCACHE -->
-        {? GuestNameHasSet $Guest['Name'] ?}
-        <h1>{! TITLE_HOME_WELCOME !}</h1>
+        {if var="Guest.Name" not=""}
+        <h1>{lang TITLE_HOME_WELCOME /}</h1>
 
-        <form name="guest-info" method="post" action="{% $RouteRoot %}">
+        <form name="guest-info" method="post" action="{var RouteRoot /}">
             <fieldset>
                 <input name="Action" type="hidden" value="ClearName" />
 
-                <input name="Submit" type="submit" value="{! TEXT_HOME_FORM_FOTGETNAME !}" />
+                <input name="Submit" type="submit" value="{lang TEXT_HOME_FORM_FOTGETNAME /}" />
             </fieldset>
         </form>
-        {? ELSE GuestNameHasSet ?}
-        <h1>{! TITLE_HOME !}</h1>
+        {else}
+        <h1>{lang TITLE_HOME /}</h1>
 
-        <form name="guest-info" method="post" action="{% $RouteRoot %}">
+        <form name="guest-info" method="post" action="{var RouteRoot /}">
             <fieldset>
                 <input name="Action" type="hidden" value="SetName" />
 
                 <label>
-                    {! TEXT_HOME_FORM_ENTERYOURNAME !}:
+                    {lang TEXT_HOME_FORM_ENTERYOURNAME /}:
                 </label>
 
                 <input name="Name" type="text" />
 
-                <input name="Submit" type="submit" value="{! TEXT_HOME_FORM_SETNAME !}" />
+                <input name="Submit" type="submit" value="{lang TEXT_HOME_FORM_SETNAME /}" />
             </fieldset>
         </form>
-        {? EOF GuestNameHasSet ?}
+        {/if}
 
         <p>
-            {! TEXT_HOME_SYSINFO_INIT_TIME !}: {% $Setting['Time']|friendlyTime %}
+            {lang TEXT_HOME_SYSINFO_INIT_TIME /}: {var Setting.Time|friendlyTime /}
         </p>
         <!-- NOCACHE -->
 
-        <form name="framework-renew" method="post" action="{% $RouteRoot %}">
+        <form name="framework-renew" method="post" action="{var RouteRoot /}">
             <fieldset>
                 <input name="Action" type="hidden" value="Renew" />
 
-                <input name="Submit" type="submit" value="{! TEXT_HOME_FORM_CLEARSTATE !}" />
+                <input name="Submit" type="submit" value="{lang TEXT_HOME_FORM_CLEARSTATE /}" />
             </fieldset>
         </form>
     </body>

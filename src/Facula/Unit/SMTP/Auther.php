@@ -27,6 +27,8 @@
 
 namespace Facula\Unit\SMTP;
 
+use Facula\Unit\SMTP\Exception\Auther as Exception;
+
 /**
  * The authentication operator for SMTP Socket
  */
@@ -249,10 +251,7 @@ class Auther
 
             return true;
         } else {
-            trigger_error(
-                'ERROR_SMTP_AUTHER_EXISTED',
-                E_USER_ERROR
-            );
+            throw new Exception\AutherAlreadyAssigned();
         }
 
         return false;

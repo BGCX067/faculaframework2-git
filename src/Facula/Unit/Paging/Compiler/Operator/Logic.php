@@ -212,6 +212,9 @@ class Logic extends Base implements Implement
                         break;
 
                     case 'fits':
+
+                        // fits and unfits use same operation
+
                     case 'unfits':
                         $stacks[] = array(
                             'Tag' =>
@@ -226,8 +229,14 @@ class Logic extends Base implements Implement
                         break;
 
                     case 'equals':
+
+                        // equals and unequals use same operation
+
                     case 'unequals':
+                        // Save the variable name to varNames
                         $varNames[] = $param['Data'];
+
+                        // And save the variable name as data, like defaults did
 
                     default:
                         $stacks[] = array(

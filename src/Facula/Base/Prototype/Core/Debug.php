@@ -185,10 +185,14 @@ abstract class Debug extends Factory implements Implement
                             }
                             #e-info {
                                 padding: 50px;
+                                color: #2d464e;
+                                text-align: center;
                             }
                             #e-trace {
                                 list-style: none;
                                 padding: 0;
+                                text-align: left;
+                                color: #fff;
                             }
                             #e-trace li {
                                 margin-bottom: 50px;
@@ -1126,29 +1130,29 @@ abstract class Debug extends Factory implements Implement
 
 
             '%Error:AppName:Html%' =>
-                htmlspecialchars($this->configs['AppName'], ENT_QUOTES),
+                htmlspecialchars($this->configs['AppName'], ENT_QUOTES | ENT_SUBSTITUTE),
 
             '%Error:AppVersion:Html%' =>
-                htmlspecialchars($this->configs['AppVersion'], ENT_QUOTES),
+                htmlspecialchars($this->configs['AppVersion'], ENT_QUOTES | ENT_SUBSTITUTE),
 
             '%Error:ServerName:Html%' =>
-                htmlspecialchars($this->configs['ServerName'], ENT_QUOTES),
+                htmlspecialchars($this->configs['ServerName'], ENT_QUOTES | ENT_SUBSTITUTE),
 
 
             '%Error:Message:Html%' =>
-                htmlspecialchars($errorMessage, ENT_QUOTES),
+                htmlspecialchars($errorMessage, ENT_QUOTES | ENT_SUBSTITUTE),
 
             '%Error:Message:Code:Html%' =>
-                htmlspecialchars($errorDetail['Code'], ENT_QUOTES),
+                htmlspecialchars($errorDetail['Code'], ENT_QUOTES | ENT_SUBSTITUTE),
 
             '%Error:Message:File:Html%' =>
-                htmlspecialchars($errorFile, ENT_QUOTES),
+                htmlspecialchars($errorFile, ENT_QUOTES | ENT_SUBSTITUTE),
 
             '%Error:Message:Line:Html%' =>
-                htmlspecialchars($errorDetail['Line'], ENT_QUOTES),
+                htmlspecialchars($errorDetail['Line'], ENT_QUOTES | ENT_SUBSTITUTE),
 
             '%Error:Message:No:Html%' =>
-                htmlspecialchars($errorDetail['No'], ENT_QUOTES),
+                htmlspecialchars($errorDetail['No'], ENT_QUOTES | ENT_SUBSTITUTE),
         );
 
         $displayContent = str_replace(
@@ -1218,29 +1222,29 @@ abstract class Debug extends Factory implements Implement
 
 
                 '%Error:Banner:Caller:Html%' =>
-                    htmlspecialchars($val['caller'], ENT_QUOTES),
+                    htmlspecialchars($val['caller'], ENT_QUOTES | ENT_SUBSTITUTE),
 
                 '%Error:Banner:File:Html%' =>
-                    htmlspecialchars($tempFilePath, ENT_QUOTES),
+                    htmlspecialchars($tempFilePath, ENT_QUOTES | ENT_SUBSTITUTE),
 
                 '%Error:Banner:Line:Html%' =>
-                    htmlspecialchars($val['line'], ENT_QUOTES),
+                    htmlspecialchars($val['line'], ENT_QUOTES | ENT_SUBSTITUTE),
 
 
                 '%Error:Banner:Plate:Author:Html%' =>
-                    htmlspecialchars($val['nameplate']['author'], ENT_QUOTES),
+                    htmlspecialchars($val['nameplate']['author'], ENT_QUOTES | ENT_SUBSTITUTE),
 
                 '%Error:Banner:Plate:Reviser:Html%' =>
-                    htmlspecialchars($val['nameplate']['reviser'], ENT_QUOTES),
+                    htmlspecialchars($val['nameplate']['reviser'], ENT_QUOTES | ENT_SUBSTITUTE),
 
                 '%Error:Banner:Plate:Contact:Html%' =>
-                    htmlspecialchars($val['nameplate']['contact'], ENT_QUOTES),
+                    htmlspecialchars($val['nameplate']['contact'], ENT_QUOTES | ENT_SUBSTITUTE),
 
                 '%Error:Banner:Plate:Updated:Html%' =>
-                    htmlspecialchars($val['nameplate']['updated'], ENT_QUOTES),
+                    htmlspecialchars($val['nameplate']['updated'], ENT_QUOTES | ENT_SUBSTITUTE),
 
                 '%Error:Banner:Plate:Version:Html%' =>
-                    htmlspecialchars($val['nameplate']['version'], ENT_QUOTES),
+                    htmlspecialchars($val['nameplate']['version'], ENT_QUOTES | ENT_SUBSTITUTE),
             );
 
             $detail .= str_replace(

@@ -27,6 +27,8 @@
 
 namespace Facula\Unit\Query\Operator;
 
+use Facula\Unit\Query\Exception\Operator as Exception;
+
 /**
  * Query MySQL
  */
@@ -77,10 +79,7 @@ class Mysql implements \Facula\Unit\Query\OperatorImplement
                 break;
 
             default:
-                trigger_error(
-                    'ERROR_QUERY_MYSQL_UNKONWN_ACTION_TYPE|' . $this->query['Action'],
-                    E_USER_ERROR
-                );
+                throw new Exception\MySQLUnknownActionType($this->query['Action']);
 
                 break;
         }

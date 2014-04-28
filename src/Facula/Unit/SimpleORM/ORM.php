@@ -27,6 +27,8 @@
 
 namespace Facula\Unit\SimpleORM;
 
+use Facula\Unit\SimpleORM\Exception as Exception;
+
 /**
  * SimpleORM
  */
@@ -192,10 +194,7 @@ abstract class ORM implements Implement, \ArrayAccess
         if (isset($this->data[static::primary])) {
             return $this->data[static::primary];
         } else {
-            trigger_error(
-                'ERROR_ORM_GETPRIMARY_PRIMARYDATA_EMPTY',
-                E_USER_ERROR
-            );
+            throw new Exception\PrimaryKeyValueEmpty();
         }
 
         return null;
@@ -512,30 +511,21 @@ abstract class ORM implements Implement, \ArrayAccess
         if (is_array($joinModels)) {
             foreach ($joinModels as $jMkey => $jMVal) {
                 if (!isset($jMVal['Field'][0])) {
-                    trigger_error(
-                        'ERROR_ORM_FETCHWITH_JOIN_FIELDNAME_NOTSET',
-                        E_USER_ERROR
-                    );
+                    throw new Exception\JoinFieldNameNotSet();
 
                     return false;
                     break;
                 }
 
                 if (!isset($jMVal['Model'][0])) {
-                    trigger_error(
-                        'ERROR_ORM_FETCHWITH_JOIN_MODELNAME_NOTSET',
-                        E_USER_ERROR
-                    );
+                    throw new Exception\JoinModelNameNotSet();
 
                     return false;
                     break;
                 }
 
                 if (!isset($jMVal['Key'][0])) {
-                    trigger_error(
-                        'ERROR_ORM_FETCHWITH_JOIN_MODELKEYNAME_NOTSET',
-                        E_USER_ERROR
-                    );
+                    throw new Exception\JoinKeyNameNotSet();
 
                     return false;
                     break;
@@ -570,10 +560,7 @@ abstract class ORM implements Implement, \ArrayAccess
 
             return true;
         } else {
-            trigger_error(
-                'ERROR_ORM_FETCHWITH_JOIN_WITH_INVALID',
-                E_USER_ERROR
-            );
+            throw new Exception\JoinParameterInvalid();
         }
 
         return false;
@@ -893,10 +880,7 @@ abstract class ORM implements Implement, \ArrayAccess
                 return $result;
             }
         } else {
-            trigger_error(
-                'ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET',
-                E_USER_ERROR
-            );
+            throw new Exception\PrimaryKeyNotSetSave();
         }
 
         return false;
@@ -978,10 +962,7 @@ abstract class ORM implements Implement, \ArrayAccess
                 return $result;
             }
         } else {
-            trigger_error(
-                'ERROR_ORM_SAVE_PRIMARY_KEY_NOTSET',
-                E_USER_ERROR
-            );
+            throw new Exception\PrimaryKeyNotSetDelete();
         }
 
         return false;

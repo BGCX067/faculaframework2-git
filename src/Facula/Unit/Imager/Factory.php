@@ -27,6 +27,7 @@
 
 namespace Facula\Unit\Imager;
 
+use Facula\Unit\Imager\Exception as Exception;
 use Facula\Base\Factory\Operator as BaseFactory;
 use Facula\Base\Tool\PHP\Ini as Ini;
 
@@ -68,9 +69,8 @@ class Factory extends BaseFactory
             } elseif (extension_loaded('imagick')) {
                 $type = 'Imagick';
             } else {
-                trigger_error(
-                    'ERROR_IMAGE_HANDLER_NOTFOUND',
-                    E_USER_ERROR
+                throw new Exception\ImageHandlerTypeUnknown(
+                    $type
                 );
 
                 return false;
@@ -95,9 +95,8 @@ class Factory extends BaseFactory
 
             return true;
         } else {
-            trigger_error(
-                'ERROR_IMAGE_HANDLER_NOTFOUND',
-                E_USER_ERROR
+            throw new Exception\ImageHandlerClassNotFound(
+                $className
             );
         }
 
@@ -126,16 +125,12 @@ class Factory extends BaseFactory
                     $error = $handler->getLastError();
                 }
             } else {
-                trigger_error(
-                    'ERROR_IMAGE_HANDLER_INTERFACE_INVALID',
-                    E_USER_ERROR
+                throw new Exception\ImageHandlerInterfaceInvaild(
+                    $className
                 );
             }
         } else {
-            trigger_error(
-                'ERROR_IMAGE_HANDLER_NOTSPECIFIED',
-                E_USER_ERROR
-            );
+            throw new Exception\ImageHandlerNotSpecified();
         }
 
         return false;

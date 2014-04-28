@@ -230,7 +230,8 @@ class Compiler extends Base implements Implement
         );
 
         if (isset($tagParameters['Parameter']['Main'])) {
-            $handler->setParameter('Main', ltrim(substr($content,
+            $handler->setParameter('Main', ltrim(substr(
+                $content,
                 $tagParameters['Parameter']['Main'][0],
                 $tagParameters['Parameter']['Main'][2]
             )), ' ');
@@ -238,7 +239,8 @@ class Compiler extends Base implements Implement
 
         if (isset($tagParameters['Parameter']['End'])
         && $tagParameters['Parameter']['End'][2]) {
-            $handler->setParameter('End', ltrim(substr($content,
+            $handler->setParameter('End', ltrim(substr(
+                $content,
                 $tagParameters['Parameter']['End'][0],
                 $tagParameters['Parameter']['End'][2]
             )), ' ');
@@ -246,7 +248,8 @@ class Compiler extends Base implements Implement
 
         if (isset($tagParameters['Data']['Field'])
         && $tagParameters['Data']['Field'][2]) {
-            $handler->setData(substr($content,
+            $handler->setData(substr(
+                $content,
                 $tagParameters['Data']['Field'][0],
                 $tagParameters['Data']['Field'][2]
             ));
@@ -257,23 +260,16 @@ class Compiler extends Base implements Implement
                 foreach ($middles as $middleKey => $middlesVal) {
                     $handler->setMiddle(
                         $middleTag,
-                        !$middlesVal['Parameter'][2] ?
-                            ''
-                        :
-                            ltrim(substr(
-                                $content,
-                                $middlesVal['Parameter'][0],
-                                $middlesVal['Parameter'][2]
-                            ), ' ')
-                        ,
-                        !$middlesVal['Data'][2] ?
-                            ''
-                        :
-                            substr(
-                                $content,
-                                $middlesVal['Data'][0],
-                                $middlesVal['Data'][2]
-                            )
+                        !$middlesVal['Parameter'][2] ? '' : ltrim(substr(
+                            $content,
+                            $middlesVal['Parameter'][0],
+                            $middlesVal['Parameter'][2]
+                        ), ' '),
+                        !$middlesVal['Data'][2] ? '' : substr(
+                            $content,
+                            $middlesVal['Data'][0],
+                            $middlesVal['Data'][2]
+                        )
                     );
                 }
             }

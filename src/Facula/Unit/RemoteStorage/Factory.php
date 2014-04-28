@@ -27,6 +27,8 @@
 
 namespace Facula\Unit\RemoteStorage;
 
+use Facula\Unit\RemoteStorage\Exception as Exception;
+
 /*
 Here's how to use
 
@@ -131,12 +133,9 @@ class Factory extends \Facula\Base\Factory\Operator
         if (is_readable($localFile)) {
             // Create handler instance
             if (!static::$handler) {
-                foreach (static::$servers as $server) {
+                foreach (static::$servers as $serverNo => $server) {
                     if (!isset($server['Type'][0])) {
-                        trigger_error(
-                            'ERROR_REMOTESTORAGE_SERVER_NOTYPE',
-                            E_USER_ERROR
-                        );
+                        throw new Exception\ServerTypeMustSet($serverNo);
 
                         return false;
                     }
@@ -144,10 +143,7 @@ class Factory extends \Facula\Base\Factory\Operator
                     $operatorName = static::getOperator($server['Type']);
 
                     if (!class_exists($operatorName)) {
-                        trigger_error(
-                            'ERROR_REMOTESTORAGE_SERVER_TYPE_UNSUPPORTED',
-                            E_USER_ERROR
-                        );
+                        throw new Exception\ServerTypeNotSupported($serverNo);
 
                         return false;
                     }
@@ -157,10 +153,7 @@ class Factory extends \Facula\Base\Factory\Operator
                     );
 
                     if (!($handler instanceof OperatorImplement)) {
-                        trigger_error(
-                            'ERROR_REMOTESTORAGE_INTERFACE_INVALID',
-                            E_USER_ERROR
-                        );
+                        throw new Exception\ServerHandlerInterfaceInvalid($serverNo);
 
                         return false;
                     }
@@ -185,10 +178,7 @@ class Factory extends \Facula\Base\Factory\Operator
                 );
             }
         } else {
-            trigger_error(
-                'ERROR_REMOTESTORAGE_FILE_UNREADABLE|' . $localFile,
-                E_USER_ERROR
-            );
+            throw new Exception\TargetFileUnreadable($localFile);
         }
 
         return false;

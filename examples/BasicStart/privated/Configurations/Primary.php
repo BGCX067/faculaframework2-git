@@ -120,6 +120,8 @@ $cfg = array(
         ),
         */
         'template' => array(
+            'Compiler' => 'Facula\Unit\Paging\Compiler',
+            'Render' => 'Facula\Unit\Paging\Render',
             'TemplatePool' => \Facula\Framework::PATH . '/privated/Templates',
             'CompiledTemplate' => \Facula\Framework::PATH . '/privated/Caches',
             'CachePath' => \Facula\Framework::PATH . '/privated/Caches',

@@ -27,6 +27,8 @@
 
 namespace Facula\Unit\SMTP;
 
+use Facula\Unit\SMTP\Exception as Exception;
+
 /*
 $cfg = array(
     'SelectMethod' => 'Normal', // Normal|Random
@@ -82,7 +84,7 @@ class Factory extends \Facula\Base\Factory\Operator
 
             if (isset($cfg['Servers']) && is_array($cfg['Servers'])) {
                 if (isset($cfg['SelectMethod'])
-                    && $cfg['SelectMethod'] == 'Random') {
+                && $cfg['SelectMethod'] == 'Random') {
                     shuffle($cfg['Servers']);
                 }
 
@@ -112,9 +114,8 @@ class Factory extends \Facula\Base\Factory\Operator
                         if (\Facula\Unit\Validator::check($val['From'], 'email')) {
                             static::$config['Servers'][$key]['From'] = $val['From'];
                         } else {
-                            trigger_error(
-                                'ERROR_SMTP_ADDRESS_FORM_INVALID|' . $val['From'],
-                                E_USER_ERROR
+                            throw new Exception\ServerFromAddressInvaild(
+                                $val['From']
                             );
                         }
                     } else {
@@ -129,9 +130,8 @@ class Factory extends \Facula\Base\Factory\Operator
                         if (\Facula\Unit\Validator::check($val['ReplyTo'], 'email')) {
                             static::$config['Servers'][$key]['ReplyTo'] = $val['ReplyTo'];
                         } else {
-                            trigger_error(
-                                'ERROR_SMTP_ADDRESS_REPLYTO_INVALID|' . $val['ReplyTo'],
-                                E_USER_ERROR
+                            throw new Exception\ServerReplyToAddressInvaild(
+                                $val['ReplyTo']
                             );
                         }
                     } else {
@@ -144,9 +144,8 @@ class Factory extends \Facula\Base\Factory\Operator
                         if (\Facula\Unit\Validator::check($val['ReturnTo'], 'email')) {
                             static::$config['Servers'][$key]['ReturnTo'] = $val['ReturnTo'];
                         } else {
-                            trigger_error(
-                                'ERROR_SMTP_ADDRESS_RETURNTO_INVALID|' . $val['ReturnTo'],
-                                E_USER_ERROR
+                            throw new Exception\ServerReturnToAddressInvaild(
+                                $val['ReplyTo']
                             );
                         }
                     } else {
@@ -159,9 +158,8 @@ class Factory extends \Facula\Base\Factory\Operator
                         if (\Facula\Unit\Validator::check($val['ErrorTo'], 'email')) {
                             static::$config['Servers'][$key]['ErrorTo'] = $val['ErrorTo'];
                         } else {
-                            trigger_error(
-                                'ERROR_SMTP_ADDRESS_ERRORTO_INVALID|' . $val['ErrorTo'],
-                                E_USER_ERROR
+                            throw new Exception\ServerErrorToAddressInvaild(
+                                $val['ErrorTo']
                             );
                         }
                     } else {
@@ -181,7 +179,7 @@ class Factory extends \Facula\Base\Factory\Operator
 
                 return true;
             } else {
-                trigger_error('ERROR_SMTP_NOSERVER', E_USER_ERROR);
+                throw new Exception\NoServerSpecified();
             }
         }
 
@@ -226,62 +224,53 @@ class Factory extends \Facula\Base\Factory\Operator
 
             \Facula\Framework::core('debug')->criticalSection(true);
 
-            try {
-                while (!empty($currentServers)
-                    && !empty(static::$emails) && $retryLimit > 0) {
-                    foreach ($currentServers as $serverkey => $server) {
-                        $operaterClassName = static::getOperator($server['Type']);
+            while (!empty($currentServers)
+                && !empty(static::$emails) && $retryLimit > 0) {
+                foreach ($currentServers as $serverkey => $server) {
+                    $operaterClassName = static::getOperator($server['Type']);
 
-                        if (class_exists($operaterClassName, true)) {
-                            $operater = new $operaterClassName($server);
+                    if (class_exists($operaterClassName)) {
+                        $operater = new $operaterClassName($server);
 
-                            if ($operater instanceof Base) {
-                                if ($operater->connect($error)) {
+                        if ($operater instanceof Base) {
+                            if ($operater->connect($error)) {
 
-                                    foreach (static::$emails as $mailkey => $email) {
-                                        if ($operater->send($email)) {
-                                            unset(static::$emails[$mailkey]);
-                                        } else {
-                                            $retryLimit--;
-                                            break;
-                                            // There is no point to continue try this connection
-                                            // to send another email after fail.
-                                        }
+                                foreach (static::$emails as $mailkey => $email) {
+                                    if ($operater->send($email)) {
+                                        unset(static::$emails[$mailkey]);
+                                    } else {
+                                        $retryLimit--;
+                                        break;
+                                        // There is no point to continue try this connection
+                                        // to send another email after fail.
                                     }
-
-                                    $operater->disconnect();
-                                } else {
-                                    $error .= ' on server: ' . $server['Host'];
-                                    unset($currentServers[$serverkey]);
                                 }
+
+                                $operater->disconnect();
                             } else {
-                                trigger_error(
-                                    'ERROR_SMTP_OPERATOR_BASE_INVALID|' . $operaterClassName,
-                                    E_USER_ERROR
-                                );
+                                $error .= ' on server: ' . $server['Host'];
+
+                                unset($currentServers[$serverkey]);
                             }
                         } else {
-                            trigger_error(
-                                'ERROR_SMTP_OPERATOR_NOTFOUND|' . $server['Type'],
-                                E_USER_ERROR
+                            throw new Exception\OperatorExtendsInvalid(
+                                $operaterClassName
                             );
                         }
+                    } else {
+                        throw new Exception\OperatorClassNotFound(
+                            $operaterClassName,
+                            $server['Type']
+                        );
                     }
                 }
-            } catch (\Exception $e) {
-                $error = $e->getMessage();
-            }
-
-            if ($error) {
-                trigger_error(
-                    'ERROR_SMTP_OPERATOR_ERROR|' . $error,
-                    E_USER_ERROR
-                );
             }
 
             \Facula\Framework::core('debug')->criticalSection(false);
 
-            return true;
+            if (!$error) {
+                return true;
+            }
         }
 
         return false;

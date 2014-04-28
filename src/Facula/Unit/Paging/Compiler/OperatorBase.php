@@ -68,7 +68,8 @@ abstract class OperatorBase extends Base
      *
      * @return bool Return true when succeed, false otherwise
      */
-    final protected function setMutex($name) {
+    final protected function setMutex($name)
+    {
         if (isset(self::$mutex[$name])) {
             throw new Exception\MutexExisted($name);
 

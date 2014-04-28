@@ -315,11 +315,11 @@ abstract class Response extends Factory implements Implement
      */
     public function send($type = 'htm', $persistConn = false)
     {
-        $file = $line = $lastBufferContent = $oldBufferContent = $finalContent = '';
+        $file = $line = $finalContent = '';
         $hookResult = null;
-        $finalContentLen = $lastBufferLevel = 0;
+        $finalContentLen = 0;
         $thereIndiscernible = false;
-        $errors = array();
+        $errors = $lastBufferContents = array();
 
         // If $type is empty, set it to htm as default
         $type = $type ? $type : 'htm';
@@ -339,29 +339,16 @@ abstract class Response extends Factory implements Implement
             $thereIndiscernible = true;
         }
 
-        // Safely shutdown early output
-        while (($lastBufferContent = ob_get_clean()) !== false) {
-            // Avoid the buffer may set by PHP itself when output_buffering = On
-            if (($lastBufferLevel = ob_get_level()) <= 1
-            && !isset($lastBufferContent[0])) {
-                break;
+        if (!headers_sent($file, $line)) {
+            // Safely shutdown early output, save the old content into a stack
+            while (ob_get_level()) {
+                $lastBufferContents[] = ob_get_clean();
             }
 
-            new Error(
-                'BUFFER_POLLUTED',
-                array(
-                    $lastBufferLevel,
-                    $lastBufferContent
-                ),
-                'NOTICE'
-            );
-        }
-
-        if (!headers_sent($file, $line)) {
             // Start buffer to output
             ob_start();
 
-            $finalContent = $oldBufferContent . static::$content;
+            $finalContent = static::$content;
 
             $hookResult = \Facula\Framework::summonHook(
                 'response_preparing',
@@ -440,6 +427,14 @@ abstract class Response extends Factory implements Implement
             }
 
             flush();
+
+            if (!empty($lastBufferContents)) {
+                foreach ($lastBufferContents as $oldObContent) {
+                    ob_start();
+
+                    echo $oldObContent;
+                }
+            }
 
             if ($thereIndiscernible) {
                 \Facula\Framework::summonHook(

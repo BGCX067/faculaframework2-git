@@ -1,5 +1,5 @@
 TITLE_HOME = Welcome to Facula Framework
-TITLE_HOME_WELCOME = Oh hi {% $Guest['Name'] %}, Welcome to the Facula Framework demo project!
+TITLE_HOME_WELCOME = Oh hi {var Guest.Name /}, Welcome to the Facula Framework demo project!
 
 TEXT_HOME_SYSINFO_INIT_TIME = Controller initialized on
 

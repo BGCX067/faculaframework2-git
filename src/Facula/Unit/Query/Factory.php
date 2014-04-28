@@ -27,6 +27,8 @@
 
 namespace Facula\Unit\Query;
 
+use Facula\Unit\Query\Exception as Exception;
+
 /**
  * Query Operator
  */
@@ -183,9 +185,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                     break;
 
                 default:
-                    trigger_error(
-                        'ERROR_QUERY_PARSER_TYPE_INVALID|' . $type,
-                        E_USER_ERROR
+                    throw new Exception\AutoParserTypeInvalid(
+                        $type
                     );
                     break;
             }
@@ -302,9 +303,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 return $this;
             }
         } else {
-            trigger_error(
-                'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
-                E_USER_ERROR
+            throw new Exception\ActionAlreadyAssigned(
+                $this->query['Action']
             );
         }
 
@@ -332,9 +332,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 return $this;
             }
         } else {
-            trigger_error(
-                'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
-                E_USER_ERROR
+            throw new Exception\ActionAlreadyAssigned(
+                $this->query['Action']
             );
         }
 
@@ -375,9 +374,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 return $this;
             }
         } else {
-            trigger_error(
-                'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
-                E_USER_ERROR
+            throw new Exception\ActionAlreadyAssigned(
+                $this->query['Action']
             );
         }
 
@@ -412,9 +410,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 return $this;
             }
         } else {
-            trigger_error(
-                'ERROR_QUERY_ACTION_ASSIGNED|' . $this->query['Action'],
-                E_USER_ERROR
+            throw new Exception\ActionAlreadyAssigned(
+                $this->query['Action']
             );
         }
 
@@ -488,9 +485,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                                 $this->dataMap[$dataKey]['Value']
                             ); // With parser
                         } else {
-                            trigger_error(
-                                'ERROR_QUERY_SAVEVALUE_PARSER_WRITER_NOTSET|' . $forField,
-                                E_USER_ERROR
+                            throw new Exception\WriterAutoParserNotSet(
+                                $parserType,
+                                $forField
                             );
                         }
 
@@ -499,16 +496,13 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
                 return $dataKey;
             } else {
-                trigger_error(
-                    'ERROR_QUERY_SAVEVALUE_TYPE_UNKNOWN|'
-                    . $this->query['Fields'][$forField],
-                    E_USER_ERROR
+                throw new Exception\UnknownDataTypeForSaving(
+                    $this->query['Fields'][$forField]
                 );
             }
         } else {
-            trigger_error(
-                'ERROR_QUERY_SAVEVALUE_FIELD_UNKNOWN|' . $forField,
-                E_USER_ERROR
+            throw new Exception\UnknownFieldForSaving(
+                $forField
             );
         }
 
@@ -530,9 +524,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
         $params = array();
 
         if (!isset(static::$queryOperators[$operator])) {
-            trigger_error(
-                'ERROR_QUERY_CONDITION_UNKNOWN_OPERATOR|' . $operator,
-                E_USER_ERROR
+            throw new Exception\UnknownOperatorForCondition(
+                $operator
             );
 
             return false;
@@ -626,9 +619,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                         ),
                     );
                 } else {
-                    trigger_error(
-                        'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
-                        E_USER_ERROR
+                    throw new Exception\InvaildOperatorParameterForCondition(
+                        $operator
                     );
 
                     return false;
@@ -645,9 +637,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                         ),
                     );
                 } else {
-                    trigger_error(
-                        'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
-                        E_USER_ERROR
+                    throw new Exception\InvaildOperatorParameterForCondition(
+                        $operator
                     );
 
                     return false;
@@ -666,9 +657,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                         $params['Value'][] = $this->saveValue($val, $fieldName);
                     }
                 } else {
-                    trigger_error(
-                        'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
-                        E_USER_ERROR
+                    throw new Exception\InvaildOperatorParameterForCondition(
+                        $operator
                     );
 
                     return false;
@@ -687,9 +677,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                         $params['Value'][] = $this->saveValue($val, $fieldName);
                     }
                 } else {
-                    trigger_error(
-                        'ERROR_QUERY_CONDITION_OPERATOR_INVALID_PARAM|' . $operator,
-                        E_USER_ERROR
+                    throw new Exception\InvaildOperatorParameterForCondition(
+                        $operator
                     );
 
                     return false;
@@ -714,9 +703,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
         if (isset(static::$logicOperators[$logic])) {
             $params['Logic'] = static::$logicOperators[$logic];
         } else {
-            trigger_error(
-                'ERROR_QUERY_CONDITION_UNKNOWN_LOGIC|' . $logic,
-                E_USER_ERROR
+            throw new Exception\UnknownLogicOperatorForCondition(
+                $logic
             );
 
             return false;
@@ -747,19 +735,13 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
         $condition = array();
 
         if (!isset($this->query['Where'])) {
-            trigger_error(
-                'ERROR_QUERY_WHERE_NOT_SUPPORTED',
-                E_USER_ERROR
-            );
+            throw new Exception\WhereNotSupported();
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            trigger_error(
-                'ERROR_QUERY_WHERE_FIELD_UNKOWN|' . $fieldName,
-                E_USER_ERROR
-            );
+            throw new Exception\WhereFieldUnknown($fieldName);
 
             return false;
         }
@@ -793,19 +775,13 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
         $condition = array();
 
         if (!isset($this->query['Having'])) {
-            trigger_error(
-                'ERROR_QUERY_HAVING_NOT_SUPPORTED',
-                E_USER_ERROR
-            );
+            throw new Exception\HavingNotSupported();
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            trigger_error(
-                'ERROR_QUERY_HAVING_FIELD_UNKOWN|' . $fieldName,
-                E_USER_ERROR
-            );
+            throw new Exception\HavingFieldUnknown($fieldName);
 
             return false;
         }
@@ -834,19 +810,13 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
     public function group($fieldName)
     {
         if (!isset($this->query['Group'])) {
-            trigger_error(
-                'ERROR_QUERY_GROUP_NOT_SUPPORTED',
-                E_USER_ERROR
-            );
+            throw new Exception\GroupNotSupported();
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            trigger_error(
-                'ERROR_QUERY_GROUP_FIELD_UNKOWN|' . $fieldName,
-                E_USER_ERROR
-            );
+            throw new Exception\GroupFieldUnknown($fieldName);
 
             return false;
         }
@@ -870,28 +840,19 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
     public function order($fieldName, $sort)
     {
         if (!isset($this->query['Order'])) {
-            trigger_error(
-                'ERROR_QUERY_ORDER_NOT_SUPPORTED',
-                E_USER_ERROR
-            );
+            throw new Exception\OrderNotSupported();
 
             return false;
         }
 
         if (!isset(static::$orderOperators[$sort])) {
-            trigger_error(
-                'ERROR_QUERY_ORDER_SORTOPERATOR_UNKOWN|' . $sort,
-                E_USER_ERROR
-            );
+            throw new Exception\OrderSortOperatorUnknown($sort);
 
             return false;
         }
 
         if (!isset($this->query['Fields'][$fieldName])) {
-            trigger_error(
-                'ERROR_QUERY_ORDER_FIELD_UNKOWN|' . $fieldName,
-                E_USER_ERROR
-            );
+            throw new Exception\OrderFieldUnknown($fieldName);
 
             return false;
         }
@@ -920,10 +881,7 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 if (isset($values[$field]) || array_key_exists($field, $values)) {
                     $tempValueData[] = $this->saveValue($values[$field], $field);
                 } else {
-                    trigger_error(
-                        'ERROR_QUERY_VALUES_FIELD_NOTSET|' . $field,
-                        E_USER_ERROR
-                    );
+                    throw new Exception\ValuesFieldNotSet($field);
                 }
             }
 
@@ -931,10 +889,7 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
             return $this;
         } else {
-            trigger_error(
-                'ERROR_QUERY_VALUES_NOT_SUPPORTED',
-                E_USER_ERROR
-            );
+            throw new Exception\ValuesNotSupported($field);
         }
 
         return false;
@@ -960,10 +915,7 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
             return $this;
         } else {
-            trigger_error(
-                'ERROR_QUERY_SETS_NOT_SUPPORTED',
-                E_USER_ERROR
-            );
+            throw new Exception\SetNotSupported();
         }
 
         return false;
@@ -982,10 +934,7 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
             foreach ($values as $value) {
                 if (!is_array($value)) {
-                    trigger_error(
-                        'ERROR_QUERY_CHANGE_OPERATOR_PARAM_INVALID',
-                        E_USER_ERROR
-                    );
+                    throw new Exception\ChangeOperatorParameterInvaild();
 
                     return false;
                     break;
@@ -996,10 +945,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                     $value['Field'],
                     $value['Value']
                 )) {
-                    trigger_error(
-                        'ERROR_QUERY_CHANGE_OPERATOR_PARAM_MISSING|Picked up only: '
-                        . implode(', ', array_keys($values)),
-                        E_USER_ERROR
+                    throw new Exception\ChangeOperatorParameterMissing(
+                        implode(', ', array_keys($values))
                     );
 
                     return false;
@@ -1007,9 +954,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 }
 
                 if (!isset(static::$mathOperators[$value['Operator']])) {
-                    trigger_error(
-                        'ERROR_QUERY_CHANGE_OPERATOR_INVALID|' . $operator,
-                        E_USER_ERROR
+                    throw new Exception\ChangeOperatorInvalid(
+                        $operator
                     );
 
                     return false;
@@ -1017,9 +963,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                 }
 
                 if (!is_numeric($value['Value'])) {
-                    trigger_error(
-                        'ERROR_QUERY_CHANGE_VALUE_NOT_NUMBER',
-                        E_USER_ERROR
+                    throw new Exception\ChangeValueNotNumber(
+                        $value['Value']
                     );
 
                     return false;
@@ -1035,10 +980,7 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
             return $this;
         } else {
-            trigger_error(
-                'ERROR_QUERY_CHANGE_NOT_SUPPORTED',
-                E_USER_ERROR
-            );
+            throw new Exception\ChangeNotSupported();
         }
 
         return false;
@@ -1064,16 +1006,10 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
                 return $this;
             } else {
-                trigger_error(
-                    'ERROR_QUERY_LIMIT_ALREADY_ASSIGNED',
-                    E_USER_ERROR
-                );
+                throw new Exception\LimitAlreadyAssigned();
             }
         } else {
-            trigger_error(
-                'ERROR_QUERY_LIMIT_NOT_SUPPORTED',
-                E_USER_ERROR
-            );
+            throw new Exception\LimitNotSupported();
         }
 
         return false;
@@ -1094,10 +1030,7 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
         )) {
             return $this->connection;
         } else {
-            trigger_error(
-                'ERROR_QUERY_PDO_CONNECTION_FAILED',
-                E_USER_ERROR
-            );
+            throw new Exception\GetConnectionFailed();
         }
 
         return false;
@@ -1129,24 +1062,16 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                     if ($operator instanceof OperatorImplement) {
                         return ($this->operator = $operator);
                     } else {
-                        trigger_error(
-                            'ERROR_QUERY_BUILDER_INTERFACE_INVALID',
-                            E_USER_ERROR
-                        );
+                        throw new Exception\OperatorInvalidInterface();
                     }
 
                 } else {
-                    trigger_error(
-                        'ERROR_QUERY_BUILDER_DRIVER_NOTSUPPORTED|'
-                        . $this->connection->_connection['Driver'],
-                        E_USER_ERROR
+                    throw new Exception\OperatorDriverNotSupported(
+                        $this->connection->_connection['Driver']
                     );
                 }
             } else {
-                trigger_error(
-                    'ERROR_QUERY_SQL_BUILDER_NEEDS_CONNECTION',
-                    E_USER_ERROR
-                );
+                throw new Exception\OperatorNeedsConnection();
             }
         } else {
             return $this->operator;
@@ -1175,10 +1100,7 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
             // mistake. And the mistake may cause query poisoning or inject
             foreach ($requiredQueryParams as $param) {
                 if (empty($this->query[$param])) {
-                    trigger_error(
-                        'ERROR_QUERY_PREPARE_PARAM_REQUIRED|' . $param,
-                        E_USER_ERROR
-                    );
+                    throw new Exception\ParameterRequiredForPrepare($param);
 
                     return false;
                     break;
@@ -1213,20 +1135,15 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                                             $this->dataMap[$paramKey]['Value'],
                                             $this->dataMap[$paramKey]['Type']
                                         )) {
-                                            trigger_error(
-                                                'ERROR_QUERY_PREPARE_PARAM_BINDVALUE_FAILED|'
-                                                . ($paramKey
-                                                . ' = ('
-                                                . $this->dataMap[$paramKey]['Type']
-                                                . ')'
-                                                . $this->dataMap[$paramKey]['Value']),
-                                                E_USER_ERROR
+                                            throw new Exception\PrepareBindValueFailed(
+                                                $paramKey,
+                                                $this->dataMap[$paramKey]['Value'],
+                                                $this->dataMap[$paramKey]['Type']
                                             );
                                         }
                                     } else {
-                                        trigger_error(
-                                            'ERROR_QUERY_PREPARE_PARAM_NOTSET|' . $paramKey,
-                                            E_USER_ERROR
+                                        throw new Exception\PrepareParameterNotSet(
+                                            $paramKey
                                         );
                                     }
                                 }
@@ -1240,18 +1157,14 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                             }
                         }
                     } catch (PDOException $e) {
-                        trigger_error(
-                            'ERROR_QUERY_PREPARE_FAILED|' . $e->getMessage(),
-                            E_USER_ERROR
+                        throw new Exception\ExceptionOnQuerying(
+                            $e->getMessage()
                         );
                     }
                 }
             }
         } else {
-            trigger_error(
-                'ERROR_QUERY_PREPARE_MUST_INITED',
-                E_USER_ERROR
-            );
+            throw new Exception\UnknownActionForPrepare();
         }
 
         return false;
@@ -1307,10 +1220,7 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
 
                         case 'CLASS':
                             if (!class_exists($className)) {
-                                trigger_error(
-                                    'ERROR_QUERY_FETCH_CLASS_NOTFOUND|' . $className,
-                                    E_USER_ERROR
-                                );
+                                throw new Exception\FetchContainerClassNotFound($className);
 
                                 return false;
                             }
@@ -1329,26 +1239,19 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                             break;
 
                         default:
-                            trigger_error(
-                                'ERROR_QUERY_FETCH_UNKNOWN_MODE|' . $mode,
-                                E_USER_ERROR
-                            );
+                            throw new Exception\FetchModeUnknown($mode);
 
                             return false;
                             break;
                     }
                 } catch (PDOException $e) {
-                    trigger_error(
-                        'ERROR_QUERY_FETCH_FAILED|' . $e->getMessage(),
-                        E_USER_ERROR
+                    throw new Exception\ExceptionOnFetching(
+                        $e->getMessage()
                     );
                 }
             }
         } else {
-            trigger_error(
-                'ERROR_QUERY_FETCH_NOT_SUPPORTED',
-                E_USER_ERROR
-            );
+            throw new Exception\FetchNotSupported();
         }
 
         return false;
@@ -1436,27 +1339,19 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                             break;
 
                         default:
-                            trigger_error(
-                                'ERROR_QUERY_SAVE_METHOD_UNSUPPORTED|'
-                                . $this->query['Action'],
-                                E_USER_ERROR
-                            );
+                            throw new Exception\SaveMethodNotSupported($this->query['Action']);
 
                             break;
                     }
 
                 } catch (PDOException $e) {
-                    trigger_error(
-                        'ERROR_QUERY_SAVE_FAILED|' . $e->getMessage(),
-                        E_USER_ERROR
+                    throw new Exception\ExceptionOnSaving(
+                        $e->getMessage()
                     );
                 }
             }
         } else {
-            trigger_error(
-                'ERROR_QUERY_SAVE_NOT_SUPPORTED',
-                E_USER_ERROR
-            );
+            throw new Exception\SaveNotSupported($this->query['Action']);
         }
     }
 }

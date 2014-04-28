@@ -27,6 +27,8 @@
 
 namespace Facula\Unit\RemoteStorage\Operator;
 
+use Facula\Unit\RemoteStorage\Exception\Operator as Exception;
+
 /**
  * Remote Storage FTP Operator
  */
@@ -129,41 +131,29 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
         if ($this->connection || $this->connect()) {
             \Facula\Framework::core('debug')->criticalSection(true);
 
-            try {
+            if ($this->setting['Path']
+            && !$this->chDir(
+                $this->setting['Path'] . $this->generatePath(),
+                $currentRemotePath,
+                $cdError
+            )) {
+                throw new Exception\EnterDirFailed($this->setting['Path'], $cdError);
+            } else {
+                if (!$remoteFileName) {
+                    $fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
 
-                if ($this->setting['Path']
-                && !$this->chDir(
-                    $this->setting['Path'] . $this->generatePath(),
-                    $currentRemotePath,
-                    $cdError
-                )) {
-                    $error = 'ERROR_REMOTESTORAGE_ENTERDIR_FAILED'
-                            . ($cdError ? '|' . $cdError : $cdError);
-
-                    trigger_error(
-                        'ERROR_FTP_CHANGEDIR_FAILED',
-                        E_USER_ERROR
-                    );
-                } else {
-                    if (!$remoteFileName) {
-                        $fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
-
-                        if (!$remoteFileName = md5_file($localFile)) {
-                            $remoteFileName = mt_rand(0, 9999) . ($fileExt ? '.' . $fileExt : '');
-                        }
-                    }
-
-                    if (ftp_put($this->connection, $remoteFileName, $localFile, FTP_BINARY)) {
-                        $resultPath =  $currentRemotePath . '/' . $remoteFileName;
-
-                        $success = true;
-                    } else {
-                        $error = 'ERROR_REMOTESTORAGE_UPLOAD_FAILED';
+                    if (!$remoteFileName = md5_file($localFile)) {
+                        $remoteFileName = mt_rand(0, 9999) . ($fileExt ? '.' . $fileExt : '');
                     }
                 }
 
-            } catch (Exception $e) {
-                $error = $e->getMessage();
+                if (ftp_put($this->connection, $remoteFileName, $localFile, FTP_BINARY)) {
+                    $resultPath =  $currentRemotePath . '/' . $remoteFileName;
+
+                    $success = true;
+                } else {
+                    $error = 'ERROR_REMOTESTORAGE_UPLOAD_FAILED';
+                }
             }
 
             \Facula\Framework::core('debug')->criticalSection(false);

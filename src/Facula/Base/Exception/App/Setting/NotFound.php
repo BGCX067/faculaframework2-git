@@ -25,7 +25,7 @@
  *
  */
 
-namespace Facula\Base\Exception\App\Container;
+namespace Facula\Base\Exception\App\Setting;
 
 use Facula\Base\Prototype\Exception as Base;
 
@@ -35,6 +35,6 @@ use Facula\Base\Prototype\Exception as Base;
 class NotFound extends Base
 {
     protected static $exceptionMessage = '
-        The item %s can\'t be found in Container.
+        The item %s can\'t be found in Setting container.
     ';
 }
