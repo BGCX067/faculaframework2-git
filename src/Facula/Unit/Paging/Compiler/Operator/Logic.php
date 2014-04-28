@@ -55,9 +55,17 @@ class Logic extends Base implements Implement
         'is' => 'default', // var="$variable" is="someothervar"
         'not' => 'default', // var="$variable" not="someothervar"
 
+        'larger' => 'number', // var="$variable" larger="1"
+        'smaller' => 'number', // var="$variable" smaller="2"
+
         // variable compare to another token (true | false | null)
         'fits' => 'default', // var="$variable" fits="true"
         'unfits' => 'default', // var="$variable" unfits="false"
+
+        'unempty' => 'variable',
+        'empty' => 'variable',
+        'true' => 'variable',
+        'false' => 'variable',
     );
 
     /** Data of child tags */
@@ -200,21 +208,42 @@ class Logic extends Base implements Implement
         $params = $parameters->fetch();
 
         if (isset($params[0])) {
-            if ($params[0]['Tag'] != 'var') {
-                throw new Exception\LogicFirstParamaterMustBeVar();
+            if ($params[0]['Tag'] != 'var'
+            && $params[0]['Tag'] != 'empty'
+            && $params[0]['Tag'] != 'true'
+            && $params[0]['Tag'] != 'false') {
+                throw new Exception\LogicFirstParamaterMustBeVar(implode(', ', array(
+                    'empty', 'true', 'false'
+                )));
             }
 
             foreach ($parameters->fetch() as $param) {
                 switch ($param['Tag']) {
+                    case 'unempty':
+                        // just remember the tag, discards data
+                    case 'empty':
+                        // just remember the tag, discards data
+                    case 'true':
+                        // just remember the tag, discards data
+                    case 'false':
+                        $stacks[] = array(
+                            'Tag' =>
+                                $param['Tag'],
+
+                            'Var' =>
+                                $param['Data'],
+                        );
+                        $varNames[] = $param['Data'];
+                        break;
+
+
                     case 'var':
                         $varNames[] = $param['Data'];
                         $lastVarName = $param['Data'];
                         break;
 
                     case 'fits':
-
                         // fits and unfits use same operation
-
                     case 'unfits':
                         $stacks[] = array(
                             'Tag' =>
@@ -229,9 +258,7 @@ class Logic extends Base implements Implement
                         break;
 
                     case 'equals':
-
                         // equals and unequals use same operation
-
                     case 'unequals':
                         // Save the variable name to varNames
                         $varNames[] = $param['Data'];
@@ -271,6 +298,27 @@ class Logic extends Base implements Implement
             // The IF Logic syntax
             foreach ($stacks as $stack) {
                 switch ($stack['Tag']) {
+                    case 'unempty':
+                        $logicStack[] =
+                            '!empty(' . $stack['Var'] . ')';
+                        break;
+
+                    case 'empty':
+                        $logicStack[] =
+                            'empty(' . $stack['Var'] . ')';
+                        break;
+
+                    case 'true':
+                        $logicStack[] =
+                            '(' . $stack['Var'] . ')';
+                        break;
+
+                    case 'false':
+                        $logicStack[] =
+                            '(!' . $stack['Var'] . ')';
+                        break;
+
+
                     case 'equals':
                         $logicStack[] =
                             '(' . $stack['Var'] . ' == ' . $stack['Data'] . ')';

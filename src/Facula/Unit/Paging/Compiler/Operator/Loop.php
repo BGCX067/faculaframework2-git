@@ -142,10 +142,19 @@ class Loop extends Base implements Implement
      */
     public function compile()
     {
-        $empty = '';
+        $empty = $php = '';
 
-        $varName = $this->mainParameter->get('var');
-        $varKeyName = $this->mainParameter->get('name');
+        if (!$varName = $this->mainParameter->get('var')) {
+            throw new Exception\LoopVarMustSpecified();
+
+            return $php;
+        }
+
+        if (!$varKeyName = $this->mainParameter->get('name')) {
+            throw new Exception\LoopNameMustSpecified();
+
+            return $php;
+        }
 
         try {
             $this->setMutex($varKeyName);
@@ -155,7 +164,7 @@ class Loop extends Base implements Implement
             );
         }
 
-        $php = '<?php if (isset(' . $varName . ') && is_array(' . $varName . ')) { ';
+        $php .= '<?php if (isset(' . $varName . ') && is_array(' . $varName . ')) { ';
         $php .= 'foreach (' . $varName . ' as $_' . $varKeyName . ' => $' . $varKeyName . ') { ?> ';
         $php .= $this->data;
 

@@ -139,8 +139,15 @@ class Casing implements Implement
      */
     public function compile()
     {
-        $varName = $this->mainParameter->get('var');
-        $php = '<?php if (isset(' . $varName . ')) { ';
+        $php = '';
+
+        if (!$varName = $this->mainParameter->get('var')) {
+            throw new Exception\CaseVarNotSpecified();
+
+            return $php;
+        }
+
+        $php .= '<?php if (isset(' . $varName . ')) { ';
         $php .= 'switch (' . $varName . ') { ';
 
         if (isset($this->middles['when'])) {

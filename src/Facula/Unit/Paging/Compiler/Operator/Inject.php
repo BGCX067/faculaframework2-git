@@ -30,6 +30,7 @@ namespace Facula\Unit\Paging\Compiler\Operator;
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 use Facula\Unit\Paging\Compiler as Compiler;
+use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 
 /**
  * Inject tag compiler
@@ -39,8 +40,13 @@ class Inject implements Implement
     /** Wrapped Data in the tags */
     protected $data = '';
 
+    /** Tag parameter container */
+    protected $parameter = null;
+
     /** Tag parameter template */
-    protected $injectAreaName = '';
+    protected $parameters = array(
+        'name' => 'default'
+    );
 
     /** Data needed for compile */
     protected $pool = array();
@@ -90,7 +96,10 @@ class Inject implements Implement
     {
         switch ($type) {
             case 'Main':
-                $this->injectAreaName = trim($param);
+                $this->parameter = new Parameter(
+                    $param,
+                    $this->parameters
+                );
                 break;
 
             default:
@@ -133,10 +142,22 @@ class Inject implements Implement
     {
         $php = '';
 
-        if (isset($this->pool['Injected'][$this->injectAreaName])
-        && !empty($this->pool['Injected'][$this->injectAreaName])) {
-            foreach ($this->pool['Injected'][$this->injectAreaName] as $injected) {
-                $php .= Compiler::compile($this->pool, $injected)->result();
+        if (!$injectAreaName = $this->parameter->get('name')) {
+            throw new Exception\InjectNameNotSpecified();
+
+            return $php;
+        }
+
+        $wrapper = explode('(CODE)', $this->data, 2);
+        $wrapperBefore = isset($wrapper[0]) ? $wrapper[0] : '';
+        $wrapperAfter = isset($wrapper[1]) ? $wrapper[1] : '';
+
+        if (isset($this->pool['Injected'][$injectAreaName])
+        && !empty($this->pool['Injected'][$injectAreaName])) {
+            foreach ($this->pool['Injected'][$injectAreaName] as $injected) {
+                $php .= $wrapperBefore
+                    . Compiler::compile($this->pool, $injected)->result()
+                    . $wrapperAfter;
             }
         } elseif (isset($this->middles['empty'])) {
             foreach ($this->middles['empty'] as $empty) {

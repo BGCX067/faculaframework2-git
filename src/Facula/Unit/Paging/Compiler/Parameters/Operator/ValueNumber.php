@@ -1,7 +1,7 @@
 <?php
 
 /**
- * LogicFirstParamaterMustBeVar Exception
+ * Variable parameter parser
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,44 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
+namespace Facula\Unit\Paging\Compiler\Parameters\Operator;
 
-use Facula\Base\Prototype\Exception as Base;
+use Facula\Unit\Paging\Compiler\Parameters\OperatorImplement as Implement;
+use Facula\Unit\Paging\Compiler\Exception\Parameters as Exception;
+use Facula\Unit\Validator as Validator;
 
 /**
- * LogicFirstParamaterMustBeVar Exception
+ * Default Parameters
  */
-class LogicFirstParamaterMustBeVar extends Base
+class ValueNumber implements Implement
 {
-    protected static $exceptionMessage = '
-        The first parameter of variable of a logic tag must be "var", or one of following: %s.
-    ';
+    protected $var = '';
+
+    /**
+     * Constructor
+     *
+     * @param mixed $var The var to be converted in to parameter format
+     *
+     * @return void
+     */
+    public function __construct($var)
+    {
+        if (!is_numeric($var)) {
+            throw new Exception\InvalidNumberString($var);
+
+            return;
+        }
+
+        $this->var = $var;
+    }
+
+    /**
+     * Get convert result
+     *
+     * @return mixed Return the result of the convert
+     */
+    public function result()
+    {
+        return $this->var;
+    }
 }

@@ -225,12 +225,16 @@ class Template implements Implement
         $templateContent = $compiler = '';
         $sets = $this->getSetTo($this->mainParameter);
 
-        $templateName = $this->mainParameter->get('name');
+        if (!$templateName = $this->mainParameter->get('name')) {
+            throw new Exception\TemplateNameNotSpecified();
+
+            return $compiler;
+        }
 
         if (!isset($this->pool['File']['Tpl'][$templateName]['default'])) {
             throw new Exception\TemplateNotFound($templateName);
 
-            return false;
+            return $compiler;
         }
 
         $templateContent = str_replace(

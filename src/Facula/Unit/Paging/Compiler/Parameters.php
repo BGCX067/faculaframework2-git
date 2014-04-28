@@ -53,6 +53,9 @@ class Parameters extends Base
         'variable' =>
             'Facula\Unit\Paging\Compiler\Parameters\Operator\ValueVariable',
 
+        'number' =>
+            'Facula\Unit\Paging\Compiler\Parameters\Operator\ValueNumber',
+
         'alphaNumber' =>
             'Facula\Unit\Paging\Compiler\Parameters\Operator\ValueAlphaNumber',
     );

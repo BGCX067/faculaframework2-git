@@ -1,7 +1,7 @@
 <?php
 
 /**
- * LogicFirstParamaterMustBeVar Exception
+ * InvalidNumberString Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,16 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
+namespace Facula\Unit\Paging\Compiler\Exception\Parameters;
 
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * LogicFirstParamaterMustBeVar Exception
+ * InvalidNumberString Exception
  */
-class LogicFirstParamaterMustBeVar extends Base
+class InvalidNumberString extends Base
 {
     protected static $exceptionMessage = '
-        The first parameter of variable of a logic tag must be "var", or one of following: %s.
+        "%s" seems not a valid number value.
     ';
 }

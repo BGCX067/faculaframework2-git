@@ -1,7 +1,7 @@
 <?php
 
 /**
- * LogicFirstParamaterMustBeVar Exception
+ * TemplateNameNotSpecified Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -30,11 +30,11 @@ namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * LogicFirstParamaterMustBeVar Exception
+ * TemplateNameNotSpecified Exception
  */
-class LogicFirstParamaterMustBeVar extends Base
+class TemplateNameNotSpecified extends Base
 {
     protected static $exceptionMessage = '
-        The first parameter of variable of a logic tag must be "var", or one of following: %s.
+        The "name" parameter for "template" tag must be specified.
     ';
 }
