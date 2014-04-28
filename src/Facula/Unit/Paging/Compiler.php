@@ -498,21 +498,21 @@ class Compiler extends Base implements Implement
 
             // Shift all the positions of tag that behind current one
             foreach ($tags as $tagPosSK => $tagPosShift) {
-                if ($tagPosShift['Start'] > $tag['End']) {
+                if ($tagPosShift['Start'] >= $tag['End']) {
                     $tags[$tagPosSK]['Start'] += $newPosShift;
                 }
 
-                if ($tagPosShift['End'] > $tag['End']) {
+                if ($tagPosShift['End'] >= $tag['End']) {
                     $tags[$tagPosSK]['End'] += $newPosShift;
                 }
 
                 // Shift positions in parameter
                 foreach ($tagPosShift['Parameter'] as $tagPosSParamKey => $tagPosShiftParam) {
-                    if ($tagPosShiftParam[0] > $tag['End']) {
+                    if ($tagPosShiftParam[0] >= $tag['End']) {
                         $tags[$tagPosSK]['Parameter'][$tagPosSParamKey][0] += $newPosShift;
                     }
 
-                    if ($tagPosShiftParam[1] > $tag['End']) {
+                    if ($tagPosShiftParam[1] >= $tag['End']) {
                         $tags[$tagPosSK]['Parameter'][$tagPosSParamKey][1] += $newPosShift;
                     }
 
@@ -522,11 +522,11 @@ class Compiler extends Base implements Implement
                 }
 
                 // Shift positions in data
-                if ($tagPosShift['Data']['Field'][0] > $tag['End']) {
+                if ($tagPosShift['Data']['Field'][0] >= $tag['End']) {
                     $tags[$tagPosSK]['Data']['Field'][0] += $newPosShift;
                 }
 
-                if ($tagPosShift['Data']['Field'][1] > $tag['End']) {
+                if ($tagPosShift['Data']['Field'][1] >= $tag['End']) {
                     $tags[$tagPosSK]['Data']['Field'][1] += $newPosShift;
                 }
 
@@ -538,12 +538,12 @@ class Compiler extends Base implements Implement
                 if (isset($tagPosShift['Data']['Middle'])) {
                     foreach ($tagPosShift['Data']['Middle'] as $tagPosMKey => $tagPosSMVals) {
                         foreach ($tagPosSMVals as $mTKey => $mTParam) {
-                            if ($mTParam['Parameter'][0] > $tag['End']) {
+                            if ($mTParam['Parameter'][0] >= $tag['End']) {
                                 $tags[$tagPosSK]['Data']['Middle'][$tagPosMKey][$mTKey]['Parameter'][0]
                                     += $newPosShift;
                             }
 
-                            if ($mTParam['Parameter'][1] > $tag['End']) {
+                            if ($mTParam['Parameter'][1] >= $tag['End']) {
                                 $tags[$tagPosSK]['Data']['Middle'][$tagPosMKey][$mTKey]['Parameter'][1]
                                     += $newPosShift;
                             }
@@ -553,12 +553,12 @@ class Compiler extends Base implements Implement
                                 - $tags[$tagPosSK]['Data']['Middle'][$tagPosMKey][$mTKey]['Parameter'][0];
 
 
-                            if ($mTParam['Data'][0] > $tag['End']) {
+                            if ($mTParam['Data'][0] >= $tag['End']) {
                                 $tags[$tagPosSK]['Data']['Middle'][$tagPosMKey][$mTKey]['Data'][0]
                                     += $newPosShift;
                             }
 
-                            if ($mTParam['Data'][1] > $tag['End']) {
+                            if ($mTParam['Data'][1] >= $tag['End']) {
                                 $tags[$tagPosSK]['Data']['Middle'][$tagPosMKey][$mTKey]['Data'][1]
                                     += $newPosShift;
                             }
