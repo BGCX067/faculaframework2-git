@@ -91,7 +91,9 @@ class ValueVariable implements Implement
 
             if (!empty($varNameArray)) {
                 foreach ($varNameArray as $arrayTable) {
-                    $varName .= '[\'' . str_replace("\0", '.', $arrayTable) . '\']';
+                    $varName .= '[\''
+                            . str_replace(array("\0", '\''), array('.', '\\\''), $arrayTable)
+                            . '\']';
                 }
             }
         }
