@@ -845,7 +845,8 @@ class Parser
 
                 case static::TAG_TYPE_CLOSER_END:
                     if (!$nestLevel
-                    || !$nest[$nestLevel]['LastExpecting'][$current['Type']]) {
+                    || !$nest[$nestLevel]['LastExpecting'][$current['Type']]
+                    || $nest[$nestLevel]['Tag'] != $current['Tag']) {
                         throw new Exception\UnexpectedEndOfAClosingTag(
                             $current['Tag'],
                             $position
