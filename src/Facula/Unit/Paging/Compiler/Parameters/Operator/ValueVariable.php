@@ -160,9 +160,9 @@ class ValueVariable implements Implement
         foreach ($var as $name) {
             if (isset($name[0])) {
                 if ($name[0] == '$') {
-                    $varName .= '[' . $name . ']';
+                    $varName .= '[' . str_replace('\'', '\\\'', $name) . ']';
                 } else {
-                    $varName .= '[\'' . str_replace('\\', '', $name). '\']';
+                    $varName .= '[\'' . str_replace(array('\\', '\''), array('', '\\\''), $name) . '\']';
                 }
             }
         }
