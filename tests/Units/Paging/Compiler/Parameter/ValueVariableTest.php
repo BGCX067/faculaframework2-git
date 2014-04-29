@@ -1,0 +1,55 @@
+<?php
+
+namespace Facula\Tests\Framework\Core;
+
+use Facula\Unit\Paging\Compiler\Parameters\Operator\ValueVariable as TestingTarget;
+
+/*
+ * Testing the namespace functions
+ */
+class ValueVariableTest extends \PHPUnit_Framework_TestCase
+{
+    /*
+     * normal variable
+     */
+    public function testVariableNameConvert()
+    {
+        $testName = 'testName';
+
+        $newVal = new TestingTarget($testName);
+        $this->assertEquals($newVal->result(), '$testName');
+    }
+
+    /*
+     * array variable with escape
+     */
+    public function testArrayEscapeConvert()
+    {
+        $testArrayName = 'testName.SomeSubArray.some\.thing';
+
+        $newVal = new TestingTarget($testArrayName);
+        $this->assertEquals($newVal->result(), '$testName[\'SomeSubArray\'][\'some.thing\']');
+    }
+
+    /*
+     * nested array
+     */
+    public function testNestedConvert()
+    {
+        $testArrayNested = 'testName.SomeSubArray.(another.array).val';
+
+        $newVal = new TestingTarget($testArrayNested);
+        $this->assertEquals($newVal->result(), '$testName[\'SomeSubArray\'][$another[\'array\']][\'val\']');
+    }
+
+    /*
+     * multi nested arrays
+     */
+    public function testMulitNestedConvert()
+    {
+        $testArrayMultiNested = 'testName.SomeSubArray.(another.(var)).val';
+
+        $newVal = new TestingTarget($testArrayMultiNested);
+        $this->assertEquals($newVal->result(), '$testName[\'SomeSubArray\'][$another[$var]][\'val\']');
+    }
+}

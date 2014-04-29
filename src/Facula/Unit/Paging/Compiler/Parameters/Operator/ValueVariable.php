@@ -29,14 +29,25 @@ namespace Facula\Unit\Paging\Compiler\Parameters\Operator;
 
 use Facula\Unit\Paging\Compiler\Parameters\OperatorImplement as Implement;
 use Facula\Unit\Paging\Compiler\Exception\Parameters as Exception;
-use Facula\Unit\Validator as Validator;
 
 /**
  * Default Parameters
  */
 class ValueVariable implements Implement
 {
+    const MARK_DELIMITER_START = 1;
+    const MARK_DELIMITER_END = 2;
+    const MARK_SPLITER = 3;
+
     protected $var = '';
+
+    /**
+     * Variable scan delimiters
+     */
+    protected static $escape = '\\';
+    protected static $delimiterStart = '(';
+    protected static $delimiterEnd = ')';
+    protected static $spliter = '.';
 
     /**
      * Constructor
@@ -47,58 +58,116 @@ class ValueVariable implements Implement
      */
     public function __construct($string)
     {
-        if (!$string) {
-            return false;
+        $this->var = $this->parseMarks($string);
+    }
+
+    /**
+     * Parse variable expression
+     *
+     * @param string $string The variable to be parsed
+     *
+     * @return string The parsed result of a PHP variable name.
+     */
+    protected function parseMarks($string)
+    {
+        $varName = $varNameBuf = '';
+        $thereSpilter = $skipSpliters = $newRangeEntered = false;
+        $var = array();
+        $delimiterLevel = 0;
+        $targetString = $string . '.';
+
+        $strLength = strlen($targetString);
+
+        for ($seeker = 0; $seeker < $strLength; $seeker++) {
+            switch ($targetString[$seeker]) {
+                case static::$delimiterStart:
+                    if (($seeker < 1 || $targetString[$seeker - 1] != static::$escape)
+                    && $delimiterLevel++ <= 0) {
+                        $skipSpliters = true;
+                        $newRangeEntered = true;
+                    } else {
+                        $varNameBuf .= $targetString[$seeker];
+                    }
+                    break;
+
+                case static::$delimiterEnd:
+                    if (($seeker < 1 || $targetString[$seeker - 1] != static::$escape)
+                    && --$delimiterLevel <= 0) {
+                        $skipSpliters = false;
+                    } else {
+                        $varNameBuf .= $targetString[$seeker];
+                    }
+                    break;
+
+                case static::$spliter:
+                    if (($seeker < 1 || $targetString[$seeker - 1] != static::$escape)
+                    && !$skipSpliters) {
+
+                        if ($newRangeEntered) {
+                            $newRangeEntered = false;
+
+                            if ($varNameBuf[0] != static::$escape) {
+                                if (!$varNameBuf) {
+                                    throw new Exception\VariableDelimiterRangeEmpty(
+                                        $string
+                                    );
+
+                                    continue 2;
+                                }
+
+                                $var[] = $this->parseMarks($varNameBuf);
+                            } else {
+                                // Normal
+                                $var[] = $varNameBuf;
+                            }
+
+                        } else {
+                            $var[] = $varNameBuf;
+                        }
+
+                        $varNameBuf = '';
+                    } else {
+                        $varNameBuf .= $targetString[$seeker];
+                    }
+                    break;
+
+                default:
+                    $varNameBuf .= $targetString[$seeker];
+                    break;
+            }
         }
 
-        if (!isset($string[0])) {
-            throw new Exception\EmptyVariableName();
+        $var[] = $varNameBuf;
 
-            return;
+        $varName = array_shift($var);
+
+        if (!preg_match('/^([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$/', $varName)) {
+            throw new Exception\InvalidVariableName(
+                $string
+            );
+
+            return '';
         }
 
-        if ($string[0] == '$') {
-            if (!isset($string[1])
-            || !preg_match('/^\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$/', $string)) {
-                throw new Exception\InvalidVariableName(
-                    $string
-                );
+        if ($delimiterLevel != 0) {
+            throw new Exception\VariableDelimiterNotClosed(
+                $string
+            );
 
-                return;
-            }
+            return '';
+        }
 
-            $varName = $string;
-        } else {
-            if (is_numeric($string[0])) {
-                throw new Exception\InvalidVariableName(
-                    $string
-                );
-
-                return;
-            }
-
-            $varNameArray = explode('.', str_replace('\\.', "\0", $string));
-
-            $varName = '$' . array_shift($varNameArray);
-
-            if (!preg_match('/^\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$/', $varName)) {
-                throw new Exception\InvalidVariableName(
-                    $string
-                );
-
-                return;
-            }
-
-            if (!empty($varNameArray)) {
-                foreach ($varNameArray as $arrayTable) {
-                    $varName .= '[\''
-                            . str_replace(array("\0", '\''), array('.', '\\\''), $arrayTable)
-                            . '\']';
+        foreach ($var as $name) {
+            if (isset($name[0])) {
+                if ($name[0] == '$') {
+                    $varName .= '[' . $name . ']';
+                } else {
+                    $varName .= '[\'' . str_replace('\\', '', $name). '\']';
                 }
             }
         }
 
-        $this->var = $varName;
+        return '$' . $varName;
     }
 
     /**
