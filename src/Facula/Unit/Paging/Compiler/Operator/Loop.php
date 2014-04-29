@@ -164,7 +164,7 @@ class Loop extends Base implements Implement
             );
         }
 
-        $php .= '<?php if (isset(' . $varName . ') && is_array(' . $varName . ')) { ';
+        $php .= '<?php if (isset(' . $varName . ') && !empty(' . $varName. ') && is_array(' . $varName . ')) { ';
         $php .= 'foreach (' . $varName . ' as $_' . $varKeyName . ' => $' . $varKeyName . ') { ?> ';
         $php .= $this->data;
 
