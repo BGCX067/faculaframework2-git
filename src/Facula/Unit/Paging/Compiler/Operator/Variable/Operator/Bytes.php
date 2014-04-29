@@ -48,78 +48,37 @@ class Bytes implements Implement
     {
         $phpCode = '';
 
-        if (isset($pool['LanguageMap']['FORMAT_TIME_DEFAULT']) &&
-            isset($pool['LanguageMap']['FORMAT_TIME_BEFORE_DAY']) &&
-            isset($pool['LanguageMap']['FORMAT_TIME_BEFORE_HR']) &&
-            isset($pool['LanguageMap']['FORMAT_TIME_BEFORE_MIN']) &&
-            isset($pool['LanguageMap']['FORMAT_TIME_BEFORE_SND']) &&
-            isset($pool['LanguageMap']['FORMAT_TIME_AFTER_SND']) &&
-            isset($pool['LanguageMap']['FORMAT_TIME_AFTER_MIN']) &&
-            isset($pool['LanguageMap']['FORMAT_TIME_AFTER_HR']) &&
-            isset($pool['LanguageMap']['FORMAT_TIME_AFTER_DAY'])) {
-
-            $phpCode .= '<?php '
-                    . '$tempTime = $Time - (' . $varName. ');'
-                    // If small than 0, means after time
-                    . 'if ($tempTime < 0) { $tempTime = abs($tempTime); '
-
-                    . 'if ($tempTime < 60) { printf(\''
-                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_TIME_AFTER_SND'])
-                    . '\', $tempTime); '
-
-                    . '} elseif ($tempTime < 3600) { printf(\''
-                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_TIME_AFTER_MIN'])
-                    . '\', (int)($tempTime / 60)); '
-
-                    . '} elseif ($tempTime < 86400) { printf(\''
-                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_TIME_AFTER_HR'])
-                    . '\', (int)($tempTime / 3600)); '
-
-                    . '} elseif ($tempTime < 604800) { printf(\''
-                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_TIME_AFTER_DAY'])
-                    . '\', (int)($tempTime / 86400)); '
-
-                    . '} elseif ($tempTime) { echo(date(\''
-                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_TIME_DEFAULT'])
-                    . '\', (int)(' . $varName . '))); } '
-
-                    . '} else { ' // Or, if larger than 0 means before
-
-                    . 'if ($tempTime < 60) { printf(\''
-                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_TIME_BEFORE_SND'])
-                    . '\', $tempTime); '
-
-                    . '} elseif ($tempTime < 3600) { printf(\''
-                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_TIME_BEFORE_MIN'])
-                    . '\', (int)($tempTime / 60)); '
-
-                    . '} elseif ($tempTime < 86400) { printf(\''
-                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_TIME_BEFORE_HR'])
-                    . '\', (int)($tempTime / 3600)); '
-
-                    . '} elseif ($tempTime < 604800) { printf(\''
-                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_TIME_BEFORE_DAY'])
-                    . '\', (int)($tempTime / 86400)); '
-
-                    . '} elseif ($tempTime) { echo(date(\''
-                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_TIME_DEFAULT'])
-                    . '\', (int)(' . $varName . '))); } '
-
-                    . '} $tempTime = 0;'
-                    . ' ?>';
+        if (isset($pool['LanguageMap']['FORMAT_BYTES_BYTES']) &&
+            isset($pool['LanguageMap']['FORMAT_BYTES_KILOBYTES']) &&
+            isset($pool['LanguageMap']['FORMAT_BYTES_MEGABYTES']) &&
+            isset($pool['LanguageMap']['FORMAT_BYTES_GIGABYTES']) &&
+            isset($pool['LanguageMap']['FORMAT_BYTES_TRILLIONBYTES'])) {
+            $phpCode .= '<?php $tempsize = '
+                    . $varName
+                    . '; if ($tempsize < 1024) { echo (($tempsize).\''
+                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_BYTES_BYTES'])
+                    . '\'); } elseif ($tempsize < 1048576) {'
+                    . ' echo ((int)($tempsize / 1024).\''
+                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_BYTES_KILOBYTES'])
+                    . '\'); } elseif ($tempsize < 1073741824) {'
+                    . ' echo (round($tempsize / 1048576, 1).\''
+                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_BYTES_MEGABYTES'])
+                    . '\'); } elseif ($tempsize < 1099511627776) {'
+                    . ' echo (round($tempsize / 1073741824, 2).\''
+                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_BYTES_GIGABYTES'])
+                    . '\'); } elseif ($tempsize < 1125899906842624) {'
+                    . ' echo (round($tempsize / 1099511627776, 3).\''
+                    . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_BYTES_TRILLIONBYTES'])
+                    . '\'); } $tempsize = 0; ?>';
         } else {
-            throw new Exception\VariableFriendlyTimeFormatMissed(
+            throw new Exception\VariableBytesFormatMissed(
                 $varName,
                 implode(', ', array(
-                    'FORMAT_TIME_DEFAULT',
-                    'FORMAT_TIME_BEFORE_DAY',
-                    'FORMAT_TIME_BEFORE_HR',
-                    'FORMAT_TIME_BEFORE_MIN',
-                    'FORMAT_TIME_BEFORE_SND',
-                    'FORMAT_TIME_AFTER_SND',
-                    'FORMAT_TIME_AFTER_MIN',
-                    'FORMAT_TIME_AFTER_HR',
-                    'FORMAT_TIME_AFTER_DAY',
+                    'FORMAT_BYTES_BYTES',
+                    'FORMAT_BYTES_KILOBYTES',
+                    'FORMAT_BYTES_MEGABYTES',
+                    'FORMAT_BYTES_GIGABYTES',
+                    'FORMAT_BYTES_TRILLIONBYTES',
                 ))
             );
         }

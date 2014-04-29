@@ -1,7 +1,7 @@
 <?php
 
 /**
- * VariableFriendlyNumberFormatMissed Exception
+ * VariableBytesFormatMissed Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -30,12 +30,12 @@ namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * VariableFriendlyNumberFormatMissed Exception
+ * VariableBytesFormatMissed Exception
  */
-class VariableFriendlyNumberFormatMissed extends Base
+class VariableBytesFormatMissed extends Base
 {
     protected static $exceptionMessage = '
-        Variable FriendlyNumber format for "%s" has missed.
-        Following format must be declared for FriendlyNumber format: %s.
+        Variable Bytes format for "%s" has missed.
+        Following format must be declared for Bytes format: %s.
     ';
 }
