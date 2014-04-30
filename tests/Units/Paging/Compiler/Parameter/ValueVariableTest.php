@@ -5,7 +5,7 @@ namespace Facula\Tests\Framework\Core;
 use Facula\Unit\Paging\Compiler\Parameters\Operator\ValueVariable as TestingTarget;
 
 /*
- * Testing the namespace functions
+ * Testing the ValueVariable functions
  */
 class ValueVariableTest extends \PHPUnit_Framework_TestCase
 {
@@ -17,6 +17,7 @@ class ValueVariableTest extends \PHPUnit_Framework_TestCase
         $testName = 'testName';
 
         $newVal = new TestingTarget($testName);
+
         $this->assertEquals($newVal->result(), '$testName');
     }
 
@@ -28,7 +29,11 @@ class ValueVariableTest extends \PHPUnit_Framework_TestCase
         $testArrayName = 'testName.SomeSubArray.some\.thing';
 
         $newVal = new TestingTarget($testArrayName);
-        $this->assertEquals($newVal->result(), '$testName[\'SomeSubArray\'][\'some.thing\']');
+
+        $this->assertEquals(
+            $newVal->result(),
+            '$testName[\'SomeSubArray\'][\'some.thing\']'
+        );
     }
 
     /*
@@ -39,7 +44,11 @@ class ValueVariableTest extends \PHPUnit_Framework_TestCase
         $testArrayNested = 'testName.SomeSubArray.(another.array).val';
 
         $newVal = new TestingTarget($testArrayNested);
-        $this->assertEquals($newVal->result(), '$testName[\'SomeSubArray\'][$another[\'array\']][\'val\']');
+
+        $this->assertEquals(
+            $newVal->result(),
+            '$testName[\'SomeSubArray\'][$another[\'array\']][\'val\']'
+        );
     }
 
     /*
@@ -50,7 +59,11 @@ class ValueVariableTest extends \PHPUnit_Framework_TestCase
         $testArrayMultiNested = 'testName.SomeSubArray.(another.(var)).val';
 
         $newVal = new TestingTarget($testArrayMultiNested);
-        $this->assertEquals($newVal->result(), '$testName[\'SomeSubArray\'][$another[$var]][\'val\']');
+
+        $this->assertEquals(
+            $newVal->result(),
+            '$testName[\'SomeSubArray\'][$another[$var]][\'val\']'
+        );
     }
 
     /*
@@ -61,6 +74,25 @@ class ValueVariableTest extends \PHPUnit_Framework_TestCase
         $testArrayMultiNested = 'testName.SomeSubArray...(another.(var)).va\'l';
 
         $newVal = new TestingTarget($testArrayMultiNested);
-        $this->assertEquals($newVal->result(), '$testName[\'SomeSubArray\'][\'\'][\'\'][$another[$var]][\'va\\\'l\']');
+
+        $this->assertEquals(
+            $newVal->result(),
+            '$testName[\'SomeSubArray\'][\'\'][\'\'][$another[$var]][\'va\\\'l\']'
+        );
+    }
+
+    /*
+     * multi nested arrays with empty item
+     */
+    public function testMulitNestedWithDollerAndEmptyItemConvert()
+    {
+        $testArrayMultiNested = 'testName.$SomeSub\'Array...(another.(var)).va\'l';
+
+        $newVal = new TestingTarget($testArrayMultiNested);
+
+        $this->assertEquals(
+            $newVal->result(),
+            '$testName[\'$SomeSub\\\'Array\'][\'\'][\'\'][$another[$var]][\'va\\\'l\']'
+        );
     }
 }

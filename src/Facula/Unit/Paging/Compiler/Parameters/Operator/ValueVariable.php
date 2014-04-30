@@ -31,7 +31,7 @@ use Facula\Unit\Paging\Compiler\Parameters\OperatorImplement as Implement;
 use Facula\Unit\Paging\Compiler\Exception\Parameters as Exception;
 
 /**
- * Default Parameters
+ * Variable Parameters
  */
 class ValueVariable implements Implement
 {
@@ -72,7 +72,7 @@ class ValueVariable implements Implement
     {
         $varName = $varArrays = $varNameBuf = '';
         $thereSpilter = $skipSpliters = $newRangeEntered = $emptyItemFill = false;
-        $var = array();
+        $var = $firstVar = array();
         $delimiterLevel = 0;
         $targetString = $string . '.';
 
@@ -81,7 +81,12 @@ class ValueVariable implements Implement
         for ($seeker = 0; $seeker < $strLength; $seeker++) {
             switch ($targetString[$seeker]) {
                 case static::$delimiterStart:
-                    if (($seeker < 1 || $targetString[$seeker - 1] != static::$escape)
+                    if (($seeker < 1
+                    || (
+                        $targetString[$seeker - 1] != static::$escape
+                        &&
+                        $targetString[$seeker - 1] == static::$spliter
+                    ))
                     && $delimiterLevel++ <= 0) {
                         $skipSpliters = true;
                         $newRangeEntered = true;
@@ -91,7 +96,19 @@ class ValueVariable implements Implement
                     break;
 
                 case static::$delimiterEnd:
-                    if (($seeker < 1 || $targetString[$seeker - 1] != static::$escape)
+                    if (($seeker < 1
+                    || ($targetString[$seeker - 1] != static::$escape
+                        &&
+                        (
+                            isset($targetString[$seeker + 1])
+                            &&
+                            (
+                                $targetString[$seeker + 1] == static::$spliter
+                                ||
+                                $targetString[$seeker + 1] == static::$delimiterEnd
+                            )
+                        )
+                    ))
                     && --$delimiterLevel <= 0) {
                         $skipSpliters = false;
                     } else {
@@ -115,14 +132,23 @@ class ValueVariable implements Implement
                                     continue 2;
                                 }
 
-                                $var[] = $this->parseMarks($varNameBuf);
+                                $var[] = array(
+                                    'Var' => $this->parseMarks($varNameBuf),
+                                    'Slash' => false,
+                                );
                             } else {
                                 // Normal
-                                $var[] = $varNameBuf;
+                                $var[] = array(
+                                    'Var' => $varNameBuf,
+                                    'Slash' => true
+                                );
                             }
 
                         } else {
-                            $var[] = $varNameBuf;
+                            $var[] = array(
+                                'Var' => $varNameBuf,
+                                'Slash' => true
+                            );
                         }
 
                         $varNameBuf = '';
@@ -137,9 +163,14 @@ class ValueVariable implements Implement
             }
         }
 
-        $var[] = $varNameBuf;
+        $var[] = array(
+            'Var' => $varNameBuf,
+            'Slash' => true
+        );
 
-        $varName = array_shift($var);
+        $firstVar = array_shift($var);
+
+        $varName = $firstVar['Var'];
 
         if (!preg_match('/^([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$/', $varName)) {
             throw new Exception\InvalidVariableName(
@@ -163,17 +194,20 @@ class ValueVariable implements Implement
         $varArrays = '';
 
         foreach (array_reverse($var) as $name) {
-            if (!$emptyItemFill && !isset($name[0])) {
+            if (!$emptyItemFill && !isset($name['Var'][0])) {
                 continue;
             }
 
-            if (isset($name[0])) {
+            if (isset($name['Var'][0])) {
                 $emptyItemFill = true;
 
-                if ($name[0] == '$') {
-                    $varArrays = '[' . $name . ']' . $varArrays;
+                if (!$name['Slash']) {
+                    $varArrays = '[' . $name['Var'] . ']' . $varArrays;
                 } else {
-                    $varArrays = '[\'' . str_replace(array('\\', '\''), array('', '\\\''), $name) . '\']' . $varArrays;
+                    $varArrays = '[\''
+                        . str_replace(array('\\', '\''), array('', '\\\''), $name['Var'])
+                        . '\']'
+                        . $varArrays;
                 }
             } else {
                 $varArrays = '[\'\']' . $varArrays;
