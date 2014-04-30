@@ -52,4 +52,15 @@ class ValueVariableTest extends \PHPUnit_Framework_TestCase
         $newVal = new TestingTarget($testArrayMultiNested);
         $this->assertEquals($newVal->result(), '$testName[\'SomeSubArray\'][$another[$var]][\'val\']');
     }
+
+    /*
+     * multi nested arrays with empty item
+     */
+    public function testMulitNestedWithEmptyItemConvert()
+    {
+        $testArrayMultiNested = 'testName.SomeSubArray...(another.(var)).va\'l';
+
+        $newVal = new TestingTarget($testArrayMultiNested);
+        $this->assertEquals($newVal->result(), '$testName[\'SomeSubArray\'][\'\'][\'\'][$another[$var]][\'va\\\'l\']');
+    }
 }

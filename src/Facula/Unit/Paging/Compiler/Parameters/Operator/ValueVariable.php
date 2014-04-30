@@ -70,8 +70,8 @@ class ValueVariable implements Implement
      */
     protected function parseMarks($string)
     {
-        $varName = $varNameBuf = '';
-        $thereSpilter = $skipSpliters = $newRangeEntered = false;
+        $varName = $varArrays = $varNameBuf = '';
+        $thereSpilter = $skipSpliters = $newRangeEntered = $emptyItemFill = false;
         $var = array();
         $delimiterLevel = 0;
         $targetString = $string . '.';
@@ -157,17 +157,30 @@ class ValueVariable implements Implement
             return '';
         }
 
-        foreach ($var as $name) {
+
+        $emptyItemFill = false;
+
+        $varArrays = '';
+
+        foreach (array_reverse($var) as $name) {
+            if (!$emptyItemFill && !isset($name[0])) {
+                continue;
+            }
+
             if (isset($name[0])) {
+                $emptyItemFill = true;
+
                 if ($name[0] == '$') {
-                    $varName .= '[' . str_replace('\'', '\\\'', $name) . ']';
+                    $varArrays = '[' . $name . ']' . $varArrays;
                 } else {
-                    $varName .= '[\'' . str_replace(array('\\', '\''), array('', '\\\''), $name) . '\']';
+                    $varArrays = '[\'' . str_replace(array('\\', '\''), array('', '\\\''), $name) . '\']' . $varArrays;
                 }
+            } else {
+                $varArrays = '[\'\']' . $varArrays;
             }
         }
 
-        return '$' . $varName;
+        return '$' . $varName . $varArrays;
     }
 
     /**
