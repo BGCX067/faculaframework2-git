@@ -81,12 +81,15 @@ class ValueVariable implements Implement
         for ($seeker = 0; $seeker < $strLength; $seeker++) {
             switch ($targetString[$seeker]) {
                 case static::$delimiterStart:
-                    if (($seeker < 1
-                    || (
-                        $targetString[$seeker - 1] != static::$escape
-                        &&
-                        $targetString[$seeker - 1] == static::$spliter
-                    ))
+                    if (!$newRangeEntered && (
+                        $seeker < 1
+                        ||
+                        (
+                            $targetString[$seeker - 1] != static::$escape
+                            &&
+                            $targetString[$seeker - 1] == static::$spliter
+                        )
+                    )
                     && $delimiterLevel++ <= 0) {
                         $skipSpliters = true;
                         $newRangeEntered = true;
@@ -96,19 +99,8 @@ class ValueVariable implements Implement
                     break;
 
                 case static::$delimiterEnd:
-                    if (($seeker < 1
-                    || ($targetString[$seeker - 1] != static::$escape
-                        &&
-                        (
-                            isset($targetString[$seeker + 1])
-                            &&
-                            (
-                                $targetString[$seeker + 1] == static::$spliter
-                                ||
-                                $targetString[$seeker + 1] == static::$delimiterEnd
-                            )
-                        )
-                    ))
+                    if (($seeker < 1 || $targetString[$seeker - 1] != static::$escape)
+                    && ($targetString[$seeker + 1] == static::$spliter)
                     && --$delimiterLevel <= 0) {
                         $skipSpliters = false;
                     } else {
