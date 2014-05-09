@@ -37,17 +37,22 @@ class ModuleScanner
     /** The path that will be scan */
     protected $path = '';
 
+    /** Max depth for seek */
+    protected $depth = '';
+
     /**
      * Scanner Constructer
      *
      * @param string $path Directory that will be scan
+     * @param string $depth Depth to search
      *
      * @return void
      */
-    public function __construct($path)
+    public function __construct($path, $depth = -1)
     {
         if (is_dir($path)) {
             $this->path = realpath($path);
+            $this->depth = (int)$depth;
         } else {
             throw new Exception\NotDirectory($path);
         }
@@ -69,6 +74,8 @@ class ModuleScanner
                 \FilesystemIterator::SKIP_DOTS
             )
         );
+
+        $iterator->setMaxDepth($this->depth);
 
         foreach ($iterator as $file) {
             if ($file->isFile() && $file->isReadable()) {

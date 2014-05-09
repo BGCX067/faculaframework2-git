@@ -96,8 +96,6 @@ class Framework
         // File extension for PHP script files
         'PHPExt' => 'php',
 
-        'PkgDeclareFile' => 'Package',
-
         // The char to split namespaces
         'NSSplitter' => NAMESPACE_SEPARATER,
 
@@ -113,6 +111,12 @@ class Framework
             'request' => 'Facula\Core\Request',
             'response' => 'Facula\Core\Response'
         ),
+
+        // Max directory seek depth for components
+        'CompMaxSeekDepth' => 2,
+
+        // Max directory seek depth for packages
+        'PkgMaxSeekDepth' => 1,
     );
 
     /** Mirror of Components information container */
@@ -463,7 +467,8 @@ class Framework
 
                     foreach ($componentPaths as $componentPath) {
                         $scanner = new \Facula\Base\Tool\File\ModuleScanner(
-                            \Facula\Base\Tool\File\PathParser::get($componentPath)
+                            \Facula\Base\Tool\File\PathParser::get($componentPath),
+                            static::$cfg['CompMaxSeekDepth']
                         );
 
                         $subModules = array_merge($subModules, $scanner->scan());
@@ -1313,7 +1318,8 @@ class Framework
         if (isset($this->setting['Packages']) && is_array($this->setting['Packages'])) {
             foreach ($this->setting['Packages'] as $path) {
                 $scanner = new \Facula\Base\Tool\File\ModuleScanner(
-                    \Facula\Base\Tool\File\PathParser::get($path)
+                    \Facula\Base\Tool\File\PathParser::get($path),
+                    static::$cfg['PkgMaxSeekDepth']
                 );
 
                 foreach ($scanner->scan() as $modules) {
@@ -1433,7 +1439,8 @@ class Framework
 
         foreach ($paths as $path) {
             $scanner = new \Facula\Base\Tool\File\ModuleScanner(
-                \Facula\Base\Tool\File\PathParser::get($path)
+                \Facula\Base\Tool\File\PathParser::get($path),
+                static::$cfg['CompMaxSeekDepth']
             );
 
             // Must use array_merge.
