@@ -64,6 +64,9 @@ class Framework
     /** Singleton instance container */
     protected static $instance = null;
 
+    /** Temporary data pool */
+    protected static $pool = array();
+
     /** Performance and running counter */
     public static $profile = array(
         'StartTime' => 0,
@@ -278,9 +281,9 @@ class Framework
     {
         if (isset(static::$components['Scope'][$class])) {
             trigger_error(
-                'Trying register a class('
+                'Trying register a class "'
                 . $class
-                . ') to scope while it already registered.',
+                . '" to scope while it already registered.',
                 E_USER_ERROR
             );
 
@@ -289,11 +292,11 @@ class Framework
 
         if (!is_readable($file)) {
             trigger_error(
-                'Trying register a class('
+                'Trying register a class "'
                 . $class
-                . '), but the class file('
+                . '", but the class file "'
                 . $file
-                . ') is not readable.',
+                . '" is not readable.',
                 E_USER_ERROR
             );
 
@@ -318,9 +321,9 @@ class Framework
     {
         if (!isset(static::$components['Scope'][$class])) {
             trigger_error(
-                'Trying unregister a class('
+                'Trying unregister a class "'
                 . $class
-                . '), but the class was not found.',
+                . '", but the class was not found.',
                 E_USER_ERROR
             );
 
@@ -348,14 +351,54 @@ class Framework
 
         $map = self::locateNamespace($splitedNamespace, false);
 
-        if (isset($map['Path'])) {
+        if (isset($map['Path']) && $map['Path']) {
             $fullPath = $map['Path']
                         . DIRECTORY_SEPARATOR
                         . ($map['Remain'] ? implode(DIRECTORY_SEPARATOR, $map['Remain']) . DIRECTORY_SEPARATOR : '')
                         . $className
                         . '.' . static::$cfg['PHPExt'];
 
-            if ($map['Path'] && file_exists($fullPath)) {
+            if (file_exists($fullPath)) {
+
+                // Load initializers and components when needed
+                if ($map['Ref']['I'] && !isset(static::$pool['NSLoaded'][$map['Ref']['I']])) {
+                    if (!static::$instance) {
+                        trigger_error(
+                            'Loading from namespace '
+                            . $class
+                            . ' with subcomponents, But framework not ready for that.'
+                            . ' The framework needs to fully initialized'
+                            . ' to load subcomponents from the namespace.',
+                            E_USER_ERROR
+                        );
+
+                        return false;
+                    }
+
+                    // Register classes
+                    if (isset($map['Ref']['M']['C'])) {
+                        foreach ($map['Ref']['M']['C'] as $className => $classPath) {
+                            static::registerScope($className, $classPath);
+                        }
+                    }
+
+                    // Register plugins
+                    if (isset($map['Ref']['M']['P'])) {
+                        foreach ($map['Ref']['M']['P'] as $pluginPath) {
+                            static::initPlugin($pluginPath);
+                        }
+                    }
+
+                    // Load routines at last
+                    if (isset($map['Ref']['M']['R'])) {
+                        foreach ($map['Ref']['M']['R'] as $routinePath) {
+                            require($routinePath);
+                        }
+                    }
+
+                    static::$pool['NSLoaded'][$map['Ref']['I']] = true;
+                }
+
                 require($fullPath);
 
                 return true;
@@ -370,12 +413,16 @@ class Framework
      *
      * @param string $nsPrefix The prefix
      * @param string $path Path of this namespace perfix
+     * @param array $componentPaths Paths of Subcomponents under this namespace.
+     *                              Subcomponents under this set will be only load on namespace called
+     *                              And only load once according to the last picked namespace
      *
      * @return bool Return true when success, false otherwise.
      */
-    public static function registerNamespace($nsPrefix, $path)
+    public static function registerNamespace($nsPrefix, $path, array $componentPaths = array())
     {
         $currentRoot = null;
+        $subModules = array();
 
         if (is_dir($path)) {
             $map = self::locateNamespace(self::splitNamespace($nsPrefix), true);
@@ -395,12 +442,61 @@ class Framework
                 );
                 $map['Ref']['R'] = true;
 
+                // Check of sub componentPaths has set, include it if so
+                if (!empty($componentPaths)) {
+                    $map['Ref']['I'] = crc32($nsPrefix); // Fine with CRC32
+
+                    // If the framework not finish init and primary namespaces not registered
+                    // (Notice that, static::$pool['NSInited'] will be not set when boot in warm up)
+                    if (!static::$instance && !isset(static::$pool['NSInited'])) {
+                        trigger_error(
+                            'Registering namespace '
+                            . $nsPrefix
+                            . ' with subcomponents, But framework not ready for that.'
+                            . ' The primary namespaces must be registered before registering'
+                            . ' any namespace which contain subcomponents.',
+                            E_USER_ERROR
+                        );
+
+                        return false;
+                    }
+
+                    foreach ($componentPaths as $componentPath) {
+                        $scanner = new \Facula\Base\Tool\File\ModuleScanner(
+                            \Facula\Base\Tool\File\PathParser::get($componentPath)
+                        );
+
+                        $subModules = array_merge($subModules, $scanner->scan());
+                    }
+
+                    foreach ($subModules as $subModule) {
+                        switch ($subModule['Prefix']) {
+                            case 'routine':
+                                $map['Ref']['M']['R'][] = $subModule['Path'];
+                                break;
+
+                            case 'plugin':
+                                $map['Ref']['M']['P'][] = $subModule['Path'];
+                                break;
+
+                            case 'class':
+                                $map['Ref']['M']['C'][ucfirst($subModule['Name'])] = $subModule['Path'];
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+                } else {
+                    $map['Ref']['I'] = 0;
+                }
+
                 return true;
             } else {
                 trigger_error(
-                    'Trying register a namespace('
+                    'Trying to register a namespace "'
                     . $nsPrefix
-                    . ') while it already registered.',
+                    . '" while it already registered.',
                     E_USER_ERROR
                 );
             }
@@ -574,7 +670,7 @@ class Framework
                     . $hook
                     . ' for '
                     . $processorName
-                    . '. But framework not ready.',
+                    . '. But framework not ready not a closure callback.',
                     E_USER_ERROR
                 );
 
@@ -627,30 +723,38 @@ class Framework
     }
 
     /**
-     * Register a package(combination of namespaces, classes, and paths) into Framework
+     * Safe wrap for require the package declaration file
+     *
+     * @param string $file Path to the declaration file
      *
      * @return void
      */
-    public static function registerPackage($path)
+    protected static function loadPackageDeclarationFile($file)
     {
         $package = array();
-        $pkgPath = \Facula\Base\Tool\File\PathParser::get($path);
-        $dclFile = $pkgPath
-                    . DIRECTORY_SEPARATOR
-                    . static::$cfg['PkgDeclareFile']
-                    . '.'
-                    . static::$cfg['PHPExt'];
 
-        if (!is_dir($pkgPath)) {
-            trigger_error(
-                'Package path '
-                . $pkgPath
-                . ' not existed.',
-                E_USER_ERROR
-            );
+        require($file);
 
-            return false;
+        if (is_array($package)) {
+            return $package;
         }
+
+        return array();
+    }
+
+    /**
+     * Register a package into Framework
+     *
+     * @param string $pkgName Name of this package
+     * @param string $dclFile Package declaration file
+     *
+     * @return bool Return true when succeed, false otherwise.
+     */
+    public static function registerPackage($pkgName, $dclFile)
+    {
+        $package = $packageComponents = $packagePaths = array();
+        $nsFolder = '';
+        $pathInfo = pathinfo($dclFile);
 
         if (!is_file($dclFile)) {
             trigger_error(
@@ -664,74 +768,95 @@ class Framework
         }
 
         // Load package info
-        require($dclFile);
+        $package = static::loadPackageDeclarationFile($dclFile);
 
-        if (!is_array($package)) {
+        if (isset($package['Requires'])) {
+            if (!is_array($package['Requires'])) {
+                trigger_error(
+                    'Registering package "' . $pkgName . '" from file "'
+                    . $dclFile
+                    . '", but the "Requires" option is invalid.',
+                    E_USER_ERROR
+                );
+
+                return false;
+            }
+
+            foreach ($package['Requires'] as $required) {
+                if (!isset(static::$components['Packages'][$required])) {
+                    trigger_error(
+                        'Package "' . $pkgName . '" declared in file "'
+                        . $dclFile
+                        . '" can\'t be enabled. '
+                        . 'It requires another package "' . $required . '" to be enabled, '
+                        . 'which is not.',
+                        E_USER_WARNING
+                    );
+
+                    return false;
+                }
+            }
+        }
+
+        // Check if the declaration file is valid
+        if (!isset($package['Namespace'][0])) {
             trigger_error(
-                'Informations in package declaration file '
+                'Registering package "' . $pkgName . '" from file "'
                 . $dclFile
-                . ' is invalid.',
+                . '", but the package namespace name not declared',
                 E_USER_ERROR
             );
 
             return false;
         }
 
-        // Namespaces
-        if (isset($package['Namespaces'])) {
-            if (!is_array($package['Paths'])) {
+        if (isset($package['Components'])) {
+            if (!is_array($package['Components'])) {
                 trigger_error(
-                    'Package namespace declaration is invalid.',
+                    'Registering package "' . $pkgName . '" from file "'
+                    . $dclFile
+                    . '", but the "Components" option is invalid.',
                     E_USER_ERROR
                 );
 
                 return false;
             }
 
-            foreach ($package['Namespaces'] as $namespace => $nsPath) {
-                static::registerNamespace(
-                    $namespace,
-                    \Facula\Base\Tool\File\PathParser::get(
-                        $pkgPath
-                        . DIRECTORY_SEPARATOR
-                        . $nsPath
-                    )
+            foreach ($package['Components'] as $componentPath) {
+                $packageComponents[] = \Facula\Base\Tool\File\PathParser::get(
+                    $pathInfo['dirname']
+                    . DIRECTORY_SEPARATOR
+                    . $componentPath
                 );
             }
         }
 
-        // Classes
-        if (isset($package['Classes'])) {
-            if (!is_array($package['Classes'])) {
-                trigger_error(
-                    'Package class declaration is invalid.',
-                    E_USER_ERROR
-                );
-
-                return false;
-            }
-
-            foreach ($package['Classes'] as $class => $classPath) {
-                static::registerScope($class, $classPath);
-            }
+        // Get Namespace folder
+        if (isset($package['Folder'][0])) {
+            $nsFolder = $pathInfo['dirname'] . DIRECTORY_SEPARATOR . $package['Folder'];
+        } else {
+            $nsFolder = $package['Folder'];
         }
+
+        // Register the namespace with Sub Components
+        static::registerNamespace($package['Namespace'], $nsFolder, $packageComponents);
 
         // Paths
         if (isset($package['Paths'])) {
             if (!is_array($package['Paths'])) {
                 trigger_error(
-                    'Package path declaration is invalid.',
+                    'Registering package "' . $pkgName . '" from file "'
+                    . $dclFile
+                    . '", but the "Paths" option is invalid.',
                     E_USER_ERROR
                 );
 
                 return false;
             }
 
-            $packagePaths = array();
-
             foreach ($package['Paths'] as $packagePath) {
                 $packagePaths[] = \Facula\Base\Tool\File\PathParser::get(
-                    $pkgPath
+                    $pathInfo['dirname']
                     . DIRECTORY_SEPARATOR
                     . $packagePath
                 );
@@ -739,6 +864,8 @@ class Framework
 
             static::pickComponents($packagePaths);
         }
+
+        static::$components['Packages'][$pkgName] = $dclFile;
 
         return true;
     }
@@ -890,15 +1017,19 @@ class Framework
 
             // Now we have settings, the first step: register namespace
             $this->registerAllNamespaces();
+            static::$pool['NSInited'] = true;
 
             // Second, start components pickup
             $this->pickAllComponents();
+            static::$pool['CompInited'] = true;
 
             // And then, register all packages
             $this->registerAllPackages();
+            static::$pool['PkgInited'] = true;
 
             // Now, init up all function cores
-            $this->initCores();
+            $this->initAllCores();
+            static::$pool['CoreInited'] = true;
 
             static::summonHook('cold');
         }
@@ -964,9 +1095,9 @@ class Framework
         foreach ($this->cores as $core) {
             if (!$core->inited()) {
                 trigger_error(
-                    'Warming up core '
+                    'Warming up core "'
                     . get_class($core)
-                    . '. But it returns false.',
+                    . '". But it returns false.',
                     E_USER_ERROR
                 );
             }
@@ -1002,7 +1133,7 @@ class Framework
      *
      * @return void
      */
-    protected function initCores()
+    protected function initAllCores()
     {
         $cores = array();
 
@@ -1038,9 +1169,9 @@ class Framework
     {
         if (!class_exists($coreClass)) {
             trigger_error(
-                'Initializing core '
+                'Initializing core "'
                 . $coreClass
-                . '. But the core class '
+                . '". But the core class '
                 . $coreClass
                 . ' seems not exist.',
                 E_USER_ERROR
@@ -1051,9 +1182,9 @@ class Framework
 
         if (!$coreRef->implementsInterface('Facula\Base\Implement\Factory\Core')) {
             trigger_error(
-                'Initializing core '
+                'Initializing core "'
                 . $coreClass
-                . '. But seems it not implement interface '
+                . '". But seems it not implement interface '
                 . 'Facula\\Base\\Implement\\Factory\\Core.',
                 E_USER_ERROR
             );
@@ -1068,9 +1199,9 @@ class Framework
             $this
         )) {
             trigger_error(
-                'Initializing core '
+                'Initializing core "'
                 . $coreClass
-                . '. But it returns false.',
+                . '". But it returns false.',
                 E_USER_ERROR
             );
 
@@ -1177,9 +1308,43 @@ class Framework
      */
     protected function registerAllPackages()
     {
+        $packageRaws = array();
+
         if (isset($this->setting['Packages']) && is_array($this->setting['Packages'])) {
-            foreach ($this->setting['Packages'] as $package) {
-                static::registerPackage($package);
+            foreach ($this->setting['Packages'] as $path) {
+                $scanner = new \Facula\Base\Tool\File\ModuleScanner(
+                    \Facula\Base\Tool\File\PathParser::get($path)
+                );
+
+                foreach ($scanner->scan() as $modules) {
+                    switch ($modules['Prefix']) {
+                        case 'package':
+                            if (!isset($packageRaws[$modules['Name']])) {
+                                    $packageRaws[$modules['Name']] =
+                                        $modules['Path'];
+
+                                    static::$components['Packages'][$modules['Name']] =
+                                        $modules['Path'];
+                                } else {
+                                    trigger_error(
+                                        'Registering package from file "'
+                                        . $modules['Path']
+                                        . '", but it seems conflicted with another package "'
+                                        . $packageRaws[$modules['Name']]['Path']
+                                        . '".',
+                                        E_USER_ERROR
+                                    );
+                                }
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            foreach ($packageRaws as $packageRawName => $packageRaw) {
+                static::registerPackage($packageRawName, $packageRaw);
             }
 
             // Release memory
@@ -1217,9 +1382,9 @@ class Framework
         foreach (array_diff(get_declared_classes(), $declaredClasses) as $key => $pluginClassname) {
             if (!static::registerScope($pluginClassname, $mainFile)) {
                 trigger_error(
-                    'Cannot register class scope for plugin class '
+                    'Cannot register class scope for plugin class "'
                     . $pluginClassname
-                    . '.',
+                    . '".',
                     E_USER_ERROR
                 );
 
@@ -1240,9 +1405,9 @@ class Framework
 
             if (!is_array($invokeResult = $plugRef->getMethod('register')->invoke(null))) {
                 trigger_error(
-                    'Registering plugin '
+                    'Registering plugin "'
                     . $pluginClassname
-                    . ', but registrant returns invalid result.',
+                    . '", but registrant returns invalid result.',
                     E_USER_ERROR
                 );
 
@@ -1303,7 +1468,5 @@ class Framework
                     break;
             }
         }
-
-        return true;
     }
 }

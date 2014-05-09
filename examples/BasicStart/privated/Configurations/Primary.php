@@ -35,6 +35,8 @@ date_default_timezone_set('UTC');
  */
 mb_internal_encoding('utf-8');
 
+define('DEMO_ROOT', \Facula\Framework::PATH);
+
 /**
  * Framework configuration array
  */
@@ -51,14 +53,15 @@ $cfg = array(
         'template' => '\Facula\Core\Template',
     ),
     'Namespaces' => array(
-        '\MyProject\Controller' => \Facula\Framework::PATH . '/privated/Components/Controllers',
-        '\MyProject\Model' => \Facula\Framework::PATH . '/privated/Components/Models',
+        '\MyProject\Controller' => DEMO_ROOT . '/privated/Components/Controllers',
+        '\MyProject\Model' => DEMO_ROOT . '/privated/Components/Models',
     ),
     'Packages' => array(
+        DEMO_ROOT . '/privated/Components/Packages',
     ),
     // State cache file need to be remove once configuration
     // or project has new change
-    'StateCache' => \Facula\Framework::PATH
+    'StateCache' => DEMO_ROOT
                     . DIRECTORY_SEPARATOR .'privated'
                     . DIRECTORY_SEPARATOR . 'Caches'
                     . DIRECTORY_SEPARATOR . 'state.php',
@@ -68,12 +71,12 @@ $cfg = array(
     'Core' => array(
         'debug' => array(
             'Debug' => true,
-            'LogRoot' => \Facula\Framework::PATH . '/privated/Caches',
+            'LogRoot' => DEMO_ROOT . '/privated/Caches',
             // 'LogServerInterface' => 'http://reports.engine.3ax.org/interface',
             // 'LogServerKey' => '3f8871562ed0f1e8d1a69cbf4d20c664',
         ),
         'object' => array(
-            'ObjectCacheRoot' => \Facula\Framework::PATH . '/privated/Caches',
+            'ObjectCacheRoot' => DEMO_ROOT . '/privated/Caches',
         ),
         'request' => array(
             'MaxRequestBlocks' => 64,
@@ -122,16 +125,16 @@ $cfg = array(
         'template' => array(
             'Compiler' => 'Facula\Unit\Paging\Compiler',
             'Render' => 'Facula\Unit\Paging\Render',
-            'TemplatePool' => \Facula\Framework::PATH . '/privated/Templates',
-            'CompiledTemplate' => \Facula\Framework::PATH . '/privated/Caches',
-            'CachePath' => \Facula\Framework::PATH . '/privated/Caches',
+            'TemplatePool' => DEMO_ROOT . '/privated/Templates',
+            'CompiledTemplate' => DEMO_ROOT . '/privated/Caches',
+            'CachePath' => DEMO_ROOT . '/privated/Caches',
             'CacheTemplate' => true,
             'CacheMaxLifeTime' => 0,
             'CompressOutput' => true,
             'ForceRenew' => false
         ),
         'cache' => array(
-            'CacheRoot' => \Facula\Framework::PATH . '/privated/Caches',
+            'CacheRoot' => DEMO_ROOT . '/privated/Caches',
         ),
     ),
 );

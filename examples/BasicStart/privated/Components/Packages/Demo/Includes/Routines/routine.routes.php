@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Framework Demo: Route register for Homes
+ * Framework Demo: Route register for Demo API Page
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -28,11 +28,11 @@
 /**
  * Register the project execution function
  */
-\Facula\Framework::registerHook('route_init', 'homes', function () {
+\Facula\Framework::registerHook('route_init', 'homes-api', function () {
 
     \Facula\Unit\Route::setup(array(
         '/api/get_name' => array(
-            'MyProject\Controller\Home\API::displayGetName',
+            'MyProject\Demo\Controller\API::displayGetName',
             array(),
             true
         ),

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Framework Demo: Project api controller
+ * Framework Demo: Setup some settings for package Demo
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,45 +25,6 @@
  *
  */
 
-namespace MyProject\Controller\Home;
-
-/**
- * API controller
- */
-class API extends \MyProject\Controller\Root
-{
-    /**
-     * Controller configuration array.
-     */
-    protected $setting = array();
-
-    /**
-     * Controller constructor
-     */
-    public function __construct()
-    {
-        $this->setting = array(
-            'Site' => $this->getSetting('Site'),
-            'Time' => FACULA_TIME,
-        );
-    }
-
-    /**
-     * Method that will be call after controller initialized
-     */
-    public function inited()
-    {
-        $this->assign('Setting', $this->setting);
-
-        return true;
-    }
-
-    public function displayGetName()
-    {
-        $this->response->setContent(
-            $this->request->getCookie('GuestName')
-        );
-
-        return $this->response->send();
-    }
-}
+\Facula\App\Setting::registerSetting('APISetting', array(
+    'DefaultName' => 'Default name',
+), true);

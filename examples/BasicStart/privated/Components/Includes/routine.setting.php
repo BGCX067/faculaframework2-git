@@ -30,4 +30,4 @@
  */
 \Facula\App\Setting::registerSetting('Site', function () {
     return array(); // Return a empty.
-}, 'MyProject\Controller\Home\Index');
+}, array('MyProject\Controller\Home\Index', 'MyProject\Demo\Controller\API'));
