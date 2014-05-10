@@ -57,4 +57,4 @@ require(
 /**
  * Wake up the framework using the configuration
  */
-\Facula\Framework::run($cfg);
+Facula\Framework::run($cfg);

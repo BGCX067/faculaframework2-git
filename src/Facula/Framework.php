@@ -185,7 +185,7 @@ class Framework
                 // Require all include files
                 if (isset($cache['Inc'])) {
                     foreach ($cache['Inc'] as $files) {
-                        require($files);
+                        static::requireFile($files);
                     }
                 }
 
@@ -265,7 +265,7 @@ class Framework
     protected static function loadScope($class)
     {
         if (isset(static::$components['Scope'][$class])) {
-            require(static::$components['Scope'][$class]);
+            static::requireFile(static::$components['Scope'][$class]);
 
             return true;
         }
@@ -396,14 +396,14 @@ class Framework
                     // Load routines at last
                     if (isset($map['Ref']['M']['R'])) {
                         foreach ($map['Ref']['M']['R'] as $routinePath) {
-                            require($routinePath);
+                            static::requireFile($routinePath);
                         }
                     }
 
                     static::$pool['NSLoaded'][$map['Ref']['I']] = true;
                 }
 
-                require($fullPath);
+                static::requireFile($fullPath);
 
                 return true;
             }
@@ -993,6 +993,18 @@ class Framework
     }
 
     /**
+     * Safe wrapper to load file
+     *
+     * @param string $file Path to the PHP file
+     *
+     * @return void
+     */
+    protected static function requireFile($file)
+    {
+        require($file);
+    }
+
+    /**
      * The entity of initialization
      *
      * @param array $cfg Configuration
@@ -1128,7 +1140,7 @@ class Framework
     {
         if (isset(static::$components[$type])) {
             foreach (static::$components[$type] as $file) {
-                require($file);
+                static::requireFile($file);
             }
         }
     }
@@ -1331,16 +1343,16 @@ class Framework
 
                                     static::$components['Packages'][$modules['Name']] =
                                         $modules['Path'];
-                                } else {
-                                    trigger_error(
-                                        'Registering package from file "'
-                                        . $modules['Path']
-                                        . '", but it seems conflicted with another package "'
-                                        . $packageRaws[$modules['Name']]['Path']
-                                        . '".',
-                                        E_USER_ERROR
-                                    );
-                                }
+                            } else {
+                                trigger_error(
+                                    'Registering package from file "'
+                                    . $modules['Path']
+                                    . '", but it seems conflicted with another package "'
+                                    . $packageRaws[$modules['Name']]['Path']
+                                    . '".',
+                                    E_USER_ERROR
+                                );
+                            }
                             break;
 
                         default:
@@ -1382,7 +1394,7 @@ class Framework
 
             return false;
         } else {
-            require($mainFile);
+            static::requireFile($mainFile);
         }
 
         foreach (array_diff(get_declared_classes(), $declaredClasses) as $key => $pluginClassname) {
@@ -1455,7 +1467,7 @@ class Framework
                     static::$includes[] = $module['Path'];
 
                     // Require the include file for init
-                    require($module['Path']);
+                    static::requireFile($module['Path']);
                     break;
 
                 case 'routine':
