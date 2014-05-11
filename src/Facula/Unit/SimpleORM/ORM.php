@@ -543,8 +543,8 @@ abstract class ORM implements Implement, \ArrayAccess
                     'Model' => $jMVal['Model'],
                     'Key' => $jMVal['Key'],
                     'Alias' => $tempJoinedModelAlias,
-                    'Single' => isset($jMVal['Single'])
-                                && $jMVal['Single'] ? true : false,
+                    'Single' => !isset($jMVal['Single']) || $jMVal['Single'] ?
+                        true : false,
                     'Param' => isset($jMVal['Param']) ? $jMVal['Param'] : array(),
                     'With' => $parentName,
                 );
@@ -750,14 +750,15 @@ abstract class ORM implements Implement, \ArrayAccess
                                     array();
                             }
 
-                            if ($JoinedVal['Single']
-                            && empty(
-                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
-                            )) {
-                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
-                                    &$JoinedVal['Data'][$pKey];
+                            if ($JoinedVal['Single']) {
+                                if (empty(
+                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
+                                )) {
+                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
+                                        &$JoinedVal['Data'][$pKey];
+                                }
                             } else {
-                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
+                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']][] =
                                     &$JoinedVal['Data'][$pKey];
                             }
                         }
