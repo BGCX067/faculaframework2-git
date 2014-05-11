@@ -510,7 +510,7 @@ abstract class ORM implements Implement, \ArrayAccess
     ) {
         if (is_array($joinModels)) {
             foreach ($joinModels as $jMkey => $jMVal) {
-                if (!isset($jMVal['Field'][0])) {
+                if (!isset($jMVal['Field'], $jMVal['Field'][0])) {
                     throw new Exception\JoinFieldNameNotSet();
 
                     return false;
@@ -531,8 +531,8 @@ abstract class ORM implements Implement, \ArrayAccess
                     break;
                 }
 
-                $tempJoinedModelAlias = isset($jMVal['Alias'])
-                    ? $jMVal['Alias'] : ($jMVal['Field']);
+                $tempJoinedModelAlias = isset($jMVal['Alias']) ?
+                    $jMVal['Alias'] : (isset($jMVal['Field']) ? $jMVal['Field'] : $jMkey);
 
                 $tempJoinedModelAddr = $parentName
                                         . '.'
