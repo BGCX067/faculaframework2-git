@@ -34,6 +34,10 @@ interface Implement
 {
     public static function from($tableName, $autoParse = false);
 
+    public static function countQueries();
+
+    public static function addAutoParser($name, $type, \Closure $parser);
+
     public function select(array $fields);
     public function insert(array $fields);
     public function update(array $fields);

@@ -99,6 +99,9 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
         'Identity' => '',
     );
 
+    /** Query counter */
+    protected static $queries = 0;
+
     /** Registered parsers */
     private static $parsers = array();
 
@@ -157,6 +160,16 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
     public static function from($tableName, $autoParse = false)
     {
         return new self($tableName, $autoParse);
+    }
+
+    /**
+     * Get how many queries has been executed
+     *
+     * @return integer The number of queries
+     */
+    public static function countQueries()
+    {
+        return static::$queries;
     }
 
     /**
@@ -1153,6 +1166,8 @@ class Factory extends \Facula\Base\Factory\Operator implements Implement
                             $statement->connection = &$this->connection;
 
                             if ($statement->execute()) {
+                                static::$queries++;
+
                                 return $statement;
                             }
                         }
