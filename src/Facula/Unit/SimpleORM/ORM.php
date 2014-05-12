@@ -539,7 +539,7 @@ abstract class ORM implements Implement, \ArrayAccess
                 }
 
                 $tempJoinedModelAlias = isset($jMVal['Alias']) ?
-                    $jMVal['Alias'] : (isset($jMVal['Field']) ? $jMVal['Field'] : $jMkey);
+                    $jMVal['Alias'] : $jMVal['Field'];
 
                 $tempJoinedModelAddr = $parentName
                                         . '.'
