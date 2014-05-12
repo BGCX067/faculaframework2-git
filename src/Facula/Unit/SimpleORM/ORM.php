@@ -510,7 +510,14 @@ abstract class ORM implements Implement, \ArrayAccess
     ) {
         if (is_array($joinModels)) {
             foreach ($joinModels as $jMkey => $jMVal) {
-                if (!isset($jMVal['Field'], $jMVal['Field'][0])) {
+                if (!is_array($jMVal)) {
+                    throw new Exception\JoinOptionInvalid();
+
+                    return false;
+                    break;
+                }
+
+                if (!isset($jMVal['Field'][0])) {
                     throw new Exception\JoinFieldNameNotSet();
 
                     return false;
