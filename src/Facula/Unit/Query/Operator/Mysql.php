@@ -28,11 +28,12 @@
 namespace Facula\Unit\Query\Operator;
 
 use Facula\Unit\Query\Exception\Operator as Exception;
+use Facula\Unit\Query\OperatorImplement;
 
 /**
  * Query MySQL
  */
-class Mysql implements \Facula\Unit\Query\OperatorImplement
+class Mysql implements OperatorImplement
 {
     /** Table name */
     private $table = '';

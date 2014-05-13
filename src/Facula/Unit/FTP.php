@@ -27,6 +27,8 @@
 
 namespace Facula\Unit;
 
+use Facula\Framework;
+
 /*
     $setting Data Struct
 
@@ -155,7 +157,7 @@ class FTP
         }
 
         // Enter critical section
-        \Facula\Framework::core('debug')->criticalSection(true);
+        Framework::core('debug')->criticalSection(true);
 
         try {
             foreach (self::$setting['Servers'] as $server) {
@@ -207,7 +209,7 @@ class FTP
         }
 
         // Exit critical section
-        \Facula\Framework::core('debug')->criticalSection(false);
+        Framework::core('debug')->criticalSection(false);
 
         if ($successed
             && (self::$connection = $conn)
@@ -259,7 +261,7 @@ class FTP
             // $validFolders: floders without empty
             $validFolders = array_values(array_filter($folders));
 
-            \Facula\Framework::core('debug')->criticalSection(true);
+            Framework::core('debug')->criticalSection(true);
 
             // If the path include / var as beginning,
             // we need to refresh the refer path to the root
@@ -319,7 +321,7 @@ class FTP
                 }
             }
 
-            \Facula\Framework::core('debug')->criticalSection(false);
+            Framework::core('debug')->criticalSection(false);
 
             if (!$chdirFailed) {
                 $enteredRemotePath = '/' . implode('/', self::$currentPath);
@@ -356,7 +358,7 @@ class FTP
                 );
             }
 
-            \Facula\Framework::core('debug')->criticalSection(true);
+            Framework::core('debug')->criticalSection(true);
 
             if (is_readable($localFile)) {
                 if (ftp_put(self::$connection, $remoteFileName, $localFile, FTP_BINARY)) {
@@ -369,7 +371,7 @@ class FTP
                 );
             }
 
-            \Facula\Framework::core('debug')->criticalSection(false);
+            Framework::core('debug')->criticalSection(false);
         }
 
         return $resultPath;

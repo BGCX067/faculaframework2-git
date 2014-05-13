@@ -28,11 +28,12 @@
 namespace Facula\Unit\Query\Operator;
 
 use Facula\Unit\Query\Exception\Operator as Exception;
+use Facula\Unit\Query\OperatorImplement;
 
 /**
  * Query PostgreSQL
  */
-class Pgsql implements \Facula\Unit\Query\OperatorImplement
+class Pgsql implements OperatorImplement
 {
     /** Table name */
     private $table = '';

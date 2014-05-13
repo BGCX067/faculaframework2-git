@@ -27,6 +27,8 @@
 
 namespace Facula\Unit\SMTP;
 
+use Facula\Framework;
+
 /**
  * Build a mail according to MIME
  */
@@ -50,7 +52,7 @@ class Datar
         global $_SERVER;
         $senderHost = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
 
-        $appInfo = \Facula\Framework::getVersion();
+        $appInfo = Framework::getVersion();
 
         $checkContent = '';
 

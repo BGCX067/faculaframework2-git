@@ -27,10 +27,12 @@
 
 namespace Facula\Unit\SMTP\Operator;
 
+use Facula\Unit\SMTP\Base;
+
 /**
  * General SMTP Operator
  */
-class General extends \Facula\Unit\SMTP\Base
+class General extends Base
 {
     /** Array of server connect info */
     protected $server = array();

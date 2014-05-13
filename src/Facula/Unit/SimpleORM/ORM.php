@@ -28,6 +28,7 @@
 namespace Facula\Unit\SimpleORM;
 
 use Facula\Unit\SimpleORM\Exception as Exception;
+use Facula\Unit\Query\Factory as Query;
 
 /**
  * SimpleORM
@@ -231,6 +232,16 @@ abstract class ORM implements Implement, \ArrayAccess
     }
 
     /**
+     * Get the name of current class (late binded class name)
+     *
+     * @return string The full name of this (or extender) class
+     */
+    public static function className()
+    {
+        return get_called_class();
+    }
+
+    /**
      * Get one row from database
      *
      * @param array $param The WHERE param for query
@@ -281,7 +292,7 @@ abstract class ORM implements Implement, \ArrayAccess
 
         $query = null;
 
-        $query = \Facula\Unit\Query\Factory::from(static::$table, !static::$noParser);
+        $query = Query::from(static::$table, !static::$noParser);
         $query->select(static::$fields);
 
         if (isset($param['Where'])) {
@@ -864,7 +875,7 @@ abstract class ORM implements Implement, \ArrayAccess
                 }
             }
 
-            $query = \Facula\Unit\Query\Factory::from(
+            $query = Query::from(
                 static::$table,
                 !static::$noParser
             )->update(static::$fields);
@@ -917,7 +928,7 @@ abstract class ORM implements Implement, \ArrayAccess
         }
 
         // Must returning primary key
-        if ($result = \Facula\Unit\Query\Factory::from(
+        if ($result = Query::from(
             static::$table,
             !static::$noParser
         )->insert(
@@ -954,7 +965,7 @@ abstract class ORM implements Implement, \ArrayAccess
                 return false;
             }
 
-            if ($result = \Facula\Unit\Query\Factory::from(
+            if ($result = Query::from(
                 static::$table,
                 !static::$noParser
             )->delete(

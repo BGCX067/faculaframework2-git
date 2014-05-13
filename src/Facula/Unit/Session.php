@@ -27,6 +27,8 @@
 
 namespace Facula\Unit;
 
+use Facula\Framework;
+
 /**
  * Session Manager
  */
@@ -58,7 +60,7 @@ class Session
     public static function init(array $setting = array())
     {
         if (!self::$inited) {
-            self::$cores = \Facula\Framework::getAllCores();
+            self::$cores = Framework::getAllCores();
 
             self::$defaults = array(
                 'Setting' => array(

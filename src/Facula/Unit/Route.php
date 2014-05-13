@@ -27,6 +27,8 @@
 
 namespace Facula\Unit;
 
+use Facula\Framework;
+
 /*
     VALID ROUTE FORMAT:
 
@@ -162,7 +164,7 @@ abstract class Route
                         }
                     }
 
-                    return \Facula\Framework::core('object')->run(
+                    return Framework::core('object')->run(
                         $lastPathOperator[0],
                         self::$operatorParams,
                         true

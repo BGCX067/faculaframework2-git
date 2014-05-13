@@ -28,6 +28,7 @@
 namespace Facula\Unit\RemoteStorage;
 
 use Facula\Unit\RemoteStorage\Exception as Exception;
+use Facula\Base\Factory\Operator as Base;
 
 /*
 Here's how to use
@@ -73,7 +74,7 @@ $setting = array(
 /**
  * Remote Storage Operator
  */
-class Factory extends \Facula\Base\Factory\Operator
+class Factory extends Base
 {
     /** The operator instance that will be use to upload files */
     protected static $handler = null;

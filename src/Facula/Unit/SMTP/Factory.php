@@ -28,6 +28,10 @@
 namespace Facula\Unit\SMTP;
 
 use Facula\Unit\SMTP\Exception as Exception;
+use Facula\Base\Factory\Operator as Base;
+use Facula\Framework;
+use Facula\Unit\IP;
+use Facula\Unit\Validator;
 
 /*
 $cfg = array(
@@ -48,7 +52,7 @@ $cfg = array(
 /**
  * SMTP Operating Factory
  */
-class Factory extends \Facula\Base\Factory\Operator
+class Factory extends Base
 {
     /** Global configuration of the class */
     protected static $config = array();
@@ -58,7 +62,7 @@ class Factory extends \Facula\Base\Factory\Operator
 
     /** Default operators */
     protected static $operators = array(
-        'general' => '\Facula\Unit\SMTP\Operator\General',
+        'general' => 'Facula\Unit\SMTP\Operator\General',
     );
 
     /**
@@ -74,9 +78,9 @@ class Factory extends \Facula\Base\Factory\Operator
         $senderIP = '';
 
         if (empty(static::$config)) {
-            $version = \Facula\Framework::getVersion();
-            $senderIP = \Facula\Unit\IP::joinIP(
-                \Facula\Framework::core('request')->getClientInfo('ipArray'),
+            $version = Framework::getVersion();
+            $senderIP = IP::joinIP(
+                Framework::core('request')->getClientInfo('ipArray'),
                 true
             );
 
@@ -111,7 +115,7 @@ class Factory extends \Facula\Base\Factory\Operator
 
                     // Set MAIL FROM, this one must be set for future use
                     if (isset($val['From'])) {
-                        if (\Facula\Unit\Validator::check($val['From'], 'email')) {
+                        if (Validator::check($val['From'], 'email')) {
                             static::$config['Servers'][$key]['From'] = $val['From'];
                         } else {
                             throw new Exception\ServerFromAddressInvaild(
@@ -127,7 +131,7 @@ class Factory extends \Facula\Base\Factory\Operator
 
                     // Set REPLY TO
                     if (isset($val['ReplyTo'])) {
-                        if (\Facula\Unit\Validator::check($val['ReplyTo'], 'email')) {
+                        if (Validator::check($val['ReplyTo'], 'email')) {
                             static::$config['Servers'][$key]['ReplyTo'] = $val['ReplyTo'];
                         } else {
                             throw new Exception\ServerReplyToAddressInvaild(
@@ -141,7 +145,7 @@ class Factory extends \Facula\Base\Factory\Operator
 
                     // Set RETURN TO
                     if (isset($val['ReturnTo'])) {
-                        if (\Facula\Unit\Validator::check($val['ReturnTo'], 'email')) {
+                        if (Validator::check($val['ReturnTo'], 'email')) {
                             static::$config['Servers'][$key]['ReturnTo'] = $val['ReturnTo'];
                         } else {
                             throw new Exception\ServerReturnToAddressInvaild(
@@ -155,7 +159,7 @@ class Factory extends \Facula\Base\Factory\Operator
 
                     // Set ERROR TO
                     if (isset($val['ErrorTo'])) {
-                        if (\Facula\Unit\Validator::check($val['ErrorTo'], 'email')) {
+                        if (Validator::check($val['ErrorTo'], 'email')) {
                             static::$config['Servers'][$key]['ErrorTo'] = $val['ErrorTo'];
                         } else {
                             throw new Exception\ServerErrorToAddressInvaild(
@@ -167,7 +171,7 @@ class Factory extends \Facula\Base\Factory\Operator
                     }
                 }
 
-                \Facula\Framework::registerHook(
+                Framework::registerHook(
                     'response_finished',
                     'SMTP_Sending',
                     function () {
@@ -222,7 +226,7 @@ class Factory extends \Facula\Base\Factory\Operator
         if (!empty(static::$config) && $remainingMails > 0) {
             $currentServers = static::$config['Servers'];
 
-            \Facula\Framework::core('debug')->criticalSection(true);
+            Framework::core('debug')->criticalSection(true);
 
             while (!empty($currentServers)
                 && !empty(static::$emails) && $retryLimit > 0) {
@@ -266,7 +270,7 @@ class Factory extends \Facula\Base\Factory\Operator
                 }
             }
 
-            \Facula\Framework::core('debug')->criticalSection(false);
+            Framework::core('debug')->criticalSection(false);
 
             if (!$error) {
                 return true;

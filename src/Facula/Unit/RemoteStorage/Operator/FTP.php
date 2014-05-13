@@ -28,11 +28,13 @@
 namespace Facula\Unit\RemoteStorage\Operator;
 
 use Facula\Unit\RemoteStorage\Exception\Operator as Exception;
+use Facula\Unit\RemoteStorage\OperatorImplement;
+use Facula\Framework;
 
 /**
  * Remote Storage FTP Operator
  */
-class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
+class FTP implements OperatorImplement
 {
     /** For activated FTP connection handler */
     private $connection = null;
@@ -100,13 +102,13 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
         $result = false;
 
         if ($this->connection) {
-            \Facula\Framework::core('debug')->criticalSection(true);
+            Framework::core('debug')->criticalSection(true);
 
             if (ftp_close($this->connection)) {
                 $result = true;
             }
 
-            \Facula\Framework::core('debug')->criticalSection(false);
+            Framework::core('debug')->criticalSection(false);
 
             return $result;
         }
@@ -129,7 +131,7 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
         $success = false;
 
         if ($this->connection || $this->connect()) {
-            \Facula\Framework::core('debug')->criticalSection(true);
+            Framework::core('debug')->criticalSection(true);
 
             if ($this->setting['Path']
             && !$this->chDir(
@@ -156,7 +158,7 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
                 }
             }
 
-            \Facula\Framework::core('debug')->criticalSection(false);
+            Framework::core('debug')->criticalSection(false);
 
             return !$success ? false : ($this->setting['Access'] . substr(
                 $resultPath,
@@ -178,7 +180,7 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
     {
         $conn = null;
 
-        \Facula\Framework::core('debug')->criticalSection(true);
+        Framework::core('debug')->criticalSection(true);
 
         if ($this->setting['SSL']) {
             $conn = ftp_ssl_connect(
@@ -209,7 +211,7 @@ class FTP implements \Facula\Unit\RemoteStorage\OperatorImplement
             }
         }
 
-        \Facula\Framework::core('debug')->criticalSection(false);
+        Framework::core('debug')->criticalSection(false);
 
         if ($conn) {
             $this->connection = $conn;

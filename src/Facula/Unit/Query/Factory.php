@@ -28,11 +28,12 @@
 namespace Facula\Unit\Query;
 
 use Facula\Unit\Query\Exception as Exception;
+use Facula\Base\Factory\Operator as Base;
 
 /**
  * Query Operator
  */
-class Factory extends \Facula\Base\Factory\Operator implements Implement
+class Factory extends Base implements Implement
 {
     /** Tag to anti reinitializing */
     private static $inited = false;
