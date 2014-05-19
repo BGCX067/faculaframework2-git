@@ -1026,9 +1026,6 @@ class Framework
                 'SAPI' => strtolower(php_sapi_name()),
                 'UName' => php_uname(),
                 'Version' => strtolower(phpversion()),
-                'GroupID' => getmygid(),
-                'UserID' => getmyuid(),
-                'UserName' => get_current_user(),
                 'ServerName' => gethostname(),
             );
 
