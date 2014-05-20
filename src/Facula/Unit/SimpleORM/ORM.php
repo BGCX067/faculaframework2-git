@@ -323,7 +323,9 @@ abstract class ORM implements Implement, \ArrayAccess
             }
         }
 
-        if ($offset || $dist) {
+        if (isset($param['Limit'], $param['Limit'][0], $param['Limit'][1])) {
+            $query->limit($param['Limit'][0], $param['Limit'][1]);
+        } elseif ($offset || $dist) {
             $query->limit($offset, $dist);
         }
 
