@@ -27,6 +27,7 @@
 
 namespace Facula\App;
 
+use Facula\Framework;
 use Facula\Base\Exception\App\Controller as Exception;
 
 /**
@@ -40,13 +41,34 @@ abstract class Controller extends Setting
     private $cores = array();
 
     /**
+     * Magic method set to replace core instance in controller
+     *
+     * @param string $key The key name function core
+     * @param string $val The function core instance
+     *
+     * @return mixed Return the function core if found, null otherwise.
+     */
+    final public function __set($key, $val)
+    {
+        if (isset($this->cores[$key])) {
+            $this->cores[$key] = $val;
+
+            return true;
+        }
+
+        throw new Exception\UndefinedProperty($key);
+
+        return false;
+    }
+
+    /**
      * Magic method get to get cores
      *
      * @param string $key The key name function core
      *
      * @return mixed Return the function core if found, null otherwise.
      */
-    public function __get($key)
+    final public function __get($key)
     {
         if (isset($this->cores[$key])) {
             return $this->cores[$key];
@@ -98,7 +120,7 @@ abstract class Controller extends Setting
      */
     final public function init()
     {
-        $this->cores = \Facula\Framework::getAllCores();
+        $this->cores = Framework::getAllCores();
 
         return true;
     }
