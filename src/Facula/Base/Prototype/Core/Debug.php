@@ -577,12 +577,12 @@ abstract class Debug extends Factory implements Implement
     /**
      * Add a fully customized error message
      *
-     * @param bool $errNo Error mumber
-     * @param bool $errStr Error message
-     * @param bool $errFile File trigger that error
-     * @param bool $errLine Line of that code trigger the error
-     * @param bool $errContext Dump information
-     * @param bool $errTrace Back trace information
+     * @param integer $errNo Error mumber
+     * @param string $errStr Error message
+     * @param string $errFile File trigger that error
+     * @param integer $errLine Line of that code trigger the error
+     * @param mixed $errContext Dump information
+     * @param array $errTrace Back trace information
      *
      * @return mixed The result of $this->errorHandler
      */
@@ -591,7 +591,7 @@ abstract class Debug extends Factory implements Implement
         $errStr,
         $errFile,
         $errLine,
-        array $errContext = array(),
+        $errContext = array(),
         array $errTrace = array()
     ) {
         return $this->errorHandler(
@@ -655,12 +655,12 @@ abstract class Debug extends Factory implements Implement
     /**
      * Error Handler
      *
-     * @param bool $errNo Error mumber
-     * @param bool $errStr Error message
-     * @param bool $errFile File trigger that error
-     * @param bool $errLine Line of that code trigger the error
-     * @param bool $errContext Dump information
-     * @param bool $errTrace Back trace information
+     * @param integer $errNo Error mumber
+     * @param string $errStr Error message
+     * @param string $errFile File trigger that error
+     * @param integer $errLine Line of that code trigger the error
+     * @param mixed $errContext Dump information
+     * @param array $errTrace Back trace information
      *
      * @return mixed Return the result of static::exception
      */
@@ -669,7 +669,7 @@ abstract class Debug extends Factory implements Implement
         $errStr,
         $errFile,
         $errLine,
-        array $errContext = array(),
+        $errContext = array(),
         array $errTrace = array()
     ) {
         $errorInfo = array(

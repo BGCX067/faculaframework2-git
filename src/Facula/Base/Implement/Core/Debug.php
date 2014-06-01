@@ -40,7 +40,7 @@ interface Debug
         $errStr,
         $errFile,
         $errLine,
-        array $errContext = array(),
+        $errContext = array(),
         array $errTrace = array()
     );
 }
