@@ -1,7 +1,7 @@
 <?php
 
 /**
- * SetFailed Exception
+ * UndefinedProperty Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,17 @@
  *
  */
 
-namespace Facula\Base\Exception\Tool\PHP\Ini;
+namespace Facula\Base\Exception\App\Controller;
 
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * SetFailed Exception
+ * UndefinedProperty Exception
  */
-class SetFailed extends Base
+class UndefinedProperty extends Base
 {
     protected static $exceptionMessage = '
-        A error occurred when try set PHP setting "%s" to "%s".
+        The property "%s" which you want to set is not per-defined.
+        Please do not define the instance property dynamically for controller.
     ';
 }
