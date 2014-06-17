@@ -90,7 +90,8 @@ class ModuleScanner
                             'Prefix' => '',
                             'Name' => $moduleFilenames[0],
                             'Ext' => $moduleFilenames[1],
-                            'Path' => $file->getPathname()
+                            'Path' => $file->getPathname(),
+                            'Dir' => $file->getPath(),
                         );
                         break;
 
@@ -99,7 +100,8 @@ class ModuleScanner
                             'Prefix' => $moduleFilenames[0],
                             'Name' => $moduleFilenames[1],
                             'Ext' => $moduleFilenames[2],
-                            'Path' => $file->getPathname()
+                            'Path' => $file->getPathname(),
+                            'Dir' => $file->getPath(),
                         );
                         break;
 
@@ -113,7 +115,8 @@ class ModuleScanner
                             'Prefix' => $tempModuleFilenames['Prefix'],
                             'Name' => implode('.', $moduleFilenames),
                             'Ext' => $tempModuleFilenames['Ext'],
-                            'Path' => $file->getPathname()
+                            'Path' => $file->getPathname(),
+                            'Dir' => $file->getPath(),
                         );
                         break;
                 }

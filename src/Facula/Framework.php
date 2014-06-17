@@ -466,30 +466,28 @@ class Framework
                     }
 
                     foreach ($componentPaths as $componentPath) {
-                        $scanner = new \Facula\Base\Tool\File\ModuleScanner(
-                            \Facula\Base\Tool\File\PathParser::get($componentPath),
+                        $scanner = new Base\Tool\File\ModuleScanner(
+                            Base\Tool\File\PathParser::get($componentPath),
                             static::$cfg['CompMaxSeekDepth']
                         );
 
-                        $subModules = array_merge($subModules, $scanner->scan());
-                    }
+                        foreach ($scanner->scan() as $subModule) {
+                            switch ($subModule['Prefix']) {
+                                case 'routine':
+                                    $map['Ref']['M']['R'][] = $subModule['Path'];
+                                    break;
 
-                    foreach ($subModules as $subModule) {
-                        switch ($subModule['Prefix']) {
-                            case 'routine':
-                                $map['Ref']['M']['R'][] = $subModule['Path'];
-                                break;
+                                case 'plugin':
+                                    $map['Ref']['M']['P'][] = $subModule['Path'];
+                                    break;
 
-                            case 'plugin':
-                                $map['Ref']['M']['P'][] = $subModule['Path'];
-                                break;
+                                case 'class':
+                                    $map['Ref']['M']['C'][ucfirst($subModule['Name'])] = $subModule['Path'];
+                                    break;
 
-                            case 'class':
-                                $map['Ref']['M']['C'][ucfirst($subModule['Name'])] = $subModule['Path'];
-                                break;
-
-                            default:
-                                break;
+                                default:
+                                    break;
+                            }
                         }
                     }
                 } else {
@@ -748,18 +746,52 @@ class Framework
     }
 
     /**
+     * Get the root directory of the package
+     *
+     * @param string $pkgName Package name
+     *
+     * @return mixed Return the path if package has been declared, or false otherwise.
+     */
+    public static function getPackagePath($pkgName)
+    {
+        if (isset(static::$components['Packages'][$pkgName])) {
+            return static::$components['Packages'][$pkgName];
+        }
+
+        return false;
+    }
+
+    /**
      * Register a package into Framework
      *
      * @param string $pkgName Name of this package
-     * @param string $dclFile Package declaration file
+     * @param string $pkgDir Root directory of the package
      *
      * @return bool Return true when succeed, false otherwise.
      */
-    public static function registerPackage($pkgName, $dclFile)
+    public static function registerPackage($pkgName, $pkgDir)
     {
-        $package = $packageComponents = $packagePaths = array();
-        $nsFolder = '';
+        $package = $packageLoads = $packagePaths = array();
+        $nsFolder = $dclFile = '';
         $pathInfo = pathinfo($dclFile);
+
+        if (!is_dir($pkgDir)) {
+            trigger_error(
+                '\"'
+                . $pkgDir
+                . '\" is not a directory for package.',
+                E_USER_ERROR
+            );
+
+            return false;
+        }
+
+        $dclFile = $pkgDir
+                . DIRECTORY_SEPARATOR
+                . 'package.'
+                . $pkgName
+                . '.'
+                . static::$cfg['PHPExt'];
 
         if (!is_file($dclFile)) {
             trigger_error(
@@ -788,7 +820,8 @@ class Framework
             }
 
             foreach ($package['Requires'] as $required) {
-                if (!isset(static::$components['Packages'][$required])) {
+                if (!isset(static::$components['Packages'][$required])
+                && !isset(static::$pool['AlPkgs'][$required])) {
                     trigger_error(
                         'Package "' . $pkgName . '" declared in file "'
                         . $dclFile
@@ -815,21 +848,21 @@ class Framework
             return false;
         }
 
-        if (isset($package['Components'])) {
-            if (!is_array($package['Components'])) {
+        if (isset($package['Loads'])) {
+            if (!is_array($package['Loads'])) {
                 trigger_error(
                     'Registering package "' . $pkgName . '" from file "'
                     . $dclFile
-                    . '", but the "Components" option is invalid.',
+                    . '", but the "Loads" option is invalid.',
                     E_USER_ERROR
                 );
 
                 return false;
             }
 
-            foreach ($package['Components'] as $componentPath) {
-                $packageComponents[] = \Facula\Base\Tool\File\PathParser::get(
-                    $pathInfo['dirname']
+            foreach ($package['Loads'] as $componentPath) {
+                $packageLoads[] = Base\Tool\File\PathParser::get(
+                    $pkgDir
                     . DIRECTORY_SEPARATOR
                     . $componentPath
                 );
@@ -837,14 +870,14 @@ class Framework
         }
 
         // Get Namespace folder
-        if (isset($package['Folder'][0])) {
-            $nsFolder = $pathInfo['dirname'] . DIRECTORY_SEPARATOR . $package['Folder'];
+        if (isset($package['Folder'], $package['Folder'][0])) {
+            $nsFolder = $pkgDir . DIRECTORY_SEPARATOR . $package['Folder'];
         } else {
-            $nsFolder = $package['Folder'];
+            $nsFolder = $pkgDir;
         }
 
-        // Register the namespace with Sub Components
-        static::registerNamespace($package['Namespace'], $nsFolder, $packageComponents);
+        // Register the namespace with Loads
+        static::registerNamespace($package['Namespace'], $nsFolder, $packageLoads);
 
         // Paths
         if (isset($package['Paths'])) {
@@ -860,8 +893,8 @@ class Framework
             }
 
             foreach ($package['Paths'] as $packagePath) {
-                $packagePaths[] = \Facula\Base\Tool\File\PathParser::get(
-                    $pathInfo['dirname']
+                $packagePaths[] = Base\Tool\File\PathParser::get(
+                    $pkgDir
                     . DIRECTORY_SEPARATOR
                     . $packagePath
                 );
@@ -870,7 +903,7 @@ class Framework
             static::pickComponents($packagePaths);
         }
 
-        static::$components['Packages'][$pkgName] = $dclFile;
+        static::$components['Packages'][$pkgName] = $pkgDir;
 
         return true;
     }
@@ -1326,8 +1359,8 @@ class Framework
 
         if (isset($this->setting['Packages']) && is_array($this->setting['Packages'])) {
             foreach ($this->setting['Packages'] as $path) {
-                $scanner = new \Facula\Base\Tool\File\ModuleScanner(
-                    \Facula\Base\Tool\File\PathParser::get($path),
+                $scanner = new Base\Tool\File\ModuleScanner(
+                    Base\Tool\File\PathParser::get($path),
                     static::$cfg['PkgMaxSeekDepth']
                 );
 
@@ -1336,16 +1369,15 @@ class Framework
                         case 'package':
                             if (!isset($packageRaws[$modules['Name']])) {
                                     $packageRaws[$modules['Name']] =
-                                        $modules['Path'];
+                                        $modules['Dir'];
 
-                                    static::$components['Packages'][$modules['Name']] =
-                                        $modules['Path'];
+                                    static::$pool['AlPkgs'][$modules['Name']] = true;
                             } else {
                                 trigger_error(
                                     'Registering package from file "'
                                     . $modules['Path']
                                     . '", but it seems conflicted with another package "'
-                                    . $packageRaws[$modules['Name']]['Path']
+                                    . $packageRaws[$modules['Name']]
                                     . '".',
                                     E_USER_ERROR
                                 );
@@ -1358,8 +1390,8 @@ class Framework
                 }
             }
 
-            foreach ($packageRaws as $packageRawName => $packageRaw) {
-                static::registerPackage($packageRawName, $packageRaw);
+            foreach ($packageRaws as $packageName => $packageDir) {
+                static::registerPackage($packageName, $packageDir);
             }
 
             // Release memory
@@ -1447,41 +1479,36 @@ class Framework
         $modules = array();
 
         foreach ($paths as $path) {
-            $scanner = new \Facula\Base\Tool\File\ModuleScanner(
-                \Facula\Base\Tool\File\PathParser::get($path),
+            $scanner = new Base\Tool\File\ModuleScanner(
+                Base\Tool\File\PathParser::get($path),
                 static::$cfg['CompMaxSeekDepth']
             );
 
-            // Must use array_merge.
-            // Yes, it's slow but we need it for auto resolve reindex problem
-            // AND we just call this once -- on the framework init
-            $modules = array_merge($modules, $scanner->scan());
-        }
+            foreach ($scanner->scan() as $module) {
+                switch ($module['Prefix']) {
+                    case 'include':
+                        static::$includes[] = $module['Path'];
 
-        foreach ($modules as $module) {
-            switch ($module['Prefix']) {
-                case 'include':
-                    static::$includes[] = $module['Path'];
+                        // Require the include file for init
+                        static::requireFile($module['Path']);
+                        break;
 
-                    // Require the include file for init
-                    static::requireFile($module['Path']);
-                    break;
+                    case 'routine':
+                        static::$components['Routine'][] = $module['Path'];
+                        break;
 
-                case 'routine':
-                    static::$components['Routine'][] = $module['Path'];
-                    break;
+                    case 'plugin':
+                        static::initPlugin($module['Path']);
+                        break;
 
-                case 'plugin':
-                    static::initPlugin($module['Path']);
-                    break;
+                    case 'class':
+                        static::registerScope(ucfirst($module['Name']), $module['Path']);
+                        break;
 
-                case 'class':
-                    static::registerScope(ucfirst($module['Name']), $module['Path']);
-                    break;
-
-                default:
-                    static::registerScope($module['Name'], $module['Path']);
-                    break;
+                    default:
+                        static::registerScope($module['Name'], $module['Path']);
+                        break;
+                }
             }
         }
     }
