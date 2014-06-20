@@ -185,7 +185,7 @@ abstract class ORM implements Implement, \ArrayAccess
      */
     public function &offsetGet($offset)
     {
-        if (isset($this->data[$offset]) || array_key_exists($key, $this->data)) {
+        if (isset($this->data[$offset]) || array_key_exists($offset, $this->data)) {
             return $this->data[$offset];
         }
 
