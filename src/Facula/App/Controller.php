@@ -210,6 +210,16 @@ abstract class Controller extends Setting
     }
 
     /**
+     * Check if the submit is from out bound
+     *
+     * @return boolean Return true when submit from outbound, false otherwise.
+     */
+    final protected function isOutboundSubmit()
+    {
+        return !$this->request->getClientInfo('fromSelf');
+    }
+
+    /**
      * Redirect to other URL
      *
      * @param string $addr Address to redirect to

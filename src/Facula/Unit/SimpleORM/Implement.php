@@ -33,12 +33,12 @@ namespace Facula\Unit\SimpleORM;
 interface Implement
 {
     public function __set($key, $val);
-    public function __get($key);
+    public function &__get($key);
     public function __isset($key);
     public function __unset($key);
 
     public function offsetSet($offset, $value);
-    public function offsetGet($offset);
+    public function &offsetGet($offset);
     public function offsetExists($offset);
     public function offsetUnset($offset);
 

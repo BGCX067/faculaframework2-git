@@ -41,6 +41,12 @@ abstract class ORM implements Implement, \ArrayAccess
     /** Declared fields */
     protected static $fields = array();
 
+    /** Declared field aliases */
+    protected static $aliases = array();
+
+    /** Declared default values */
+    protected static $defaults = array();
+
     /** The primary key */
     protected static $primary = '';
 
@@ -49,6 +55,9 @@ abstract class ORM implements Implement, \ArrayAccess
 
     /** Container of data */
     private $data = array();
+
+    /** A null value for reference */
+    private $null = null;
 
     /** Backup container for original data */
     private $dataOriginal = array();
@@ -75,7 +84,17 @@ abstract class ORM implements Implement, \ArrayAccess
             $this->dataOriginal[$key] = $val;
         }
 
+        // Save the data
         $this->data[$key] = $val;
+
+        // Create alias if needed
+        if (isset(static::$aliases[$key])) {
+            if (isset(static::$fields[static::$aliases[$key]])) {
+                throw new Exception\FieldNameConflictAlias(static::$aliases[$key]);
+            }
+
+            $this->data[static::$aliases[$key]] = &$this->data[$key];
+        }
     }
 
     /**
@@ -85,9 +104,19 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return mixed Return the data when success, or null when data not set
      */
-    public function __get($key)
+    public function &__get($key)
     {
-        return isset($this->data[$key]) ? $this->data[$key] : null;
+        if (isset($this->data[$key]) || array_key_exists($key, $this->data)) {
+            return $this->data[$key];
+        }
+
+        if (isset(static::$defaults[$key])) {
+            $this->data[$key] = static::$defaults[$key];
+
+            return $this->data[$key];
+        }
+
+        return static::$null;
     }
 
     /**
@@ -112,7 +141,13 @@ abstract class ORM implements Implement, \ArrayAccess
     public function __unset($key)
     {
         if (isset($this->data[$key])) {
-            unset($this->data[$key]);
+            if (isset(static::$aliases[$key], $this->data[static::$aliases[$key]])) { // Unsetting a alias
+                unset($this->data[$key], $this->data[static::$aliases[$key]]);
+            } else { // Unsetting a actual key
+                $this->data[$key] = null;
+
+                unset($this->data[$key]);
+            }
         }
     }
 
@@ -131,6 +166,14 @@ abstract class ORM implements Implement, \ArrayAccess
         }
 
         $this->data[$offset] = $value;
+
+        if (isset(static::$aliases[$offset])) {
+            if (isset(static::$fields[static::$aliases[$offset]])) {
+                throw new Exception\FieldNameConflictAlias(static::$aliases[$offset]);
+            }
+
+            $this->data[static::$aliases[$offset]] = &$this->data[$offset];
+        }
     }
 
     /**
@@ -140,9 +183,19 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return bool Return true when data exist, or null when data not found
      */
-    public function offsetGet($offset)
+    public function &offsetGet($offset)
     {
-        return isset($this->data[$offset]) ? $this->data[$offset] : null;
+        if (isset($this->data[$offset]) || array_key_exists($key, $this->data)) {
+            return $this->data[$offset];
+        }
+
+        if (isset(static::$defaults[$offset])) {
+            $this->data[$offset] = static::$defaults[$offset];
+
+            return $this->data[$offset];
+        }
+
+        return static::$null;
     }
 
     /**
@@ -166,7 +219,15 @@ abstract class ORM implements Implement, \ArrayAccess
      */
     public function offsetUnset($offset)
     {
-        unset($this->data[$offset]);
+        if (isset($this->data[$offset])) {
+            if (isset(static::$aliases[$offset], $this->data[static::$aliases[$offset]])) {
+                unset($this->data[$offset], $this->data[static::$aliases[$offset]]);
+            } else {
+                $this->data[$offset] = null;
+
+                unset($this->data[$offset]);
+            }
+        }
     }
 
     /**
@@ -212,7 +273,7 @@ abstract class ORM implements Implement, \ArrayAccess
     }
 
     /**
-     * Export current data
+     * Get current data
      *
      * @return array Return the data
      */
@@ -336,7 +397,17 @@ abstract class ORM implements Implement, \ArrayAccess
                 break;
 
             default:
-                return $query->fetch();
+                if ($results = $query->fetch()) {
+                    foreach ($results as $resKey => $resVal) {
+                        foreach (static::$aliases as $fieldName => $alias) {
+                            if (isset($results[$resKey][$fieldName])) {
+                                $results[$resKey][$alias] = &$results[$resKey][$fieldName];
+                            }
+                        }
+                    }
+
+                    return $results;
+                }
                 break;
         }
 
