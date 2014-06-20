@@ -167,7 +167,7 @@ class Mysql implements OperatorImplement
         $sql = 'UPDATE `' . $this->table . '`';
 
         // Sets
-        if (!empty($this->query['Sets'])) {
+        if (!empty($this->query['Sets']) || !empty($this->query['Changes'])) {
              $sql .= ' SET ' . $this->doSets();
         }
 

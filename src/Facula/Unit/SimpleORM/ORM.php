@@ -53,9 +53,6 @@ abstract class ORM implements Implement, \ArrayAccess
     /** Trigger to enable or disable auto parser */
     protected static $noParser = false;
 
-    /** A null value for reference */
-    private static $null = null;
-
     /** Container of data */
     private $data = array();
 
@@ -116,7 +113,9 @@ abstract class ORM implements Implement, \ArrayAccess
             return $this->data[$key];
         }
 
-        return self::$null;
+        $this->data[$key] = null;
+
+        return $this->data[$key];
     }
 
     /**
@@ -195,7 +194,9 @@ abstract class ORM implements Implement, \ArrayAccess
             return $this->data[$offset];
         }
 
-        return self::$null;
+        $this->data[$offset] = null;
+
+        return $this->data[$offset];
     }
 
     /**

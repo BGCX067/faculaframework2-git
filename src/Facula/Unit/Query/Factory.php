@@ -366,7 +366,7 @@ class Factory extends Base implements Implement
         if (!isset($this->query['Action'])) {
             $this->query['Action'] = 'update';
             $this->query['Type'] = 'Write';
-            $this->query['Required'] = array('Sets');
+            $this->query['Required'] = array(array('Sets', 'Changes'));
 
             // Save fields
             if ($this->saveFields($fields)) {
@@ -1113,11 +1113,29 @@ class Factory extends Base implements Implement
             // our required data in $this->query has been filled or we may make
             // mistake. And the mistake may cause query poisoning or inject
             foreach ($requiredQueryParams as $param) {
-                if (empty($this->query[$param])) {
-                    throw new Exception\ParameterRequiredForPrepare($param);
+                if (is_array($param)) { // At least One of the param must be filled
+                    $paramFilled = false;
 
-                    return false;
-                    break;
+                    foreach ($param as $paramName) {
+                        if (!empty($this->query[$paramName])) {
+                            $paramFilled = true;
+                            break;
+                        }
+                    }
+
+                    if (!$paramFilled) {
+                        throw new Exception\ParameterRequiredForPrepare(implode(', ', $param));
+
+                        return false;
+                        break;
+                    }
+                } else {
+                    if (empty($this->query[$param])) {
+                        throw new Exception\ParameterRequiredForPrepare($param);
+
+                        return false;
+                        break;
+                    }
                 }
             }
 
