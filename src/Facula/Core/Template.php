@@ -27,10 +27,12 @@
 
 namespace Facula\Core;
 
+use Facula\Base\Factory\Core as Factory;
+
 /**
  * A Factory to load Template function core
  */
-class Template extends \Facula\Base\Factory\Core
+class Template extends Factory
 {
     /** Default class of the core */
     protected static $default = 'Facula\Base\Entity\Core\Template';

@@ -27,10 +27,12 @@
 
 namespace Facula\Core;
 
+use Facula\Base\Factory\Core as Factory;
+
 /**
  * A Factory to load Debug function core
  */
-class Debug extends \Facula\Base\Factory\Core
+class Debug extends Factory
 {
     /** Default class of the core */
     protected static $default = 'Facula\Base\Entity\Core\Debug';

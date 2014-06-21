@@ -27,10 +27,12 @@
 
 namespace Facula\Core;
 
+use Facula\Base\Factory\Core as Factory;
+
 /**
  * A Factory to load Response function core
  */
-class Response extends \Facula\Base\Factory\Core
+class Response extends Factory
 {
     /** Default class of the core */
     protected static $default = 'Facula\Base\Entity\Core\Response';

@@ -27,10 +27,12 @@
 
 namespace Facula\Core;
 
+use Facula\Base\Factory\Core as Factory;
+
 /**
  * A Factory to load PDO function core
  */
-class PDO extends \Facula\Base\Factory\Core
+class PDO extends Factory
 {
     /** Default class of the core */
     protected static $default = 'Facula\Base\Entity\Core\PDO';
