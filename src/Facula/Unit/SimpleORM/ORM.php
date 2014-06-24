@@ -47,6 +47,9 @@ abstract class ORM implements Implement, \ArrayAccess
     /** Declared default values */
     protected static $defaults = array();
 
+    /** Declared with query parameters */
+    protected static $withs = array();
+
     /** The primary key */
     protected static $primary = '';
 
@@ -325,15 +328,15 @@ abstract class ORM implements Implement, \ArrayAccess
             1,
             $returnType = 'CLASS',
             $whereOperator = '='
-        )) && isset($data[0])) {
-            return $data[0];
+        )) && !empty($data)) {
+            return array_shift($data);
         }
 
         return false;
     }
 
     /**
-     * Get datas from database
+     * Make query parameter and use Query to query
      *
      * @param array $param The params for query (Where, Order, Limit)
      * @param integer $offset The start point of cursor
@@ -343,7 +346,7 @@ abstract class ORM implements Implement, \ArrayAccess
      *
      * @return array Return the result of query when success, false otherwise
      */
-    public static function fetch(
+    protected static function query(
         array $param = array(),
         $offset = 0,
         $dist = 0,
@@ -413,6 +416,39 @@ abstract class ORM implements Implement, \ArrayAccess
         }
 
         return array();
+    }
+
+    /**
+     * Get datas from database with configuration
+     *
+     * @param array $param The params for query (Where, Order, Limit)
+     * @param integer $offset The start point of cursor
+     * @param integer $dist Length of how long the cursor will travel
+     * @param string $returnType Data return type for Query class
+     * @param string $whereOperator Default operator for WHERE condition
+     *
+     * @return array Return the result of query when success, false otherwise
+     */
+    public static function fetch(
+        array $param = array(),
+        $offset = 0,
+        $dist = 0,
+        $returnType = 'CLASS',
+        $whereOperator = '='
+    ) {
+        // If current class has withs option, force use with to perform join query
+        // Notice this will ignore return type as always return CLASS instance for the result.
+        if (!empty(static::$withs)) {
+            return static::fetchWith(
+                static::$withs,
+                $param,
+                $offset,
+                $dist,
+                $whereOperator
+            );
+        }
+
+        return static::query($param, $offset, $dist, $returnType, $whereOperator);
     }
 
     /**
@@ -786,7 +822,7 @@ abstract class ORM implements Implement, \ArrayAccess
             );
         */
 
-        if ($principals = self::fetch(
+        if ($principals = self::query(
             $currentParams,
             $offset,
             $dist,

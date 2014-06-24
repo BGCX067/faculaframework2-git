@@ -1,7 +1,7 @@
 <?php
 
 /**
- * PrimaryKeyNotSetSave Exception
+ * PrimaryKeyNotSetDelete Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -30,9 +30,9 @@ namespace Facula\Unit\SimpleORM\Exception;
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * PrimaryKeyNotSetSave Exception
+ * PrimaryKeyNotSetDelete Exception
  */
-class PrimaryKeyNotSetSave extends Base
+class PrimaryKeyNotSetDelete extends Base
 {
     protected static $exceptionMessage = '
         Primary key must be set to perform delete.

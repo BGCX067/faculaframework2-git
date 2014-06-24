@@ -35,6 +35,6 @@ use Facula\Base\Prototype\Exception as Base;
 class PrimaryKeyNotSetSave extends Base
 {
     protected static $exceptionMessage = '
-        Primary key must be set to perform save.
+        Primary key must be set to perform delete.
     ';
 }
