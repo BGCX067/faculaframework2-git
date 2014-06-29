@@ -49,6 +49,9 @@ abstract class ORM implements Implement, \ArrayAccess
 
     /** Declared with query parameters */
     protected static $withs = array();
+    
+    /** Declare integer fields that use increase / decrease method for updating */
+    protected static $creases = array();
 
     /** The primary key */
     protected static $primary = '';
@@ -927,57 +930,39 @@ abstract class ORM implements Implement, \ArrayAccess
 
             foreach ($this->data as $key => $val) {
                 if (isset(static::$fields[$key])) {
-                    // Determine data type of current val
-                    if (is_int($val)) {
-                        $tempNewValType = 'int';
-                        $tempNewValIsNum = true;
-                    } elseif (is_float($val)) {
-                        $tempNewValType = 'float';
-                        $tempNewValIsNum = true;
-                    } else {
-                        $tempNewValType = 'other';
-                        $tempNewValIsNum = false;
-                    }
+                
+                    if (isset(static::$creases[$key])) { // Check if we need to Xcrease it
+                        /*
+                            Notice that: Xcrease use to reduce the problem caused in high concurrence condition
+                            But it will not solve it.
 
-                    // If this val is number, use change method to change it
-                    if ($tempNewValIsNum
-                    && isset($this->dataOriginal[$key])
-                    && (is_int($this->dataOriginal[$key]) || is_float($this->dataOriginal[$key]))) {
+                            To avoid hallucinate reading problem, you need to LOCK the table or row when reading
+                            for updating which not supported by this ORM and it's base structure currently.
 
-                        switch ($tempNewValType) {
-                            case 'int':
-                                $changesTo = (int)$this->dataOriginal[$key] - $val;
-                                break;
+                            Use with care.
+                        */
+                        if (is_int($val)) {
+                            $changesTo = (int)$this->dataOriginal[$key] - $val;
+                        } elseif (is_float($val)) {
+                            $changesTo = (float)$this->dataOriginal[$key] - $val;
+                        } else {
+                            throw new Exception\CreasingANonNumber($val, gettype($val));
 
-                            case 'float':
-                                $changesTo = (float)$this->dataOriginal[$key] - $val;
-                                break;
-
-                            default:
-                                $changesTo = 0;
-                                continue;
-                                break;
+                            return false;
                         }
 
                         if ($changesTo > 0) {
                             $changeOperator = '-';
                         } elseif ($changesTo < 0) {
                             $changeOperator = '+';
-                        } else {
-                            $changeOperator = '';
                         }
 
-                        if ($changeOperator) {
-                            $changes[] = array(
-                                'Field' => $key,
-                                'Operator' => $changeOperator,
-                                'Value' => abs($changesTo)
-                            );
-                        } else {
-                            $sets[$key] = $val;
-                        }
-                    } else {
-                        // Or, use replace method
+                        $changes[] = array(
+                            'Field' => $key,
+                            'Operator' => $changeOperator,
+                            'Value' => abs($changesTo)
+                        );
+                    } else { // Or fine with replace
                         $sets[$key] = $val;
                     }
                 }
