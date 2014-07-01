@@ -210,10 +210,11 @@ class Logic extends Base implements Implement
         if (isset($params[0])) {
             if ($params[0]['Tag'] != 'var'
             && $params[0]['Tag'] != 'empty'
+            && $params[0]['Tag'] != 'unempty'
             && $params[0]['Tag'] != 'true'
             && $params[0]['Tag'] != 'false') {
                 throw new Exception\LogicFirstParamaterMustBeVar(implode(', ', array(
-                    'empty', 'true', 'false'
+                    'empty', 'unempty', 'true', 'false'
                 )));
             }
 
