@@ -892,7 +892,11 @@ abstract class ORM implements Implement, \ArrayAccess
                         0,
                         'ASSOC'
                     ) as $pKey => $pVal) {
-                        $JoinedVal['Data'][$pKey] = $pVal;
+                        if (is_object($pVal)) {
+                            $JoinedVal['Data'][$pKey] = $pVal->getData();
+                        } else {
+                            $JoinedVal['Data'][$pKey] = $pVal;
+                        }
 
                         foreach ($tempJoinedKeys[$pVal[$JoinedVal['Key']]] as $tkJoinedKey => $tkJoinedVal) {
                             if (isset(
