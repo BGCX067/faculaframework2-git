@@ -31,7 +31,7 @@ use Facula\Base\Factory\Operator as Base;
 use Facula\Base\Implement\Core\Template\Compiler as Implement;
 use Facula\Base\Exception\Factory\Operator as OperatorException;
 use Facula\Unit\Paging\Compiler\OperatorImplement as OperatorImplement;
-use Facula\Unit\Paging\Compiler\OperatorBase as OperatorBase;
+use Facula\Unit\Paging\Compiler\DataContainer as DataContainer;
 use Facula\Unit\Paging\Compiler\Exception\Compiler as Exception;
 use Facula\Unit\Paging\Compiler\Exception\Parser as ParserException;
 use Facula\Unit\Paging\Compiler\Parser as Parser;
@@ -217,16 +217,22 @@ class Compiler extends Base implements Implement
      * @param array $tagParameters Tag parameters in array
      * @param string $content Dynamic content that changing during compile
      * @param array $pool Pool data that will be use in tag compile
+     * @param DataContainer $compileDataContainer Data used for compile this template
      *
      * @return string Return the compile result of the tag
      */
-    public static function compileTag(array $tagParameters, &$content, array $pool)
-    {
+    public static function compileTag(
+        array $tagParameters,
+        &$content,
+        array $pool,
+        DataContainer $compileDataContainer
+    ) {
         $result = '';
         $class = '';
         $handler = new static::$tagHandlers[$tagParameters['Tag']](
             $pool,
-            static::$config
+            static::$config,
+            $compileDataContainer
         );
 
         if (isset($tagParameters['Parameter']['Main'])) {
@@ -473,8 +479,7 @@ class Compiler extends Base implements Implement
         $newResult = '';
         $tags = $this->parse();
         $tag = array();
-
-        OperatorBase::init();
+        $data = new DataContainer();
 
         while (($tag = array_shift($tags)) !== null) {
             $oldLength = $tag['End'] - $tag['Start'];
@@ -482,7 +487,8 @@ class Compiler extends Base implements Implement
             if (!($newResult = static::compileTag(
                 $tag,
                 $result,
-                $this->sourcePool
+                $this->sourcePool,
+                $data
             )) && (is_bool($newResult) || is_null($newResult))) {
                 throw new Exception\TagCompileEmptyResult(
                     $tag['Tag'],
@@ -577,8 +583,6 @@ class Compiler extends Base implements Implement
 
             $resultLen += $newPosShift;
         }
-
-        OperatorBase::flush();
 
         return $result;
     }

@@ -31,6 +31,8 @@ use Facula\Base\Error\Core\Template as Error;
 use Facula\Base\Prototype\Core as Factory;
 use Facula\Base\Implement\Core\Template as Implement;
 use Facula\Base\Tool\File\PathParser as PathParser;
+use Facula\Base\Tool\File\ModuleScanner as ModuleScanner;
+use Facula\Framework;
 
 /**
  * Prototype class for Template core for make core remaking more easy
@@ -242,7 +244,7 @@ abstract class Template extends Factory implements Implement
         $selectedLanguage = $clientLanguage = $errors = array();
 
         // Determine what language can be used for this client
-        if ($clientLanguage = \Facula\Framework::core('request')->getClientInfo('languages')) {
+        if ($clientLanguage = Framework::core('request')->getClientInfo('languages')) {
             // Use $siteLanguage as the first param so we can follow clients priority
             $selectedLanguage = array_values(
                 array_intersect(
@@ -260,9 +262,9 @@ abstract class Template extends Factory implements Implement
 
         // Set Essential assign value
         $this->assigned['Time'] = FACULA_TIME;
-        $this->assigned['Message'] = array();
+        $this->assigned['_MESSAGE'] = array();
 
-        \Facula\Framework::summonHook(
+        Framework::summonHook(
             'template_inited',
             array(),
             $errors
@@ -346,9 +348,9 @@ abstract class Template extends Factory implements Implement
             );
 
             if (isset($message['Name'])) {
-                $this->assigned['Message'][$message['Name']][] = $messageContent;
+                $this->assigned['_MESSAGE'][$message['Name']][] = $messageContent;
             } else {
-                $this->assigned['Message']['Default'][] = $messageContent;
+                $this->assigned['_MESSAGE']['Default'][] = $messageContent;
             }
 
             return $messageContent;
@@ -556,7 +558,7 @@ abstract class Template extends Factory implements Implement
         $mappedFiles = array();
 
         // Scan for template files
-        $scanner = new \Facula\Base\Tool\File\ModuleScanner(
+        $scanner = new ModuleScanner(
             $this->configs['TplPool']
         );
 
@@ -573,7 +575,7 @@ abstract class Template extends Factory implements Implement
         $files = $errors = array();
 
         // Get files from hooks
-        foreach (\Facula\Framework::summonHook(
+        foreach (Framework::summonHook(
             'template_import_paths',
             array(),
             $errors
@@ -583,7 +585,7 @@ abstract class Template extends Factory implements Implement
             }
 
             foreach ($importedPaths as $path) {
-                $pathScanner = new \Facula\Base\Tool\File\ModuleScanner(
+                $pathScanner = new ModuleScanner(
                     $path
                 );
 
@@ -708,13 +710,13 @@ abstract class Template extends Factory implements Implement
                             $cachedTmpPage = $cachedPagePath . '.temp.php';
 
                             if (file_put_contents($cachedTmpPage, $compiledContentForCached)) {
-                                \Facula\Framework::summonHook(
+                                Framework::summonHook(
                                     'template_cache_prerender_*',
                                     array(),
                                     $errors
                                 );
 
-                                \Facula\Framework::summonHook(
+                                Framework::summonHook(
                                     'template_cache_prerender_' . $templateName,
                                     array(),
                                     $errors
@@ -725,11 +727,11 @@ abstract class Template extends Factory implements Implement
                                     $templateName,
                                     $cachedTmpPage
                                 )) !== false) {
-                                    \Facula\Framework::core('debug')->criticalSection(true);
+                                    Framework::core('debug')->criticalSection(true);
 
                                     unlink($cachedTmpPage);
 
-                                    \Facula\Framework::core('debug')->criticalSection(false);
+                                    Framework::core('debug')->criticalSection(false);
 
                                     /*
                                         Beware the renderCachedContent as it may contains code that assigned
@@ -769,13 +771,13 @@ abstract class Template extends Factory implements Implement
                                     unset($splitedRenderedContent, $splitedRenderedContentLen);
 
                                     // Remove the old file, let APC cache knows the update.
-                                    \Facula\Framework::core('debug')->criticalSection(true);
+                                    Framework::core('debug')->criticalSection(true);
 
                                     if (file_exists($cachedPagePath)) {
                                         unlink($cachedPagePath);
                                     }
 
-                                    \Facula\Framework::core('debug')->criticalSection(false);
+                                    Framework::core('debug')->criticalSection(false);
 
                                     if (file_put_contents($cachedPagePath, $renderCachedOutputContent)) {
                                         return $cachedPagePath;
@@ -970,13 +972,13 @@ abstract class Template extends Factory implements Implement
         $renderedResult = '';
         $errors = array();
 
-        \Facula\Framework::summonHook(
+        Framework::summonHook(
             'template_render_*',
             array(),
             $errors
         );
 
-        \Facula\Framework::summonHook(
+        Framework::summonHook(
             'template_render_' . $templateName,
             array(),
             $errors
@@ -1026,11 +1028,11 @@ abstract class Template extends Factory implements Implement
         extract($assigned);
         unset($assigned);
 
-        \Facula\Framework::core('debug')->criticalSection(true);
+        Framework::core('debug')->criticalSection(true);
 
         require($compiledTpl);
 
-        \Facula\Framework::core('debug')->criticalSection(false);
+        Framework::core('debug')->criticalSection(false);
 
         return ob_get_clean();
     }
@@ -1050,13 +1052,13 @@ abstract class Template extends Factory implements Implement
         $errors = array();
         $poolCompexted = array();
 
-        \Facula\Framework::summonHook(
+        Framework::summonHook(
             'template_compile_*',
             array(),
             $errors
         );
 
-        \Facula\Framework::summonHook(
+        Framework::summonHook(
             'template_compile_' . $templateName,
             array(),
             $errors
@@ -1129,13 +1131,13 @@ abstract class Template extends Factory implements Implement
             );
         }
 
-        \Facula\Framework::core('debug')->criticalSection(true);
+        Framework::core('debug')->criticalSection(true);
 
         if (file_exists($resultTpl)) {
             unlink($resultTpl);
         }
 
-        \Facula\Framework::core('debug')->criticalSection(false);
+        Framework::core('debug')->criticalSection(false);
 
         return file_put_contents(
             $resultTpl,
@@ -1197,7 +1199,7 @@ abstract class Template extends Factory implements Implement
                 return true;
             }
         } else { // load default lang file then client lang file
-            \Facula\Framework::summonHook(
+            Framework::summonHook(
                 'template_load_language',
                 array(),
                 $errors
@@ -1249,13 +1251,13 @@ abstract class Template extends Factory implements Implement
                 }
             }
 
-            \Facula\Framework::core('debug')->criticalSection(true);
+            Framework::core('debug')->criticalSection(true);
 
             if (file_exists($compiledLangFile)) {
                 unlink($compiledLangFile);
             }
 
-            \Facula\Framework::core('debug')->criticalSection(false);
+            Framework::core('debug')->criticalSection(false);
 
             if (file_put_contents(
                 $compiledLangFile,

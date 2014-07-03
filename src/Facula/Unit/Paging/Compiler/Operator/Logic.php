@@ -28,6 +28,7 @@
 namespace Facula\Unit\Paging\Compiler\Operator;
 
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
+use Facula\Unit\Paging\Compiler\DataContainer as DataContainer;
 use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 use Facula\Unit\Paging\Compiler\OperatorBase as Base;
@@ -37,6 +38,9 @@ use Facula\Unit\Paging\Compiler\OperatorBase as Base;
  */
 class Logic extends Base implements Implement
 {
+    /** Data container for data exchange */
+    protected $dataContainer = null;
+
     /** Wrapped Data in the tags */
     protected $data = '';
 
@@ -94,12 +98,14 @@ class Logic extends Base implements Implement
      *
      * @param array $pool Data that may needed for tag compile
      * @param array $config The config of main compiler
+     * @param DataContainer $dataContainer Data container for compiling data exchange
      *
      * @return void
      */
-    public function __construct(array $pool, array $config)
+    public function __construct(array $pool, array $config, DataContainer $dataContainer)
     {
         $this->pool = $pool;
+        $this->dataContainer = $dataContainer;
     }
 
     /**
@@ -285,15 +291,9 @@ class Logic extends Base implements Implement
             // I'll do this with violence
             // Syntax to check if variable has set.
             foreach ($varNames as $varName) {
-                try {
-                    $this->setMutex('unsetVarCheck:' . $varName);
-
-                    $phpIsset .= 'if (!isset(' . $varName . ')) { ';
-                    $phpIsset .= $varName . ' = null; ';
-                    $phpIsset .= '} ';
-                } catch (Exception\MutexExisted $e) {
-                    // It's fine.
-                }
+                $phpIsset .= 'if (!isset(' . $varName . ')) { ';
+                $phpIsset .= $varName . ' = null; ';
+                $phpIsset .= '} ';
             }
 
             // The IF Logic syntax

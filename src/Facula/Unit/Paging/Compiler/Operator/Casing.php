@@ -28,6 +28,7 @@
 namespace Facula\Unit\Paging\Compiler\Operator;
 
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
+use Facula\Unit\Paging\Compiler\DataContainer as DataContainer;
 use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 
@@ -36,6 +37,9 @@ use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
  */
 class Casing implements Implement
 {
+    /** Data container for data exchange */
+    protected $dataContainer = null;
+
     /** Wrapped Data in the tags */
     protected $data = '';
 
@@ -75,12 +79,14 @@ class Casing implements Implement
      *
      * @param array $pool Data that may needed for tag compile
      * @param array $config The config of main compiler
+     * @param DataContainer $dataContainer Data container for compiling data exchange
      *
      * @return void
      */
-    public function __construct(array $pool, array $config)
+    public function __construct(array $pool, array $config, DataContainer $dataContainer)
     {
         $this->pool = $pool;
+        $this->dataContainer = $dataContainer;
     }
 
     /**

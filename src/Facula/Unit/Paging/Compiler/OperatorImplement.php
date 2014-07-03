@@ -31,7 +31,7 @@ interface OperatorImplement
 {
     public static function register();
 
-    public function __construct(array $pool, array $config);
+    public function __construct(array $pool, array $config, DataContainer $dataContainer);
     public function setParameter($type, $param);
     public function setData($data);
     public function setMiddle($tag, $param, $data);

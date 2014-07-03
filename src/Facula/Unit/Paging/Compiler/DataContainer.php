@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Base of Page Compiler Operator
+ * Data Container of current compiling content
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -28,13 +28,48 @@
 namespace Facula\Unit\Paging\Compiler;
 
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
-use Facula\Base\Factory\Operator as Base;
 
 /**
  * Base of operators
  */
-abstract class OperatorBase extends Base
+class DataContainer
 {
-    /** Preset a empty operator array */
-    protected static $operators = array();
+    /** Mutex tags */
+    private $mutex = array();
+
+    /**
+     * Set a tag for mutex
+     *
+     * @param string $name The name of the mutex
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    public function setMutex($name)
+    {
+        if (isset($this->mutex[$name])) {
+            throw new Exception\MutexExisted($name);
+
+            return false;
+        }
+
+        $this->mutex[$name] = true;
+
+        return true;
+    }
+
+    /**
+     * Check whatever a mutex has set
+     *
+     * @param string $name The name of the mutex
+     *
+     * @return bool Return true when setted, false otherwise
+     */
+    public function checkMutex($name)
+    {
+        if (isset($this->mutex[$name])) {
+            return true;
+        }
+
+        return false;
+    }
 }
