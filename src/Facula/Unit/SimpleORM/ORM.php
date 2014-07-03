@@ -49,9 +49,12 @@ abstract class ORM implements Implement, \ArrayAccess
 
     /** Declared with query parameters */
     protected static $withs = array();
-    
+
     /** Declare integer fields that use increase / decrease method for updating */
     protected static $creases = array();
+
+    /** Declare which fields will be used in query, empty for all in static::$fields */
+    protected static $uses = array();
 
     /** The primary key */
     protected static $primary = '';
@@ -82,7 +85,7 @@ abstract class ORM implements Implement, \ArrayAccess
     public function __set($key, $val)
     {
         // Behaver changed. It will not try to protect original value,
-        // but backup last value.
+        // but it will backup the last value.
         if (!isset($this->data[$key])) {
             $this->dataOriginal[$key] = $val;
         }
@@ -310,6 +313,30 @@ abstract class ORM implements Implement, \ArrayAccess
     }
 
     /**
+     * Get current using fields according to static::$uses and static::$fields
+     *
+     * @return string The full name of this (or extender) class
+     */
+    public static function getUsingFields()
+    {
+        $fields = array();
+
+        if (!empty(static::$uses)) {
+            foreach (static::$uses as $fieldName) {
+                if (isset(static::$fields[$fieldName])) {
+                    $fields[$fieldName] = static::$fields[$fieldName];
+                } else {
+                    throw new Exception\UseOfUndeclaredField($fieldName);
+                }
+            }
+        } else {
+            $fields = static::$fields;
+        }
+
+        return $fields;
+    }
+
+    /**
      * Get one row from database
      *
      * @param array $param The WHERE param for query
@@ -329,8 +356,8 @@ abstract class ORM implements Implement, \ArrayAccess
             array('Where' => $param),
             0,
             1,
-            $returnType = 'CLASS',
-            $whereOperator = '='
+            $returnType,
+            $whereOperator
         )) && !empty($data)) {
             return array_shift($data);
         }
@@ -361,7 +388,7 @@ abstract class ORM implements Implement, \ArrayAccess
         $query = null;
 
         $query = Query::from(static::$table, !static::$noParser);
-        $query->select(static::$fields);
+        $query->select(static::getUsingFields());
 
         if (isset($param['Where'])) {
             foreach ($param['Where'] as $field => $value) {
@@ -909,7 +936,7 @@ abstract class ORM implements Implement, \ArrayAccess
     public function save()
     {
         $primaryKey = $result = $query = null;
-        $sets = $changes = array();
+        $sets = $changes = $fields = array();
         $changeOperator = '';
         $changesTo = 0;
 
@@ -917,6 +944,8 @@ abstract class ORM implements Implement, \ArrayAccess
         $tempNewValIsNum = false;
 
         if (isset($this->data[static::$primary])) {
+            $fields = static::getUsingFields();
+
             // Must call the hook before we handle data
             if (!$this->onSave()) {
                 return false;
@@ -929,8 +958,8 @@ abstract class ORM implements Implement, \ArrayAccess
             }
 
             foreach ($this->data as $key => $val) {
-                if (isset(static::$fields[$key])) {
-                
+                if (isset($fields[$key])) {
+
                     if (isset(static::$creases[$key])) { // Check if we need to Xcrease it
                         /*
                             Notice that: Xcrease use to reduce the problem caused in high concurrence condition
@@ -971,7 +1000,7 @@ abstract class ORM implements Implement, \ArrayAccess
             $query = Query::from(
                 static::$table,
                 !static::$noParser
-            )->update(static::$fields);
+            )->update($fields);
 
             if (!empty($sets)) {
                 $query->set($sets);
@@ -1007,6 +1036,7 @@ abstract class ORM implements Implement, \ArrayAccess
     {
         $result = null;
         $data = $keys = array();
+        $fields = static::getUsingFields();
 
         // Must call the hook before we handle data
         if (!$this->onInsert()) {
@@ -1014,8 +1044,8 @@ abstract class ORM implements Implement, \ArrayAccess
         }
 
         foreach ($this->data as $key => $val) {
-            if (isset(static::$fields[$key])) {
-                $keys[$key] = static::$fields[$key];
+            if (isset($fields[$key])) {
+                $keys[$key] = $fields[$key];
                 $data[$key] = $val;
             }
         }
