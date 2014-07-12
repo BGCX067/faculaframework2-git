@@ -26,7 +26,7 @@ class BooleanTest extends \PHPUnit_Framework_TestCase
     }
 
     /*
-     * Test the string Input from HTTP POST
+     * Test the boolean Input from HTTP POST
      */
     public function testInputCorrectBooleanFromHttpPost()
     {

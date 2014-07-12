@@ -26,7 +26,7 @@ class FloatTest extends \PHPUnit_Framework_TestCase
     }
 
     /*
-     * Test the string Input from HTTP POST
+     * Test the float Input from HTTP POST
      */
     public function testInputCorrectFloatFromHttpPost()
     {
@@ -73,7 +73,7 @@ class FloatTest extends \PHPUnit_Framework_TestCase
     }
 
     /*
-     * Test the string Input from HTTP POST
+     * Test the float Input from HTTP POST
      */
     public function testInputIncorrectFloatFromHttpPost()
     {

@@ -26,7 +26,7 @@ class IntegerTest extends \PHPUnit_Framework_TestCase
     }
 
     /*
-     * Test the string Input from HTTP POST
+     * Test the integer Input from HTTP POST
      */
     public function testInputCorrectIntegerFromHttpPost()
     {
@@ -63,7 +63,7 @@ class IntegerTest extends \PHPUnit_Framework_TestCase
     }
 
     /*
-     * Test the string Input from HTTP POST
+     * Test the integer Input from HTTP POST
      */
     public function testInputIncorrectIntegerFromHttpPost()
     {
