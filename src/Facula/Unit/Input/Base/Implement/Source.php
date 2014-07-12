@@ -8,7 +8,7 @@ namespace Facula\Unit\Input\Base\Implement;
 interface Source
 {
     /** Create a new instance of the Source object */
-    public static function create();
+    public static function import();
 
     /** Get data from source */
     public function get($key);

@@ -37,7 +37,7 @@ class StringTest extends \PHPUnit_Framework_TestCase
         $errors = array();
 
         $input = Input\Input::from(
-            Input\Source\HttpPost::create()
+            Input\Source\HttpPost::import()
         )->fields(
             Input\Field\Strings::bind('TestString')
                 ->defaults('Default Test')->limits(
@@ -90,7 +90,7 @@ class StringTest extends \PHPUnit_Framework_TestCase
         $exceptionCatched = false;
 
         $input = Input\Input::from(
-            Input\Source\HttpPost::create()
+            Input\Source\HttpPost::import()
         )->fields(
             Input\Field\Strings::bind('TestString')
                 ->defaults('Default Test')->limits(

@@ -41,7 +41,7 @@ abstract class Source implements Impl
     /**
      * Create a new instance of the source object
      */
-    public static function create()
+    public static function import()
     {
         return new static();
     }

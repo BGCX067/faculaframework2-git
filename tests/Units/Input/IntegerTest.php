@@ -37,7 +37,7 @@ class IntegerTest extends \PHPUnit_Framework_TestCase
         $errors = array();
 
         $input = Input\Input::from(
-            Input\Source\HttpPost::create()
+            Input\Source\HttpPost::import()
         )->fields(
             Input\Field\Integers::bind('TestInteger')
                 ->defaults(64)->limits(
@@ -75,7 +75,7 @@ class IntegerTest extends \PHPUnit_Framework_TestCase
         $errors = array();
 
         $input = Input\Input::from(
-            Input\Source\HttpPost::create()
+            Input\Source\HttpPost::import()
         )->fields(
             Input\Field\Integers::bind('TestIntegerLarger')
                 ->defaults(64)->limits(

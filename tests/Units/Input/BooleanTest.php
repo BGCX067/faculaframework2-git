@@ -37,7 +37,7 @@ class BooleanTest extends \PHPUnit_Framework_TestCase
         $errors = array();
 
         $input = Input\Input::from(
-            Input\Source\HttpPost::create()
+            Input\Source\HttpPost::import()
         )->fields(
             Input\Field\Booleans::bind('TestBooleans')->defaults(true),
             Input\Field\Booleans::bind('TestBooleansNotExisted')->defaults(false)

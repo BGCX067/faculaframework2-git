@@ -37,7 +37,7 @@ class FloatTest extends \PHPUnit_Framework_TestCase
         $errors = array();
 
         $input = Input\Input::from(
-            Input\Source\HttpPost::create()
+            Input\Source\HttpPost::import()
         )->fields(
             Input\Field\Floats::bind('TestFloat')
                 ->defaults(64)->limits(
@@ -85,7 +85,7 @@ class FloatTest extends \PHPUnit_Framework_TestCase
         $errors = array();
 
         $input = Input\Input::from(
-            Input\Source\HttpPost::create()
+            Input\Source\HttpPost::import()
         )->fields(
             Input\Field\Integers::bind('TestFloatLarger')
                 ->defaults(64)->limits(
