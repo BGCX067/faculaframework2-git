@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Framework Demo: Setup some settings for package Demo
+ * Boolean Result
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -20,11 +20,20 @@
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2014 Rain Lee
  * @package    Facula
- * @version    0.1 alpha
+ * @version    0.1.0 alpha
  * @see        https://github.com/raincious/facula FYI
  *
  */
 
-Facula\App\Setting::registerSetting('APISetting', array(
-    'DefaultName' => 'Default name',
-), true);
+namespace Facula\Unit\Input\Resulting;
+
+use Facula\Unit\Input\Base\Resulting;
+
+/**
+ * Boolean Result
+ */
+class Booleans extends Resulting
+{
+    /** The data type of current result */
+    protected static $dataType = 'Boolean';
+}

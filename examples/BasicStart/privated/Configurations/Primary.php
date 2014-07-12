@@ -46,13 +46,13 @@ $cfg = array(
         // 'SiteRootURL' => '',
     ),
     'UsingCore' => array(
-        // 'pdo' => '\Facula\Core\PDO',
-        'cache' => '\Facula\Core\Cache',
-        'template' => '\Facula\Core\Template',
+        // 'pdo' => 'Facula\Core\PDO',
+        'cache' => 'Facula\Core\Cache',
+        'template' => 'Facula\Core\Template',
     ),
     'Namespaces' => array(
-        '\MyProject\Controller' => Facula\Framework::PATH . '/privated/Components/Controllers',
-        '\MyProject\Model' => Facula\Framework::PATH . '/privated/Components/Models',
+        'MyProject\Controller' => Facula\Framework::PATH . '/privated/Components/Controllers',
+        'MyProject\Model' => Facula\Framework::PATH . '/privated/Components/Models',
     ),
     'Packages' => array(
         Facula\Framework::PATH . '/privated/Components/Packages',
@@ -64,7 +64,7 @@ $cfg = array(
                     . DIRECTORY_SEPARATOR . 'Caches'
                     . DIRECTORY_SEPARATOR . 'state.php',
     'Paths' => array(
-        \Facula\Framework::PATH . '/privated/Components/Includes',
+        Facula\Framework::PATH . '/privated/Components/Includes',
     ),
     'Core' => array(
         'debug' => array(

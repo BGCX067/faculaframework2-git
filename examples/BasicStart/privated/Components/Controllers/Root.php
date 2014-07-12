@@ -27,10 +27,12 @@
 
 namespace MyProject\Controller;
 
+use Facula\App\Controller as Base;
+
 /**
  * Root controller, just extends Facula Base Controller
  */
-class Root extends \Facula\App\Controller
+class Root extends Base
 {
 
 }

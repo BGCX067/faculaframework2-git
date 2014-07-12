@@ -293,16 +293,6 @@ abstract class ORM implements Implement, \ArrayAccess
     }
 
     /**
-     * Get current data reference to operate data outside the class
-     *
-     * @return array Return the data reference
-     */
-    protected function & getDataRef()
-    {
-        return $this->data;
-    }
-
-    /**
      * Get the name of current class (late binded class name)
      *
      * @return string The full name of this (or extender) class
@@ -313,11 +303,21 @@ abstract class ORM implements Implement, \ArrayAccess
     }
 
     /**
+     * Get current data reference to operate data outside the class
+     *
+     * @return array Return the data reference
+     */
+    protected function & getDataRef()
+    {
+        return $this->data;
+    }
+
+    /**
      * Get current using fields according to static::$uses and static::$fields
      *
      * @return string The full name of this (or extender) class
      */
-    public static function getUsingFields()
+    protected static function getUsingFields()
     {
         $fields = array();
 

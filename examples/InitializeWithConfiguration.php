@@ -50,7 +50,7 @@ $configuration = array(
     ),
 );
 
-\Facula\Framework::run();
+Facula\Framework::run();
 
-\Facula\Framework::core('response')->setContent('Hello Word!');
-\Facula\Framework::core('response')->send(); // See http response header for changes
+Facula\Framework::core('response')->setContent('Hello Word!');
+Facula\Framework::core('response')->send(); // See http response header for changes

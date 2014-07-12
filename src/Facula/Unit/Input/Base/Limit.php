@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Framework Demo: Setup some settings for package Demo
+ * Input Field Limit
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -20,11 +20,38 @@
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2014 Rain Lee
  * @package    Facula
- * @version    0.1 alpha
+ * @version    0.1.0 alpha
  * @see        https://github.com/raincious/facula FYI
  *
  */
 
-Facula\App\Setting::registerSetting('APISetting', array(
-    'DefaultName' => 'Default name',
-), true);
+namespace Facula\Unit\Input\Base;
+
+use Facula\Unit\Input\Base\Implement\Limit as Impl;
+use Facula\Unit\Input\Base\Error;
+
+/**
+ * Input Field Limit
+ */
+abstract class Limit implements Impl
+{
+    /**
+     * Create a new instance of Field Limit object
+     *
+     * @return object New instance of Field limit object
+     */
+    final public static function create()
+    {
+        return new static();
+    }
+
+    /**
+     * Constructor
+     *
+     * @return void
+     */
+    final public function __construct()
+    {
+        return;
+    }
+}

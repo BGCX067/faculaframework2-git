@@ -27,10 +27,12 @@
 
 namespace MyProject\Demo\Controller;
 
+use MyProject\Controller\Root;
+
 /**
  * API controller
  */
-class API extends \MyProject\Controller\Root
+class API extends Root
 {
     /**
      * Controller configuration array.

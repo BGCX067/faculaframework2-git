@@ -28,28 +28,28 @@
 /**
  * Register the project execution function
  */
-\Facula\Framework::registerHook('ready', 'exec', function () {
+Facula\Framework::registerHook('ready', 'exec', function () {
     if (!$routeMap = \Facula\Framework::core('cache')->load('Routes')) {
-        \Facula\Framework::summonHook('route_init');
+        Facula\Framework::summonHook('route_init');
 
-        \Facula\Framework::core('cache')->save(
+        Facula\Framework::core('cache')->save(
             'Route-map',
-            \Facula\Unit\Route::exportMap(),
+            Facula\Unit\Route::exportMap(),
             0
         );
     } else {
-        \Facula\Unit\Route::importMap($routeMap);
+        Facula\Unit\Route::importMap($routeMap);
     }
 
-    \Facula\Unit\Route::setDefaultHandler(function () {
-        \Facula\Framework::core('object')->run(
+    Facula\Unit\Route::setDefaultHandler(function () {
+        Facula\Framework::core('object')->run(
             'MyProject\Controller\Home\Index',
             array(),
             true
         );
     });
 
-    \Facula\Unit\Route::setErrorHandler(function ($type) {
+    Facula\Unit\Route::setErrorHandler(function ($type) {
         $pageContent = '';
 
         switch ($type) {
@@ -60,18 +60,18 @@
             case 'PATH_NO_OPERATOR_SPECIFIED':
 
             default:
-                if ($pageContent = \Facula\Framework::core(
+                if ($pageContent = Facula\Framework::core(
                     'template'
                 )->render('message.404')) {
-                    \Facula\Framework::core('response')->setHeader(
+                    Facula\Framework::core('response')->setHeader(
                         'HTTP/1.1 404 Not Found'
                     );
 
-                    \Facula\Framework::core('response')->setContent(
+                    Facula\Framework::core('response')->setContent(
                         $pageContent
                     );
 
-                    \Facula\Framework::core('response')->send();
+                    Facula\Framework::core('response')->send();
                 }
                 break;
         }
@@ -79,7 +79,7 @@
         return true;
     });
 
-    if (file_exists(\Facula\Framework::PATH . DIRECTORY_SEPARATOR . '.htaccess')) {
+    if (file_exists(Facula\Framework::PATH . DIRECTORY_SEPARATOR . '.htaccess')) {
         $path = array(
             'Prefix' => '/',
             'Path' => $_SERVER['QUERY_STRING']
@@ -91,28 +91,28 @@
         );
     }
 
-    if (\Facula\Unit\Route::setPath($path['Path'])) {
-        \Facula\Framework::core('template')->assign(
+    if (Facula\Unit\Route::setPath($path['Path'])) {
+        Facula\Framework::core('template')->assign(
             'RouteRoot',
-            \Facula\Framework::core('request')->getClientInfo('rootURL')
+            Facula\Framework::core('request')->getClientInfo('rootURL')
             . $path['Prefix']
         );
 
-        \Facula\Framework::core('template')->assign(
+        Facula\Framework::core('template')->assign(
             'AbsRouteRoot',
-            \Facula\Framework::core('request')->getClientInfo('absRootURL')
+            Facula\Framework::core('request')->getClientInfo('absRootURL')
             . $path['Prefix']
         );
 
-        \Facula\Framework::core('template')->assign(
+        Facula\Framework::core('template')->assign(
             'RoutePath',
-            \Facula\Unit\Route::getPath()
+            Facula\Unit\Route::getPath()
         );
     }
 
     unset($path);
 
-    \Facula\Unit\Route::run();
+    Facula\Unit\Route::run();
 
     return true;
 });

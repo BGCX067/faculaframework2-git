@@ -27,10 +27,13 @@
 
 namespace MyProject\Controller\Home;
 
+use MyProject\Controller\Root;
+use Facula\Framework;
+
 /**
  * Index controller
  */
-class Index extends \MyProject\Controller\Root
+class Index extends Root
 {
     /**
      * Controller configuration array.
@@ -85,7 +88,7 @@ class Index extends \MyProject\Controller\Root
 
         switch($post['Action']) {
             case 'Renew':
-                \Facula\Framework::clearState();
+                Framework::clearState();
                 break;
 
             case 'ClearName':

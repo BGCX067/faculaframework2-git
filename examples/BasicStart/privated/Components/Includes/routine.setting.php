@@ -28,6 +28,6 @@
 /**
  * Register the site setting
  */
-\Facula\App\Setting::registerSetting('Site', function () {
+Facula\App\Setting::registerSetting('Site', function () {
     return array(); // Return a empty.
 }, array('MyProject\Controller\Home\Index', 'MyProject\Demo\Controller\API'));

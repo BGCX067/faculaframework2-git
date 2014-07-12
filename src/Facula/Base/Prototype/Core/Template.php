@@ -318,45 +318,64 @@ abstract class Template extends Factory implements Implement
      */
     public function insertMessage(array $message)
     {
-        if (!empty($message)) {
-            if (isset($message['Code'])) {
-                if (isset($message['Args'])) {
+        $argKeys = $argKeySearchs = $argVals = array();
+
+        if (empty($message)) {
+            return false;
+        }
+
+        if (isset($message['Code'])) {
+            if (isset($message['Args']) && is_array($message['Args'])) {
+                $argKeys = array_keys($message['Args']);
+
+                if ($argKeys != array_keys($argKeys)) {
+                    foreach ($argKeys as $argKeyKey => $argKeyVal) {
+                        $argKeySearchs[$argKeyKey] = '%' . $argKeyVal . '%';
+                    }
+
+                    $argVals = array_values($message['Args']);
+
+                    $msgString = str_replace(
+                        $argKeySearchs,
+                        $argVals,
+                        $this->getLanguageString('MESSAGE_' . $message['Code'])
+                    );
+                } else {
                     $msgString = vsprintf(
                         $this->getLanguageString('MESSAGE_' . $message['Code']),
                         $message['Args']
                     );
-                } else {
-                    $msgString = $this->getLanguageString(
-                        'MESSAGE_' . $message['Code']
-                    );
                 }
-            } elseif (isset($message['Message'])) {
-                $msgString = $message['Message'];
+
             } else {
-                new Error(
-                    'MESSAGE_NOCONTENT',
-                    array(),
-                    'WARNING'
+                $msgString = $this->getLanguageString(
+                    'MESSAGE_' . $message['Code']
                 );
-
-                return false;
             }
-
-            $messageContent = array(
-                'Message' => $msgString ? $msgString : 'ERROR_UNKNOWN_ERROR',
-                'Type' => isset($message['Type']) ? $message['Type'] : 'UNKNOWN'
+        } elseif (isset($message['Message'])) {
+            $msgString = $message['Message'];
+        } else {
+            new Error(
+                'MESSAGE_NOCONTENT',
+                array(),
+                'WARNING'
             );
 
-            if (isset($message['Name'])) {
-                $this->assigned['_MESSAGE'][$message['Name']][] = $messageContent;
-            } else {
-                $this->assigned['_MESSAGE']['Default'][] = $messageContent;
-            }
-
-            return $messageContent;
+            return false;
         }
 
-        return false;
+        $messageContent = array(
+            'Message' => $msgString ? $msgString : 'ERROR_UNKNOWN_ERROR',
+            'Type' => isset($message['Type']) ? $message['Type'] : 'UNKNOWN'
+        );
+
+        if (isset($message['Name'])) {
+            $this->assigned['_MESSAGE'][$message['Name']][] = $messageContent;
+        } else {
+            $this->assigned['_MESSAGE']['Default'][] = $messageContent;
+        }
+
+        return $messageContent;
     }
 
     /**

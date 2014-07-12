@@ -1,39 +1,41 @@
 
-                           FACULA PHP FRAMEWORK
-                                 Version 2
-                                By Rain Lee
+                                FACULA PHP FRAMEWORK
+                                      Version 2
+                            By Rain Lee <raincious@gmail.com>
 
   0. Thank you
 
-  Thank you for download and try this framework.
+  Thank you for downloading and trying this framework.
 
-  This framework designed for medium sized website which has minor traffic
-to process and need an all-in-one solution for load balancing and multi
-databse support.
-
-  For personal developer, this framework not a restriction to force you to use
-MVC pattern (You can use it when you want to of course). It provides lot of free-
-dom and expandability in to your web develop and allows you to detailly controll
-the behavior of your application.
+  This is a non-full-stack core-component layout PHP framework, which highly capable
+to be extended and modified by developer's needs for providing a user friendly base
+structure for software developing.
 
   1. Requirement
 
-  This version of Facula Framework needs PHP 5.4 at minimum with few builtin
-extensions enabled. Besides that, consider of the customizability of the framework,
-no any other component will be require by force :)
+  The framework core needs PHP 5.4 at minimum. Some of Units needs specified extensions
+to be enabled, there will be a warning when you try to use those Unit with out enabling
+those extensions.
+
+  Besides that, consider of the customizability of the framework, no any other component
+will be required by force :)
 
   2. Installation
 
-  Well, install this framework is easy. But also it's a long story. If this is
-the first time you use it to help you to make a application. Please check wiki.
+  Well, install this framework is easy. But also it's a long story. If this is the first
+time you use it to help you to make a application. Please check wiki.
+
+  If you can found nothing in wiki, you must also capable to found the the composer.json.
+Which means you perhaps need a composer.
+
+  Please check out https://packagist.org/packages/raincious/facula for more detail.
 
   3. Copyright
 
-  Yeah, if you reading this file right now, the copy must be right. Otherwise,
-the copy is not right.
+  Yeah, if you reading this file right now, the copy must be right. Otherwise, the copy is
+not right so you may need to re-download it.
 
-  I don't know why you want to copy this, because since you use git, fork it
-is more easy.
+  I don't know why you want to copy this, because since you use git, fork it is more easy.
 
   This framework can also be git from:
 
@@ -41,14 +43,27 @@ is more easy.
   https://code.google.com/p/faculaframework2/
   https://bitbucket.org/raincious/facula-framework-2/ // Privated
 
-  Oh, If you looking for document for redistribution, please check a file name
-COPYRIGHT.
+  Oh, If you looking for document for redistribution, please check a file named LICENSE.
 
   4. Please notice
 
-  Don't be too serious to the section 0, third paragraph.
+  Don't be too serious to the section 0, or the whole document above.
 
-                                             Written by Rain Lee, 06/09/2013
-                                                         raincious@gmail.com
+  5. Yeah, actually
 
- 
+  You may feel I'm not too welcome to people to try this framework. Yes, but not. Please
+have fun reading the codes I written, leave issues when you discover any problem, or fork
+it then push back.
+
+  This framework basely is my own working experiment platform to test all the possibility
+in my head. Code in this framework may not very stable and high quality, I will try to do
+it as I should to, but no guarantees.
+
+  So please do not use this framework on any of space ship, rocket, mars rover, even your
+own car or anything you think that may critical.
+
+                                                        Written by Rain Lee, 06/09/2013
+                                                        Revisioned by Rain Lee, 07/07/2014
+                                                                      raincious@gmail.com
+
+

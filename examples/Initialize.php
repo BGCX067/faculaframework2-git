@@ -6,7 +6,7 @@ if (file_exists('Lock')) {
 
 require('..' . DIRECTORY_SEPARATOR . 'Bootstrap.php');
 
-\Facula\Framework::run();
+Facula\Framework::run();
 
-\Facula\Framework::core('response')->setContent('Hello Word!');
-\Facula\Framework::core('response')->send();
+Facula\Framework::core('response')->setContent('Hello Word!');
+Facula\Framework::core('response')->send();

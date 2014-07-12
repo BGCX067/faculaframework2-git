@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Framework Demo: Setup some settings for package Demo
+ * InvalidErrorType Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -20,11 +20,21 @@
  * @author     Rain Lee <raincious@gmail.com>
  * @copyright  2014 Rain Lee
  * @package    Facula
- * @version    0.1 alpha
+ * @version    0.1.0 alpha
  * @see        https://github.com/raincious/facula FYI
  *
  */
 
-Facula\App\Setting::registerSetting('APISetting', array(
-    'DefaultName' => 'Default name',
-), true);
+namespace Facula\Unit\Input\Base\Exception\Field\Error;
+
+use Facula\Base\Prototype\Exception as Base;
+
+/**
+ * InvalidErrorType Exception
+ */
+class InvalidErrorType extends Base
+{
+    protected static $exceptionMessage = '
+        Unknown error type "%s".
+    ';
+}
