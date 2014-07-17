@@ -29,6 +29,7 @@ namespace Facula\Unit\Input\Base;
 
 use Facula\Unit\Input\Base\Implement\Field as Impl;
 use Facula\Unit\Input\Base\Field\Error as FieldError;
+use Facula\Unit\Input\Base\Exception\Field as Exception;
 use Facula\Unit\Input\Base\Limit;
 
 /**
@@ -59,6 +60,9 @@ abstract class Field implements Impl
 
     /** The resulting object class */
     protected static $resulting = '';
+
+    /** The resulting object class */
+    protected static $resultingGroup = '';
 
     /**
      * Create a new field instance
@@ -253,7 +257,7 @@ abstract class Field implements Impl
      */
     final public function import($value)
     {
-        $error = null;
+        $limitError = $parseError = $newValue = null;
 
         if (is_null($value)) { // We use none as unsetted value
             if ($this->required) {
@@ -265,19 +269,29 @@ abstract class Field implements Impl
             if (is_null($this->defaults)) {
                 $this->error(new FieldError('ERROR', 'DEFAULT_NOTSET'));
 
-                return true;
+                return false;
             }
 
             $value = $this->defaults;
         }
 
-        if (!$this->checkLimit($value, $error)) {
-            $this->error($error);
+        if (!$this->checkLimit($value, $limitError)) {
+            $this->error($limitError);
 
             return false;
         }
 
-        $this->value = $value;
+        if (!$this->parseImport($value, $newValue, $parseError)) {
+            if (!is_null($parseError)) {
+                $this->error($parseError);
+
+                return false;
+            }
+
+            $this->value = $newValue;
+        } else {
+            $this->value = $value;
+        }
 
         return true;
     }
@@ -289,6 +303,31 @@ abstract class Field implements Impl
      */
     final public function result()
     {
-        return new static::$resulting($this->value());
+        $outputs = array();
+        $values = $this->value();
+
+        if (static::$resultingGroup && is_array($values)) {
+            foreach ($values as $key => $val) {
+                $outputs[$key] = new static::$resulting($val);
+            }
+
+            return new static::$resultingGroup($outputs);
+        }
+
+        return new static::$resulting($values);
+    }
+
+    /**
+     * Hook function that will be call when field value has been imported
+     *
+     * @param mixed $value Inputing value
+     * @param mixed $newValue Reference to a new input value used to replace the invalid one
+     * @param mixed $error Reference to get error feedback
+     *
+     * @return bool Return false to truncate value input, true otherwise.
+     */
+    protected function parseImport($value, &$newValue, &$error)
+    {
+        return true;
     }
 }

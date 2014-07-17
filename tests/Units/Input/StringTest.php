@@ -85,6 +85,7 @@ class StringTest extends \PHPUnit_Framework_TestCase
         global $_POST;
 
         $_POST['TestString'] = '@Test'; // Invalid format
+        $_POST['TestNotAStr'] = array('Array here'); // Another invalid format
 
         $errors = array();
         $exceptionCatched = false;
@@ -98,19 +99,33 @@ class StringTest extends \PHPUnit_Framework_TestCase
                         ->format('alphanumber')
                         ->maxlen(64)
                         ->minlen(1)
+                ),
+            Input\Field\Strings::bind('TestNotAStr')
+                ->defaults('Default Test')->limits(
+                    Input\Limit\Validate::create()
+                        ->format('standard')
+                        ->maxlen(64)
+                        ->minlen(1)
                 )
         )->errors($errors)->prepare(); // prepare returns a new object: Input\Result
 
-        $this->assertEquals(1, count($errors));
+        $this->assertEquals(2, count($errors));
 
         // Error type should be INVALID
         $this->assertEquals('INVALID', $errors[0]->type());
+        $this->assertEquals('INVALID', $errors[1]->type());
 
         // Error code should be FORMAT
         $this->assertEquals('FORMAT', $errors[0]->code());
 
+        // And this should be DATA_TYPE
+        $this->assertEquals('DATA_TYPE', $errors[1]->code());
+
         // Error code should be TESTSTRING_FORMAT
         $this->assertEquals('TESTSTRING_FORMAT', $errors[0]->errorCode());
+
+        // And this should be TESTNOTASTR_DATA_TYPE
+        $this->assertEquals('TESTNOTASTR_DATA_TYPE', $errors[1]->errorCode());
 
         try {
             $input->get('TestString')->value();
