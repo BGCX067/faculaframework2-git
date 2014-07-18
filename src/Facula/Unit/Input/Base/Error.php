@@ -130,4 +130,14 @@ class Error
 
         return $this->code;
     }
+
+    /**
+     * Get error type and code
+     *
+     * @return string The error code
+     */
+    public function typedCode()
+    {
+        return $this->type . '_' . $this->code;
+    }
 }

@@ -58,13 +58,30 @@ class Validate extends Base
         $formatError = '';
 
         if (!is_string($value)) {
-            $error = new Error('INVALID', 'DATA_TYPE', array(gettype($value)));
+            $error = new Error('INVALID', 'DATATYPE', array(gettype($value)));
 
             return false;
         }
 
         if (!Validator::check($value, $this->format, $this->maxlen, $this->minlen, $formatError)) {
-            $error = new Error('INVALID', $formatError);
+            switch ($formatError) {
+                case 'TOOLONG':
+                    $error = new Error('INVALID', 'TOOLONG', array(
+                        'Max' => $this->maxlen
+                    ));
+                    break;
+
+                case 'TOOSHORT':
+                    $error = new Error('INVALID', 'TOOSHORT', array(
+                        'Min' => $this->minlen
+                    ));
+                    break;
+
+                default:
+                    $error = new Error('INVALID', $formatError);
+                    break;
+            }
+
 
             return false;
         }

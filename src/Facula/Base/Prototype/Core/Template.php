@@ -325,10 +325,15 @@ abstract class Template extends Factory implements Implement
         }
 
         if (isset($message['Code'])) {
-            if (isset($message['Args']) && is_array($message['Args'])) {
+            if (!empty($message['Args']) && is_array($message['Args'])) {
                 $argKeys = array_keys($message['Args']);
 
-                if ($argKeys != array_keys($argKeys)) {
+                if ($argKeys == array_flip($argKeys)) {
+                    $msgString = vsprintf(
+                        $this->getLanguageString('MESSAGE_' . $message['Code']),
+                        $message['Args']
+                    );
+                } else {
                     foreach ($argKeys as $argKeyKey => $argKeyVal) {
                         $argKeySearchs[$argKeyKey] = '%' . $argKeyVal . '%';
                     }
@@ -339,11 +344,6 @@ abstract class Template extends Factory implements Implement
                         $argKeySearchs,
                         $argVals,
                         $this->getLanguageString('MESSAGE_' . $message['Code'])
-                    );
-                } else {
-                    $msgString = vsprintf(
-                        $this->getLanguageString('MESSAGE_' . $message['Code']),
-                        $message['Args']
                     );
                 }
 

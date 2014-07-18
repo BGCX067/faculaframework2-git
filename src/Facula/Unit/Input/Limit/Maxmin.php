@@ -55,19 +55,23 @@ class Maxmin extends Base
     public function qualified($value, &$error)
     {
         if (!is_integer($value) && !is_float($value)) {
-            $error = new Error('INVALID', 'DATA_TYPE', array(gettype($value)));
+            $error = new Error('INVALID', 'DATATYPE', array(gettype($value)));
 
             return false;
         }
 
         if ($value > $this->max) {
-            $error = new Error('INVALID', 'TOO_LARGE');
+            $error = new Error('INVALID', 'TOOLARGE', array(
+                'Max' => $this->max
+            ));
 
             return false;
         }
 
         if ($value < $this->min) {
-            $error = new Error('INVALID', 'TOO_SMALL');
+            $error = new Error('INVALID', 'TOOSMALL', array(
+                'Min' => $this->min
+            ));
 
             return false;
         }

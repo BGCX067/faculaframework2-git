@@ -48,6 +48,9 @@ class Input
     /** Input fields */
     protected $fields = array();
 
+    /** Inputed data */
+    protected $inputed = array();
+
     /**
      * Create a new instance of input
      *
@@ -115,6 +118,8 @@ class Input
         $fieldName = $field->field();
         $fieldData = $this->source->get($fieldName);
 
+        $this->inputed[$fieldName] = $fieldData;
+
         if (isset($this->fields[$fieldName])) {
             throw new Exception\FieldAlreadyRegistered($fieldName);
 
@@ -168,6 +173,20 @@ class Input
     public function errors(array &$errors)
     {
         $errors = array_values($this->errors);
+
+        return $this;
+    }
+
+    /**
+     * Get all original input to a reference
+     *
+     * @param array &$inputed The array reference
+     *
+     * @return Object Current instance of Input instance
+     */
+    public function original(array &$inputed)
+    {
+        $inputed = $this->inputed;
 
         return $this;
     }

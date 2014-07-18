@@ -49,7 +49,7 @@ class Eachs extends Base
     public function qualified($values, &$error)
     {
         if (!is_array($values)) {
-            $error = new Error('INVALID', 'DATA_TYPE', array());
+            $error = new Error('INVALID', 'DATATYPE', array());
 
             return false;
         }

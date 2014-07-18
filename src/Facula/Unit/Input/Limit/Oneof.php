@@ -49,7 +49,7 @@ class Oneof extends Base
     public function qualified($value, &$error)
     {
         if (!isset($this->elements[$value])) {
-            $error = new Error('INVALID', 'CASE_UNKNOWN', array($value));
+            $error = new Error('INVALID', 'CASEUNKNOWN', array($value));
 
             return false;
         }
