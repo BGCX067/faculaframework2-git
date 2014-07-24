@@ -267,7 +267,8 @@ abstract class Field implements Impl
             }
 
             if (is_null($this->defaults)) {
-                $this->error(new FieldError('ERROR', 'DEFAULT_NOTSET'));
+                // So there is no value and default value
+                $this->error(new FieldError('ERROR', 'NOTSET'));
 
                 return false;
             }

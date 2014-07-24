@@ -140,4 +140,17 @@ class Error
     {
         return $this->type . '_' . $this->code;
     }
+
+    /**
+     * Get error full code: type_FIELD_code
+     *
+     * @return string The error code
+     */
+    public function fullCode()
+    {
+        return $this->type
+            . '_'
+            . ($this->field ? strtoupper($this->field) . '_' : '')
+            . $this->code;
+    }
 }

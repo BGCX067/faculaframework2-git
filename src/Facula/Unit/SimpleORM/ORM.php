@@ -806,6 +806,10 @@ abstract class ORM implements Implement, \ArrayAccess
 
         $joinedMap = $dataMap = $colAddress = array();
 
+        if (!empty(static::$withs)) {
+            $joinModels = array_merge(static::$withs, $joinModels);
+        }
+
         /*
             Format:
 
