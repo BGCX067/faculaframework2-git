@@ -35,24 +35,32 @@ class OneofTest extends \PHPUnit_Framework_TestCase
 
         $error = null;
 
+        $vA = 'ValueA';
+        $vB = 'ValueB';
+        $vC = 'ValueC';
+
+        $one = 1;
+        $two = 2;
+        $three = 3;
+
         // Should be true
-        $this->assertTrue($oneOf->qualified('ValueA', $error));
-        $this->assertTrue($oneOf->qualified('ValueB', $error));
-        $this->assertFalse($oneOf->qualified('ValueC', $error));
+        $this->assertTrue($oneOf->qualified($vA, $error));
+        $this->assertTrue($oneOf->qualified($vB, $error));
+        $this->assertFalse($oneOf->qualified($vC, $error));
 
         // Error should be CASE_UNKNOWN
         $this->assertEquals('INVALID', $error->type());
-        $this->assertEquals('CASE_UNKNOWN', $error->code());
+        $this->assertEquals('CASEUNKNOWN', $error->code());
 
         // Another test with non-string data
         $oneOf2 = Input\Limit\Oneof::create()->add(1)->add(2);
 
-        $this->assertTrue($oneOf2->qualified(1, $error));
-        $this->assertTrue($oneOf2->qualified(2, $error));
-        $this->assertFalse($oneOf2->qualified(3, $error));
+        $this->assertTrue($oneOf2->qualified($one, $error));
+        $this->assertTrue($oneOf2->qualified($two, $error));
+        $this->assertFalse($oneOf2->qualified($three, $error));
 
         $this->assertEquals('INVALID', $error->type());
-        $this->assertEquals('CASE_UNKNOWN', $error->code());
+        $this->assertEquals('CASEUNKNOWN', $error->code());
     }
 
     /*
@@ -87,6 +95,6 @@ class OneofTest extends \PHPUnit_Framework_TestCase
 
         // Error should be CASE_UNKNOWN
         $this->assertEquals('INVALID', $errors[0]->type());
-        $this->assertEquals('CASE_UNKNOWN', $errors[0]->code());
+        $this->assertEquals('CASEUNKNOWN', $errors[0]->code());
     }
 }

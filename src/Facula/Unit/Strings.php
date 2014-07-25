@@ -28,9 +28,9 @@
 namespace Facula\Unit;
 
 /* Define function, use mb_* when available */
-define('FUNC_STRLEN', function_exists('mb_strlen') ? 'mb_strlen', 'strlen');
-define('FUNC_SUBSTR', function_exists('mb_substr') ? 'mb_substr', 'substr');
-define('FUNC_STRPOS', function_exists('mb_strpos') ? 'mb_strpos', 'strpos');
+define('FUNC_STRLEN', function_exists('mb_strlen') ? 'mb_strlen' : 'strlen');
+define('FUNC_SUBSTR', function_exists('mb_substr') ? 'mb_substr' : 'substr');
+define('FUNC_STRPOS', function_exists('mb_strpos') ? 'mb_strpos' : 'strpos');
 
 /**
  * String Operator
@@ -54,13 +54,16 @@ abstract class Strings
         $len,
         $apostrophe = false
     ) {
-        if ($len > FUNC_STRLEN($string)) {
+        $FUNC_STRLEN = FUNC_STRLEN;
+        $FUNC_SUBSTR = FUNC_SUBSTR;
+
+        if ($len > $FUNC_STRLEN($string)) {
             return $string;
         } else {
             if ($apostrophe && $len > 3) {
-                return FUNC_SUBSTR($string, $start, $len - 3) . '...';
+                return $FUNC_SUBSTR($string, $start, $len - 3) . '...';
             } else {
-                return FUNC_SUBSTR($string, $start, $len);
+                return $FUNC_SUBSTR($string, $start, $len);
             }
 
         }
@@ -77,7 +80,9 @@ abstract class Strings
      */
     public static function strlen($string)
     {
-        return FUNC_STRLEN($string);
+        $FUNC_STRLEN = FUNC_STRLEN;
+
+        return $FUNC_STRLEN($string);
     }
 
     /**
@@ -94,6 +99,8 @@ abstract class Strings
         $needle,
         $offset = 0
     ) {
-        return FUNC_STRPOS($haystack, $needle, $offset);
+        $FUNC_STRPOS = FUNC_STRPOS;
+
+        return $FUNC_STRPOS($haystack, $needle, $offset);
     }
 }

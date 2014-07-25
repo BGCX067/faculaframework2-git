@@ -119,13 +119,13 @@ class StringTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('FORMAT', $errors[0]->code());
 
         // And this should be DATA_TYPE
-        $this->assertEquals('DATA_TYPE', $errors[1]->code());
+        $this->assertEquals('DATATYPE', $errors[1]->code());
 
         // Error code should be TESTSTRING_FORMAT
         $this->assertEquals('TESTSTRING_FORMAT', $errors[0]->errorCode());
 
         // And this should be TESTNOTASTR_DATA_TYPE
-        $this->assertEquals('TESTNOTASTR_DATA_TYPE', $errors[1]->errorCode());
+        $this->assertEquals('TESTNOTASTR_DATATYPE', $errors[1]->errorCode());
 
         try {
             $input->get('TestString')->value();

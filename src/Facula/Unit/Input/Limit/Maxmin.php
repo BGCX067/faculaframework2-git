@@ -52,7 +52,7 @@ class Maxmin extends Base
      *
      * @return bool Return True when it's qualified, false otherwise
      */
-    public function qualified($value, &$error)
+    public function qualified(&$value, &$error)
     {
         if (!is_integer($value) && !is_float($value)) {
             $error = new Error('INVALID', 'DATATYPE', array(gettype($value)));

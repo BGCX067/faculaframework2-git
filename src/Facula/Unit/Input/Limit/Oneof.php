@@ -46,7 +46,7 @@ class Oneof extends Base
      *
      * @return bool Return True when it's qualified, false otherwise
      */
-    public function qualified($value, &$error)
+    public function qualified(&$value, &$error)
     {
         if (!isset($this->elements[$value])) {
             $error = new Error('INVALID', 'CASEUNKNOWN', array($value));

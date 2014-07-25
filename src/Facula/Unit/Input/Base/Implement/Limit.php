@@ -10,5 +10,5 @@ use Facula\Unit\Input\Base\Validator;
 interface Limit
 {
     public static function create();
-    public function qualified($value, &$error);
+    public function qualified(&$value, &$error);
 }

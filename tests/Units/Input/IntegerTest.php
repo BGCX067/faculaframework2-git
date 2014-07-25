@@ -101,7 +101,7 @@ class IntegerTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->assertEquals(
-            'TOO_LARGE',
+            'TOOLARGE',
             $errors[0]->code()
         );
 
@@ -112,7 +112,7 @@ class IntegerTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->assertEquals(
-            'TOO_SMALL',
+            'TOOSMALL',
             $errors[1]->code()
         );
     }

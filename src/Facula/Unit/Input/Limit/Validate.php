@@ -53,7 +53,7 @@ class Validate extends Base
      *
      * @return bool Return True when it's qualified, false otherwise
      */
-    public function qualified($value, &$error)
+    public function qualified(&$value, &$error)
     {
         $formatError = '';
 

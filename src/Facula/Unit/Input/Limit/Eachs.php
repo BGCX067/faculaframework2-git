@@ -38,6 +38,12 @@ class Eachs extends Base
 {
     protected $limits = array();
 
+    /** The max amount of elements in array */
+    protected $max = 0;
+
+    /** The min amount of elements in array */
+    protected $min = 0;
+
     /**
      * Check if the input is valid
      *
@@ -46,10 +52,36 @@ class Eachs extends Base
      *
      * @return bool Return True when it's qualified, false otherwise
      */
-    public function qualified($values, &$error)
+    public function qualified(&$values, &$error)
     {
         if (!is_array($values)) {
             $error = new Error('INVALID', 'DATATYPE', array());
+
+            return false;
+        }
+
+        $amount = count($values);
+
+        if ($this->max && $amount > $this->max) {
+            $error = new Error(
+                'INVALID',
+                'TOOMANY',
+                array(
+                    'Max' => $this->max
+                )
+            );
+
+            return false;
+        }
+
+        if ($this->min && $amount < $this->min) {
+            $error = new Error(
+                'INVALID',
+                'TOOLESS',
+                array(
+                    'Min' => $this->min
+                )
+            );
 
             return false;
         }
@@ -91,6 +123,34 @@ class Eachs extends Base
         foreach (func_get_args() as $arg) {
             $this->limit($arg);
         }
+
+        return $this;
+    }
+
+    /**
+     * Set the max amount limit
+     *
+     * @param integer $max The max amount limit
+     *
+     * @return object Return current object instance
+     */
+    public function max($max)
+    {
+        $this->max = (int)$max;
+
+        return $this;
+    }
+
+    /**
+     * Set the min amount limit
+     *
+     * @param integer $min The min amount limit
+     *
+     * @return object Return current object instance
+     */
+    public function min($min)
+    {
+        $this->min = (int)$min;
 
         return $this;
     }
