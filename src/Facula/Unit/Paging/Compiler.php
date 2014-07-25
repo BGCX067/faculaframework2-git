@@ -71,9 +71,6 @@ class Compiler extends Base implements Implement
     /** Tag handlers */
     protected static $tagHandlers = array();
 
-    /** Shared data pool between tag handlers */
-    protected $pool = array();
-
     /** Instance of content parser */
     protected $parser = null;
 
