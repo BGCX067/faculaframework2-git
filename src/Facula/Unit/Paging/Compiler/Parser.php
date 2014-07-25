@@ -981,7 +981,6 @@ class Parser
             $nest[$nestLevel]['LastExpecting'] = $current['Expecting'];
         }
 
-
         if (!empty($nest)) {
             throw new Exception\TagNeedToBeClosed(
                 $nest[$nestLevel]['Tag'],
