@@ -27,6 +27,7 @@
 
 namespace Facula\Unit\Paging;
 
+use Facula\Framework;
 use Facula\Base\Implement\Core\Template\Render as Implement;
 
 /**
@@ -84,11 +85,11 @@ class Render implements Implement
         extract($assigned);
         unset($assigned);
 
-        \Facula\Framework::core('debug')->criticalSection(true);
+        Framework::core('debug')->criticalSection(true);
 
         require($targetTpl);
 
-        \Facula\Framework::core('debug')->criticalSection(false);
+        Framework::core('debug')->criticalSection(false);
 
         return ob_get_clean();
     }
