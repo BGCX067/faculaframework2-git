@@ -126,7 +126,7 @@ class Framework
     protected static $includes = array();
 
     /** Data container for Facula framework instance */
-    protected $setting = array( );
+    protected $setting = array();
 
     /** Core container */
     protected $cores = array();
