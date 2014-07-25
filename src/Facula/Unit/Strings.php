@@ -27,6 +27,11 @@
 
 namespace Facula\Unit;
 
+/* Define function, use mb_* when available */
+define('FUNC_STRLEN', function_exists('mb_strlen') ? 'mb_strlen', 'strlen');
+define('FUNC_SUBSTR', function_exists('mb_substr') ? 'mb_substr', 'substr');
+define('FUNC_STRPOS', function_exists('mb_strpos') ? 'mb_strpos', 'strpos');
+
 /**
  * String Operator
  */
@@ -38,7 +43,7 @@ abstract class Strings
      * @param string $string The string to operate
      * @param string $start Start position to get substring
      * @param string $len Length of result string
-     * @param string $apostrophe Will we display apostrophe at end when for
+     * @param boolean $apostrophe Will we display apostrophe at end when for
      *                           indicate there some content been cut out
      *
      * @return bool Return result of mb_substr
@@ -49,13 +54,13 @@ abstract class Strings
         $len,
         $apostrophe = false
     ) {
-        if ($len > mb_strlen($string)) {
+        if ($len > FUNC_STRLEN($string)) {
             return $string;
         } else {
             if ($apostrophe && $len > 3) {
-                return mb_substr($string, $start, $len - 3) . '...';
+                return FUNC_SUBSTR($string, $start, $len - 3) . '...';
             } else {
-                return mb_substr($string, $start, $len);
+                return FUNC_SUBSTR($string, $start, $len);
             }
 
         }
@@ -72,7 +77,7 @@ abstract class Strings
      */
     public static function strlen($string)
     {
-        return mb_strlen($string);
+        return FUNC_STRLEN($string);
     }
 
     /**
@@ -89,6 +94,6 @@ abstract class Strings
         $needle,
         $offset = 0
     ) {
-        return mb_strpos($haystack, $needle, $offset);
+        return FUNC_STRPOS($haystack, $needle, $offset);
     }
 }

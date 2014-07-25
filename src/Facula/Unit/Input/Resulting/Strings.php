@@ -28,6 +28,7 @@
 namespace Facula\Unit\Input\Resulting;
 
 use Facula\Unit\Input\Base\Resulting;
+use Facula\Unit\Strings as Stringer;
 
 /**
  * String Result
@@ -42,12 +43,14 @@ class Strings extends Resulting
      *
      * @param integer $start The starting point of the sub string in current string
      * @param integer $len The length of sub string
+     * @param boolean $apostrophe Will we display apostrophe at end when for
+     *                           indicate there some content been cut out
      *
      * @return string The sub string
      */
-    public function cut($start, $len)
+    public function cut($start, $len, $apostrophe = false)
     {
-        return substr($this->value, $start, $len);
+        return Stringer::substr($this->value, $start, $len, $apostrophe);
     }
 
     /**
@@ -57,7 +60,7 @@ class Strings extends Resulting
      */
     public function len()
     {
-        return strlen($this->value);
+        return Stringer::strlen($this->value);
     }
 
     /**
@@ -70,6 +73,6 @@ class Strings extends Resulting
      */
     public function replace($search, $replace)
     {
-        return str_replace($search, $replace, $this->value);
+        return Stringer::str_replace($search, $replace, $this->value);
     }
 }
