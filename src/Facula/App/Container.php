@@ -122,6 +122,7 @@ abstract class Container
         \Closure $default = null
     ) {
         $accesser = '';
+        $selectedContain = '';
 
         if (isset(self::$contains[$name])) {
             if (isset(self::$contains[$name]['Accesser']['!PUBLIC!'])
@@ -132,128 +133,130 @@ abstract class Container
                         )
                         && isset(self::$contains[$name]['Accesser'][$accesser])
                     )
-                ) {
+            ) {
                 $selectedContain = self::$contains[$name]['Processor'];
-
-                switch (count($args)) {
-                    case 0:
-                        return $selectedContain();
-                        break;
-
-                    case 1:
-                        return $selectedContain($args[0]);
-                        break;
-
-                    case 2:
-                        return $selectedContain(
-                            $args[0],
-                            $args[1]
-                        );
-                        break;
-
-                    case 3:
-                        return $selectedContain(
-                            $args[0],
-                            $args[1],
-                            $args[2]
-                        );
-                        break;
-
-                    case 4:
-                        return $selectedContain(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3]
-                        );
-                        break;
-
-                    case 5:
-                        return $selectedContain(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4]
-                        );
-                        break;
-
-                    case 6:
-                        return $selectedContain($args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4],
-                            $args[5]
-                        );
-                        break;
-
-                    case 7:
-                        return $selectedContain(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4],
-                            $args[5],
-                            $args[6]
-                        );
-                        break;
-
-                    case 8:
-                        return $selectedContain(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4],
-                            $args[5],
-                            $args[6],
-                            $args[7]
-                        );
-                        break;
-
-                    case 9:
-                        return $selectedContain(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4],
-                            $args[5],
-                            $args[6],
-                            $args[7],
-                            $args[8]
-                        );
-                        break;
-
-                    case 10:
-                        return $selectedContain(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4],
-                            $args[5],
-                            $args[6],
-                            $args[7],
-                            $args[8],
-                            $args[9]
-                        );
-                        break;
-
-                    default:
-                        return call_user_func_array(self::$contains[$name], $args);
-                        break;
-
-                }
             } else {
                 throw new Exception\AccessDenied($name, $accesser);
             }
         } elseif ($default && is_callable($default)) {
-            return $default();
+            $selectedContain = $default;
         } else {
             throw new Exception\NotFound($name);
+
+            return false;
+        }
+
+        switch (count($args)) {
+            case 0:
+                return $selectedContain();
+                break;
+
+            case 1:
+                return $selectedContain($args[0]);
+                break;
+
+            case 2:
+                return $selectedContain(
+                    $args[0],
+                    $args[1]
+                );
+                break;
+
+            case 3:
+                return $selectedContain(
+                    $args[0],
+                    $args[1],
+                    $args[2]
+                );
+                break;
+
+            case 4:
+                return $selectedContain(
+                    $args[0],
+                    $args[1],
+                    $args[2],
+                    $args[3]
+                );
+                break;
+
+            case 5:
+                return $selectedContain(
+                    $args[0],
+                    $args[1],
+                    $args[2],
+                    $args[3],
+                    $args[4]
+                );
+                break;
+
+            case 6:
+                return $selectedContain($args[0],
+                    $args[1],
+                    $args[2],
+                    $args[3],
+                    $args[4],
+                    $args[5]
+                );
+                break;
+
+            case 7:
+                return $selectedContain(
+                    $args[0],
+                    $args[1],
+                    $args[2],
+                    $args[3],
+                    $args[4],
+                    $args[5],
+                    $args[6]
+                );
+                break;
+
+            case 8:
+                return $selectedContain(
+                    $args[0],
+                    $args[1],
+                    $args[2],
+                    $args[3],
+                    $args[4],
+                    $args[5],
+                    $args[6],
+                    $args[7]
+                );
+                break;
+
+            case 9:
+                return $selectedContain(
+                    $args[0],
+                    $args[1],
+                    $args[2],
+                    $args[3],
+                    $args[4],
+                    $args[5],
+                    $args[6],
+                    $args[7],
+                    $args[8]
+                );
+                break;
+
+            case 10:
+                return $selectedContain(
+                    $args[0],
+                    $args[1],
+                    $args[2],
+                    $args[3],
+                    $args[4],
+                    $args[5],
+                    $args[6],
+                    $args[7],
+                    $args[8],
+                    $args[9]
+                );
+                break;
+
+            default:
+                return call_user_func_array(self::$contains[$name], $args);
+                break;
+
         }
 
         return false;
