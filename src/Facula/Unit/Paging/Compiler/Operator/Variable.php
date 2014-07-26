@@ -28,6 +28,7 @@
 namespace Facula\Unit\Paging\Compiler\Operator;
 
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
+use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as DataContainerException;
 use Facula\Unit\Paging\Compiler\DataContainer as DataContainer;
 use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
@@ -214,11 +215,41 @@ class Variable extends Base implements Implement
         $varName = $this->parameter->get('var');
         $varType = $this->parameter->get('type');
 
+        $varPureName = '';
+        $varPureNameMatchs = array();
+
+        if (!preg_match(
+            '/^\$([A-Za-z0-9_]+)/iu',
+            $varName,
+            $varPureNameMatchs,
+            PREG_OFFSET_CAPTURE
+        )) {
+            throw new Exception\VariableInvalidName(
+                $varName
+            );
+
+            return '';
+        } else {
+            $varPureName = $varPureNameMatchs[1][0];
+        }
+
         $php = '<?php if (!isset('
             . $varName
             . ')) { '
             . $varName
             . ' = null; } ?>';
+
+        try {
+            $this->dataContainer->setMutex('Variable:' . $varPureName);
+        } catch (DataContainerException\MutexExisted $e) {
+            // It's fine
+        }
+
+        if ($this->dataContainer->checkMutex('Loop:' . $varPureName)) {
+            throw new Exception\VariableOverwriteRiskLoop(
+                $varPureName
+            );
+        }
 
         try {
             $className = static::getOperator(

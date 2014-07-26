@@ -162,7 +162,7 @@ class Loop implements Implement
         }
 
         try {
-            $this->dataContainer->setMutex($varKeyName);
+            $this->dataContainer->setMutex('Loop:' . $varKeyName);
         } catch (Exception\MutexExisted $e) {
             throw new Exception\NameAlreadyExisted(
                 $e->getParameter(0)

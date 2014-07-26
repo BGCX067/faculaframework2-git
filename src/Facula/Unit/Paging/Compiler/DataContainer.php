@@ -67,7 +67,7 @@ class DataContainer
     public function checkMutex($name)
     {
         if (isset($this->mutex[$name])) {
-            return true;
+            return $this->mutex[$name];
         }
 
         return false;

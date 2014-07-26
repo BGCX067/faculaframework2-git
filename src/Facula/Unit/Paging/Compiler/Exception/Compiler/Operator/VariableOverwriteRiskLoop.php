@@ -1,7 +1,7 @@
 <?php
 
 /**
- * InvalidAlphaNumberString Exception
+ * VariableOverwriteRiskLoop Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,16 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler\Exception\Parameters;
+namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
 
-use Facula\Unit\Paging\Compiler\Exception\Parameters as Base;
+use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Base;
 
 /**
- * InvalidAlphaNumberString Exception
+ * VariableOverwriteRiskLoop Exception
  */
-class InvalidAlphaNumberString extends Base
+class VariableOverwriteRiskLoop extends Base
 {
     protected static $exceptionMessage = '
-        "%s" seems not a valid alpha-number value.
+        Variable "%s" may risk overwritten by a "loop" tag.
     ';
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * InvalidAlphaNumberString Exception
+ * Operator Base Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,16 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler\Exception\Parameters;
+namespace Facula\Unit\Paging\Compiler\Exception\Compiler;
 
-use Facula\Unit\Paging\Compiler\Exception\Parameters as Base;
+use Facula\Unit\Paging\Compiler\Exception\Compiler as Base;
 
 /**
- * InvalidAlphaNumberString Exception
+ * Operator Base Exception
  */
-class InvalidAlphaNumberString extends Base
+class Operator extends Base
 {
     protected static $exceptionMessage = '
-        "%s" seems not a valid alpha-number value.
+        Tag Operator encountered a problem at line %d, column %d: %s
     ';
 }

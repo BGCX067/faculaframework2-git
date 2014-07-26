@@ -33,6 +33,7 @@ use Facula\Base\Exception\Factory\Operator as OperatorException;
 use Facula\Unit\Paging\Compiler\OperatorImplement as OperatorImplement;
 use Facula\Unit\Paging\Compiler\DataContainer as DataContainer;
 use Facula\Unit\Paging\Compiler\Exception\Compiler as Exception;
+use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as TagOperatorException;
 use Facula\Unit\Paging\Compiler\Exception\Parser as ParserException;
 use Facula\Unit\Paging\Compiler\Parser as Parser;
 use Facula\Unit\Paging\Compiler\Error\Compiler as Error;
@@ -475,24 +476,36 @@ class Compiler extends Base implements Implement
         $oldLength = $newLength = $newEndPos = $newPosShift = 0;
         $newResult = '';
         $tags = $this->parse();
-        $tag = array();
+        $tag = $errorLine = array();
         $data = new DataContainer();
 
         while (($tag = array_shift($tags)) !== null) {
             $oldLength = $tag['End'] - $tag['Start'];
 
-            if (!($newResult = static::compileTag(
-                $tag,
-                $result,
-                $this->sourcePool,
-                $data
-            )) && (is_bool($newResult) || is_null($newResult))) {
-                throw new Exception\TagCompileEmptyResult(
-                    $tag['Tag'],
-                    $tag['Start']
+            try {
+                if (!($newResult = static::compileTag(
+                    $tag,
+                    $result,
+                    $this->sourcePool,
+                    $data
+                )) && (is_bool($newResult) || is_null($newResult))) {
+                    throw new Exception\TagCompileEmptyResult(
+                        $tag['Tag'],
+                        $tag['Start']
+                    );
+
+                    return false;
+                }
+            } catch (TagOperatorException $e) {
+                $errorLine = $this->getLineByPosition(
+                    isset($tag['OrgStart']) ? $tag['OrgStart'] : $tag['Start']
                 );
 
-                return false;
+                throw new TagOperatorException(
+                    $errorLine['Line'],
+                    $errorLine['Column'],
+                    $e->getMessage()
+                );
             }
 
             $newLength = strlen($newResult);
@@ -501,6 +514,11 @@ class Compiler extends Base implements Implement
 
             // Shift all the positions of tag that behind current one
             foreach ($tags as $tagPosSK => $tagPosShift) {
+                if (!isset($tags[$tagPosSK]['OrgStart'], $tagPosShift['OrgEnd'])) {
+                    $tags[$tagPosSK]['OrgStart'] = $tags[$tagPosSK]['Start'];
+                    $tags[$tagPosSK]['OrgEnd'] = $tags[$tagPosSK]['End'];
+                }
+
                 if ($tagPosShift['Start'] >= $tag['End']) {
                     $tags[$tagPosSK]['Start'] += $newPosShift;
                 }

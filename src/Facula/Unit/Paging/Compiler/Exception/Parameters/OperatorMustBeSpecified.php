@@ -27,7 +27,7 @@
 
 namespace Facula\Unit\Paging\Compiler\Exception\Parameters;
 
-use Facula\Base\Prototype\Exception as Base;
+use Facula\Unit\Paging\Compiler\Exception\Parameters as Base;
 
 /**
  * OperatorMustBeSpecified Exception

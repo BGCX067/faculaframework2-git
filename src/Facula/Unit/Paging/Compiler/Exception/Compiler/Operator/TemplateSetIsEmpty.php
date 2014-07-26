@@ -27,7 +27,7 @@
 
 namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
 
-use Facula\Base\Prototype\Exception as Base;
+use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Base;
 
 /**
  * TemplateSetIsEmpty Exception

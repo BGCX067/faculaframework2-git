@@ -27,7 +27,7 @@
 
 namespace Facula\Unit\Paging\Compiler\Exception\Parser;
 
-use Facula\Base\Prototype\Exception as Base;
+use Facula\Unit\Paging\Compiler\Exception\Parser as Base;
 
 /**
  * MaxTagLimitReached Exception

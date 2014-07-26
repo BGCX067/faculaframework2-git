@@ -1,7 +1,7 @@
 <?php
 
 /**
- * InvalidAlphaNumberString Exception
+ * Compiler Base Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,16 +25,16 @@
  *
  */
 
-namespace Facula\Unit\Paging\Compiler\Exception\Parameters;
+namespace Facula\Unit\Paging\Compiler\Exception;
 
-use Facula\Unit\Paging\Compiler\Exception\Parameters as Base;
+use Facula\Base\Prototype\Exception as Base;
 
 /**
- * InvalidAlphaNumberString Exception
+ * Compiler Base Exception
  */
-class InvalidAlphaNumberString extends Base
+class Compiler extends Base
 {
     protected static $exceptionMessage = '
-        "%s" seems not a valid alpha-number value.
+        Compiler encountered a problem at line %d, column %d: %s
     ';
 }
