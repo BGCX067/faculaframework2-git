@@ -1,7 +1,7 @@
 <?php
 
 /**
- * VariableOverwriteRiskLoop Exception
+ * VariableOverwriteRisk Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -30,11 +30,11 @@ namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Base;
 
 /**
- * VariableOverwriteRiskLoop Exception
+ * VariableOverwriteRisk Exception
  */
-class VariableOverwriteRiskLoop extends Base
+class VariableOverwriteRisk extends Base
 {
     protected static $exceptionMessage = '
-        Variable "%s" may risk overwritten by a "loop" tag.
+        Variable "%s" may risk overwrite.
     ';
 }

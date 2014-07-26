@@ -27,6 +27,7 @@
 
 namespace Facula\Unit\Paging\Compiler\Operator;
 
+use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
 use Facula\Unit\Paging\Compiler\DataContainer as DataContainer;
 use Facula\Unit\Paging\Compiler\Parameters as Parameter;
@@ -35,7 +36,7 @@ use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 /**
  * Case tag compiler
  */
-class Casing implements Implement
+class Casing extends Base implements Implement
 {
     /** Data container for data exchange */
     protected $dataContainer = null;
@@ -151,6 +152,16 @@ class Casing implements Implement
             throw new Exception\CaseVarNotSpecified();
 
             return $php;
+        }
+
+        $varPureName = $this->getPureVarName($varName);
+
+        if ($this->dataContainer->checkMutex('Overwrite!' . $varPureName)) {
+            throw new Exception\CaseOverwriteRisk(
+                $varPureName
+            );
+
+            return '';
         }
 
         $php .= '<?php if (isset(' . $varName . ')) { ';

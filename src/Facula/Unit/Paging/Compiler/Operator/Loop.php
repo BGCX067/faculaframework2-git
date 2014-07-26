@@ -27,6 +27,7 @@
 
 namespace Facula\Unit\Paging\Compiler\Operator;
 
+use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
 use Facula\Unit\Paging\Compiler\DataContainer as DataContainer;
 use Facula\Unit\Paging\Compiler\Parameters as Parameter;
@@ -35,7 +36,7 @@ use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
 /**
  * Loop tag compiler
  */
-class Loop implements Implement
+class Loop extends Base implements Implement
 {
     /** Data container for data exchange */
     protected $dataContainer = null;
@@ -161,6 +162,25 @@ class Loop implements Implement
             return $php;
         }
 
+        // The loop it self may overwrite another loop
+        $varPureName = $this->getPureVarName($varName);
+
+        if ($this->dataContainer->checkMutex('Overwrite!' . $varPureName)) {
+            throw new Exception\LoopOverwriteRisk(
+                $varPureName
+            );
+
+            return '';
+        }
+
+        try {
+            // Add Overwrite mutex to tag that will create new variable
+            $this->dataContainer->setMutex('Overwrite!' . $varKeyName);
+            $this->dataContainer->setMutex('Overwrite!_' . $varKeyName);
+        } catch (Exception\MutexExisted $e) {
+            // It's fine
+        }
+
         try {
             $this->dataContainer->setMutex('Loop:' . $varKeyName);
         } catch (Exception\MutexExisted $e) {
@@ -180,12 +200,14 @@ class Loop implements Implement
         }
 
         if (!$empty) {
-            $php .= '<?php }} ?>';
+            $php .= '<?php }} ';
         } else {
             $php .= ' <?php }} else { ?>';
             $php .= $empty;
-            $php .= ' <?php } ?>';
+            $php .= ' <?php } ';
         }
+
+        $php .= ' unset($_' . $varKeyName . ', $' . $varKeyName . '); ?>';
 
         return $php;
     }

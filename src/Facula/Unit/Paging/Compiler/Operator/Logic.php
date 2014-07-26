@@ -27,11 +27,11 @@
 
 namespace Facula\Unit\Paging\Compiler\Operator;
 
+use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
 use Facula\Unit\Paging\Compiler\DataContainer as DataContainer;
 use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
-use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 
 /**
  * Logic tag compiler
@@ -291,6 +291,17 @@ class Logic extends Base implements Implement
             // I'll do this with violence
             // Syntax to check if variable has set.
             foreach ($varNames as $varName) {
+                // Check overwrite for $varName
+                $varPureName = $this->getPureVarName($varName);
+
+                if ($this->dataContainer->checkMutex('Overwrite!' . $varPureName)) {
+                    throw new Exception\LogicOverwriteRisk(
+                        $varPureName
+                    );
+
+                    return '';
+                }
+
                 $phpIsset .= 'if (!isset(' . $varName . ')) { ';
                 $phpIsset .= $varName . ' = null; ';
                 $phpIsset .= '} ';
@@ -298,6 +309,17 @@ class Logic extends Base implements Implement
 
             // The IF Logic syntax
             foreach ($stacks as $stack) {
+                // Check overwrite for $stack['Var']
+                $varPureName = $this->getPureVarName($stack['Var']);
+
+                if ($this->dataContainer->checkMutex('Overwrite!' . $varPureName)) {
+                    throw new Exception\LogicOverwriteRisk(
+                        $varPureName
+                    );
+
+                    return '';
+                }
+
                 switch ($stack['Tag']) {
                     case 'unempty':
                         $logicStack[] =
@@ -321,11 +343,32 @@ class Logic extends Base implements Implement
 
 
                     case 'equals':
+                        // $stack['Data'] will be the variable
+                        $dataVarPureName = $this->getPureVarName($stack['Data']);
+
+                        if ($this->dataContainer->checkMutex('Overwrite!' . $dataVarPureName)) {
+                            throw new Exception\LogicOverwriteRisk(
+                                $dataVarPureName
+                            );
+
+                            return '';
+                        }
                         $logicStack[] =
                             '(' . $stack['Var'] . ' == ' . $stack['Data'] . ')';
                         break;
 
                     case 'unequals':
+                        // $stack['Data'] will be the variable too
+                        $dataVarPureName = $this->getPureVarName($stack['Data']);
+
+                        if ($this->dataContainer->checkMutex('Overwrite!' . $dataVarPureName)) {
+                            throw new Exception\LogicOverwriteRisk(
+                                $dataVarPureName
+                            );
+
+                            return '';
+                        }
+
                         $logicStack[] =
                             '(' . $stack['Var'] . ' != ' . $stack['Data'] . ')';
                         break;

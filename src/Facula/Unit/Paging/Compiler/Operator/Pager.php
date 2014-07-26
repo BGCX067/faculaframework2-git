@@ -27,11 +27,11 @@
 
 namespace Facula\Unit\Paging\Compiler\Operator;
 
+use Facula\Unit\Paging\Compiler\OperatorBase as Base;
 use Facula\Unit\Paging\Compiler\OperatorImplement as Implement;
 use Facula\Unit\Paging\Compiler\DataContainer as DataContainer;
-use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Exception;
-use Facula\Unit\Paging\Compiler\OperatorBase as Base;
+use Facula\Unit\Paging\Compiler\Parameters as Parameter;
 
 /**
  * Pager tag compiler
@@ -184,6 +184,33 @@ class Pager extends Base implements Implement
 
         if (!$linkFormat) {
             throw new Exception\PagerParameterMissed('format');
+
+            return '';
+        }
+
+        $currentVarPureName = $this->getPureVarName($currentPage);
+        $maxVarPureName = $this->getPureVarName($maxDisplay);
+        $totalVarPureName = $this->getPureVarName($totalPage);
+
+        if ($this->dataContainer->checkMutex('Overwrite!' . $currentVarPureName)) {
+            throw new Exception\PagerOverwriteRisk(
+                $currentVarPureName,
+                'current'
+            );
+
+            return '';
+        } elseif ($this->dataContainer->checkMutex('Overwrite!' . $maxVarPureName)) {
+            throw new Exception\PagerOverwriteRisk(
+                $maxVarPureName,
+                'max'
+            );
+
+            return '';
+        } elseif ($this->dataContainer->checkMutex('Overwrite!' . $totalVarPureName)) {
+            throw new Exception\PagerOverwriteRisk(
+                $totalVarPureName,
+                'total'
+            );
 
             return '';
         }

@@ -37,4 +37,31 @@ abstract class OperatorBase extends Base
 {
     /** Preset a empty operator array */
     protected static $operators = array();
+
+    /**
+     * Get pure variable name with out $ and []
+     *
+     * @param string $varName Name of the variable
+     *
+     * @return string Pure variable name
+     */
+    protected function getPureVarName($varName)
+    {
+        $varPureNameMatchs = array();
+
+        if (!preg_match(
+            '/^\$([A-Za-z0-9_]+)/iu',
+            $varName,
+            $varPureNameMatchs,
+            PREG_OFFSET_CAPTURE
+        )) {
+            throw new Exception\BaseInvalidVariableName(
+                $varName
+            );
+
+            return false;
+        } else {
+            return $varPureNameMatchs[1][0];
+        }
+    }
 }

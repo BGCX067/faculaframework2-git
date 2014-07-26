@@ -1,7 +1,7 @@
 <?php
 
 /**
- * VariableInvalidName Exception
+ * LoopOverwriteRisk Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -30,11 +30,11 @@ namespace Facula\Unit\Paging\Compiler\Exception\Compiler\Operator;
 use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Base;
 
 /**
- * VariableInvalidName Exception
+ * LoopOverwriteRisk Exception
  */
-class VariableInvalidName extends Base
+class LoopOverwriteRisk extends Base
 {
     protected static $exceptionMessage = '
-        Variable name "%s" is invalid.
+        Loop "%s" may risk overwrite.
     ';
 }
