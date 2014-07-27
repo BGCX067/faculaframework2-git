@@ -167,7 +167,8 @@ class Loop extends Base implements Implement
 
         if ($this->dataContainer->checkMutex('Overwrite!' . $varPureName)) {
             throw new Exception\LoopOverwriteRisk(
-                $varPureName
+                $varPureName,
+                $varKeyName
             );
 
             return '';

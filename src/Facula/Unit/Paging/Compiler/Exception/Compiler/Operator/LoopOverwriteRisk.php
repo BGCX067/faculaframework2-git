@@ -35,6 +35,6 @@ use Facula\Unit\Paging\Compiler\Exception\Compiler\Operator as Base;
 class LoopOverwriteRisk extends Base
 {
     protected static $exceptionMessage = '
-        Loop "%s" may risk overwrite.
+        Variable "%s" for Loop "%s" may risk overwrite.
     ';
 }
