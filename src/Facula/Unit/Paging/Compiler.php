@@ -90,6 +90,9 @@ class Compiler extends Base implements Implement
     /** Data that needed for compile */
     protected $sourcePool = array();
 
+    /** Data exchanger */
+    protected $data = null;
+
     /**
      * Compile the specified string
      *
@@ -313,6 +316,7 @@ class Compiler extends Base implements Implement
         $this->sourcePool = $pool;
 
         $this->parser = static::getParser($sourceContent);
+        $this->data = new DataContainer();
     }
 
     /**
@@ -477,7 +481,11 @@ class Compiler extends Base implements Implement
         $newResult = '';
         $tags = $this->parse();
         $tag = $errorLine = array();
-        $data = new DataContainer();
+
+        foreach ($tags as $tagKey => $tagVal) {
+            $tags[$tagKey]['OrgStart'] = $tagVal['Start'];
+            $tags[$tagKey]['OrgEnd'] = $tagVal['End'];
+        }
 
         while (($tag = array_shift($tags)) !== null) {
             $oldLength = $tag['End'] - $tag['Start'];
@@ -487,7 +495,7 @@ class Compiler extends Base implements Implement
                     $tag,
                     $result,
                     $this->sourcePool,
-                    $data
+                    $this->data
                 )) && (is_bool($newResult) || is_null($newResult))) {
                     throw new Exception\TagCompileEmptyResult(
                         $tag['Tag'],
@@ -498,7 +506,7 @@ class Compiler extends Base implements Implement
                 }
             } catch (TagOperatorException $e) {
                 $errorLine = $this->getLineByPosition(
-                    isset($tag['OrgStart']) ? $tag['OrgStart'] : $tag['Start']
+                    $tag['OrgStart']
                 );
 
                 throw new TagOperatorException(
@@ -514,11 +522,6 @@ class Compiler extends Base implements Implement
 
             // Shift all the positions of tag that behind current one
             foreach ($tags as $tagPosSK => $tagPosShift) {
-                if (!isset($tags[$tagPosSK]['OrgStart'], $tagPosShift['OrgEnd'])) {
-                    $tags[$tagPosSK]['OrgStart'] = $tags[$tagPosSK]['Start'];
-                    $tags[$tagPosSK]['OrgEnd'] = $tags[$tagPosSK]['End'];
-                }
-
                 if ($tagPosShift['Start'] >= $tag['End']) {
                     $tags[$tagPosSK]['Start'] += $newPosShift;
                 }
