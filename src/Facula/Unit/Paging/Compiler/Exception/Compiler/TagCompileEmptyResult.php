@@ -35,6 +35,6 @@ use Facula\Base\Prototype\Exception as Base;
 class TagCompileEmptyResult extends Base
 {
     protected static $exceptionMessage = '
-        Tag "%s" has failed on compile in position %d.
+        Tag "%s" has failed on compiling in line %d, column %d.
     ';
 }

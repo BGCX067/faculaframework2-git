@@ -497,9 +497,14 @@ class Compiler extends Base implements Implement
                     $this->sourcePool,
                     $this->data
                 )) && (is_bool($newResult) || is_null($newResult))) {
+                    $errorLine = $this->getLineByPosition(
+                        $tag['OrgStart']
+                    );
+
                     throw new Exception\TagCompileEmptyResult(
                         $tag['Tag'],
-                        $tag['Start']
+                        $errorLine['Line'],
+                        $errorLine['Column']
                     );
 
                     return false;
@@ -512,6 +517,7 @@ class Compiler extends Base implements Implement
                 throw new TagOperatorException(
                     $errorLine['Line'],
                     $errorLine['Column'],
+                    $tag['Tag'],
                     $e->getMessage()
                 );
             }

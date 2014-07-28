@@ -35,6 +35,6 @@ use Facula\Unit\Paging\Compiler\Exception\Compiler as Base;
 class Operator extends Base
 {
     protected static $exceptionMessage = '
-        Tag Operator encountered a problem at line %d, column %d: %s
+        Tag Operator encountered a problem at line %d, column %d when handling tag "%s": %s
     ';
 }
