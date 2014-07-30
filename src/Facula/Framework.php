@@ -27,6 +27,9 @@
 
 namespace Facula;
 
+/** Inform modules the Facula Framework is declared */
+define('IN_FACULA', true);
+
 /** Version of current Facula version */
 define('__FACULAVERSION__', '0.1.0-alpha');
 
@@ -38,9 +41,6 @@ define('PROJECT_ROOT', realpath('.'));
 
 /** Separator for namespace */
 define('NAMESPACE_SEPARATER', '\\');
-
-/** Inform modules the Facula Framework is declared */
-define('IN_FACULA', true);
 
 /** Stable current time for this runtime */
 define('FACULA_TIME', isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time());
@@ -96,20 +96,9 @@ class Framework
         // File extension for PHP script files
         'PHPExt' => 'php',
 
-        // The char to split namespaces
-        'NSSplitter' => NAMESPACE_SEPARATER,
-
         // Framework namespace
         'FWNS' => array(
             'Facula' => FACULA_ROOT,
-        ),
-
-        // Cores that needed for every boot time
-        'RequiredCores' => array(
-            'debug' => 'Facula\Core\Debug',
-            'object' => 'Facula\Core\Object',
-            'request' => 'Facula\Core\Request',
-            'response' => 'Facula\Core\Response'
         ),
 
         // Max directory seek depth for components
@@ -117,6 +106,14 @@ class Framework
 
         // Max directory seek depth for packages
         'PkgMaxSeekDepth' => 1,
+    );
+
+    /** Cores that needed for every boot time */
+    protected static $requiredCores = array(
+        'debug' => 'Facula\Core\Debug',
+        'object' => 'Facula\Core\Object',
+        'request' => 'Facula\Core\Request',
+        'response' => 'Facula\Core\Response'
     );
 
     /** Mirror of Components information container */
@@ -562,7 +559,7 @@ class Framework
     protected static function splitNamespace($namespace)
     {
         return explode(
-            static::$cfg['NSSplitter'],
+            NAMESPACE_SEPARATER,
             trim(
                 str_replace(
                     array(
@@ -570,10 +567,10 @@ class Framework
                         '\\',
                         DIRECTORY_SEPARATOR
                     ),
-                    static::$cfg['NSSplitter'],
+                    NAMESPACE_SEPARATER,
                     $namespace
                 ),
-                static::$cfg['NSSplitter']
+                NAMESPACE_SEPARATER
             )
         );
     }
@@ -1184,7 +1181,7 @@ class Framework
     {
         $cores = array();
 
-        $cores += static::$cfg['RequiredCores'];
+        $cores += static::$requiredCores;
 
         if (isset($this->setting['UsingCore'])
             && is_array($this->setting['UsingCore'])) {
