@@ -49,6 +49,9 @@ abstract class Field implements Impl
     /** The value of this field */
     protected $value = null;
 
+    /** The original value of this field */
+    protected $originalValue = null;
+
     /** The default value of this field */
     protected $defaults = null;
 
@@ -259,6 +262,8 @@ abstract class Field implements Impl
     {
         $limitError = $parseError = $newValue = null;
 
+        $this->originalValue = $value;
+
         if (is_null($value)) { // We use none as unsetted value
             if ($this->required) {
                 $this->error(new FieldError('ERROR', 'REQUIRED'));
@@ -298,6 +303,16 @@ abstract class Field implements Impl
     }
 
     /**
+     * Get original input of this field
+     *
+     * @return mixed The original input
+     */
+    final public function original()
+    {
+        return $this->originalValue;
+    }
+
+    /**
      * Get field resulting object according to static::$resulting
      *
      * @return object Instance of the resulting object
@@ -306,16 +321,20 @@ abstract class Field implements Impl
     {
         $outputs = array();
         $values = $this->value();
+        $originals = $this->original();
 
         if (static::$resultingGroup && is_array($values)) {
             foreach ($values as $key => $val) {
-                $outputs[$key] = new static::$resulting($val);
+                $outputs[$key] = new static::$resulting(
+                    $val,
+                    isset($originals[$key]) ? $originals[$key] : null
+                );
             }
 
-            return new static::$resultingGroup($outputs);
+            return new static::$resultingGroup($outputs, $originals);
         }
 
-        return new static::$resulting($values);
+        return new static::$resulting($values, $originals);
     }
 
     /**

@@ -27,6 +27,7 @@
 
 namespace Facula\Unit\Input\Field;
 
+use Facula\Unit\Input\Base\Field\Error as Error;
 use Facula\Unit\Input\Base\Field as Base;
 
 /**
@@ -37,4 +38,32 @@ class Strings extends Base
     /** Set the resulting class */
     protected static $resulting =
         'Facula\Unit\Input\Resulting\Strings';
+
+    /**
+     * Check imported data, and provide a valid fail value if needed
+     *
+     * @param mixed $value Inputing value
+     * @param mixed $newValue Reference to a new input value used to replace the invalid one
+     * @param mixed $error Reference to get error feedback
+     *
+     * @return bool Return false to truncate value input, true otherwise.
+     */
+    protected function parseImport($value, &$newValue, &$errorRef)
+    {
+        if (is_string($value)) {
+            return true;
+        }
+
+        $errorRef = new Error(
+            'INVALID',
+            'DATATYPE',
+            array(
+                gettype($value)
+            )
+        );
+
+        $newValue = '';
+
+        return false;
+    }
 }

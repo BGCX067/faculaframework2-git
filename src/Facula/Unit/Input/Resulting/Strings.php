@@ -36,7 +36,7 @@ use Facula\Unit\Strings as Stringer;
 class Strings extends Resulting
 {
     /** The data type of current result */
-    protected static $dataType = 'String';
+    protected static $dataType = 'Data';
 
     /**
      * Return a sub string

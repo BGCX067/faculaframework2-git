@@ -37,7 +37,7 @@ class ArrayStringTest extends \PHPUnit_Framework_TestCase
             'validUserName2'
         );
 
-        $errors = array();
+        $errors = $original = array();
 
         $input = Input\Input::from(
             Input\Source\HttpPost::import()
@@ -50,7 +50,13 @@ class ArrayStringTest extends \PHPUnit_Framework_TestCase
                         ->minlen(1)
                 )
             )
-        )->errors($errors)->prepare();
+        )->errors($errors)->original($original)->prepare();
+
+        // $original['TestStringArray'] must equals $_POST['TestStringArray']
+        $this->assertEquals(
+            true,
+            $original['TestStringArray'] == $_POST['TestStringArray'] ? true : false
+        );
 
         // The error should be 0
         $this->assertEquals(0, count($errors));

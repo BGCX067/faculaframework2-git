@@ -7,7 +7,7 @@ namespace Facula\Unit\Input\Base\Implement;
  */
 interface Resulting
 {
-    public function __construct($value);
+    public function __construct($value, $original);
 
     public function value();
     public function original();

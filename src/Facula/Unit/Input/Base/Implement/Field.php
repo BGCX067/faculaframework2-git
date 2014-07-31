@@ -33,6 +33,9 @@ interface Field
     /** Import the source data into this field instance */
     public function import($input);
 
+    /** Get original input of this field */
+    public function original();
+
     /** Get all errors from current field instance */
     public function errors();
 

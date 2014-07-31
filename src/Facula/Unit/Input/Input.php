@@ -118,8 +118,6 @@ class Input
         $fieldName = $field->field();
         $fieldData = $this->source->get($fieldName);
 
-        $this->inputed[$fieldName] = $fieldData;
-
         if (isset($this->fields[$fieldName])) {
             throw new Exception\FieldAlreadyRegistered($fieldName);
 
@@ -187,6 +185,10 @@ class Input
     public function original(array &$inputed)
     {
         $inputed = $this->inputed;
+
+        foreach ($this->fields as $fieldName => $field) {
+            $inputed[$fieldName] = $field->original();
+        }
 
         return $this;
     }

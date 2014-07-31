@@ -35,5 +35,5 @@ use Facula\Unit\Input\Base\Resulting;
 class Booleans extends Resulting
 {
     /** The data type of current result */
-    protected static $dataType = 'Boolean';
+    protected static $dataType = 'Data';
 }

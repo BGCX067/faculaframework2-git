@@ -35,7 +35,7 @@ use Facula\Unit\Input\Base\Resulting;
 class Integers extends Resulting
 {
     /** The data type of current result */
-    protected static $dataType = 'Integer';
+    protected static $dataType = 'Data';
 
     /**
      * Convert integer into string

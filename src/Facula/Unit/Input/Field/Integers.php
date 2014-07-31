@@ -37,4 +37,36 @@ class Integers extends Base
     /** Set the resulting class */
     protected static $resulting =
         'Facula\Unit\Input\Resulting\Integers';
+
+    /**
+     * Check imported data, and provide a valid fail value if needed
+     *
+     * @param mixed $value Inputing value
+     * @param mixed $newValue Reference to a new input value used to replace the invalid one
+     * @param mixed $error Reference to get error feedback
+     *
+     * @return bool Return false to truncate value input, true otherwise.
+     */
+    protected function parseImport($value, &$newValue, &$errorRef)
+    {
+        if (is_numeric($value)) {
+            // No nothing if that is a integer
+            if (is_integer($value)) {
+                return true;
+            }
+
+            $newValue = (int)$value;
+
+            return false;
+        }
+
+        $errorRef = new Error(
+            'INVALID',
+            'DATATYPE'
+        );
+
+        $newValue = 0;
+
+        return false;
+    }
 }

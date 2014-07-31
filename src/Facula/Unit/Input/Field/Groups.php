@@ -53,13 +53,13 @@ class Groups extends Base
     /**
      * Convert import value into field
      *
-     * @param mixed $value Inputing value
-     * @param mixed $newValue Reference to a new input value used to replace the invalid one
+     * @param mixed $values Inputing value
+     * @param mixed $newValues Reference to a new input value used to replace the invalid one
      * @param mixed $error Reference to get error feedback
      *
      * @return bool Return false to truncate value input, true otherwise.
      */
-    protected function parseImport($values, &$newValue, &$errorRef)
+    protected function parseImport($values, &$newValues, &$errorRef)
     {
         $errors = array();
         $results = array();
@@ -91,7 +91,7 @@ class Groups extends Base
             }
         }
 
-        $newValue = $results;
+        $newValues = $results;
 
         return false;
     }

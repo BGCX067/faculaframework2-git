@@ -35,7 +35,7 @@ use Facula\Unit\Input\Base\Resulting;
 class Floats extends Resulting
 {
     /** The data type of current result */
-    protected static $dataType = 'Float';
+    protected static $dataType = 'Data';
 
     /**
      * Convert float into string

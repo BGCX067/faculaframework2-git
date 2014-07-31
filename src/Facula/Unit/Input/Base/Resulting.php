@@ -47,77 +47,18 @@ abstract class Resulting implements Impl
     /**
      * Constructor
      *
+     * @param mixed $value The value
+     * @param mixed $original The original value
+     *
      * @return void
      */
-    final public function __construct($value)
+    final public function __construct($value, $original)
     {
-        $this->original = $value;
+        $this->original = $original;
 
         switch (static::$dataType) {
-            case 'Integer':
-                if (is_null($value)) {
-                    $this->value = 0;
-
-                    return;
-                }
-
-                if (!is_numeric($value)) {
-                    throw new Exception\FailCastingToInteger(gettype($value));
-
-                    return false;
-                }
-
-                $this->value = (integer)$value;
-                break;
-
-            case 'Float':
-                if (is_null($value)) {
-                    $this->value = 0.0;
-
-                    return;
-                }
-
-                if (!is_numeric($value)) {
-                    throw new Exception\FailCastingToFloat(gettype($value));
-
-                    return false;
-                }
-
-                $this->value = (float)$value;
-                break;
-
-            case 'String':
-                if (is_null($value)) {
-                    $this->value = "";
-
-                    return;
-                }
-
-                if (!is_string($value) && !is_integer($value)
-                && !is_float($value) && !is_bool($value)) {
-                    throw new Exception\FailCastingToString(gettype($value));
-
-                    return false;
-                }
-
-                $this->value = (string)$value;
-                break;
-
-            case 'Boolean':
-                if (is_null($value)) {
-                    $this->value = false;
-
-                    return;
-                }
-
-                if (!is_string($value) && !is_integer($value)
-                && !is_float($value) && !is_bool($value)) {
-                    throw new Exception\FailCastingToBool(gettype($value));
-
-                    return false;
-                }
-
-                $this->value = $value ? true : false;
+            case 'Data':
+                $this->value = $value;
                 break;
 
             case 'Group':

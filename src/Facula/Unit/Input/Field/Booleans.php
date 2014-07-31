@@ -37,4 +37,24 @@ class Booleans extends Base
     /** Set the resulting class */
     protected static $resulting =
         'Facula\Unit\Input\Resulting\Booleans';
+
+    /**
+     * Check imported data, and provide a valid fail value if needed
+     *
+     * @param mixed $value Inputing value
+     * @param mixed $newValue Reference to a new input value used to replace the invalid one
+     * @param mixed $error Reference to get error feedback
+     *
+     * @return bool Return false to truncate value input, true otherwise.
+     */
+    protected function parseImport($value, &$newValue, &$errorRef)
+    {
+        if (is_bool($value)) {
+            return true;
+        }
+
+        $newValue = $value ? true : false;
+
+        return false;
+    }
 }
