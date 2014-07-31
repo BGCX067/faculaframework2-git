@@ -49,7 +49,9 @@ abstract class Route
     public static $routeSplit = '/';
 
     /** Route Map */
-    private static $routeMap = array();
+    private static $routeMap = array(
+        'Subs' => array()
+    );
 
     /** Handler that will be use when no route specified */
     private static $defaultHandler = null;
@@ -75,7 +77,7 @@ abstract class Route
         $tempLastRef = $tempLastUsedRef = null;
 
         foreach ($paths as $path => $operator) {
-            $tempLastRef = &self::$routeMap;
+            $tempLastRef = &self::$routeMap['Subs'];
 
             foreach (explode(
                 self::$routeSplit,
@@ -133,23 +135,68 @@ abstract class Route
         $lastPathOperator = null;
         $lastPathRef = &self::$routeMap;
 
+
         if (isset(self::$pathParams[0]) && self::$pathParams[0] != '') {
             foreach (self::$pathParams as $param) {
-                if (isset($lastPathRef[$param])) {
-                    $lastPathRef = &$lastPathRef[$param];
-                } elseif (isset($lastPathRef['?'])) {
-                    $lastPathRef = &$lastPathRef['?'];
-                    $usedParams[] = $param;
-                } else {
+                if (empty($lastPathRef['Subs'])) {
                     return self::execErrorHandler('PATH_NOT_FOUND');
-                    break;
                 }
 
-                if (isset($lastPathRef['Operator'])) {
-                    $lastPathOperator = &$lastPathRef['Operator'];
+                if (isset($lastPathRef['Subs'][$param])) {
+                    $lastPathRef = &$lastPathRef['Subs'][$param];
+
+                    continue;
                 }
 
-                $lastPathRef = &$lastPathRef['Subs'];
+                if (is_numeric($param)) {
+                    if (strpos($param, '.') !== false && isset($lastPathRef['Subs']['?float'])) {
+                        $lastPathRef = &$lastPathRef['Subs']['?float'];
+
+                        $usedParams[] = (float)$param;
+
+                        continue;
+                    }
+
+                    if (isset($lastPathRef['Subs']['?integer'])) {
+                        $lastPathRef = &$lastPathRef['Subs']['?integer'];
+
+                        $usedParams[] = (int)$param;
+
+                        continue;
+                    }
+                }
+
+                if (isset($lastPathRef['Subs']['?'])) {
+                    $lastPathRef = &$lastPathRef['Subs']['?'];
+
+                    $usedParams[] = $param;
+
+                    continue;
+                }
+
+                foreach ($lastPathRef['Subs'] as $subKey => $subVal) {
+                    $preg = '';
+                    $keyLen = strlen($subKey);
+
+                    if ($keyLen > 2 && $subKey[0] == '{' && $subKey[$keyLen - 1] == '}') {
+                        $preg = substr($subKey, 1, $keyLen - 2);
+                    }
+
+                    if ($preg && preg_match('/^(' . $preg . ')$/', $param)) {
+                        $lastPathRef = &$lastPathRef['Subs'][$subKey];
+
+                        $usedParams[] = $param;
+
+                        continue 2;
+                    }
+                }
+
+                return self::execErrorHandler('PATH_NOT_FOUND');
+                break;
+            }
+
+            if (isset($lastPathRef['Operator'])) {
+                $lastPathOperator = &$lastPathRef['Operator'];
             }
 
             if ($lastPathOperator) {
