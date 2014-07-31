@@ -27,6 +27,7 @@
 
 namespace Facula\Unit\Input\Field;
 
+use Facula\Unit\Input\Base\Field\Error as Error;
 use Facula\Unit\Input\Base\Field as Base;
 
 /**
