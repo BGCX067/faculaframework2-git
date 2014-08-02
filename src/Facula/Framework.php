@@ -122,6 +122,9 @@ class Framework
     /** Auto includes files */
     protected static $includes = array();
 
+    /** Initializer files which only be load when cold up */
+    protected static $initializers = array();
+
     /** Data container for Facula framework instance */
     protected $setting = array();
 
@@ -142,14 +145,19 @@ class Framework
 
             static::$profile['StartTime'] = microtime(true);
 
-            if (isset($cfg['StateCache'][0])) {
-                if (!static::$instance = static::initFromStateCache($cfg['StateCache'])) {
-                    static::$instance = new static($cfg);
+            if (empty($cfg['StateCache'])
+            || !(static::$instance = static::initFromStateCache($cfg['StateCache']))) {
+                static::$instance = new static($cfg);
 
+                // I don't like it, but we have to check again.
+                if (isset($cfg['StateCache'])) {
                     static::saveStateCache($cfg['StateCache']);
                 }
-            } else {
-                static::$instance = new static($cfg);
+
+                // Load all initializer file for cold init
+                foreach (static::$initializers as $initializerFile) {
+                    static::requireFile($initializerFile);
+                }
             }
 
             static::$instance->ready();
@@ -664,13 +672,17 @@ class Framework
         }
 
         if (is_callable($callback)) {
+
+            // Check if framework has finished init
+            // If a closure callback registered before framework finish init, it may cause
+            // no callable hook problem, because callback is not cachedable
             if (!static::$instance && is_object($callback)) {
                 trigger_error(
                     'Registering hook '
                     . $hook
                     . ' for '
                     . $processorName
-                    . '. But framework not ready not a closure callback.',
+                    . '. But framework not ready for a closure callback.',
                     E_USER_ERROR
                 );
 
@@ -1070,6 +1082,11 @@ class Framework
             // And then, register all packages
             $this->registerAllPackages();
             static::$pool['PkgInited'] = true;
+
+            // Load all include file for init user per defined object and functions
+            foreach (static::$includes as $includeFile) {
+                static::requireFile($includeFile);
+            }
 
             // Now, init up all function cores
             $this->initAllCores();
@@ -1485,9 +1502,10 @@ class Framework
                 switch ($module['Prefix']) {
                     case 'include':
                         static::$includes[] = $module['Path'];
+                        break;
 
-                        // Require the include file for init
-                        static::requireFile($module['Path']);
+                    case 'initialize':
+                        static::$initializers[] = $module['Path'];
                         break;
 
                     case 'routine':
