@@ -925,16 +925,19 @@ class Framework
      */
     public static function summonHook($hook, array $params = array(), array &$errors = array())
     {
-        $hookCall = $error = null;
-        $results = array();
+        $hookCall = null;
+        $results = $error = array();
 
         if (isset(static::$components['Hooks'][$hook])) {
             foreach (static::$components['Hooks'][$hook] as $hookName => $callback) {
-                $error = null;
+                $error = array();
                 $hookCall = $callback;
 
                 $results[$hookName] = $hookCall($params, $error);
-                $errors[$hookName] = $error;
+
+                if (!empty($error)) {
+                    $errors[$hookName] = $error;
+                }
             }
         }
 
