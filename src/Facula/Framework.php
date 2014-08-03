@@ -145,22 +145,19 @@ class Framework
 
             static::$profile['StartTime'] = microtime(true);
 
-            if (empty($cfg['StateCache'])
-            || !(static::$instance = static::initFromStateCache($cfg['StateCache']))) {
-                static::$instance = new static($cfg);
+            if (!empty($cfg['StateCache'])) {
+                if (!static::$instance = static::initFromStateCache($cfg['StateCache'])) {
+                    static::$instance = new static($cfg);
 
-                // I don't like it, but we have to check again.
-                if (isset($cfg['StateCache'])) {
                     static::saveStateCache($cfg['StateCache']);
                 }
-
-                // Load all initializer file for cold init
-                foreach (static::$initializers as $initializerFile) {
-                    static::requireFile($initializerFile);
-                }
+            } else {
+                static::$instance = new static($cfg);
             }
 
             static::$instance->ready();
+
+            static::$profile['InitedTime'] = microtime(true);
         }
 
         $cfg = null;
@@ -1093,6 +1090,8 @@ class Framework
             static::$pool['CoreInited'] = true;
 
             static::summonHook('cold');
+
+            static::$pool['ColdFinished'] = true;
         }
     }
 
@@ -1161,6 +1160,13 @@ class Framework
                     . '". But it returns false.',
                     E_USER_ERROR
                 );
+            }
+        }
+
+        // Load all initializer file for cold init
+        if (isset(static::$pool['ColdFinished'])) {
+            foreach (static::$initializers as $initializerFile) {
+                static::requireFile($initializerFile);
             }
         }
 
