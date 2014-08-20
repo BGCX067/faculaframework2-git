@@ -74,6 +74,9 @@ abstract class Template extends Factory implements Implement
         'Compiler' => 'Facula\Base\Implement\Core\Template\Compiler'
     );
 
+    /** Running mark */
+    protected static $performMark = array();
+
     /**
      * Constructor
      *
@@ -729,11 +732,15 @@ abstract class Template extends Factory implements Implement
                             $cachedTmpPage = $cachedPagePath . '.temp.php';
 
                             if (file_put_contents($cachedTmpPage, $compiledContentForCached)) {
-                                Framework::summonHook(
-                                    'template_cache_prerender_*',
-                                    array(),
-                                    $errors
-                                );
+                                if (!isset(static::$performMark['template_cache_prerendered'])) {
+                                    Framework::summonHook(
+                                        'template_cache_prerender_*',
+                                        array(),
+                                        $errors
+                                    );
+
+                                    static::$performMark['template_cache_prerendered'] = true;
+                                }
 
                                 Framework::summonHook(
                                     'template_cache_prerender_' . $templateName,
@@ -991,11 +998,15 @@ abstract class Template extends Factory implements Implement
         $renderedResult = '';
         $errors = array();
 
-        Framework::summonHook(
-            'template_render_*',
-            array(),
-            $errors
-        );
+        if (!isset(static::$performMark['template_render'])) {
+            Framework::summonHook(
+                'template_render_*',
+                array(),
+                $errors
+            );
+
+            static::$performMark['template_render'] = true;
+        }
 
         Framework::summonHook(
             'template_render_' . $templateName,
@@ -1071,11 +1082,15 @@ abstract class Template extends Factory implements Implement
         $errors = array();
         $poolCompexted = array();
 
-        Framework::summonHook(
-            'template_compile_*',
-            array(),
-            $errors
-        );
+        if (!isset(static::$performMark['template_compile'])) {
+            Framework::summonHook(
+                'template_compile_*',
+                array(),
+                $errors
+            );
+
+            static::$performMark['template_compile'] = true;
+        }
 
         Framework::summonHook(
             'template_compile_' . $templateName,
