@@ -60,6 +60,10 @@ abstract class Route
     const CALL_STRING_METHOD = 1;
     const CALL_STRING_TYPE = 2;
 
+    /** Consts for handler errors */
+    const HANDLER_FAIL_RESULT_FALSE = 0;
+    const HANDLER_FAIL_NO_HANDLER = 1;
+
     /** Character will be use to split the route */
     public static $routeSplit = '/';
 
@@ -284,98 +288,123 @@ abstract class Route
         $usedParams = self::$operatorParams = array();
         $lastPathOperator = null;
         $lastPathRef = &self::$routeMap;
+        $callResult = $callError = null;
 
-        if (isset(self::$pathParams[static::ITEM_CALL_STRING]) && self::$pathParams[static::ITEM_CALL_STRING] != '') {
-            foreach (self::$pathParams as $param) {
-                if (empty($lastPathRef['Subs'])) {
-                    return self::execErrorHandler('PATH_NOT_FOUND');
-                }
+        if (!isset(self::$pathParams[static::ITEM_CALL_STRING]) || self::$pathParams[static::ITEM_CALL_STRING] == '') {
+            self::execDefaultHandler();
 
-                if (isset($lastPathRef['Subs'][$param])) {
-                    $lastPathRef = &$lastPathRef['Subs'][$param];
+            return false;
+        }
+
+        foreach (self::$pathParams as $param) {
+            if (empty($lastPathRef['Subs'])) {
+                self::execErrorHandler('PATH_NOT_FOUND');
+
+                return false; 
+            }
+
+            if (isset($lastPathRef['Subs'][$param])) {
+                $lastPathRef = &$lastPathRef['Subs'][$param];
+
+                continue;
+            }
+
+            if (is_numeric($param)) {
+                if (strpos($param, '.') !== false && isset($lastPathRef['Subs']['?float'])) {
+                    $lastPathRef = &$lastPathRef['Subs']['?float'];
+
+                    $usedParams[] = (float)$param;
 
                     continue;
                 }
 
-                if (is_numeric($param)) {
-                    if (strpos($param, '.') !== false && isset($lastPathRef['Subs']['?float'])) {
-                        $lastPathRef = &$lastPathRef['Subs']['?float'];
+                if (isset($lastPathRef['Subs']['?integer'])) {
+                    $lastPathRef = &$lastPathRef['Subs']['?integer'];
 
-                        $usedParams[] = (float)$param;
+                    $usedParams[] = (int)$param;
 
-                        continue;
-                    }
+                    continue;
+                }
+            }
 
-                    if (isset($lastPathRef['Subs']['?integer'])) {
-                        $lastPathRef = &$lastPathRef['Subs']['?integer'];
+            if (isset($lastPathRef['Subs']['?'])) {
+                $lastPathRef = &$lastPathRef['Subs']['?'];
 
-                        $usedParams[] = (int)$param;
+                $usedParams[] = $param;
 
-                        continue;
-                    }
+                continue;
+            }
+
+            foreach ($lastPathRef['Subs'] as $subKey => $subVal) {
+                $preg = '';
+                $keyLen = strlen($subKey);
+
+                if ($keyLen > 2 && $subKey[0] == '{' && $subKey[$keyLen - 1] == '}') {
+                    $preg = substr($subKey, 1, $keyLen - 2);
                 }
 
-                if (isset($lastPathRef['Subs']['?'])) {
-                    $lastPathRef = &$lastPathRef['Subs']['?'];
+                if ($preg && preg_match('/^(' . $preg . ')$/', $param)) {
+                    $lastPathRef = &$lastPathRef['Subs'][$subKey];
 
                     $usedParams[] = $param;
 
-                    continue;
+                    continue 2;
                 }
-
-                foreach ($lastPathRef['Subs'] as $subKey => $subVal) {
-                    $preg = '';
-                    $keyLen = strlen($subKey);
-
-                    if ($keyLen > 2 && $subKey[0] == '{' && $subKey[$keyLen - 1] == '}') {
-                        $preg = substr($subKey, 1, $keyLen - 2);
-                    }
-
-                    if ($preg && preg_match('/^(' . $preg . ')$/', $param)) {
-                        $lastPathRef = &$lastPathRef['Subs'][$subKey];
-
-                        $usedParams[] = $param;
-
-                        continue 2;
-                    }
-                }
-
-                return self::execErrorHandler('PATH_NOT_FOUND');
-                break;
             }
 
-            if (isset($lastPathRef['Operator'])) {
-                $lastPathOperator = &$lastPathRef['Operator'];
-            }
+            self::execErrorHandler('PATH_NOT_FOUND');
 
-            if ($lastPathOperator) {
-                if (isset($lastPathOperator[static::ITEM_CALL_STRING])) {
-                    if (isset($lastPathOperator[static::ITEM_CALL_PARAMETER])) {
-                        foreach ($lastPathOperator[static::ITEM_CALL_PARAMETER] as $paramIndex) {
-                            if (isset($usedParams[$paramIndex])) {
-                                self::$operatorParams[] = $usedParams[$paramIndex];
-                            } else {
-                                self::$operatorParams[] = null;
-                            }
-                        }
-                    }
-
-                    return static::call(
-                        $lastPathOperator[static::ITEM_CALL_STRING],
-                        self::$operatorParams,
-                        $lastPathOperator[static::ITEM_CALL_CACHE]
-                    );
-                } else {
-                    return self::execErrorHandler('PATH_NO_OPERATOR_SPECIFIED');
-                }
-            } else {
-                return self::execErrorHandler('PATH_NO_OPERATOR');
-            }
-        } else {
-            return self::execDefaultHandler();
+            return false; 
+            break;
         }
 
-        return false;
+        if (isset($lastPathRef['Operator'])) {
+            $lastPathOperator = &$lastPathRef['Operator'];
+        }
+
+        if (!$lastPathOperator) {
+            self::execErrorHandler('PATH_NO_OPERATOR');
+
+            return false;
+        }
+
+        if (!isset($lastPathOperator[static::ITEM_CALL_STRING])) {
+            self::execErrorHandler('PATH_NO_OPERATOR_SPECIFIED');
+
+            return false;
+        }
+
+        if (isset($lastPathOperator[static::ITEM_CALL_PARAMETER])) {
+            foreach ($lastPathOperator[static::ITEM_CALL_PARAMETER] as $paramIndex) {
+                if (isset($usedParams[$paramIndex])) {
+                    self::$operatorParams[] = $usedParams[$paramIndex];
+                } else {
+                    self::$operatorParams[] = null;
+                }
+            }
+        }
+
+        $callResult = static::call(
+            $lastPathOperator[static::ITEM_CALL_STRING],
+            self::$operatorParams,
+            $lastPathOperator[static::ITEM_CALL_CACHE],
+            $callError
+        );
+
+        switch ($callError) {
+            case static::HANDLER_FAIL_RESULT_FALSE:
+                self::execErrorHandler('HANDLE_FAILED');
+                break;
+
+            case static::HANDLER_FAIL_NO_HANDLER:
+                self::execErrorHandler('HANDLE_NO_HANDLER');
+                break;
+            
+            default:
+                break;
+        }
+
+        return $callResult;
     }
 
     /**
@@ -387,11 +416,13 @@ abstract class Route
      *
      * @return mixed Return false on false, return the calling result otherwise
      */
-    protected static function call(array $callParameter, array $parameters, $cacheCall)
+    protected static function call(array $callParameter, array $parameters, $cacheCall, &$failType)
     {
+        $callResult = null;
+
         switch ($callParameter[static::CALL_STRING_TYPE]) {
             case static::CALL_TYPE_STATIC:
-                return Framework::core('object')->callFunction(
+                $callResult = Framework::core('object')->callFunction(
                     array(
                         $callParameter[static::CALL_STRING_CLASS], 
                         $callParameter[static::CALL_STRING_METHOD]
@@ -401,7 +432,7 @@ abstract class Route
                 break;
 
             case static::CALL_TYPE_INSTANCE:
-                return Framework::core('object')->callFunction(
+                $callResult = Framework::core('object')->callFunction(
                     array(
                         Framework::core('object')->getInstance(
                             $callParameter[static::CALL_STRING_CLASS], 
@@ -424,10 +455,12 @@ abstract class Route
                 $accessMethod = Framework::core('request')->getClientInfo('method');
 
                 if (!method_exists($instance, $accessMethod)) {
+                    $failType = static::HANDLER_FAIL_NO_HANDLER;
+
                     return false;
                 }
 
-                return Framework::core('object')->callFunction(
+                $callResult = Framework::core('object')->callFunction(
                     array($instance, $accessMethod),
                     $parameters
                 );
@@ -436,6 +469,12 @@ abstract class Route
             default:
                 break;
         }
+
+        if ($callResult) {
+            return $callResult;
+        }
+
+        $failType = static::HANDLER_FAIL_RESULT_FALSE;
 
         return false;
     }
