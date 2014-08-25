@@ -115,8 +115,8 @@ abstract class Route
             }
 
             if (!isset(
-                $operator[static::ITEM_CALL_STRING], 
-                $operator[static::ITEM_CALL_PARAMETER], 
+                $operator[static::ITEM_CALL_STRING],
+                $operator[static::ITEM_CALL_PARAMETER],
                 $operator[static::ITEM_CALL_CACHE]
             )) {
                 continue;
@@ -150,7 +150,7 @@ abstract class Route
 
             if (!isset($splitedCallStr[0], $splitedCallStr[1])) {
                 trigger_error(
-                    'Key parameter in calling string "' 
+                    'Key parameter in calling string "'
                     . $callString
                     . '" is lost. Please use Class::Method format.',
                     E_USER_ERROR
@@ -162,7 +162,7 @@ abstract class Route
             if (!class_exists($splitedCallStr[0])) {
                 trigger_error(
                     'The static route handler class "'
-                    . $splitedCallStr[0] .'" in calling string "' 
+                    . $splitedCallStr[0] .'" in calling string "'
                     . $callString
                     . '" can\'t be found.',
                     E_USER_ERROR
@@ -174,9 +174,9 @@ abstract class Route
             if (!method_exists($splitedCallStr[0], $splitedCallStr[1])) {
                 trigger_error(
                     'The static method "'
-                    . $splitedCallStr[1] 
+                    . $splitedCallStr[1]
                     . '" for handler class "'
-                    . $splitedCallStr[0] .'" in calling string "' 
+                    . $splitedCallStr[0] .'" in calling string "'
                     . $callString
                     . '" can\'t be found.',
                     E_USER_ERROR
@@ -193,7 +193,7 @@ abstract class Route
 
             if (!isset($splitedCallStr[0], $splitedCallStr[1])) {
                 trigger_error(
-                    'Key parameter in calling string "' 
+                    'Key parameter in calling string "'
                     . $callString
                     . '" is lost. Please use Class::Method format.',
                     E_USER_ERROR
@@ -205,7 +205,7 @@ abstract class Route
             if (!class_exists($splitedCallStr[0])) {
                 trigger_error(
                     'The route handler class "'
-                    . $splitedCallStr[0] .'" in calling string "' 
+                    . $splitedCallStr[0] .'" in calling string "'
                     . $callString
                     . '" can\'t be found.',
                     E_USER_ERROR
@@ -217,9 +217,9 @@ abstract class Route
             if (!method_exists($splitedCallStr[0], $splitedCallStr[1])) {
                 trigger_error(
                     'The method "'
-                    . $splitedCallStr[1] 
+                    . $splitedCallStr[1]
                     . '" for handler class "'
-                    . $splitedCallStr[0] .'" in calling string "' 
+                    . $splitedCallStr[0] .'" in calling string "'
                     . $callString
                     . '" can\'t be found.',
                     E_USER_ERROR
@@ -235,7 +235,7 @@ abstract class Route
             if (!class_exists($callString)) {
                 trigger_error(
                     'The handler class "'
-                    . $callString 
+                    . $callString
                     . '" can\'t be found.',
                     E_USER_ERROR
                 );
@@ -300,7 +300,7 @@ abstract class Route
             if (empty($lastPathRef['Subs'])) {
                 self::execErrorHandler('PATH_NOT_FOUND');
 
-                return false; 
+                return false;
             }
 
             if (isset($lastPathRef['Subs'][$param])) {
@@ -354,7 +354,7 @@ abstract class Route
 
             self::execErrorHandler('PATH_NOT_FOUND');
 
-            return false; 
+            return false;
             break;
         }
 
@@ -399,7 +399,7 @@ abstract class Route
             case static::HANDLER_FAIL_NO_HANDLER:
                 self::execErrorHandler('HANDLE_NO_HANDLER');
                 break;
-            
+
             default:
                 break;
         }
@@ -424,9 +424,9 @@ abstract class Route
             case static::CALL_TYPE_STATIC:
                 $callResult = Framework::core('object')->callFunction(
                     array(
-                        $callParameter[static::CALL_STRING_CLASS], 
+                        $callParameter[static::CALL_STRING_CLASS],
                         $callParameter[static::CALL_STRING_METHOD]
-                    ), 
+                    ),
                     $parameters
                 );
                 break;
@@ -435,8 +435,8 @@ abstract class Route
                 $callResult = Framework::core('object')->callFunction(
                     array(
                         Framework::core('object')->getInstance(
-                            $callParameter[static::CALL_STRING_CLASS], 
-                            array(), 
+                            $callParameter[static::CALL_STRING_CLASS],
+                            array(),
                             $cacheCall
                         ),
                         $callParameter[static::CALL_STRING_METHOD]
@@ -447,8 +447,8 @@ abstract class Route
 
             case static::CALL_TYPE_METHOD:
                 $instance = Framework::core('object')->getInstance(
-                    $callParameter[static::CALL_STRING_CLASS], 
-                    array(), 
+                    $callParameter[static::CALL_STRING_CLASS],
+                    array(),
                     $cacheCall
                 );
 
