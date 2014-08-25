@@ -98,6 +98,10 @@ class Template extends Base
             Trying to load default language file %s, but the file seems not existed.
         ',
 
+        'LANGUAGE_KEY_ALREADY_DECLARED' => '
+            Trying declare language key "%s", but it already assigned with value "%s" elsewhere.
+        ',
+
         'RENDER_CLASS_NOTFOUND' => '
             Template render class "%s" was not found.
         ',

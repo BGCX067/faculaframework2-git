@@ -30,6 +30,8 @@ namespace Facula\Base\Prototype\Core;
 use Facula\Base\Error\Core\Object as Error;
 use Facula\Base\Prototype\Core as Factory;
 use Facula\Base\Implement\Core\Object as Implement;
+use Facula\Base\Tool\File\PathParser;
+use Facula\Framework;
 
 /**
  * Prototype class for Object for make core remaking more easy
@@ -72,7 +74,7 @@ abstract class Object extends Factory implements Implement
         $this->configs = array(
             'OCRoot' => isset($cfg['ObjectCacheRoot'])
                         && is_dir($cfg['ObjectCacheRoot'])
-                        ? \Facula\Base\Tool\File\PathParser::get($cfg['ObjectCacheRoot']) : '',
+                        ? PathParser::get($cfg['ObjectCacheRoot']) : '',
 
             'OCExpire' => isset($cfg['ObjectCacheExpire'])
                         && $cfg['ObjectCacheExpire']
@@ -169,13 +171,13 @@ abstract class Object extends Factory implements Implement
                                             . '.php';
             $instance->cachedObjectSaveTime = FACULA_TIME;
 
-            \Facula\Framework::core('debug')->criticalSection(true);
+            Framework::core('debug')->criticalSection(true);
 
             if (file_exists($instance->cachedObjectFilePath)) {
                 unlink($instance->cachedObjectFilePath);
             }
 
-            \Facula\Framework::core('debug')->criticalSection(false);
+            Framework::core('debug')->criticalSection(false);
 
             return file_put_contents(
                 $instance->cachedObjectFilePath,
@@ -541,7 +543,7 @@ abstract class Object extends Factory implements Implement
         if ($handler = $this->getInstance($appParam[0], $args, $cache)) {
             if (isset($appParam[1])
                 && method_exists($handler, $appParam[1])) {
-                $hookResult = \Facula\Framework::summonHook(
+                $hookResult = Framework::summonHook(
                     'call_' . $appParam[0] . '::' . $appParam[1] . '_before',
                     $args,
                     $errors
@@ -555,7 +557,7 @@ abstract class Object extends Factory implements Implement
                     $args
                 );
 
-                \Facula\Framework::summonHook(
+                Framework::summonHook(
                     'call_' . $appParam[0] . '::' . $appParam[1] . '_after',
                     array(
                         'Call' => $callResult,
@@ -564,7 +566,7 @@ abstract class Object extends Factory implements Implement
                     $errors
                 );
             } elseif (method_exists($handler, 'run')) {
-                $hookResult = \Facula\Framework::summonHook(
+                $hookResult = Framework::summonHook(
                     'call_' . $appParam[0] . '_before',
                     $args,
                     $errors
@@ -578,7 +580,7 @@ abstract class Object extends Factory implements Implement
                     $args
                 );
 
-                \Facula\Framework::summonHook(
+                Framework::summonHook(
                     'call_' . $appParam[0] . '_after',
                     array(
                         'Call' => $callResult,

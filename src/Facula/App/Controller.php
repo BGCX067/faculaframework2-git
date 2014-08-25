@@ -126,28 +126,6 @@ abstract class Controller extends Setting
     }
 
     /**
-     * Default runner that will be automatically call by
-     * Object core if no runner specified.
-     *
-     * In this very case, it will get HTTP METHOD, and use that to call
-     * specific class method for request processing.
-     *
-     * @return mixed Return the result of the method when it's found, false otherwise.
-     */
-    final public function run()
-    {
-        $method = $this->request->getClientInfo('method');
-
-        if (method_exists($this, $method)) {
-            return $this->$method();
-        } else {
-            $this->response->setHeader('HTTP/1.1 405 Method Not Allowed');
-            $this->response->send();
-            return false;
-        }
-    }
-
-    /**
      * Get a parameter from GET request
      *
      * @param string $key The key name of GET parameter

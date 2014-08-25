@@ -289,6 +289,8 @@ abstract class Request extends Factory implements Implement
             if (!isset($val[$this->configs['MaxHeaderSize']])) {
                 switch (strtoupper($key)) {
                     case 'REQUEST_METHOD':
+                        $val = strtoupper($val);
+
                         // Determine the type of request method.
                         $this->requestInfo['method'] = isset(static::$requestMethods[$val])
                             ? static::$requestMethods[$val] : 'get';

@@ -475,7 +475,7 @@ abstract class Template extends Factory implements Implement
         $fileMap = array();
         $fileMapFileName = $this->configs['Compiled']
             . DIRECTORY_SEPARATOR
-            . 'cachedData.fileMap.php';
+            . 'cachedData.templateFileMap.php';
 
         if (!empty(static::$fileMap)) {
             return true;
@@ -1221,7 +1221,7 @@ abstract class Template extends Factory implements Implement
                             . 'compiledLanguage.'
                             . $this->pool['Language'] . '.php';
 
-        $langContent = '';
+        $langContent = $langKey = $langVal = '';
 
         if (!$this->configs['Renew']
             && is_readable($compiledLangFile)
@@ -1278,11 +1278,28 @@ abstract class Template extends Factory implements Implement
             foreach ($langMapPre as $lang) {
                 $langMapTemp = explode('=', $lang, 2);
 
-                if (isset($langMapTemp[1])) {
+                if (!isset($langMapTemp[1])) {
                     // If $langMapTemp[1] not set, may means this is just a comment.
-                    $this->pool['LanguageMap'][trim($langMapTemp[0])] =
-                        trim($langMapTemp[1]);
+                    continue;
                 }
+
+                $langKey = trim($langMapTemp[0]);
+                $langVal = trim($langMapTemp[1]);
+
+                if (isset($this->pool['LanguageMap'][$langKey])) {
+                    new Error(
+                        'LANGUAGE_KEY_ALREADY_DECLARED',
+                        array(
+                            $langKey,
+                            $this->pool['LanguageMap'][$langKey]
+                        ),
+                        'WARNING'
+                    );
+                    
+                    break;
+                }
+
+                $this->pool['LanguageMap'][$langKey] = $langVal;
             }
 
             Framework::core('debug')->criticalSection(true);

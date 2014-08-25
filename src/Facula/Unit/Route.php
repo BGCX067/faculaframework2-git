@@ -45,6 +45,21 @@ use Facula\Framework;
  */
 abstract class Route
 {
+    /** Consts for call type */
+    const CALL_TYPE_STATIC = 1;
+    const CALL_TYPE_INSTANCE = 2;
+    const CALL_TYPE_METHOD = 3;
+
+    /** Consts for array indexes of route item */
+    const ITEM_CALL_STRING = 0;
+    const ITEM_CALL_PARAMETER = 1;
+    const ITEM_CALL_CACHE = 2;
+
+    /** Consts for call methods */
+    const CALL_STRING_CLASS = 0;
+    const CALL_STRING_METHOD = 1;
+    const CALL_STRING_TYPE = 2;
+
     /** Character will be use to split the route */
     public static $routeSplit = '/';
 
@@ -95,10 +110,145 @@ abstract class Route
                 }
             }
 
-            $tempLastUsedRef['Operator'] = $operator;
+            if (!isset(
+                $operator[static::ITEM_CALL_STRING], 
+                $operator[static::ITEM_CALL_PARAMETER], 
+                $operator[static::ITEM_CALL_CACHE]
+            )) {
+                continue;
+            }
+
+            $tempLastUsedRef['Operator'] = array(
+                static::ITEM_CALL_STRING => static::parseCallString($operator[static::ITEM_CALL_STRING]),
+                static::ITEM_CALL_PARAMETER => $operator[static::ITEM_CALL_PARAMETER],
+                static::ITEM_CALL_CACHE => $operator[static::ITEM_CALL_CACHE],
+            );
         }
 
         return true;
+    }
+
+    /**
+     * Parse the call string
+     *
+     * @param string $callString Calling string
+     *
+     * @return array Parsed result
+     */
+    public static function parseCallString($callString)
+    {
+        $callType = 0;
+        $class = '';
+        $method = '';
+
+        if (strpos($callString, '::') !== false) {
+            $splitedCallStr = explode('::', $callString, 2);
+
+            if (!isset($splitedCallStr[0], $splitedCallStr[1])) {
+                trigger_error(
+                    'Key parameter in calling string "' 
+                    . $callString
+                    . '" is lost. Please use Class::Method format.',
+                    E_USER_ERROR
+                );
+
+                return false;
+            }
+
+            if (!class_exists($splitedCallStr[0])) {
+                trigger_error(
+                    'The static route handler class "'
+                    . $splitedCallStr[0] .'" in calling string "' 
+                    . $callString
+                    . '" can\'t be found.',
+                    E_USER_ERROR
+                );
+
+                return false;
+            }
+
+            if (!method_exists($splitedCallStr[0], $splitedCallStr[1])) {
+                trigger_error(
+                    'The static method "'
+                    . $splitedCallStr[1] 
+                    . '" for handler class "'
+                    . $splitedCallStr[0] .'" in calling string "' 
+                    . $callString
+                    . '" can\'t be found.',
+                    E_USER_ERROR
+                );
+
+                return false;
+            }
+
+            $class = $splitedCallStr[0];
+            $method = $splitedCallStr[1];
+            $callType = static::CALL_TYPE_STATIC;
+        } elseif (strpos($callString, '->') !== false) {
+            $splitedCallStr = explode('->', $callString, 2);
+
+            if (!isset($splitedCallStr[0], $splitedCallStr[1])) {
+                trigger_error(
+                    'Key parameter in calling string "' 
+                    . $callString
+                    . '" is lost. Please use Class::Method format.',
+                    E_USER_ERROR
+                );
+
+                return false;
+            }
+
+            if (!class_exists($splitedCallStr[0])) {
+                trigger_error(
+                    'The route handler class "'
+                    . $splitedCallStr[0] .'" in calling string "' 
+                    . $callString
+                    . '" can\'t be found.',
+                    E_USER_ERROR
+                );
+
+                return false;
+            }
+
+            if (!method_exists($splitedCallStr[0], $splitedCallStr[1])) {
+                trigger_error(
+                    'The method "'
+                    . $splitedCallStr[1] 
+                    . '" for handler class "'
+                    . $splitedCallStr[0] .'" in calling string "' 
+                    . $callString
+                    . '" can\'t be found.',
+                    E_USER_ERROR
+                );
+
+                return false;
+            }
+
+            $class = $splitedCallStr[0];
+            $method = $splitedCallStr[1];
+            $callType = static::CALL_TYPE_INSTANCE;
+        } else {
+            if (!class_exists($callString)) {
+                trigger_error(
+                    'The handler class "'
+                    . $callString 
+                    . '" can\'t be found.',
+                    E_USER_ERROR
+                );
+
+                return false;
+            }
+
+            $class = $callString;
+            $method = '';
+            $callType = static::CALL_TYPE_METHOD;
+        }
+
+        return array(
+            static::CALL_STRING_CLASS => $class,
+            static::CALL_STRING_METHOD => $method,
+            static::CALL_STRING_TYPE => $callType,
+        );
     }
 
     /**
@@ -135,8 +285,7 @@ abstract class Route
         $lastPathOperator = null;
         $lastPathRef = &self::$routeMap;
 
-
-        if (isset(self::$pathParams[0]) && self::$pathParams[0] != '') {
+        if (isset(self::$pathParams[static::ITEM_CALL_STRING]) && self::$pathParams[static::ITEM_CALL_STRING] != '') {
             foreach (self::$pathParams as $param) {
                 if (empty($lastPathRef['Subs'])) {
                     return self::execErrorHandler('PATH_NOT_FOUND');
@@ -200,9 +349,9 @@ abstract class Route
             }
 
             if ($lastPathOperator) {
-                if (isset($lastPathOperator[0])) {
-                    if (isset($lastPathOperator[1])) {
-                        foreach ($lastPathOperator[1] as $paramIndex) {
+                if (isset($lastPathOperator[static::ITEM_CALL_STRING])) {
+                    if (isset($lastPathOperator[static::ITEM_CALL_PARAMETER])) {
+                        foreach ($lastPathOperator[static::ITEM_CALL_PARAMETER] as $paramIndex) {
                             if (isset($usedParams[$paramIndex])) {
                                 self::$operatorParams[] = $usedParams[$paramIndex];
                             } else {
@@ -211,10 +360,10 @@ abstract class Route
                         }
                     }
 
-                    return Framework::core('object')->run(
-                        $lastPathOperator[0],
+                    return static::call(
+                        $lastPathOperator[static::ITEM_CALL_STRING],
                         self::$operatorParams,
-                        true
+                        $lastPathOperator[static::ITEM_CALL_CACHE]
                     );
                 } else {
                     return self::execErrorHandler('PATH_NO_OPERATOR_SPECIFIED');
@@ -224,6 +373,68 @@ abstract class Route
             }
         } else {
             return self::execDefaultHandler();
+        }
+
+        return false;
+    }
+
+    /**
+     * Call path handler
+     *
+     * @param array $callParameter The combined class and method name
+     * @param array $parameters Parameters used for calling
+     * @param bool $cacheCall Make object function core cache the class instance
+     *
+     * @return mixed Return false on false, return the calling result otherwise
+     */
+    protected static function call(array $callParameter, array $parameters, $cacheCall)
+    {
+        switch ($callParameter[static::CALL_STRING_TYPE]) {
+            case static::CALL_TYPE_STATIC:
+                return Framework::core('object')->callFunction(
+                    array(
+                        $callParameter[static::CALL_STRING_CLASS], 
+                        $callParameter[static::CALL_STRING_METHOD]
+                    ), 
+                    $parameters
+                );
+                break;
+
+            case static::CALL_TYPE_INSTANCE:
+                return Framework::core('object')->callFunction(
+                    array(
+                        Framework::core('object')->getInstance(
+                            $callParameter[static::CALL_STRING_CLASS], 
+                            array(), 
+                            $cacheCall
+                        ),
+                        $callParameter[static::CALL_STRING_METHOD]
+                    ),
+                    $parameters
+                );
+                break;
+
+            case static::CALL_TYPE_METHOD:
+                $instance = Framework::core('object')->getInstance(
+                    $callParameter[static::CALL_STRING_CLASS], 
+                    array(), 
+                    $cacheCall
+                );
+
+                $accessMethod = Framework::core('request')->getClientInfo('method');
+
+                if (!method_exists($instance, $accessMethod)) {
+                    return false;
+                }
+
+                return Framework::core('object')->callFunction(
+                    array($instance, $accessMethod),
+                    $parameters
+                );
+                break;
+
+            default:
+                break;
         }
 
         return false;

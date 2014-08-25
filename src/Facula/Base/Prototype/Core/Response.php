@@ -30,6 +30,7 @@ namespace Facula\Base\Prototype\Core;
 use Facula\Base\Error\Core\Response as Error;
 use Facula\Base\Prototype\Core as Factory;
 use Facula\Base\Implement\Core\Response as Implement;
+use Facula\Framework;
 
 /**
  * Prototype class for Response core for make core remaking more easy
@@ -296,7 +297,7 @@ abstract class Response extends Factory implements Implement
      */
     public function inited()
     {
-        if (\Facula\Framework::core('request')->getClientInfo('gzip') && $this->configs['GZIPEnabled']) {
+        if (Framework::core('request')->getClientInfo('gzip') && $this->configs['GZIPEnabled']) {
             $this->configs['UseGZIP'] = true;
         } else {
             $this->configs['UseGZIP'] = false;
@@ -325,15 +326,15 @@ abstract class Response extends Factory implements Implement
         $type = $type ? $type : 'htm';
 
         // Assume we will finish this application after output, calc belowing profile data
-        \Facula\Framework::$profile['MemoryUsage'] = memory_get_usage(true);
-        \Facula\Framework::$profile['MemoryPeak'] = memory_get_peak_usage(true);
+        Framework::$profile['MemoryUsage'] = memory_get_usage(true);
+        Framework::$profile['MemoryPeak'] = memory_get_peak_usage(true);
 
-        \Facula\Framework::$profile['OutputTime'] = microtime(true);
-        \Facula\Framework::$profile['ProductionTime'] =
-            \Facula\Framework::$profile['OutputTime'] - \Facula\Framework::$profile['StartTime'];
+        Framework::$profile['OutputTime'] = microtime(true);
+        Framework::$profile['ProductionTime'] =
+            Framework::$profile['OutputTime'] - Framework::$profile['StartTime'];
 
         // Check size of response_finished hook queue
-        if (\Facula\Framework::getHookSize('response_finished') > 0) {
+        if (Framework::getHookSize('response_finished') > 0) {
             ignore_user_abort(true);
 
             $thereIndiscernible = true;
@@ -350,7 +351,7 @@ abstract class Response extends Factory implements Implement
 
             $finalContent = static::$content;
 
-            $hookResult = \Facula\Framework::summonHook(
+            $hookResult = Framework::summonHook(
                 'response_preparing',
                 array($finalContent),
                 $errors
@@ -377,14 +378,14 @@ abstract class Response extends Factory implements Implement
             if ($this->configs['PSignal']) {
                 header(
                     'X-Runtime: '
-                    . round(\Facula\Framework::$profile['ProductionTime']  * 1000, 2)
-                    . 'ms (' . \Facula\Framework::$profile['ProductionTime'] . 's)'
+                    . round(Framework::$profile['ProductionTime']  * 1000, 2)
+                    . 'ms (' . Framework::$profile['ProductionTime'] . 's)'
                 );
 
                 header(
                     'X-Memory: '
-                    . (\Facula\Framework::$profile['MemoryUsage'] / 1024)
-                    . 'kb / ' . (\Facula\Framework::$profile['MemoryPeak'] / 1024) . 'kb'
+                    . (Framework::$profile['MemoryUsage'] / 1024)
+                    . 'kb / ' . (Framework::$profile['MemoryPeak'] / 1024) . 'kb'
                 );
             }
 
@@ -410,7 +411,7 @@ abstract class Response extends Factory implements Implement
                 header('Connection: Close');
             }
 
-            $hookResult = \Facula\Framework::summonHook(
+            $hookResult = Framework::summonHook(
                 'response_sending',
                 array($finalContent),
                 $errors
@@ -437,7 +438,7 @@ abstract class Response extends Factory implements Implement
             }
 
             if ($thereIndiscernible) {
-                \Facula\Framework::summonHook(
+                Framework::summonHook(
                     'response_finished',
                     $hookResult,
                     $errors

@@ -31,6 +31,7 @@ use Facula\Base\Error\Core\Cache as Error;
 use Facula\Base\Prototype\Core as Factory;
 use Facula\Base\Implement\Core\Cache as Implement;
 use Facula\Base\Tool\File\PathParser as PathParser;
+use Facula\Framework;
 
 /**
  * Prototype class for Cache core for make core remaking more easy
@@ -169,13 +170,13 @@ abstract class Cache extends Factory implements Implement
                     2 => $data ? $data : null, // Data
                 );
 
-                \Facula\Framework::core('debug')->criticalSection(true);
+                Framework::core('debug')->criticalSection(true);
 
                 if (file_exists($file)) {
                     unlink($file);
                 }
 
-                \Facula\Framework::core('debug')->criticalSection(false);
+                Framework::core('debug')->criticalSection(false);
 
                 return file_put_contents(
                     $file,

@@ -30,6 +30,7 @@ namespace Facula\Base\Prototype\Core;
 use Facula\Base\Error\Core\PDO as Error;
 use Facula\Base\Prototype\Core as Factory;
 use Facula\Base\Implement\Core\PDO as Implement;
+use Facula\Framework;
 
 /**
  * Prototype class for PDO core for make core remaking more easy
@@ -543,7 +544,7 @@ abstract class PDO extends Factory implements Implement
 
         if (!isset($this->map['DBConn'][$dbIndex]['Connection'])) {
             // Enter Critical Section so no error below belowing code will cause error
-            \Facula\Framework::core('debug')->criticalSection(true);
+            Framework::core('debug')->criticalSection(true);
 
             try {
                 $dbh = new \PDO(
@@ -572,7 +573,7 @@ abstract class PDO extends Factory implements Implement
             }
 
             // Exit Critical Section, restore error caught
-            \Facula\Framework::core('debug')->criticalSection(false);
+            Framework::core('debug')->criticalSection(false);
 
             if ($successed) {
                 $this->map['DBConn'][$dbIndex]['Connection'] = &$dbh;

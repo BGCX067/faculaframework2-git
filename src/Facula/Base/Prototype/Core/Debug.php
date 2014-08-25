@@ -30,6 +30,7 @@ namespace Facula\Base\Prototype\Core;
 use Facula\Base\Prototype\Core as Factory;
 use Facula\Base\Implement\Core\Debug as Implement;
 use Facula\Base\Tool\File\PathParser as PathParser;
+use Facula\Framework;
 
 /**
  * Prototype class for Debug core for make core remaking more easy
@@ -520,7 +521,7 @@ abstract class Debug extends Factory implements Implement
 
         $date = date(DATE_ATOM, $time);
 
-        $ip = \Facula\Framework::core('request')->getClientInfo('ip');
+        $ip = Framework::core('request')->getClientInfo('ip');
 
         if ($this->configs['LogRoot']) {
             $datefileName = date('Y-m-d H', $time);
@@ -613,7 +614,7 @@ abstract class Debug extends Factory implements Implement
     {
         if (!empty($this->errorRecords)
             && $this->configs['LogServer']['Enabled']) {
-            $app = \Facula\Framework::getCoreInfo();
+            $app = Framework::getCoreInfo();
 
             $data = array(
                 'KEY' => $this->configs['LogServer']['Key'],

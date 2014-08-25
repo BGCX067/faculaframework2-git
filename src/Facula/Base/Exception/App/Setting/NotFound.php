@@ -35,6 +35,6 @@ use Facula\Base\Prototype\Exception as Base;
 class NotFound extends Base
 {
     protected static $exceptionMessage = '
-        The item %s can\'t be found in Setting container.
+        The item "%s" can\'t be found in Setting container.
     ';
 }

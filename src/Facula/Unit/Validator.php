@@ -40,8 +40,9 @@ abstract class Validator
         'standard' => '/^[A-Za-z0-9\x{007f}-\x{ffe5}\.\_\@\-\:\#\,\s]+$/u',
         'alphanumber' => '/^[A-Za-z0-9]+$/u',
         'filename' => '/^[A-Za-z0-9\s\(\)\.\-\,\_\x{007f}-\x{ffe5}]+$/u',
-        'url' => '/^[a-zA-Z0-9]+\:\/\/[a-zA-Z0-9\&\;\.\#\/\?\-\=\_\+\:\%\,]+$/u',
-        'urlelement' => '/[a-zA-Z0-9\.\/\?\-\=\&\_\+\:\%\,]+/u',
+        'url' => '/^[a-zA-Z0-9]+\:\/\/[a-zA-Z0-9\&\;\.\#\/\?\-\=\_\+\:\%\,]+$/u', // Is a valid URI address
+        'urlelement' => '/^[a-zA-Z0-9\.\/\?\-\=\&\_\+\:\%\,]+$/u', // All chars that allowed in URL
+        'urlkey' => '/^[a-zA-Z0-9\-\x{007f}-\x{ffe5}]+$/u', // Valid value as URL parameter
         'number' => '/^[0-9]+$/u',
         'integer' => '/^(\+|\-|)[0-9]+$/u',
         'float' => '/^(\+|\-|)[0-9]+(\.[0-9]|)+$/u',
