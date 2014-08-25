@@ -32,7 +32,7 @@ use Facula\Base\Prototype\Exception as Base;
 /**
  * Parameter Base Exception
  */
-class Parameter extends Base
+class Parameters extends Base
 {
     protected static $exceptionMessage = '
         Parameter encountered a problem: %s
