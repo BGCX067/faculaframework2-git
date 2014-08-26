@@ -264,7 +264,8 @@ abstract class Field implements Impl
 
         $this->originalValue = $value;
 
-        if (is_null($value)) { // We use none as unsetted value
+        if (is_null($value)
+        || (is_string($value) && $value == '')) {
             if ($this->required) {
                 $this->error(new FieldError('ERROR', 'REQUIRED'));
 

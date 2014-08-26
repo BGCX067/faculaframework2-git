@@ -54,13 +54,24 @@ class Maxmin extends Base
      */
     public function qualified(&$value, &$error)
     {
-        if (!is_integer($value) && !is_float($value)) {
+        $inputedVal = 0;
+
+        if (is_string($value) && is_numeric($value)) {
+            if (strpos($value, '.')) { // Check if is float
+                $inputedVal = (float)$value;
+            } else {
+                $inputedVal = (int)$value;
+            }
+        } elseif (is_integer($value) || is_float($value)) {
+            // Valid, do nothing
+            $inputedVal = $value;
+        } else {
             $error = new Error('INVALID', 'DATATYPE', array(gettype($value)));
 
             return false;
         }
 
-        if ($value > $this->max) {
+        if ($inputedVal > $this->max) {
             $error = new Error('INVALID', 'TOOLARGE', array(
                 'Max' => $this->max
             ));
@@ -68,7 +79,7 @@ class Maxmin extends Base
             return false;
         }
 
-        if ($value < $this->min) {
+        if ($inputedVal < $this->min) {
             $error = new Error('INVALID', 'TOOSMALL', array(
                 'Min' => $this->min
             ));
