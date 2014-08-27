@@ -61,7 +61,19 @@ class HttpPost extends Source
      */
     public function get($fieldName)
     {
-        return $this->request->getPost($fieldName);
+        $inputVal = $this->request->getPost($fieldName);
+
+        if (is_null($inputVal)) {
+            return null;
+        } elseif ((is_string($inputVal)
+        || is_numeric($inputVal)
+        || is_integer($inputVal)
+        || is_float($inputVal))
+        && !$inputVal) {
+            return null;
+        }
+
+        return $inputVal;
     }
 
     /**

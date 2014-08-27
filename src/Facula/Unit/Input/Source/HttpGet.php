@@ -61,7 +61,19 @@ class HttpGet extends Source
      */
     public function get($fieldName)
     {
-        return $this->request->getGet($fieldName);
+        $inputVal = $this->request->getGet($fieldName);
+
+        if (is_null($inputVal)) {
+            return null;
+        } elseif ((is_string($inputVal)
+        || is_numeric($inputVal)
+        || is_integer($inputVal)
+        || is_float($inputVal))
+        && !$inputVal) {
+            return null;
+        }
+
+        return $inputVal;
     }
 
     /**
