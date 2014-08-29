@@ -33,7 +33,7 @@ use Facula\Unit\Query\OperatorImplement;
 /**
  * Query PostgreSQL
  */
-class Pgsql implements OperatorImplement
+class pgSQL implements OperatorImplement
 {
     /** Table name */
     private $table = '';
@@ -296,11 +296,11 @@ class Pgsql implements OperatorImplement
                     break;
 
                 case 'LIKE':
-                    $sql .= '("' . $where['Field'] . '" LIKE ' . $where['Value'] . ')';
+                    $sql .= '("' . $where['Field'] . '" LIKE ' . $where['Value'] . ' ESCAPE \'!\')';
                     break;
 
                 case 'NOT LIKE':
-                    $sql .= '("' . $where['Field'] . '" NOT LIKE ' . $where['Value'] . ')';
+                    $sql .= '("' . $where['Field'] . '" NOT LIKE ' . $where['Value'] . ' ESCAPE \'!\')';
                     break;
 
                 case 'BETWEEN':
@@ -439,6 +439,49 @@ class Pgsql implements OperatorImplement
         }
 
         return $sql;
+    }
+
+    /**
+     * Replace some specific string for query accuracy
+     *
+     * @param string $mode Escape mode
+     * @param mixed $value Value to escape
+     *
+     * @return mixed Escaped value
+     */
+    public function escape($mode, $value)
+    {
+        switch ($mode) {
+            case 'LIKE %':
+                return str_replace(
+                    array('!', '_', '%'),
+                    array('!!', '!_', '!%'),
+                    $value
+                ) . '%';
+                break;
+
+            case '% LIKE':
+                return '%' . str_replace(
+                    array('!', '_', '%'),
+                    array('!!', '!_', '!%'),
+                    $value
+                );
+                break;
+
+            case '% LIKE %':
+                return '%' . str_replace(
+                    array('!', '_', '%'),
+                    array('!!', '!_', '!%'),
+                    $value
+                ) . '%';
+                break;
+
+            default:
+                throw new Exception\UnsupportedEscapeMode($mode);
+                break;
+        }
+
+        return false;
     }
 
     /**

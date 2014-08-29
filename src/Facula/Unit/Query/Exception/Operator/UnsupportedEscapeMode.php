@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Query Adapter Interface
+ * UnsupportedEscapeMode Exception
  *
  * Facula Framework 2014 (C) Rain Lee
  *
@@ -25,20 +25,16 @@
  *
  */
 
-namespace Facula\Unit\Query;
+namespace Facula\Unit\Query\Exception\Operator;
+
+use Facula\Base\Prototype\Exception as Base;
 
 /**
- * Interface for Query adapters
+ * UnsupportedEscapeMode Exception
  */
-interface OperatorImplement
+class UnsupportedEscapeMode extends Base
 {
-    public function __construct($tableName, array &$querySet);
-    public function build();
-
-    public function escape($mode, $value);
-
-    public function fetch(\PDOStatement $statement);
-    public function update(\PDOStatement $statement);
-    public function insert(\PDOStatement $statement, $primaryKey);
-    public function delete(\PDOStatement $statement);
+    protected static $exceptionMessage = '
+        Non-safety-related escape mode "%s" is not supported.
+    ';
 }

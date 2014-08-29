@@ -40,8 +40,8 @@ class Factory extends Base implements Implement
 
     /** Default operators */
     protected static $operators = array(
-        'mysql' => '\Facula\Unit\Query\Operator\Mysql',
-        'pgsql' => '\Facula\Unit\Query\Operator\Pgsql',
+        'mysql' => 'Facula\Unit\Query\Operator\MySQL',
+        'pgsql' => 'Facula\Unit\Query\Operator\pgSQL',
     );
 
     /** Shortcut for PDO data types */
@@ -72,6 +72,14 @@ class Factory extends Base implements Implement
         'NOT IN' => 'NOT IN',
         'IS NULL' => 'IS NULL',
         'IS NOT NULL' => 'IS NOT NULL',
+
+        // Specials
+        'LIKE %' => 'LIKE',
+        '% LIKE' => 'LIKE',
+        '% LIKE %' => 'LIKE',
+        'NOT LIKE %' => 'NOT LIKE',
+        '% NOT LIKE' => 'NOT LIKE',
+        '% NOT LIKE %' => 'NOT LIKE',
     );
 
     /** Allowed logic operators */
@@ -469,12 +477,13 @@ class Factory extends Base implements Implement
     /**
      * Save value into class
      *
-     * @param array $value The value of the field
-     * @param array $forField Name of the field
+     * @param string $value The value of the field
+     * @param string $forField Name of the field
+     * @param string $escapeMode Non-safety-related escape mode
      *
      * @return mixed Return current object when succeed, or false otherwise
      */
-    protected function saveValue($value, $forField)
+    protected function saveValue($value, $forField, $escapeMode = '')
     {
         $saveParser = null;
 
@@ -486,6 +495,8 @@ class Factory extends Base implements Implement
                     static::$pdoDataTypes[$this->query['Fields'][$forField]]; // Type
 
                 $this->dataMap[$dataKey]['Value'] = $value;
+
+                $this->dataMap[$dataKey]['Escape'] = $escapeMode;
 
                 if ($this->query['Parser'] && isset($this->query['FieldParsers'][$forField])) {
                     foreach (array_reverse(
@@ -610,17 +621,67 @@ class Factory extends Base implements Implement
                 break;
 
             case 'LIKE':
-                $params = array(
-                    'Operator' => 'LIKE',
-                    'Value' => $this->saveValue($value, $fieldName),
-                );
+                switch ($operator) {
+                    case 'LIKE %':
+                        $params = array(
+                            'Operator' => 'LIKE',
+                            'Value' => $this->saveValue($value, $fieldName, 'LIKE %'),
+                        );
+                        break;
+
+                    case '% LIKE':
+                        $params = array(
+                            'Operator' => 'LIKE',
+                            'Value' => $this->saveValue($value, $fieldName, '% LIKE'),
+                        );
+                        break;
+
+                    case '% LIKE %':
+                        $params = array(
+                            'Operator' => 'LIKE',
+                            'Value' => $this->saveValue($value, $fieldName, '% LIKE %'),
+                        );
+                        break;
+
+                    default:
+                        $params = array(
+                            'Operator' => 'LIKE',
+                            'Value' => $this->saveValue($value, $fieldName),
+                        );
+                        break;
+                }
                 break;
 
             case 'NOT LIKE':
-                $params = array(
-                    'Operator' => 'NOT LIKE',
-                    'Value' => $this->saveValue($value, $fieldName),
-                );
+                switch ($operator) {
+                    case 'NOT LIKE %':
+                        $params = array(
+                            'Operator' => 'NOT LIKE',
+                            'Value' => $this->saveValue($value, $fieldName, 'LIKE %'),
+                        );
+                        break;
+
+                    case '% NOT LIKE':
+                        $params = array(
+                            'Operator' => 'NOT LIKE',
+                            'Value' => $this->saveValue($value, $fieldName, '% LIKE'),
+                        );
+                        break;
+
+                    case '% NOT LIKE %':
+                        $params = array(
+                            'Operator' => 'LIKE',
+                            'Value' => $this->saveValue($value, $fieldName, '% LIKE %'),
+                        );
+                        break;
+
+                    default:
+                        $params = array(
+                            'Operator' => 'NOT LIKE',
+                            'Value' => $this->saveValue($value, $fieldName, 'LIKE'),
+                        );
+                        break;
+                }
                 break;
 
             case 'BETWEEN':
@@ -1105,7 +1166,7 @@ class Factory extends Base implements Implement
         array $requiredQueryParams = array()
     ) {
         $sql = $sqlID = '';
-        $statement = null;
+        $statement = $tempDataVal = null;
         $matchedParams = array();
 
         if (isset($this->query['Action'])) {
@@ -1162,14 +1223,23 @@ class Factory extends Base implements Implement
                                 // Use key to search in datamap, and bind the value and types
                                 foreach ($matchedParams[0] as $paramKey) {
                                     if (isset($this->dataMap[$paramKey])) {
+                                        if ($this->dataMap[$paramKey]['Escape']) {
+                                            $tempDataVal = $this->operator->escape(
+                                                $this->dataMap[$paramKey]['Escape'],
+                                                $this->dataMap[$paramKey]['Value']
+                                            );
+                                        } else {
+                                            $tempDataVal = $this->dataMap[$paramKey]['Value'];
+                                        }
+
                                         if (!$statement->bindValue(
                                             $paramKey,
-                                            $this->dataMap[$paramKey]['Value'],
+                                            $tempDataVal,
                                             $this->dataMap[$paramKey]['Type']
                                         )) {
                                             throw new Exception\PrepareBindValueFailed(
                                                 $paramKey,
-                                                $this->dataMap[$paramKey]['Value'],
+                                                $tempDataVal,
                                                 $this->dataMap[$paramKey]['Type']
                                             );
                                         }
