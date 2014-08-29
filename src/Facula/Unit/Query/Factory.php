@@ -678,7 +678,7 @@ class Factory extends Base implements Implement
                     default:
                         $params = array(
                             'Operator' => 'NOT LIKE',
-                            'Value' => $this->saveValue($value, $fieldName, 'LIKE'),
+                            'Value' => $this->saveValue($value, $fieldName),
                         );
                         break;
                 }
