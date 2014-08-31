@@ -47,6 +47,19 @@ class FriendlyNumber implements Implement
     public static function convert($varName, array $parameter, array $pool)
     {
         $phpCode = '';
+        $precision = 2;
+
+        if (isset($parameter[0]) && $parameter[0] != '') {
+            if (!is_numeric($parameter[0])) {
+                throw new Exception\VariableFriendlyNumberPrecisionInvalid(
+                    $parameter[0]
+                );
+
+                return false;
+            }
+
+            $precision = (int)$parameter[0];
+        }
 
         if (isset($pool['LanguageMap']['FORMAT_NUMBER_HUNDRED']) &&
             isset($pool['LanguageMap']['FORMAT_NUMBER_THOUSAND']) &&
@@ -60,49 +73,49 @@ class FriendlyNumber implements Implement
                     . $varName
                     . ' > 1000000000000000000000) { echo(round(('
                     . $varName
-                    . ' / 1000000000000000000000) , 2) . \''
+                    . ' / 1000000000000000000000) , ' . $precision . ') . \''
                     . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_NUMBER_SEXTILLION'])
                     . '\'); } elseif ('
                     . $varName
                     . ' > 1000000000000000000) { echo(round(('
                     . $varName
-                    . ' / 1000000000000000000) , 2) . \''
+                    . ' / 1000000000000000000) , ' . $precision . ') . \''
                     . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_NUMBER_QUINTILLION'])
                     . '\'); } elseif ('
                     . $varName
                     . ' > 1000000000000000) { echo(round(('
                     . $varName
-                    . ' / 1000000000000000) , 2) . \''
+                    . ' / 1000000000000000) , ' . $precision . ') . \''
                     . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_NUMBER_QUADRILLION'])
                     . '\'); } elseif ('
                     . $varName
                     . ' > 1000000000000) { echo(round(('
                     . $varName
-                    . ' / 1000000000000) , 2) . \''
+                    . ' / 1000000000000) , ' . $precision . ') . \''
                     . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_NUMBER_TRILLION'])
                     . '\'); } elseif ('
                     . $varName
                     . ' > 1000000000) { echo(round(('
                     . $varName
-                    . ' / 1000000000) , 2) . \''
+                    . ' / 1000000000) , ' . $precision . ') . \''
                     . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_NUMBER_BILLION'])
                     . '\'); } elseif ('
                     . $varName
                     . ' > 1000000) { echo(round(('
                     . $varName
-                    . ' / 1000000) , 2) . \''
+                    . ' / 1000000) , ' . $precision . ') . \''
                     . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_NUMBER_MILLION'])
                     . '\'); } elseif ('
                     . $varName
                     . ' > 1000) { echo(round(('
                     . $varName
-                    . ' / 1000) , 2) . \''
+                    . ' / 1000) , ' . $precision . ') . \''
                     . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_NUMBER_THOUSAND'])
                     . '\'); } elseif ('
                     . $varName
                     . ' > 100) { echo(round(('
                     . $varName
-                    . ' / 100) , 2) . \''
+                    . ' / 100) , ' . $precision . ') . \''
                     . str_replace('\'', '\\\'', $pool['LanguageMap']['FORMAT_NUMBER_HUNDRED'])
                     . '\'); } else { echo('
                     . $varName
