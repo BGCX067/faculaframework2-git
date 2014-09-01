@@ -29,12 +29,13 @@ namespace Facula\Unit\RemoteStorage\Operator;
 
 use Facula\Unit\RemoteStorage\Exception\Operator as Exception;
 use Facula\Unit\RemoteStorage\OperatorImplement;
+use Facula\Unit\RemoteStorage\Common;
 use Facula\Framework;
 
 /**
  * Remote Storage FTP Operator
  */
-class FTP implements OperatorImplement
+class FTP extends Common implements OperatorImplement
 {
     /** For activated FTP connection handler */
     private $connection = null;
@@ -133,24 +134,34 @@ class FTP implements OperatorImplement
         if ($this->connection || $this->connect()) {
             Framework::core('debug')->criticalSection(true);
 
+            if (!$remoteFileName) {
+                $fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
+
+                if (!$remoteFileName = md5_file($localFile)) {
+                    $remoteFileName = mt_rand(0, 9999) . ($fileExt ? '.' . $fileExt : '');
+                }
+            }
+
             if ($this->setting['Path']
             && !$this->chDir(
-                $this->setting['Path'] . $this->generatePath(),
+                $this->setting['Path'] . $this->generatePath(pathinfo(
+                    $remoteFileName,
+                    PATHINFO_FILENAME
+                )),
                 $currentRemotePath,
                 $cdError
             )) {
                 throw new Exception\EnterDirFailed($this->setting['Path'], $cdError);
             } else {
-                if (!$remoteFileName) {
-                    $fileExt = strtolower(pathinfo($localFile, PATHINFO_EXTENSION));
-
-                    if (!$remoteFileName = md5_file($localFile)) {
-                        $remoteFileName = mt_rand(0, 9999) . ($fileExt ? '.' . $fileExt : '');
-                    }
-                }
-
-                if (ftp_put($this->connection, $remoteFileName, $localFile, FTP_BINARY)) {
-                    $resultPath =  $currentRemotePath . '/' . $remoteFileName;
+                if (ftp_put(
+                    $this->connection,
+                    $remoteFileName,
+                    $localFile,
+                    FTP_BINARY
+                )) {
+                    $resultPath =  $currentRemotePath
+                        . '/'
+                        . $remoteFileName;
 
                     $success = true;
                 } else {
@@ -302,15 +313,5 @@ class FTP implements OperatorImplement
         }
 
         return false;
-    }
-
-    /**
-     * Generate a random path for the uploading file
-     *
-     * @return string The generated path
-     */
-    private function generatePath()
-    {
-        return '/' . date('Y') . '/' . abs((int)(crc32(date('m/w')) / 10240));
     }
 }

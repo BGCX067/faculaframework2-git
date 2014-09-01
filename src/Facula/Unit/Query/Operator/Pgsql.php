@@ -33,7 +33,7 @@ use Facula\Unit\Query\OperatorImplement;
 /**
  * Query PostgreSQL
  */
-class pgSQL implements OperatorImplement
+class PgSQL implements OperatorImplement
 {
     /** Table name */
     private $table = '';

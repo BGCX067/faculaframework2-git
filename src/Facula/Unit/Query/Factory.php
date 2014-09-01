@@ -41,7 +41,7 @@ class Factory extends Base implements Implement
     /** Default operators */
     protected static $operators = array(
         'mysql' => 'Facula\Unit\Query\Operator\MySQL',
-        'pgsql' => 'Facula\Unit\Query\Operator\pgSQL',
+        'pgsql' => 'Facula\Unit\Query\Operator\PgSQL',
     );
 
     /** Shortcut for PDO data types */
