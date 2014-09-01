@@ -216,11 +216,9 @@ class Variable extends Base implements Implement
         $varType = $this->parameter->get('type');
         $varPureName = $this->getPureVarName($varName);
 
-        $php = '<?php if (!isset('
+        $php = '<?php if (isset('
             . $varName
-            . ')) { '
-            . $varName
-            . ' = null; } ?>';
+            . ')) { ?>';
 
         if ($this->dataContainer->checkMutex('Overwrite!' . $varPureName)) {
             throw new Exception\VariableOverwriteRisk(
@@ -257,7 +255,7 @@ class Variable extends Base implements Implement
                 $varName,
                 explode('|', $this->parameter->get('parameters')),
                 $this->pool
-            );
+            ) . '<?php } ?>';
         } catch (OperatorException\OperatorNotFound $e) {
             throw new Exception\VariableTypeNotFound($varType, $varName);
         }
