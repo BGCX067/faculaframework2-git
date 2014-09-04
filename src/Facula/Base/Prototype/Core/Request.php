@@ -212,9 +212,13 @@ abstract class Request extends Factory implements Implement
         // Get current absolute root
         if (isset($_SERVER['SERVER_NAME']) && isset($_SERVER['SERVER_PORT'])) {
             $this->requestInfo['absRootURL'] =
-                ($_SERVER['SERVER_PORT'] == 443 ? 'https://' : 'http://')
+                ((
+                    (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off')
+                    ||
+                    ($_SERVER['SERVER_PORT'] == '443') // Just a guess, Why people use other protocol on 443?
+                ) ? 'https://' : 'http://')
                 . $_SERVER['SERVER_NAME']
-                . ($_SERVER['SERVER_PORT'] == 80 ? '' : ':'
+                . ($_SERVER['SERVER_PORT'] == '80' ? '' : ':'
                 . $_SERVER['SERVER_PORT'])
                 . $this->requestInfo['rootURL'];
         }
@@ -320,6 +324,12 @@ abstract class Request extends Factory implements Implement
 
                     case 'SERVER_PORT':
                         if ($val == 443) {
+                            $this->requestInfo['https'] = true;
+                        }
+                        break;
+
+                    case 'HTTPS':
+                        if ($val != 'off') {
                             $this->requestInfo['https'] = true;
                         }
                         break;
