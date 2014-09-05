@@ -669,7 +669,6 @@ class Framework
         }
 
         if (is_callable($callback)) {
-
             // Check if framework has finished init
             // If a closure callback registered before framework finish init, it may cause
             // no callable hook problem, because callback is not cachedable
@@ -910,6 +909,11 @@ class Framework
         }
 
         static::$components['Packages'][$pkgName] = $pkgDir;
+
+        static::summonHook('unpacking', array(
+            'Path' => $pkgDir,
+            'Config' => $package
+        ));
 
         return true;
     }

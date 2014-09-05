@@ -234,6 +234,9 @@ abstract class Template extends Factory implements Implement
 
         $this->assigned['AbsRootURL'] =
             $facula->request->getClientInfo('absRootURL');
+
+        $this->assigned['AbsRootLocation'] =
+            $facula->request->getClientInfo('absRootLocation');
     }
 
     /**
@@ -735,7 +738,9 @@ abstract class Template extends Factory implements Implement
                                 if (!isset(static::$performMark['template_cache_prerendered'])) {
                                     Framework::summonHook(
                                         'template_cache_prerender_*',
-                                        array(),
+                                        array(
+                                            'Template' => $templateName
+                                        ),
                                         $errors
                                     );
 
@@ -744,7 +749,9 @@ abstract class Template extends Factory implements Implement
 
                                 Framework::summonHook(
                                     'template_cache_prerender_' . $templateName,
-                                    array(),
+                                    array(
+                                        'Template' => $templateName
+                                    ),
                                     $errors
                                 );
 
@@ -1001,7 +1008,9 @@ abstract class Template extends Factory implements Implement
         if (!isset(static::$performMark['template_render'])) {
             Framework::summonHook(
                 'template_render_*',
-                array(),
+                array(
+                    'Template' => $templateName
+                ),
                 $errors
             );
 
@@ -1010,7 +1019,9 @@ abstract class Template extends Factory implements Implement
 
         Framework::summonHook(
             'template_render_' . $templateName,
-            array(),
+            array(
+                'Template' => $templateName
+            ),
             $errors
         );
 
@@ -1085,7 +1096,9 @@ abstract class Template extends Factory implements Implement
         if (!isset(static::$performMark['template_compile'])) {
             Framework::summonHook(
                 'template_compile_*',
-                array(),
+                array(
+                    'Template' => $templateName
+                ),
                 $errors
             );
 
@@ -1094,7 +1107,9 @@ abstract class Template extends Factory implements Implement
 
         Framework::summonHook(
             'template_compile_' . $templateName,
-            array(),
+            array(
+                'Template' => $templateName
+            ),
             $errors
         );
 
@@ -1295,7 +1310,7 @@ abstract class Template extends Factory implements Implement
                         ),
                         'WARNING'
                     );
-                    
+
                     break;
                 }
 

@@ -211,16 +211,19 @@ abstract class Request extends Factory implements Implement
 
         // Get current absolute root
         if (isset($_SERVER['SERVER_NAME']) && isset($_SERVER['SERVER_PORT'])) {
+            $this->requestInfo['absRootLocation'] =
+                $_SERVER['SERVER_NAME']
+                . ($_SERVER['SERVER_PORT'] == '80' ? '' : ':'
+                . $_SERVER['SERVER_PORT'])
+                . $this->requestInfo['rootURL'];
+
             $this->requestInfo['absRootURL'] =
                 ((
                     (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off')
                     ||
                     ($_SERVER['SERVER_PORT'] == '443') // Just a guess, Why people use other protocol on 443?
                 ) ? 'https://' : 'http://')
-                . $_SERVER['SERVER_NAME']
-                . ($_SERVER['SERVER_PORT'] == '80' ? '' : ':'
-                . $_SERVER['SERVER_PORT'])
-                . $this->requestInfo['rootURL'];
+                . $this->requestInfo['absRootLocation'];
         }
     }
 
