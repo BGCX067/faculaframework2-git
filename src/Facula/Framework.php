@@ -446,6 +446,7 @@ class Framework
                     ),
                     DIRECTORY_SEPARATOR
                 );
+
                 $map['Ref']['R'] = true;
 
                 // Check of sub componentPaths has set, include it if so
@@ -476,15 +477,18 @@ class Framework
                         foreach ($scanner->scan() as $subModule) {
                             switch ($subModule['Prefix']) {
                                 case 'routine':
-                                    $map['Ref']['M']['R'][] = $subModule['Path'];
+                                    $map['Ref']['M']['R'][]
+                                        = $subModule['Path'];
                                     break;
 
                                 case 'plugin':
-                                    $map['Ref']['M']['P'][] = $subModule['Path'];
+                                    $map['Ref']['M']['P'][]
+                                        = $subModule['Path'];
                                     break;
 
                                 case 'class':
-                                    $map['Ref']['M']['C'][ucfirst($subModule['Name'])] = $subModule['Path'];
+                                    $map['Ref']['M']['C'][ucfirst($subModule['Name'])]
+                                        = $subModule['Path'];
                                     break;
 
                                 default:
@@ -699,7 +703,7 @@ class Framework
             return false;
         }
 
-        return false;
+        return true;
     }
 
     /**
@@ -778,7 +782,6 @@ class Framework
     {
         $package = $packageLoads = $packagePaths = array();
         $nsFolder = $dclFile = '';
-        $pathInfo = pathinfo($dclFile);
 
         if (!is_dir($pkgDir)) {
             trigger_error(
@@ -910,11 +913,6 @@ class Framework
 
         static::$components['Packages'][$pkgName] = $pkgDir;
 
-        static::summonHook('unpacking', array(
-            'Path' => $pkgDir,
-            'Config' => $package
-        ));
-
         return true;
     }
 
@@ -1003,9 +1001,9 @@ class Framework
                 return static::$instance->cores[$coreName];
             } else {
                 trigger_error(
-                    'Function core '
+                    'Function core "'
                     . $coreName
-                    . ' not available. '
+                    . '" not available. '
                     . 'You can only acquire following cores: '
                     . (implode(', ', array_keys(static::$instance->cores)))
                     . '.',
@@ -1014,9 +1012,9 @@ class Framework
             }
         } else {
             trigger_error(
-                'Facula must be initialized to get core '
+                'Facula must be initialized to get function core "'
                 . $coreName
-                . ' to work.',
+                . '" to work.',
                 E_USER_ERROR
             );
         }
@@ -1063,8 +1061,12 @@ class Framework
 
         // First, import all the settings in to Facula core
         if ($this->importConfigs($cfg)) {
-            $this->setting['Common']['AppName'] = isset($cfg['AppName'][0]) ? $cfg['AppName'] : 'Facula App';
-            $this->setting['Common']['AppVersion'] = isset($cfg['AppVersion'][0]) ? $cfg['AppVersion'] : '0.0';
+            $this->setting['Common']['AppName'] =
+                isset($cfg['AppName'][0]) ? $cfg['AppName'] : 'Facula App';
+
+            $this->setting['Common']['AppVersion'] =
+                isset($cfg['AppVersion'][0]) ? $cfg['AppVersion'] : '0.0';
+
             $this->setting['Common']['BootVersion'] = FACULA_TIME;
 
             // Get some of the info of current PHP installation
@@ -1087,7 +1089,7 @@ class Framework
             $this->registerAllPackages();
             static::$pool['PkgInited'] = true;
 
-            // Load all include file for init user per defined object and functions
+            // Load all include file for init user predefined object and functions
             foreach (static::$includes as $includeFile) {
                 static::requireFile($includeFile);
             }
@@ -1336,26 +1338,34 @@ class Framework
     /**
      * Register all built in and configured Namespace
      *
-     * @return bool Always return true
+     * @return void
      */
     protected function registerAllNamespaces()
     {
-        $namespaces = $validNamespaces = array();
+        $registeredNamespace = array();
 
         // Convert core namespace's relative path in to actual path
         foreach (static::$cfg['FWNS'] as $namespace => $path) {
-            static::registerNamespace($namespace, $path);
+            if (static::registerNamespace($namespace, $path)) {
+                $registeredNamespace[$namespace] = $path;
+            }
         }
 
-        if (isset($this->setting['Namespaces']) && is_array($this->setting['Namespaces'])) {
+        if (isset($this->setting['Namespaces'])
+        && is_array($this->setting['Namespaces'])) {
             foreach ($this->setting['Namespaces'] as $namespace => $path) {
-                static::registerNamespace($namespace, $path);
+                if (static::registerNamespace($namespace, $path)) {
+                    $registeredNamespace[$namespace] = $path;
+                }
             }
 
             unset($this->setting['Namespaces']);
         }
 
-        return true;
+        static::summonHook(
+            'namespaces_registered_all',
+            $registeredNamespace
+        );
     }
 
     /**
@@ -1365,14 +1375,19 @@ class Framework
      */
     protected function pickAllComponents()
     {
+        $pickComponents = array();
+
         if (isset($this->setting['Paths']) && is_array($this->setting['Paths'])) {
-            static::pickComponents($this->setting['Paths']);
+            static::pickComponents($this->setting['Paths'], $pickComponents);
 
             // Release memory
             unset($this->setting['Paths']);
-        }
 
-        return true;
+            static::summonHook(
+                'components_registered_all',
+                $pickComponents
+            );
+        }
     }
 
     /**
@@ -1382,7 +1397,7 @@ class Framework
      */
     protected function registerAllPackages()
     {
-        $packageRaws = array();
+        $packageRaws = $regiseredPackages = array();
 
         if (isset($this->setting['Packages']) && is_array($this->setting['Packages'])) {
             foreach ($this->setting['Packages'] as $path) {
@@ -1419,13 +1434,18 @@ class Framework
 
             foreach ($packageRaws as $packageName => $packageDir) {
                 static::registerPackage($packageName, $packageDir);
+
+                $regiseredPackages[$packageName] = $packageDir;
             }
 
             // Release memory
             unset($this->setting['Packages']);
-        }
 
-        return false;
+            static::summonHook(
+                'packages_registered_all',
+                $regiseredPackages
+            );
+        }
     }
 
     /**
@@ -1499,9 +1519,12 @@ class Framework
     /**
      * Discover components, and import them into Framework
      *
+     * @param array $paths Path for component scan
+     * @param array $paths Path for component scan
+     *
      * @return void
      */
-    protected static function pickComponents(array $paths)
+    protected static function pickComponents(array $paths, array &$pickedComponents = array())
     {
         $modules = array();
 
@@ -1515,26 +1538,38 @@ class Framework
                 switch ($module['Prefix']) {
                     case 'include':
                         static::$includes[] = $module['Path'];
+
+                        $pickedComponents['Includes'][] = $module['Path'];
                         break;
 
                     case 'initialize':
                         static::$initializers[] = $module['Path'];
+
+                        $pickedComponents['Initialize'][] = $module['Path'];
                         break;
 
                     case 'routine':
                         static::$components['Routine'][] = $module['Path'];
+
+                        $pickedComponents['Routine'][] = $module['Path'];
                         break;
 
                     case 'plugin':
                         static::initPlugin($module['Path']);
+
+                        $pickedComponents['Plugin'][] = $module['Path'];
                         break;
 
                     case 'class':
                         static::registerScope(ucfirst($module['Name']), $module['Path']);
+
+                        $pickedComponents['Class'][ucfirst($module['Name'])] = $module['Path'];
                         break;
 
                     default:
                         static::registerScope($module['Name'], $module['Path']);
+
+                        $pickedComponents['Class'][$module['Name']] = $module['Path'];
                         break;
                 }
             }

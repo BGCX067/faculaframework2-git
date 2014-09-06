@@ -235,8 +235,8 @@ abstract class Template extends Factory implements Implement
         $this->assigned['AbsRootURL'] =
             $facula->request->getClientInfo('absRootURL');
 
-        $this->assigned['AbsRootLocation'] =
-            $facula->request->getClientInfo('absRootLocation');
+        $this->assigned['AbsRootFormated'] =
+            $facula->request->getClientInfo('absRootFormated');
     }
 
     /**

@@ -211,19 +211,27 @@ abstract class Request extends Factory implements Implement
 
         // Get current absolute root
         if (isset($_SERVER['SERVER_NAME']) && isset($_SERVER['SERVER_PORT'])) {
-            $this->requestInfo['absRootLocation'] =
-                $_SERVER['SERVER_NAME']
-                . ($_SERVER['SERVER_PORT'] == '80' ? '' : ':'
-                . $_SERVER['SERVER_PORT'])
+            $this->requestInfo['absRootFormated'] =
+                '%s//'
+                . $_SERVER['SERVER_NAME']
+                . '%s'
                 . $this->requestInfo['rootURL'];
 
-            $this->requestInfo['absRootURL'] =
-                ((
-                    (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off')
-                    ||
-                    ($_SERVER['SERVER_PORT'] == '443') // Just a guess, Why people use other protocol on 443?
-                ) ? 'https://' : 'http://')
-                . $this->requestInfo['absRootLocation'];
+            $this->requestInfo['absRootURL'] = sprintf(
+                $this->requestInfo['absRootFormated'],
+                (
+                    $this->isHTTPS() ?
+                        'https:'
+                    :
+                        'http:'
+                ),
+                (
+                    $this->isHTTPS() ?
+                        ($_SERVER['SERVER_PORT'] == '443' ? '' : ':' . $_SERVER['SERVER_PORT'])
+                    :
+                        ($_SERVER['SERVER_PORT'] == '80' ? '' : ':' . $_SERVER['SERVER_PORT'])
+                )
+            );
         }
     }
 
@@ -626,6 +634,22 @@ abstract class Request extends Factory implements Implement
                 return true;
                 break;
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if current access from HTTPS
+     *
+     * @return bool Return true when accessed from HTTPS, false otherwise
+     */
+    protected function isHTTPS()
+    {
+        if ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off')
+        ||
+        ($_SERVER['SERVER_PORT'] == '443')) {
+            return true;
         }
 
         return false;
