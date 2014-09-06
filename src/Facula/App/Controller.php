@@ -228,6 +228,33 @@ abstract class Controller extends Setting
     }
 
     /**
+     * Redirect to another request scheme
+     *
+     * @param string $protocol Protocol to redirect to
+     * @param integer $port Post of that protocol
+     * @param string $url The url to redirect to
+     * @param integer $code Redirect code
+     *
+     * @return mixed Return the result of redirect
+     */
+    final protected function redirectScheme($protocol, $port, $url = '', $code = 301)
+    {
+        if (isset($url[0]) && $url[0] != '/') {
+            $url = '/' . $url;
+        }
+
+        return $this->redirect(
+            sprintf(
+                $this->request->getClientInfo('hostURIFormated'),
+                ($protocol . ':'),
+                (':' . $port)
+            ) . $url,
+            $code,
+            false
+        );
+    }
+
+    /**
      * Set a new HTTP header
      *
      * @param string $header The header

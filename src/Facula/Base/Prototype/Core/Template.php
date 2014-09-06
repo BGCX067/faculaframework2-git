@@ -232,6 +232,9 @@ abstract class Template extends Factory implements Implement
         $this->assigned['RootURL'] =
             $facula->request->getClientInfo('rootURL');
 
+        $this->assigned['HostURIFormated'] =
+            $facula->request->getClientInfo('hostURIFormated');
+
         $this->assigned['AbsRootURL'] =
             $facula->request->getClientInfo('absRootURL');
 

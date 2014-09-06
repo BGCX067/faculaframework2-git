@@ -211,10 +211,13 @@ abstract class Request extends Factory implements Implement
 
         // Get current absolute root
         if (isset($_SERVER['SERVER_NAME']) && isset($_SERVER['SERVER_PORT'])) {
-            $this->requestInfo['absRootFormated'] =
+            $this->requestInfo['hostURIFormated'] =
                 '%s//'
                 . $_SERVER['SERVER_NAME']
-                . '%s'
+                . '%s';
+
+            $this->requestInfo['absRootFormated'] =
+                $this->requestInfo['hostURIFormated']
                 . $this->requestInfo['rootURL'];
 
             $this->requestInfo['absRootURL'] = sprintf(
