@@ -29,6 +29,7 @@ namespace Facula\Base\Factory;
 
 use Facula\Base\Error\Factory\Core as Error;
 use Facula\Base\Implement\Factory\Core as Implement;
+use Facula\Framework;
 
 /**
  * Core Factory
@@ -52,7 +53,7 @@ abstract class Core implements Implement
     final public static function getInstance(
         array $cfg,
         array $common,
-        \Facula\Framework $parent
+        Framework $parent
     ) {
         $caller = get_called_class();
         // If $cfg['Core'] has beed set, means user wants
@@ -103,13 +104,13 @@ abstract class Core implements Implement
 
             if (!is_subclass_of(
                 $class,
-                '\Facula\Base\Prototype\Core'
+                'Facula\Base\Prototype\Core'
             )) {
                 new Error(
                     'CLASS_BASE',
                     array(
                         $class,
-                        '\\Facula\\Base\\Prototype\\Core'
+                        'Facula\\Base\\Prototype\\Core'
                     ),
                     'ERROR'
                 );

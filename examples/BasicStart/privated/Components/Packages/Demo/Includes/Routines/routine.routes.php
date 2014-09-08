@@ -32,7 +32,7 @@ Facula\Framework::registerHook('route_init', 'homes-api', function () {
 
     Facula\Unit\Route::setup(array(
         '/api/get_name' => array(
-            'MyProject\Demo\Controller\API::displayGetName',
+            'MyProject\Demo\Controller\API->displayGetName',
             array(),
             true
         ),

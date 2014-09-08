@@ -29,7 +29,15 @@
  * Register the project execution function
  */
 Facula\Framework::registerHook('ready', 'exec', function () {
-    if (!$routeMap = \Facula\Framework::core('cache')->load('Routes')) {
+    if (!$routeMap = Facula\Framework::core('cache')->load('Routes')) {
+        Facula\Unit\Route::setup(array(
+            '/' => array(
+                'MyProject\Controller\Home\Index',
+                array(),
+                true
+            ),
+        ));
+
         Facula\Framework::summonHook('route_init');
 
         Facula\Framework::core('cache')->save(
@@ -40,14 +48,6 @@ Facula\Framework::registerHook('ready', 'exec', function () {
     } else {
         Facula\Unit\Route::importMap($routeMap);
     }
-
-    Facula\Unit\Route::setDefaultHandler(function () {
-        Facula\Framework::core('object')->run(
-            'MyProject\Controller\Home\Index',
-            array(),
-            true
-        );
-    });
 
     Facula\Unit\Route::setErrorHandler(function ($type) {
         $pageContent = '';

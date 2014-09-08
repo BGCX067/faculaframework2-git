@@ -108,37 +108,25 @@ abstract class Object extends Factory implements Implement
         $instance = null;
         $obj = array();
 
-        if ($this->configs['OCRoot']) {
-            $file = $this->configs['OCRoot']
-                    . DIRECTORY_SEPARATOR
-                    . 'cachedObject.'
-                    . ($type ? $type : 'general')
-                    . '#'
-                    . str_replace(
-                        NAMESPACE_SEPARATER,
-                        '%',
-                        $objectName
-                    )
-                    . '#'
-                    . ($uniqueID ? $uniqueID : 'common')
-                    . '.php';
-
-            if (is_readable($file) && filemtime($file) >= $this->configs['CacheTime']) {
-                require($file);
-
-                if ($obj && $instance = unserialize($obj)) {
-
-                    if ($this->configs['OCExpire']
-                    && $instance->cachedObjectSaveTime < $this->configs['OCExpire'] - FACULA_TIME) {
-                        return false;
-                    }
-
-                    return $instance;
-                }
-            }
+        if (!$this->configs['OCRoot']) {
+            return false;
         }
 
-        return false;
+        $file = $this->configs['OCRoot']
+                . DIRECTORY_SEPARATOR
+                . 'cachedObject.'
+                . ($type ? $type : 'general')
+                . '#'
+                . str_replace(
+                    NAMESPACE_SEPARATER,
+                    '%',
+                    $objectName
+                )
+                . '#'
+                . ($uniqueID ? $uniqueID : 'common')
+                . '.php';
+
+        return $this->loadObjectCache($file);
     }
 
     /**
@@ -153,43 +141,27 @@ abstract class Object extends Factory implements Implement
      */
     protected function saveObjectToCache($objectName, $instance, $type = '', $uniqueID = '')
     {
-        $objectInfo = array();
-
-        if ($this->configs['OCRoot']) {
-            $instance->cachedObjectFilePath = $this->configs['OCRoot']
-                                            . DIRECTORY_SEPARATOR
-                                            . 'cachedObject.'
-                                            . ($type ? $type : 'general')
-                                            . '#'
-                                            . str_replace(
-                                                array('\\', '/'),
-                                                '%',
-                                                $objectName
-                                            )
-                                            . '#'
-                                            . ($uniqueID ? $uniqueID : 'common')
-                                            . '.php';
-            $instance->cachedObjectSaveTime = FACULA_TIME;
-
-            Framework::core('debug')->criticalSection(true);
-
-            if (file_exists($instance->cachedObjectFilePath)) {
-                unlink($instance->cachedObjectFilePath);
-            }
-
-            Framework::core('debug')->criticalSection(false);
-
-            return file_put_contents(
-                $instance->cachedObjectFilePath,
-                static::$config['CacheSafeCode'][0]
-                . '$obj = '
-                . var_export(serialize($instance), true)
-                . ';'
-                . static::$config['CacheSafeCode'][1]
-            );
+        if (!$this->configs['OCRoot']) {
+            return false;
         }
 
-        return false;
+        $instance->cachedObjectFilePath = $this->configs['OCRoot']
+                                        . DIRECTORY_SEPARATOR
+                                        . 'cachedObject.'
+                                        . ($type ? $type : 'general')
+                                        . '#'
+                                        . str_replace(
+                                            array('\\', '/'),
+                                            '%',
+                                            $objectName
+                                        )
+                                        . '#'
+                                        . ($uniqueID ? $uniqueID : 'common')
+                                        . '.php';
+
+        $instance->cachedObjectSaveTime = FACULA_TIME;
+
+        return $this->saveObjectCache($instance);
     }
 
     /**
@@ -592,5 +564,86 @@ abstract class Object extends Factory implements Implement
         }
 
         return $handler;
+    }
+
+    /**
+     * Load object instance from cache
+     *
+     * @param string $file Path to the cache file
+     * @param integer $expire The time to expire
+     *
+     * @return mixed Return object instance when succeed, false otherwise
+     */
+    protected function loadObjectCache($file, $expire = 0)
+    {
+        if (!is_readable($file) || filemtime($file) < $expire) {
+            return false;
+        }
+
+        if (!$instance = static::loadCacheFile($file)) {
+            return false;
+        }
+
+        if ($expire
+        && $instance->cachedObjectSaveTime < $expire) {
+            return false;
+        }
+
+        return $instance;
+    }
+
+    /**
+     * Save object instance to cache
+     *
+     * @param instance $instance The object instance
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    protected function saveObjectCache($instance)
+    {
+        return static::saveCacheFile($instance);
+    }
+
+    /**
+     * Static Wrapper: Load object instance from cache file
+     *
+     * @param string $file The path to cache file
+     *
+     * @return mixed Return the instance when succeed, false otherwise
+     */
+    protected static function loadCacheFile($file)
+    {
+        $obj = null;
+
+        require($file);
+
+        if (is_null($obj)) {
+            return false;
+        }
+
+        return unserialize($obj);
+    }
+
+    /**
+     * Static Wrapper: Save object instance to cache file
+     *
+     * @param instance $instance The instance to save
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    protected static function saveCacheFile($instance)
+    {
+        if (file_exists($instance->cachedObjectFilePath)) {
+            unlink($instance->cachedObjectFilePath);
+        }
+
+        return file_put_contents(
+            $instance->cachedObjectFilePath,
+            static::$config['CacheSafeCode'][0]
+            . '$obj = '
+            . var_export(serialize($instance), true)
+            . ';'
+            . static::$config['CacheSafeCode'][1]
+        );
     }
 }

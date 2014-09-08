@@ -174,28 +174,26 @@ class Framework
      */
     protected static function initFromStateCache($stateFile)
     {
-        $cache = array();
+        $conf = static::loadCacheFile($stateFile);
 
-        if (file_exists($stateFile)) {
-            require($stateFile);
+        if (empty($conf)) {
+            return false;
+        }
 
-            if (!empty($cache)) {
-                if (isset($cache['Cmp'])) {
-                    static::$components = $cache['Cmp'];
-                }
+        // Step 1: Load components array to static::$components
+        if (isset($conf['Cmp'])) {
+            static::$components = $conf['Cmp'];
+        }
 
-                // Require all include files
-                if (isset($cache['Inc'])) {
-                    foreach ($cache['Inc'] as $files) {
-                        static::requireFile($files);
-                    }
-                }
-
-                return unserialize($cache['Facula']); // unserialize the object
+        // Step 2: Load all include files
+        if (isset($conf['Inc'])) {
+            foreach ($conf['Inc'] as $files) {
+                static::requireFile($files);
             }
         }
 
-        return false;
+        // Step 3: unserialize framework instance
+        return unserialize($conf['Facula']);
     }
 
     /**
@@ -213,17 +211,7 @@ class Framework
             'Cmp' => static::$components
         );
 
-        $content = self::$cfg['CacheTags'][0]
-                    . '$cache = '
-                    . var_export($cache, true)
-                    . ';'
-                    . self::$cfg['CacheTags'][1];
-
-        if (file_put_contents($stateFile, $content)) {
-            return true;
-        }
-
-        return false;
+        return static::saveCacheFile($stateFile, $cache);
     }
 
     /**
@@ -234,10 +222,67 @@ class Framework
     public static function clearState()
     {
         if (static::$instance && isset(static::$instance->setting['StateCache'])) {
-            return unlink(static::$instance->setting['StateCache']);
+            return static::clearCacheFile(static::$instance->setting['StateCache']);
         }
 
         return false;
+    }
+
+    /**
+     * Load framework cache file
+     *
+     * @return array Return configuration in array when succeed, or empty array when fail
+     */
+    protected static function loadCacheFile($stateFile)
+    {
+        $cache = array();
+
+        if (!file_exists($stateFile)) {
+            return array();
+        }
+
+        require($stateFile);
+
+        if (empty($cache)) {
+            return array();
+        }
+
+        return $cache;
+    }
+
+    /**
+     * Save framework cache file
+     *
+     * @param string $stateFile Path to the cache file
+     * @param array $cache Cache data
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    protected static function saveCacheFile($stateFile, $cache)
+    {
+        $content = self::$cfg['CacheTags'][0]
+                    . '$cache = '
+                    . var_export($cache, true)
+                    . ';'
+                    . self::$cfg['CacheTags'][1];
+
+        if (!file_put_contents($stateFile, $content)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Clear framework cache file
+     *
+     * @param string $stateFile Path to the cache file
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    protected static function clearCacheFile($stateFile)
+    {
+        return unlink($stateFile);
     }
 
     /**
@@ -672,25 +717,7 @@ class Framework
             return false;
         }
 
-        if (is_callable($callback)) {
-            // Check if framework has finished init
-            // If a closure callback registered before framework finish init, it may cause
-            // no callable hook problem, because callback is not cachedable
-            if (!static::$instance && is_object($callback)) {
-                trigger_error(
-                    'Registering hook '
-                    . $hook
-                    . ' for '
-                    . $processorName
-                    . '. But framework not ready for a closure callback.',
-                    E_USER_ERROR
-                );
-
-                return false;
-            }
-
-            static::$components['Hooks'][$hook][$processorName] = $callback;
-        } else {
+        if (!is_callable($callback)) {
             trigger_error(
                 'Registering hook '
                 . $hook
@@ -702,6 +729,26 @@ class Framework
 
             return false;
         }
+
+        // Check if framework has finished init
+        // If a closure callback registered before framework finish init, it may cause
+        // no callable hook problem, because callback is not cachedable
+        if (!static::$instance
+        && is_object($callback)
+        && ($callback instanceof \Closure)) {
+            trigger_error(
+                'Registering hook '
+                . $hook
+                . ' for '
+                . $processorName
+                . '. But framework not ready for a closure callback.',
+                E_USER_ERROR
+            );
+
+            return false;
+        }
+
+        static::$components['Hooks'][$hook][$processorName] = $callback;
 
         return true;
     }

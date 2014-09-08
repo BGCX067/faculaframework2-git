@@ -102,8 +102,6 @@ abstract class Route
                 self::$routeSplit,
                 trim($path, self::$routeSplit)
             ) as $key => $val) {
-                $val = $val ? $val : '?';
-
                 $tempLastUsedRef = &$tempLastRef[$val];
 
                 if (isset($tempLastRef[$val])) {
@@ -290,7 +288,7 @@ abstract class Route
         $lastPathRef = &self::$routeMap;
         $callResult = $callError = null;
 
-        if (!isset(self::$pathParams[static::ITEM_CALL_STRING]) || self::$pathParams[static::ITEM_CALL_STRING] == '') {
+        if (!isset(self::$pathParams[0][0]) && !isset($lastPathRef['Subs'][''])) {
             self::execDefaultHandler();
 
             return false;

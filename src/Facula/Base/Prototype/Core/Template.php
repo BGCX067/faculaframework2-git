@@ -487,17 +487,11 @@ abstract class Template extends Factory implements Implement
             return true;
         }
 
-        if (!$this->configs['Renew']
-            && is_readable($fileMapFileName)
-            && filemtime($fileMapFileName) >= $this->configs['CacheVer']) {
-            require($fileMapFileName);
-
-            if (isset($fileMap)) {
-                static::$fileMap = $fileMap;
-
-                return true;
-            }
-        } else {
+        if ($this->configs['Renew']
+            || (!$fileMap = $this->loadDataCache(
+                $fileMapFileName,
+                $this->configs['CacheVer']
+            ))) {
             // Get file and build maps
             foreach (array_merge(
                 $this->getMapDataFromHook(),
@@ -556,24 +550,12 @@ abstract class Template extends Factory implements Implement
                 }
             }
 
-            static::$fileMap = $fileMap;
-
-            // Must. APC may not know the file has renewed if we just call file_put_content
-            if (file_exists($fileMapFileName)) {
-                unlink($fileMapFileName);
-            }
-
-            return file_put_contents(
-                $fileMapFileName,
-                static::$setting['TemplateFileSafeCode'][0]
-                . '$fileMap = '
-                . var_export($fileMap, true)
-                . '; '
-                . static::$setting['TemplateFileSafeCode'][1]
-            );
+            return $this->saveDataCache($fileMapFileName, $fileMap);
         }
 
-        return false;
+        static::$fileMap = $fileMap;
+
+        return true;
     }
 
     /**
@@ -646,7 +628,7 @@ abstract class Template extends Factory implements Implement
     ) {
         $templatePath = $templateContent = $cachedPagePath = $cachedPageRoot =
         $cachedPageFactor = $cachedPageFile = $cachedPageFactorDir = $cachedTmpPage =
-        $renderCachedContent = $renderCachedOutputContent = '';
+        $renderCachedContent = '';
 
         $splitedCompiledContentIndexLen = $splitedRenderedContentLen = $currentExpireTimestamp = 0;
 
@@ -689,8 +671,7 @@ abstract class Template extends Factory implements Implement
             $cachedPagePath = $cachedPageRoot . $cachedPageFile;
 
             if (!$this->configs['Renew']
-                && is_readable($cachedPagePath)
-                && (!$expire || filemtime($cachedPagePath) > $currentExpireTimestamp)) {
+                && $this->templateCacheReadable($cachedPagePath, $currentExpireTimestamp)) {
                 return $cachedPagePath;
             } else {
                 if ($expiredCallback
@@ -713,7 +694,7 @@ abstract class Template extends Factory implements Implement
                         foreach ($splitedCompiledContent as $key => $val) {
                             if ($key > 0
                                 && $key < $splitedCompiledContentIndexLen
-                                && $key%2) {
+                                && $key % 2) {
                                 $splitedCompiledContent[$key] = '<?php echo(stripslashes(\''
                                                                 . addslashes($val)
                                                                 . '\')); ?>';
@@ -737,7 +718,7 @@ abstract class Template extends Factory implements Implement
                             || mkdir($cachedPageRoot, 0744, true)) {
                             $cachedTmpPage = $cachedPagePath . '.temp.php';
 
-                            if (file_put_contents($cachedTmpPage, $compiledContentForCached)) {
+                            if ($this->saveCachedTemplate($cachedTmpPage, $compiledContentForCached)) {
                                 if (!isset(static::$performMark['template_cache_prerendered'])) {
                                     Framework::summonHook(
                                         'template_cache_prerender_*',
@@ -763,11 +744,7 @@ abstract class Template extends Factory implements Implement
                                     $templateName,
                                     $cachedTmpPage
                                 )) !== false) {
-                                    Framework::core('debug')->criticalSection(true);
-
-                                    unlink($cachedTmpPage);
-
-                                    Framework::core('debug')->criticalSection(false);
+                                    $this->saveCachedTemplate($cachedTmpPage, null);
 
                                     /*
                                         Beware the renderCachedContent as it may contains code that assigned
@@ -800,22 +777,10 @@ abstract class Template extends Factory implements Implement
                                         }
                                     }
 
-                                    $renderCachedOutputContent = static::$setting['TemplateFileSafeCode'][0]
-                                                                . static::$setting['TemplateFileSafeCode'][1]
-                                                                . implode('', $splitedRenderedContent);
-
-                                    unset($splitedRenderedContent, $splitedRenderedContentLen);
-
-                                    // Remove the old file, let APC cache knows the update.
-                                    Framework::core('debug')->criticalSection(true);
-
-                                    if (file_exists($cachedPagePath)) {
-                                        unlink($cachedPagePath);
-                                    }
-
-                                    Framework::core('debug')->criticalSection(false);
-
-                                    if (file_put_contents($cachedPagePath, $renderCachedOutputContent)) {
+                                    if ($this->saveCachedTemplate(
+                                        $cachedPagePath,
+                                        implode('', $splitedRenderedContent)
+                                    )) {
                                         return $cachedPagePath;
                                     }
                                 }
@@ -885,8 +850,7 @@ abstract class Template extends Factory implements Implement
             . $this->pool['Language'] . '.php';
 
         if (!$this->configs['Renew']
-            && is_readable($compiledTpl)
-            && filemtime($compiledTpl) >= $this->configs['CacheVer']) {
+            && $this->templateCacheReadable($compiledTpl, $this->configs['CacheVer'])) {
             return $compiledTpl;
         } else {
             if (!$templatePath = $this->getTemplateFromMap($templateName, $templateSet)) {
@@ -1183,20 +1147,7 @@ abstract class Template extends Factory implements Implement
             );
         }
 
-        Framework::core('debug')->criticalSection(true);
-
-        if (file_exists($resultTpl)) {
-            unlink($resultTpl);
-        }
-
-        Framework::core('debug')->criticalSection(false);
-
-        return file_put_contents(
-            $resultTpl,
-            static::$setting['TemplateFileSafeCode'][0]
-            . static::$setting['TemplateFileSafeCode'][1]
-            . trim($compiledContent)
-        );
+        return $this->saveCachedTemplate($resultTpl, $compiledContent);
     }
 
     /**
@@ -1231,7 +1182,7 @@ abstract class Template extends Factory implements Implement
     {
         // Set LanguageMap first, because we need to tell application,
         // we already tried to get lang file so it will not waste time retrying it.
-        $this->pool['LanguageMap'] = $langMap = $langMapPre =
+        $this->pool['LanguageMap'] = $typedLangData =
         $langMapTemp = $errors = array();
 
         $compiledLangFile = $this->configs['Compiled']
@@ -1239,28 +1190,26 @@ abstract class Template extends Factory implements Implement
                             . 'compiledLanguage.'
                             . $this->pool['Language'] . '.php';
 
-        $langContent = $langKey = $langVal = '';
+        $langContent = $defaultLangContent = $langKey = $langVal = '';
 
-        if (!$this->configs['Renew']
-            && is_readable($compiledLangFile)
-            && filemtime($compiledLangFile) >= $this->configs['CacheVer']) { // Try load lang cache first
-            require($compiledLangFile); // require for opcode optimizing
+        if ($this->configs['Renew']
+            || (!$this->pool['LanguageMap'] = $this->loadDataCache(
+                $compiledLangFile,
+                $this->configs['CacheVer']
+            ))) {
 
-            if (!empty($langMap)) {
-                $this->pool['LanguageMap'] = $langMap;
-                return true;
-            }
-        } else { // load default lang file then client lang file
             Framework::summonHook(
                 'template_load_language',
                 array(),
                 $errors
             );
 
+            // load default lang file then client lang file
+
             // Must load default lang first
             foreach ($this->getLanguageFormMap('default') as $file) {
                 if (is_readable($file)) {
-                    $langContent .= file_get_contents($file) . "\n";
+                    $defaultLangContent .= file_get_contents($file) . "\n";
                 } else {
                     new Error(
                         'LANGUAGE_DEFAULT_FILE_NOTFOUND',
@@ -1291,55 +1240,221 @@ abstract class Template extends Factory implements Implement
                 }
             }
 
-            $langMapPre = explode("\n", $langContent);
+            foreach (array(
+                'Default' => explode("\n", $defaultLangContent),
+                'Client' =>  explode("\n", $langContent)
+            ) as $langType => $langMapPre) {
+                foreach ($langMapPre as $lang) {
+                    $langMapTemp = explode('=', $lang, 2);
 
-            foreach ($langMapPre as $lang) {
-                $langMapTemp = explode('=', $lang, 2);
+                    if (!isset($langMapTemp[1])) {
+                        // If $langMapTemp[1] not set, may means this is just a comment.
+                        continue;
+                    }
 
-                if (!isset($langMapTemp[1])) {
-                    // If $langMapTemp[1] not set, may means this is just a comment.
-                    continue;
+                    $langKey = trim($langMapTemp[0]);
+                    $langVal = trim($langMapTemp[1]);
+
+                    if (isset($typedLangData[$langType][$langKey])) {
+                        new Error(
+                            'LANGUAGE_KEY_ALREADY_DECLARED',
+                            array(
+                                $langKey,
+                                $typedLangData[$langType][$langKey]
+                            ),
+                            'WARNING'
+                        );
+
+                        break;
+                    }
+
+                    $this->pool['LanguageMap'][$langKey] = $langVal;
+
+                    $typedLangData[$langType][$langKey] = $langVal;
                 }
-
-                $langKey = trim($langMapTemp[0]);
-                $langVal = trim($langMapTemp[1]);
-
-                if (isset($this->pool['LanguageMap'][$langKey])) {
-                    new Error(
-                        'LANGUAGE_KEY_ALREADY_DECLARED',
-                        array(
-                            $langKey,
-                            $this->pool['LanguageMap'][$langKey]
-                        ),
-                        'WARNING'
-                    );
-
-                    break;
-                }
-
-                $this->pool['LanguageMap'][$langKey] = $langVal;
             }
 
-            Framework::core('debug')->criticalSection(true);
-
-            if (file_exists($compiledLangFile)) {
-                unlink($compiledLangFile);
-            }
-
-            Framework::core('debug')->criticalSection(false);
-
-            if (file_put_contents(
+            if ($this->saveDataCache(
                 $compiledLangFile,
-                static::$setting['TemplateFileSafeCode'][0]
-                . ' $langMap = '
-                . var_export($this->pool['LanguageMap'], true)
-                . '; '
-                . static::$setting['TemplateFileSafeCode'][1]
+                $this->pool['LanguageMap']
             )) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Check if template file is readable
+     *
+     * @param string $path Path to the cache
+     * @param integer $expire Time of expiration
+     *
+     * @return bool Return true when cache is readable, false otherwise
+     */
+    protected function templateCacheReadable($path, $expire = 0)
+    {
+        if (!is_readable($path)) {
+            return false;
+        }
+
+        if ($expire > 0 && filemtime($path) < $expire) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if template file is readable
+     *
+     * @param string $path Path to the cache
+     *
+     * @return string Content of the cachedTemplate
+     */
+    protected function getTemplateContent($path)
+    {
+        return static::loadTemplateCacheFile($path);
+    }
+
+    /**
+     * Save template cache
+     *
+     * @param string $path Path to the cache
+     * @param string $content Content of cache
+     *
+     * @return bool Return true when saved, false otherwise
+     */
+    protected function saveCachedTemplate($path, $content)
+    {
+        return static::saveTemplateCacheFile($path, $content);
+    }
+
+    /**
+     * Static wrapper: Load template cache file
+     *
+     * @param string $path Path to the cache
+     *
+     * @return mixed The string of cached content, or false when failed
+     */
+    protected static function loadTemplateCacheFile($path)
+    {
+        return file_get_contents($path);
+    }
+
+    /**
+     * Static wrapper: Save template cache file
+     *
+     * @param string $path Path to the cache
+     * @param string $content Content to save
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    protected static function saveTemplateCacheFile($path, $content)
+    {
+        if (file_exists($path)) {
+            unlink($path);
+        }
+
+        if (is_null($content)) {
+            return true;
+        }
+
+        return file_put_contents(
+            $path,
+            static::$setting['TemplateFileSafeCode'][0]
+            . static::$setting['TemplateFileSafeCode'][1]
+            . $content
+        );
+    }
+
+    /**
+     * Load cache data
+     *
+     * @param string $path Path to the cache
+     * @param string $content Content to save
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    protected function loadDataCache($path, $expire = 0)
+    {
+        $data = static::loadDataCacheFile($path);
+
+        if (empty($data)) {
+            return false;
+        }
+
+        if ($expire > 0 && $data['Meta']['SavedTime'] < $expire) {
+            return false;
+        }
+
+        return $data['Data'];
+    }
+
+    /**
+     * Save Data Cache
+     *
+     * @param string $filePath Path to the cache
+     * @param string $data Content to save
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    protected function saveDataCache($filePath, $data)
+    {
+        return static::saveDataCacheFile($filePath, $data);
+    }
+
+    /**
+     * Static Wrapper: Save data cache
+     *
+     * @param string $filePath Path to the cache
+     * @param string $data Content to save
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    protected static function saveDataCacheFile($filePath, $data)
+    {
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+
+        return file_put_contents(
+            $filePath,
+            static::$setting['TemplateFileSafeCode'][0]
+            . '$cacheData = ' . var_export($data, true) . '; '
+            . '$cacheMeta = ' . var_export(array(
+                'SavedTime' => time()
+            ), true) . '; '
+            . static::$setting['TemplateFileSafeCode'][1]
+        );
+    }
+
+    /**
+     * Static Wrapper: Load cached
+     *
+     * @param string $path Path to the cache
+     *
+     * @return array Return data content when succeed, or empty array when failed
+     */
+    protected static function loadDataCacheFile($path)
+    {
+        $cacheData = array();
+        $cacheMeta = array();
+
+        if (!is_readable($path)) {
+            return array();
+        }
+
+        require($path);
+
+        if (empty($cacheData) || empty($cacheMeta)) {
+            return array();
+        }
+
+        return array(
+            'Data' => $cacheData,
+            'Meta' => $cacheMeta
+        );
     }
 }
