@@ -677,7 +677,7 @@ abstract class Template extends Factory implements Implement
                 }
 
                 if ($templatePath = $this->getCompiledTemplate($templateName, $templateSet)) {
-                    if ($templateContent = file_get_contents($templatePath)) {
+                    if ($templateContent = $this->getCachedTemplate($templatePath)) {
                         // Spilt using no cache
                         $splitedCompiledContent = explode(
                             '<!-- NOCACHE -->',
@@ -1279,6 +1279,22 @@ abstract class Template extends Factory implements Implement
         }
 
         return false;
+    }
+
+    /**
+     * Load cached template
+     *
+     * @param string $path Path to the cache
+     *
+     * @return mixed Return the template content when succeed, false otherwise
+     */
+    protected function getCachedTemplate($path)
+    {
+        if (!is_readable($path)) {
+            return false;
+        }
+
+        return file_get_contents($path);
     }
 
     /**
