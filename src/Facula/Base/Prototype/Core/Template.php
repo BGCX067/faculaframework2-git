@@ -53,7 +53,9 @@ abstract class Template extends Factory implements Implement
         'TemplateFileSafeCode' => array(
             '<?php if (!defined(\'IN_FACULA\')) {exit(\'Access Denied\');} ',
             ' ?>',
-        )
+        ),
+        'NoIndexFile' =>
+            '<html><head><title>Access Denied</title></head><body>Access Denied</body></html>'
     );
 
     /** Instance configuration for caching */
@@ -710,8 +712,7 @@ abstract class Template extends Factory implements Implement
                             $splitedCompiledContentIndexLen
                         );
 
-                        if (is_dir($cachedPageRoot)
-                        || mkdir($cachedPageRoot, 0744, true)) {
+                        if ($this->buildCachingPath($cachedPageFactorDir)) {
                             $cachedTmpPage = $cachedPagePath . '.temp.php';
 
                             if ($this->saveCachedTemplate($cachedTmpPage, $compiledContentForCached)) {
@@ -1279,6 +1280,40 @@ abstract class Template extends Factory implements Implement
         }
 
         return false;
+    }
+
+    /**
+     * Build path for cache file based on $this->configs['Cached']
+     *
+     * @param string $path Directory path to the cache
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    protected function buildCachingPath($path)
+    {
+        $enteredPath = $this->configs['Cached'];
+
+        foreach (explode(
+            DIRECTORY_SEPARATOR,
+            $path
+        ) as $pathEl) {
+            $enteredPath .= DIRECTORY_SEPARATOR . $pathEl;
+
+            if (!file_exists($enteredPath)) {
+                if (!mkdir($enteredPath, 0744, true)) {
+                    return false;
+                } else {
+                    file_put_contents(
+                        $enteredPath
+                        . DIRECTORY_SEPARATOR
+                        . 'index.htm',
+                        static::$setting['NoIndexFile']
+                    );
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
