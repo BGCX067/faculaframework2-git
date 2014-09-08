@@ -105,7 +105,6 @@ abstract class Cache extends Factory implements Implement
     {
         $path = $file = '';
         $cache = array();
-        $expireMethod = null;
 
         if ($path = $this->getCacheFileByName($cacheName)) {
             $file = $this->configs['Root'] . DIRECTORY_SEPARATOR . $path['File'];
@@ -113,12 +112,12 @@ abstract class Cache extends Factory implements Implement
             if (is_readable($file)) {
                 require($file);
 
-                if (($cache[0] && $cache[0] < FACULA_TIME)
-                || $this->configs['BootVer'] > $cache[1]) {
+                if (($cache[0] && $cache[0] <= FACULA_TIME)
+                || $this->configs['BootVer'] != $cache[1]) {
                     return false;
                 }
 
-                return $cache[2]; // Yeah, actually null cannot be isset.
+                return $cache[2];
             }
         }
 
@@ -166,7 +165,7 @@ abstract class Cache extends Factory implements Implement
             if ($this->makeCacheDir($path['Path'])) {
                 $cacheData = array(
                     0 => (int)$expiredTime, // Expired
-                    1 => (int)FACULA_TIME, // Cached Time
+                    1 => $this->configs['BootVer'], // Cached Version
                     2 => $data ? $data : null, // Data
                 );
 

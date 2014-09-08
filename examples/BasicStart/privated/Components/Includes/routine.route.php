@@ -41,7 +41,7 @@ Facula\Framework::registerHook('ready', 'exec', function () {
         Facula\Framework::summonHook('route_init');
 
         Facula\Framework::core('cache')->save(
-            'Route-map',
+            'Routes',
             Facula\Unit\Route::exportMap(),
             0
         );

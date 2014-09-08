@@ -61,8 +61,8 @@ abstract class Route
     const CALL_STRING_TYPE = 2;
 
     /** Consts for handler errors */
-    const HANDLER_FAIL_RESULT_FALSE = 0;
-    const HANDLER_FAIL_NO_HANDLER = 1;
+    const HANDLER_FAIL_RESULT_FALSE = 1;
+    const HANDLER_FAIL_NO_HANDLER = 2;
 
     /** Character will be use to split the route */
     public static $routeSplit = '/';

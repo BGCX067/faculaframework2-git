@@ -44,6 +44,10 @@ class Template extends Base
             The path declared in "CompiledTemplate" must be defined and existed.
         ',
 
+        'PATH_CACHEDTEMPLATE_NOTFOUND' => '
+            The path declared in "CachePath" must be defined and existed.
+        ',
+
         'MESSAGE_NOCONTENT' => '
             Inserted message is empty.
         ',

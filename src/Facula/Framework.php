@@ -260,6 +260,10 @@ class Framework
      */
     protected static function saveCacheFile($stateFile, $cache)
     {
+        if (file_exists($stateFile)) {
+            unlink($stateFile);
+        }
+
         $content = self::$cfg['CacheTags'][0]
                     . '$cache = '
                     . var_export($cache, true)

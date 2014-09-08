@@ -213,7 +213,7 @@ abstract class Template extends Factory implements Implement
                 );
             } else {
                 new Error(
-                    'PATH_COMPILEDTEMPLATE_NOTFOUND',
+                    'PATH_CACHEDTEMPLATE_NOTFOUND',
                     array(),
                     'ERROR'
                 );
@@ -488,10 +488,10 @@ abstract class Template extends Factory implements Implement
         }
 
         if ($this->configs['Renew']
-            || (!$fileMap = $this->loadDataCache(
-                $fileMapFileName,
-                $this->configs['CacheVer']
-            ))) {
+        || (!$fileMap = $this->loadDataCache(
+            $fileMapFileName,
+            $this->configs['CacheVer']
+        ))) {
             // Get file and build maps
             foreach (array_merge(
                 $this->getMapDataFromHook(),
@@ -550,7 +550,7 @@ abstract class Template extends Factory implements Implement
                 }
             }
 
-            return $this->saveDataCache($fileMapFileName, $fileMap);
+            $this->saveDataCache($fileMapFileName, $fileMap);
         }
 
         static::$fileMap = $fileMap;
@@ -634,23 +634,19 @@ abstract class Template extends Factory implements Implement
 
         $splitedCompiledContent = $splitedRenderedContent = $errors = array();
 
-        if (!$expire && !is_null($this->configs['CacheTTL'])) {
-            $expire = $this->configs['CacheTTL'];
+        if ($expire) {
+            $currentExpireTimestamp = FACULA_TIME - $expire;
+        } elseif ($this->configs['CacheTTL']) {
+            $currentExpireTimestamp = FACULA_TIME - $this->configs['CacheTTL'];
         }
 
-        $currentExpireTimestamp = FACULA_TIME - $expire;
-
         if (isset($this->configs['Cached'][0])) {
-            $cachedPageFactor =
-                !$cacheFactor
-                ?
-                'default'
-                :
-                str_replace(
-                    array('/', '\\', '|'),
-                    '#',
-                    $cacheFactor
-                );
+            $cachedPageFactor = !$cacheFactor ?
+                'default' : str_replace(
+                                array('/', '\\', '|'),
+                                '#',
+                                $cacheFactor
+                            );
 
             $cachedPageFactorDir = !$cacheFactor ?
                 'default' : $this->getCacheSubPath($cacheFactor);
@@ -671,12 +667,12 @@ abstract class Template extends Factory implements Implement
             $cachedPagePath = $cachedPageRoot . $cachedPageFile;
 
             if (!$this->configs['Renew']
-                && $this->templateCacheReadable($cachedPagePath, $currentExpireTimestamp)) {
+            && $this->templateCacheReadable($cachedPagePath, $currentExpireTimestamp)) {
                 return $cachedPagePath;
             } else {
                 if ($expiredCallback
-                    && is_callable($expiredCallback)
-                    && !$expiredCallback()) {
+                && is_callable($expiredCallback)
+                && !$expiredCallback()) {
                     return false;
                 }
 
@@ -715,7 +711,7 @@ abstract class Template extends Factory implements Implement
                         );
 
                         if (is_dir($cachedPageRoot)
-                            || mkdir($cachedPageRoot, 0744, true)) {
+                        || mkdir($cachedPageRoot, 0744, true)) {
                             $cachedTmpPage = $cachedPagePath . '.temp.php';
 
                             if ($this->saveCachedTemplate($cachedTmpPage, $compiledContentForCached)) {
@@ -850,7 +846,7 @@ abstract class Template extends Factory implements Implement
             . $this->pool['Language'] . '.php';
 
         if (!$this->configs['Renew']
-            && $this->templateCacheReadable($compiledTpl, $this->configs['CacheVer'])) {
+        && $this->templateCacheReadable($compiledTpl, $this->configs['CacheVer'])) {
             return $compiledTpl;
         } else {
             if (!$templatePath = $this->getTemplateFromMap($templateName, $templateSet)) {
@@ -1193,10 +1189,10 @@ abstract class Template extends Factory implements Implement
         $langContent = $defaultLangContent = $langKey = $langVal = '';
 
         if ($this->configs['Renew']
-            || (!$this->pool['LanguageMap'] = $this->loadDataCache(
-                $compiledLangFile,
-                $this->configs['CacheVer']
-            ))) {
+        || (!$this->pool['LanguageMap'] = $this->loadDataCache(
+            $compiledLangFile,
+            $this->configs['CacheVer']
+        ))) {
 
             Framework::summonHook(
                 'template_load_language',
@@ -1299,23 +1295,11 @@ abstract class Template extends Factory implements Implement
             return false;
         }
 
-        if ($expire > 0 && filemtime($path) < $expire) {
+        if ($expire > 0 && filemtime($path) <= $expire) {
             return false;
         }
 
         return true;
-    }
-
-    /**
-     * Check if template file is readable
-     *
-     * @param string $path Path to the cache
-     *
-     * @return string Content of the cachedTemplate
-     */
-    protected function getTemplateContent($path)
-    {
-        return static::loadTemplateCacheFile($path);
     }
 
     /**
@@ -1327,31 +1311,6 @@ abstract class Template extends Factory implements Implement
      * @return bool Return true when saved, false otherwise
      */
     protected function saveCachedTemplate($path, $content)
-    {
-        return static::saveTemplateCacheFile($path, $content);
-    }
-
-    /**
-     * Static wrapper: Load template cache file
-     *
-     * @param string $path Path to the cache
-     *
-     * @return mixed The string of cached content, or false when failed
-     */
-    protected static function loadTemplateCacheFile($path)
-    {
-        return file_get_contents($path);
-    }
-
-    /**
-     * Static wrapper: Save template cache file
-     *
-     * @param string $path Path to the cache
-     * @param string $content Content to save
-     *
-     * @return bool Return true when succeed, false otherwise
-     */
-    protected static function saveTemplateCacheFile($path, $content)
     {
         if (file_exists($path)) {
             unlink($path);
@@ -1385,7 +1344,7 @@ abstract class Template extends Factory implements Implement
             return false;
         }
 
-        if ($expire > 0 && $data['Meta']['SavedTime'] < $expire) {
+        if ($expire > 0 && $data['Meta']['SavedTime'] <= $expire) {
             return false;
         }
 
@@ -1395,39 +1354,14 @@ abstract class Template extends Factory implements Implement
     /**
      * Save Data Cache
      *
-     * @param string $filePath Path to the cache
+     * @param string $path Path to the cache
      * @param string $data Content to save
      *
      * @return bool Return true when succeed, false otherwise
      */
-    protected function saveDataCache($filePath, $data)
+    protected function saveDataCache($path, $data)
     {
-        return static::saveDataCacheFile($filePath, $data);
-    }
-
-    /**
-     * Static Wrapper: Save data cache
-     *
-     * @param string $filePath Path to the cache
-     * @param string $data Content to save
-     *
-     * @return bool Return true when succeed, false otherwise
-     */
-    protected static function saveDataCacheFile($filePath, $data)
-    {
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
-
-        return file_put_contents(
-            $filePath,
-            static::$setting['TemplateFileSafeCode'][0]
-            . '$cacheData = ' . var_export($data, true) . '; '
-            . '$cacheMeta = ' . var_export(array(
-                'SavedTime' => time()
-            ), true) . '; '
-            . static::$setting['TemplateFileSafeCode'][1]
-        );
+        return static::saveDataCacheFile($path, $data);
     }
 
     /**
@@ -1455,6 +1389,31 @@ abstract class Template extends Factory implements Implement
         return array(
             'Data' => $cacheData,
             'Meta' => $cacheMeta
+        );
+    }
+
+    /**
+     * Static Wrapper: Save data cache
+     *
+     * @param string $path Path to the cache
+     * @param string $data Content to save
+     *
+     * @return bool Return true when succeed, false otherwise
+     */
+    protected static function saveDataCacheFile($path, $data)
+    {
+        if (file_exists($path)) {
+            unlink($path);
+        }
+
+        return file_put_contents(
+            $path,
+            static::$setting['TemplateFileSafeCode'][0]
+            . '$cacheData = ' . var_export($data, true) . '; '
+            . '$cacheMeta = ' . var_export(array(
+                'SavedTime' => time()
+            ), true) . '; '
+            . static::$setting['TemplateFileSafeCode'][1]
         );
     }
 }

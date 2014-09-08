@@ -78,7 +78,7 @@ abstract class Object extends Factory implements Implement
 
             'OCExpire' => isset($cfg['ObjectCacheExpire'])
                         && $cfg['ObjectCacheExpire']
-                        ? (int)($cfg['ObjectCacheExpire']) : 604800,
+                        ? (int)($cfg['ObjectCacheExpire']) : 0,
 
             'CacheTime' => $common['BootVersion']
         );
@@ -107,9 +107,18 @@ abstract class Object extends Factory implements Implement
     {
         $instance = null;
         $obj = array();
+        $expire = 0;
 
         if (!$this->configs['OCRoot']) {
             return false;
+        }
+
+        if ($this->configs['OCExpire']) {
+            $expire = FACULA_TIME - $this->configs['OCExpire'];
+        }
+
+        if ($this->configs['CacheTime'] > $expire) {
+            $expire = $this->configs['CacheTime'];
         }
 
         $file = $this->configs['OCRoot']
@@ -126,7 +135,7 @@ abstract class Object extends Factory implements Implement
                 . ($uniqueID ? $uniqueID : 'common')
                 . '.php';
 
-        return $this->loadObjectCache($file);
+        return $this->loadObjectCache($file, $expire);
     }
 
     /**
@@ -576,16 +585,11 @@ abstract class Object extends Factory implements Implement
      */
     protected function loadObjectCache($file, $expire = 0)
     {
-        if (!is_readable($file) || filemtime($file) < $expire) {
-            return false;
-        }
-
         if (!$instance = static::loadCacheFile($file)) {
             return false;
         }
 
-        if ($expire
-        && $instance->cachedObjectSaveTime < $expire) {
+        if ($expire > 0 && $instance->cachedObjectSaveTime <= $expire) {
             return false;
         }
 
@@ -614,6 +618,10 @@ abstract class Object extends Factory implements Implement
     protected static function loadCacheFile($file)
     {
         $obj = null;
+
+        if (!is_readable($file)) {
+            return false;
+        }
 
         require($file);
 
