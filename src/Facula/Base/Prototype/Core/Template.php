@@ -644,11 +644,7 @@ abstract class Template extends Factory implements Implement
 
         if (isset($this->configs['Cached'][0])) {
             $cachedPageFactor = !$cacheFactor ?
-                'default' : str_replace(
-                                array('/', '\\', '|'),
-                                '#',
-                                $cacheFactor
-                            );
+                'default' : str_replace(array('/', '\\', '|'), '#', $cacheFactor);
 
             $cachedPageFactorDir = !$cacheFactor ?
                 'default' : $this->getCacheSubPath($cacheFactor);
