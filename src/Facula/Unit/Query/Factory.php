@@ -723,6 +723,10 @@ class Factory extends Base implements Implement
             case 'IN':
                 if (is_array($value)) {
                     if (empty($value)) {
+                        throw new Exception\EmptyValueNotAllowedForCondition(
+                            $operator
+                        );
+
                         return false;
                     }
 
@@ -743,6 +747,10 @@ class Factory extends Base implements Implement
             case 'NOT IN':
                 if (is_array($value)) {
                     if (empty($value)) {
+                        throw new Exception\EmptyValueNotAllowedForCondition(
+                            $operator
+                        );
+
                         return false;
                     }
 
