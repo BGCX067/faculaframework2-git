@@ -78,6 +78,12 @@ abstract class Resulting implements Impl
 
                     $this->value[$key] = $val;
                 }
+
+                // Group can be empty so check it there,
+                // or we will get null instead of array
+                if (empty($value)) {
+                    $this->value = array();
+                }
                 break;
 
             case 'Wrapper':

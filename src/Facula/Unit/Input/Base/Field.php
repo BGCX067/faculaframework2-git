@@ -281,12 +281,6 @@ abstract class Field implements Impl
             $value = $this->defaults;
         }
 
-        if (!$this->checkLimit($value, $limitError)) {
-            $this->error($limitError);
-
-            return false;
-        }
-
         if (!$this->parseImport($value, $newValue, $parseError)) {
             if (!is_null($parseError)) {
                 $this->error($parseError);
@@ -294,10 +288,16 @@ abstract class Field implements Impl
                 return false;
             }
 
-            $this->value = $newValue;
-        } else {
-            $this->value = $value;
+            $value = $newValue;
         }
+
+        if (!$this->checkLimit($value, $limitError)) {
+            $this->error($limitError);
+
+            return false;
+        }
+
+        $this->value = $value;
 
         return true;
     }
