@@ -756,7 +756,7 @@ abstract class Template extends Factory implements Implement
      *
      * @return string The cache-already content
      */
-    protected function handleCacheExcludeArea(&$compliedTemplate, $task = '', $removeTag)
+    protected function handleCacheExcludeArea(&$compliedTemplate, $task, $removeTag)
     {
         $tempSelectedStr = '';
         $positions = $tempPop = $tempPair = $splitedArea = array();
@@ -793,7 +793,7 @@ abstract class Template extends Factory implements Implement
                             $tag,
                             $tempPop['Tag'],
                             substr(
-                                $result,
+                                $compliedTemplate,
                                 $tempPop['Pos'],
                                 1024
                             ) . '...'
@@ -822,8 +822,8 @@ abstract class Template extends Factory implements Implement
             }
 
             $splitedArea[] = substr(
-                $compliedTemplate, 
-                $splitedNextStarted, 
+                $compliedTemplate,
+                $splitedNextStarted,
                 $tempPair[0]['Pos'] - $splitedNextStarted
             );
 
@@ -833,8 +833,8 @@ abstract class Template extends Factory implements Implement
         }
 
         $splitedArea[] = substr(
-            $compliedTemplate, 
-            $splitedNextStarted, 
+            $compliedTemplate,
+            $splitedNextStarted,
             strlen($compliedTemplate) - $splitedNextStarted
         );
 
