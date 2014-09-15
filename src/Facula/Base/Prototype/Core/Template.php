@@ -55,7 +55,11 @@ abstract class Template extends Factory implements Implement
             ' ?>',
         ),
         'NoIndexFile' =>
-            '<html><head><title>Access Denied</title></head><body>Access Denied</body></html>'
+            '<html><head><title>Access Denied</title></head><body>Access Denied</body></html>',
+        'NoCacheTag' => array(
+            '<!-- NOCACHE -->',
+            '<!-- /NOCACHE -->',
+        ),
     );
 
     /** Instance configuration for caching */
@@ -632,7 +636,7 @@ abstract class Template extends Factory implements Implement
         $cachedPageFactor = $cachedPageFile = $cachedPageFactorDir = $cachedTmpPage =
         $renderCachedContent = '';
 
-        $splitedCompiledContentIndexLen = $splitedRenderedContentLen = $currentExpireTimestamp = 0;
+        $currentExpireTimestamp = 0;
 
         $splitedCompiledContent = $splitedRenderedContent = $errors = array();
 
@@ -676,36 +680,10 @@ abstract class Template extends Factory implements Implement
 
                 if ($templatePath = $this->getCompiledTemplate($templateName, $templateSet)) {
                     if ($templateContent = $this->getCachedTemplate($templatePath)) {
-                        // Spilt using no cache
-                        $splitedCompiledContent = explode(
-                            '<!-- NOCACHE -->',
-                            $templateContent
-                        );
-
-                        $splitedCompiledContentIndexLen = count($splitedCompiledContent) - 1;
-
-                        // Deal with area which need to be cached
-                        foreach ($splitedCompiledContent as $key => $val) {
-                            if ($key > 0
-                                && $key < $splitedCompiledContentIndexLen
-                                && $key % 2) {
-                                $splitedCompiledContent[$key] = '<?php echo(stripslashes(\''
-                                                                . addslashes($val)
-                                                                . '\')); ?>';
-                            }
-                        }
-
-                        // Reassembling compiled content;
-                        $compiledContentForCached = implode(
-                            '<!-- NOCACHE -->',
-                            $splitedCompiledContent
-                        );
-
-                        // Save compiled content to a temp file
-                        unset(
+                        $compiledContentForCached = $this->handleCacheExcludeArea(
                             $templateContent,
-                            $splitedCompiledContent,
-                            $splitedCompiledContentIndexLen
+                            'Make',
+                            false
                         );
 
                         if ($this->buildCachingPath($cachedPageFactorDir)) {
@@ -737,42 +715,16 @@ abstract class Template extends Factory implements Implement
                                     $templateName,
                                     $cachedTmpPage
                                 )) !== false) {
+                                    // Clear old template
                                     $this->saveCachedTemplate($cachedTmpPage, null);
-
-                                    /*
-                                        Beware the renderCachedContent as it may contains code that assigned
-                                        by user. After render and cache, the php code may will
-                                        turn to executable.
-
-                                        Web ui designer should filter those code to avoid danger by using
-                                        compiler's variable format, but they usually know nothing
-                                        about how to keep user input safe.
-
-                                        So: belowing code will help you to filter those code if the web ui
-                                        designer not filter it by their own.
-                                    */
-                                    $splitedRenderedContent = explode(
-                                        '<!-- NOCACHE -->',
-                                        $renderCachedContent
-                                    );
-
-                                    $splitedRenderedContentLen = count($splitedRenderedContent) - 1;
-
-                                    foreach ($splitedRenderedContent as $key => $val) {
-                                        if (!($key > 0 && $key < $splitedRenderedContentLen
-                                            && $key%2)) { // Inverse as above to tag and select cached area.
-                                            $splitedRenderedContent[$key] = str_replace(
-                                                array('<?', '?>'),
-                                                array('&lt;?', '?&gt;'),
-                                                $val
-                                            );
-                                            // Replace php code tag to unexecutable tag before save file.
-                                        }
-                                    }
 
                                     if ($this->saveCachedTemplate(
                                         $cachedPagePath,
-                                        implode('', $splitedRenderedContent)
+                                        $this->handleCacheExcludeArea(
+                                            $renderCachedContent,
+                                            'Secure',
+                                            true
+                                        )
                                     )) {
                                         return $cachedPagePath;
                                     }
@@ -793,6 +745,125 @@ abstract class Template extends Factory implements Implement
         }
 
         return false;
+    }
+
+    /**
+     * Handle the cache and exclude area of a template
+     *
+     * @param string $compliedTemplate Content of the template
+     * @param string $task Type of task
+     * @param bool $removeTag Remove the <!-- NOCACHE --> tag from output
+     *
+     * @return string The cache-already content
+     */
+    protected function handleCacheExcludeArea(&$compliedTemplate, $task = '', $removeTag)
+    {
+        $tempSelectedStr = '';
+        $positions = $tempPop = $tempPair = $splitedArea = array();
+        $lastPos = $nextPos = $tagStrLen = $splitedNextStarted = 0;
+
+        foreach (static::$setting['NoCacheTag'] as $tagStr) {
+            $nextPos = 0;
+            $tagStrLen = strlen($tagStr);
+
+            while (($lastPos = strpos($compliedTemplate, $tagStr, $nextPos)) !== false) {
+                $positions[$lastPos] = array(
+                    'Tag' => $tagStr,
+                    'Pos' => $lastPos,
+                    'End' => $lastPos + $tagStrLen,
+                    'Len' => $tagStrLen,
+                );
+
+                $nextPos = $lastPos + 1;
+            }
+        }
+
+        ksort($positions);
+
+        while (!empty($positions)) {
+            $tempPair = array();
+
+            foreach (static::$setting['NoCacheTag'] as $tag) {
+                $tempPop = array_shift($positions);
+
+                if ($tempPop['Tag'] != $tag) {
+                    new Error(
+                        'CACHE_EXCLUDE_AREA_UNEXECPTED_SEQUENCE',
+                        array(
+                            $tag,
+                            $tempPop['Tag'],
+                            substr(
+                                $result,
+                                $tempPop['Pos'],
+                                1024
+                            ) . '...'
+                        ),
+                        'ERROR'
+                    );
+
+                    return false;
+                }
+
+                $tempPair[] = $tempPop;
+            }
+
+            if ($removeTag) {
+                $tempSelectedStr = substr(
+                    $compliedTemplate,
+                    $tempPair[0]['End'],
+                    $tempPair[1]['Pos'] - $tempPair[0]['End']
+                );
+            } else {
+                $tempSelectedStr = substr(
+                    $compliedTemplate,
+                    $tempPair[0]['Pos'],
+                    $tempPair[1]['End'] - $tempPair[0]['Pos']
+                );
+            }
+
+            $splitedArea[] = substr(
+                $compliedTemplate, 
+                $splitedNextStarted, 
+                $tempPair[0]['Pos'] - $splitedNextStarted
+            );
+
+            $splitedArea[] = $tempSelectedStr;
+
+            $splitedNextStarted = $tempPair[1]['End'];
+        }
+
+        $splitedArea[] = substr(
+            $compliedTemplate, 
+            $splitedNextStarted, 
+            strlen($compliedTemplate) - $splitedNextStarted
+        );
+
+        switch ($task) {
+            case 'Make':
+                foreach ($splitedArea as $aKey => $aVal) {
+                    if ($aKey % 2) {
+                        $splitedArea[$aKey] =
+                            '<?php echo(stripslashes(\''
+                            . addslashes($aVal)
+                            . '\')); ?>';
+                    }
+                }
+                break;
+
+            case 'Secure':
+                foreach ($splitedArea as $aKey => $aVal) {
+                    if (!($aKey % 2)) {
+                        $splitedArea[$aKey] = str_replace(
+                            array('<?', '?>'),
+                            array('&lt;?', '?&gt;'),
+                            $aVal
+                        );
+                    }
+                }
+                break;
+        }
+
+        return implode('', $splitedArea);
     }
 
     /**

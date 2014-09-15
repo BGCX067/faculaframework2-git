@@ -121,5 +121,9 @@ class Template extends Base
         'COMPILER_INTERFACE_INVALID' => '
             Template compiler class "%s" must implement interface "%s".
         ',
+
+        'CACHE_EXCLUDE_AREA_UNEXECPTED_SEQUENCE' => '
+            Invalid sequence of cache exclude tag. Expecting "%s" but picked "%s" in code "%s".
+        ',
     );
 }
