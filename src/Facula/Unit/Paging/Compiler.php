@@ -524,7 +524,7 @@ class Compiler extends Base implements Implement
 
             $newLength = strlen($newResult);
 
-            $newPosShift = ($newLength - $oldLength);
+            $newPosShift = $newLength - $oldLength;
 
             // Shift all the positions of tag that behind current one
             foreach ($tags as $tagPosSK => $tagPosShift) {
@@ -582,7 +582,6 @@ class Compiler extends Base implements Implement
                                 $tags[$tagPosSK]['Data']['Middle'][$tagPosMKey][$mTKey]['Parameter'][1]
                                 - $tags[$tagPosSK]['Data']['Middle'][$tagPosMKey][$mTKey]['Parameter'][0];
 
-
                             if ($mTParam['Data'][0] >= $tag['End']) {
                                 $tags[$tagPosSK]['Data']['Middle'][$tagPosMKey][$mTKey]['Data'][0]
                                     += $newPosShift;
@@ -603,7 +602,7 @@ class Compiler extends Base implements Implement
 
             $result = substr($result, 0, $tag['Start'])
                 . $newResult
-                . substr($result, $tag['End'], $resultLen);
+                . substr($result, $tag['End'], $resultLen - $tag['End']);
 
             $resultLen += $newPosShift;
         }
