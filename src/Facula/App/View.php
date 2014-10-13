@@ -28,6 +28,7 @@
 namespace Facula\App;
 
 use Facula\Base\Exception\App\View as Exception;
+use Facula\Framework;
 
 /**
  * Base view
@@ -94,8 +95,8 @@ class View
         $content = '';
 
         if ($content = self::render($this->file, $this->assigned)) {
-            \Facula\Framework::core('response')->setContent($content);
-            \Facula\Framework::core('response')->send();
+            Framework::core('response')->setContent($content);
+            Framework::core('response')->send();
 
             return true;
         }
@@ -117,11 +118,11 @@ class View
 
         extract($assigned);
 
-        \Facula\Framework::core('debug')->criticalSection(true);
+        Framework::core('debug')->criticalSection(true);
 
         require($targetTpl);
 
-        \Facula\Framework::core('debug')->criticalSection(false);
+        Framework::core('debug')->criticalSection(false);
 
         return ob_get_clean();
     }
