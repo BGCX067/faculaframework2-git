@@ -27,10 +27,13 @@
 
 namespace Facula\Unit\Imager\Operator;
 
+use Facula\Unit\Imager\OperatorImplement;
+use Facula\Unit\Imager\Base;
+
 /**
  * Imager GD Handler
  */
-class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\OperatorImplement
+class GD extends Base implements OperatorImplement
 {
     /** Resource handler */
     private $imageRes = null;
@@ -535,6 +538,7 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Operato
      * @param string $align Align type
      * @param integer $margin Align type
      * @param array $color R,G,B value of array
+     * @param integer $size Font size instead of default one
      *
      * @return bool Return true when added, false for fail
      */
@@ -542,98 +546,117 @@ class GD extends \Facula\Unit\Imager\Base implements \Facula\Unit\Imager\Operato
         $text,
         $align = 'center center',
         $margin = 0,
-        $color = array(255, 255, 255)
+        array $color = array(255, 255, 255, 128),
+        $size = 12
     ) {
         $colorLayer = $fontColor = $shadowFontColor = null;
         $fontX = $fontY = 0;
         $fontBoxPos = array();
+        $fontSize = $size ? (int)$size : $this->setting['FontSize'];
 
         $result = false;
 
         if ($this->imageRes) {
-            if (isset($this->setting['Font'][0]) && $this->setting['FontSize']) {
-                $fontBoxPos = imagettfbbox(
-                    $this->setting['FontSize'],
-                    0,
-                    $this->setting['Font'],
-                    $text
-                );
+            if (!isset($this->setting['Font'][0]) || !$fontSize) {
+                throw new \Exception("Font and FontSize must be set to use text watermark.");
 
-                $fontWidth = abs($fontBoxPos[4] - $fontBoxPos[0]);
-                $fontHeight = abs($fontBoxPos[5] - $fontBoxPos[1]);
+                return false;
+            }
 
-                if ($fontWidth < $this->imageInfo['Width']
-                    && $fontHeight < $this->imageInfo['Height']) {
-                    list($fontX, $fontY) = $this->getAlignPos(
-                        $align,
-                        $this->imageInfo['Width'],
-                        $this->imageInfo['Height'],
-                        $fontWidth,
-                        $fontHeight,
-                        $margin
+            $fontBoxPos = imagettfbbox(
+                $fontSize,
+                0,
+                $this->setting['Font'],
+                $text
+            );
+
+            $fontWidth = abs($fontBoxPos[4] - $fontBoxPos[0]);
+            $fontHeight = abs($fontBoxPos[5] - $fontBoxPos[1]);
+
+            if ($fontWidth > $this->imageInfo['Width'] || $fontHeight > $this->imageInfo['Height']) {
+                $this->error = 'ERROR_IMAGE_HANDLER_WATERMARK_TOOLARGE';
+
+                return false;
+            }
+
+            list($fontX, $fontY) = $this->getAlignPos(
+                $align,
+                $this->imageInfo['Width'],
+                $this->imageInfo['Height'],
+                $fontWidth,
+                $fontHeight,
+                $margin
+            );
+
+            $fontY += $fontHeight; // imagettfbbox will align using baseline...
+
+            if ($colorLayer = imagecreatetruecolor($fontWidth, $fontHeight)) {
+                if (isset($this->imageInfo['Transparent'])) {
+                    imagesavealpha($colorLayer, true);
+                    imagealphablending($colorLayer, false);
+
+                    $alphaWhite = imagecolorallocatealpha(
+                        $colorLayer,
+                        255,
+                        255,
+                        255,
+                        127
                     );
 
-                    $fontY += $fontHeight; // imagettfbbox will align using baseline...
-
-                    if ($colorLayer = imagecreatetruecolor($fontWidth, $fontHeight)) {
-                        if (isset($this->imageInfo['Transparent'])) {
-                            imagesavealpha($colorLayer, true);
-                            imagealphablending($colorLayer, false);
-
-                            $alphaWhite = imagecolorallocatealpha(
-                                $colorLayer,
-                                255,
-                                255,
-                                255,
-                                127
-                            );
-
-                            imagefill($colorLayer, 0, 0, $alphaWhite);
-                        }
-
-                        $fontColor = imagecolorallocate(
-                            $colorLayer,
-                            $color[0],
-                            $color[1],
-                            $color[2]
-                        );
-                        $shadowFontColor = imagecolorallocate($colorLayer, 0, 0, 0);
-
-                        if ($fontColor !== false && $shadowFontColor !== false) {
-                            if (imagettftext(
-                                $this->imageRes,
-                                $this->setting['FontSize'],
-                                0,
-                                $fontX + 1,
-                                $fontY + 1,
-                                $shadowFontColor,
-                                $this->setting['Font'],
-                                $text
-                            )
-                            &&
-                            imagettftext(
-                                $this->imageRes,
-                                $this->setting['FontSize'],
-                                0,
-                                $fontX,
-                                $fontY,
-                                $fontColor,
-                                $this->setting['Font'],
-                                $text
-                            )) {
-                                $result = true;
-                            }
-
-                            imagedestroy($colorLayer);
-
-                            return $result;
-                        }
-                    }
-                } else {
-                    $this->error = 'ERROR_IMAGE_HANDLER_WATERMARK_TOOLARGE';
+                    imagefill($colorLayer, 0, 0, $alphaWhite);
                 }
-            } else {
-                $this->error = 'ERROR_IMAGE_HANDLER_FONT_NOTSET';
+
+                if (!isset($color[3])) {
+                    $color[3] = 255;
+                }
+
+                // http://php.net/manual/en/function.imagecolorallocatealpha.php#106642 Thank you!
+                $color[3] = ((~((int)$color[3])) & 0xff) >> 1;
+
+                if (!isset($color[0], $color[1], $color[2])) {
+                    throw new \Exception("All Color setting must be set in array(R, G, B).");
+
+                    return false;
+                }
+
+                $fontColor = imagecolorallocatealpha(
+                    $colorLayer,
+                    $color[0],
+                    $color[1],
+                    $color[2],
+                    $color[3]
+                );
+                $shadowFontColor = imagecolorallocatealpha($colorLayer, 0, 0, 0, $color[3]);
+
+                if ($fontColor !== false && $shadowFontColor !== false) {
+                    if (imagettftext(
+                        $this->imageRes,
+                        $fontSize,
+                        0,
+                        $fontX + 1,
+                        $fontY + 1,
+                        $shadowFontColor,
+                        $this->setting['Font'],
+                        $text
+                    )
+                    &&
+                    imagettftext(
+                        $this->imageRes,
+                        $fontSize,
+                        0,
+                        $fontX,
+                        $fontY,
+                        $fontColor,
+                        $this->setting['Font'],
+                        $text
+                    )) {
+                        $result = true;
+                    }
+
+                    imagedestroy($colorLayer);
+
+                    return $result;
+                }
             }
         } else {
             $this->error = 'ERROR_IMAGE_HANDLER_IMAGE_NOTLOAD';

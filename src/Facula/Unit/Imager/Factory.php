@@ -48,7 +48,7 @@ class Factory extends BaseFactory
 
     /** Declare default operators */
     protected static $operators = array(
-        'GD' => '\Facula\Unit\Imager\Operator\GD',
+        'GD' => 'Facula\Unit\Imager\Operator\GD',
     );
 
     /**
@@ -86,11 +86,13 @@ class Factory extends BaseFactory
                 'MemoryLimit' =>
                     (Ini::getBytes('memory_limit', '3M') - memory_get_peak_usage()) * 0.9,
 
-                'Font' => isset($setting['Font']) && is_readable($setting['Font'])
-                    ? static::$setting['Font'] : null,
+                'Font' =>
+                    isset($setting['Font']) && is_readable($setting['Font']) ?
+                        $setting['Font'] : static::$setting['Font'],
 
-                'FontSize' => isset($setting['FontSize'])
-                    ? static::$setting['FontSize']  : 12,
+                'FontSize' =>
+                    isset($setting['FontSize']) && $setting['FontSize'] > 0 ?
+                        $setting['FontSize']  : static::$setting['FontSize'],
             );
 
             return true;
