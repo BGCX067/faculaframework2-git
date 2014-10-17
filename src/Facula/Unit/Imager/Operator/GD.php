@@ -547,7 +547,7 @@ class GD extends Base implements OperatorImplement
         $align = 'center center',
         $margin = 0,
         array $color = array(255, 255, 255, 128),
-        $size = 12
+        $size = 0
     ) {
         $colorLayer = $fontColor = $shadowFontColor = null;
         $fontX = $fontY = 0;

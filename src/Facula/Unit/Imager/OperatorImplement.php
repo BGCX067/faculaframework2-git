@@ -63,7 +63,7 @@ interface OperatorImplement
         $align = 'center center',
         $margin = 0,
         array $color = array(255, 255, 255),
-        $size = 12
+        $size = 0
     );
 
     public function save($file);
