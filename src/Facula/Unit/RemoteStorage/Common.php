@@ -46,7 +46,10 @@ abstract class Common
         $validFileName = preg_replace(
             '/([^a-zA-Z0-9\x{007f}-\x{ffe5}\-\_\@]+)+/iu',
             '~',
-            $fileName
+            pathinfo(
+                $fileName,
+                PATHINFO_FILENAME
+            )
         );
 
         while (strpos($validFileName, '~~') !== false) {
@@ -59,8 +62,6 @@ abstract class Common
 
         if ($fileNameLen >= $splitLen) {
             for ($charLoop = 0; $charLoop < $fileNameSplitLen;) {
-                $resultName .= '/';
-
                 for ($elLoop = 0; $elLoop < $splitLen; $elLoop++) {
                     $resultName .= $validFileName[$charLoop];
 
@@ -68,10 +69,11 @@ abstract class Common
                         break;
                     }
                 }
+
+                $resultName .= '/';
             }
         } else {
-            $resultName = '/'
-                . date('Y')
+            $resultName = date('Y')
                 . '/'
                 . abs((int)(crc32(date('m/w')) / 10240));
         }

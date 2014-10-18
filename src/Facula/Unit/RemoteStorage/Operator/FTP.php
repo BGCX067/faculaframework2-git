@@ -85,8 +85,8 @@ class FTP extends Common implements OperatorImplement
                 && function_exists('ftp_ssl_connect')
                 ? true : false,
 
-            'Path' => isset($setting['Path'][0])
-                ? $setting['Path'] : '/',
+            'Path' => isset($setting['Path'][0]) && $setting['Path'] !== '/' // We already / by default, // will cause problem
+                ? $setting['Path'] . '/' : '/',
 
             'Access' => isset($setting['Access'][0])
                 ? $setting['Access'] . '/' : '',
@@ -142,12 +142,8 @@ class FTP extends Common implements OperatorImplement
                 }
             }
 
-            if ($this->setting['Path']
-            && !$this->chDir(
-                $this->setting['Path'] . $this->generatePath(pathinfo(
-                    $remoteFileName,
-                    PATHINFO_FILENAME
-                )),
+            if (!$this->chDir(
+                $this->setting['Path'] . $this->generatePath($remoteFileName),
                 $currentRemotePath,
                 $cdError
             )) {
