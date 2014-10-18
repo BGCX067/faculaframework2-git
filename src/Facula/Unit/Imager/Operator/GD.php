@@ -499,6 +499,13 @@ class GD extends Base implements OperatorImplement
 
         if ($this->imageRes) {
             if ($watermark = $this->openImage($file)) {
+                if ($watermark['Info']['Width'] * 3 > $this->imageInfo['Width']
+                    || $watermark['Info']['Height'] * 3 > $this->imageInfo['Height']) {
+                    $this->error = 'ERROR_IMAGE_HANDLER_WATERMARK_TARGET_TOOSMALL';
+
+                    return false;
+                }
+
                 list($markX, $markY) = $this->getAlignPos(
                     $align,
                     $this->imageInfo['Width'],
@@ -510,8 +517,8 @@ class GD extends Base implements OperatorImplement
 
                 if (!$watermarkMarker = imagecreatetruecolor(
                     $watermark['Info']['Width'],
-                    $watermark['Info']['Height'])
-                ) {
+                    $watermark['Info']['Height']
+                )) {
                     return false;
                 }
 
@@ -604,8 +611,9 @@ class GD extends Base implements OperatorImplement
             $fontWidth = abs($fontBoxPos[4] - $fontBoxPos[0]);
             $fontHeight = abs($fontBoxPos[5] - $fontBoxPos[1]);
 
-            if ($fontWidth > $this->imageInfo['Width'] || $fontHeight > $this->imageInfo['Height']) {
-                $this->error = 'ERROR_IMAGE_HANDLER_WATERMARK_TOOLARGE';
+            if ($fontWidth * 3 > $this->imageInfo['Width']
+                || $fontHeight * 3 > $this->imageInfo['Height']) {
+                $this->error = 'ERROR_IMAGE_HANDLER_WATERMARK_TARGET_TOOSMALL';
 
                 return false;
             }
