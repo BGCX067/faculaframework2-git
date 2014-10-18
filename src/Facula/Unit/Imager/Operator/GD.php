@@ -292,7 +292,8 @@ class GD extends Base implements OperatorImplement
                 }
 
                 if (isset($this->imageInfo['Transparent'])) {
-                    imagealphablending($newImg, false);
+                    // Make it transparent when the origin picture is transparent
+                    imagealphablending($newImg, true);
                     imagesavealpha($newImg, true);
 
                     $transparent = $this->imageInfo['Transparent'];
@@ -492,7 +493,7 @@ class GD extends Base implements OperatorImplement
      */
     public function waterMark($file, $align = 'center center', $margin = 0)
     {
-        $watermark = null;
+        $watermark = $watermarkMarker = null;
         $markX = $markY = 0;
         $result = false;
 
@@ -507,15 +508,45 @@ class GD extends Base implements OperatorImplement
                     $margin
                 );
 
-                if (imagecopy(
+                if (!$watermarkMarker = imagecreatetruecolor(
+                    $watermark['Info']['Width'],
+                    $watermark['Info']['Height'])
+                ) {
+                    return false;
+                }
+
+                imagecopy(
+                    $watermarkMarker,
                     $this->imageRes,
+                    0,
+                    0,
+                    $markX,
+                    $markY,
+                    $watermark['Info']['Width'],
+                    $watermark['Info']['Height']
+                );
+
+                imagecopy(
+                    $watermarkMarker,
                     $watermark['Res'],
+                    0,
+                    0,
+                    0,
+                    0,
+                    $watermark['Info']['Width'],
+                    $watermark['Info']['Height']
+                );
+
+                if (imagecopymerge(
+                    $this->imageRes,
+                    $watermarkMarker,
                     $markX,
                     $markY,
                     0,
                     0,
                     $watermark['Info']['Width'],
-                    $watermark['Info']['Height']
+                    $watermark['Info']['Height'],
+                    100
                 )) {
                     $result = true;
                 }
@@ -590,6 +621,19 @@ class GD extends Base implements OperatorImplement
 
             $fontY += $fontHeight; // imagettfbbox will align using baseline...
 
+            if (!isset($color[3])) {
+                $color[3] = 255;
+            }
+
+            // http://php.net/manual/en/function.imagecolorallocatealpha.php#106642 Thank you!
+            $color[3] = ((~((int)$color[3])) & 0xff) >> 1;
+
+            if (!isset($color[0], $color[1], $color[2])) {
+                throw new \Exception("All Color setting must be set in array(R, G, B).");
+
+                return false;
+            }
+
             if ($colorLayer = imagecreatetruecolor($fontWidth, $fontHeight)) {
                 if (isset($this->imageInfo['Transparent'])) {
                     imagesavealpha($colorLayer, true);
@@ -604,19 +648,6 @@ class GD extends Base implements OperatorImplement
                     );
 
                     imagefill($colorLayer, 0, 0, $alphaWhite);
-                }
-
-                if (!isset($color[3])) {
-                    $color[3] = 255;
-                }
-
-                // http://php.net/manual/en/function.imagecolorallocatealpha.php#106642 Thank you!
-                $color[3] = ((~((int)$color[3])) & 0xff) >> 1;
-
-                if (!isset($color[0], $color[1], $color[2])) {
-                    throw new \Exception("All Color setting must be set in array(R, G, B).");
-
-                    return false;
                 }
 
                 $fontColor = imagecolorallocatealpha(
