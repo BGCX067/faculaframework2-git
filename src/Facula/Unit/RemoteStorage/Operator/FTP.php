@@ -85,7 +85,7 @@ class FTP extends Common implements OperatorImplement
                 && function_exists('ftp_ssl_connect')
                 ? true : false,
 
-            'Path' => isset($setting['Path'][0]) && $setting['Path'] !== '/' // We already / by default, // will cause problem
+            'Path' => isset($setting['Path'][0]) && $setting['Path'] !== '/' // We already / by default, and // will cause problem
                 ? $setting['Path'] . '/' : '/',
 
             'Access' => isset($setting['Access'][0])
@@ -245,8 +245,8 @@ class FTP extends Common implements OperatorImplement
         $chdirFailed = false;
         $validFolders = $skipedFolders = $remainFolders = array();
 
-        if ($this->connection && count($folders)) {
-            // $validFolders: floders without empty
+        if ($this->connection && !empty($folders)) {
+            // $validFolders: folders without empty name like the one before the first /
             $validFolders = array_values(array_filter($folders));
 
             // If the path include / var as beginning, we need to refresh the refer path to the root

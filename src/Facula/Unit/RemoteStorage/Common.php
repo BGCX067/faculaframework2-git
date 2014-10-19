@@ -72,6 +72,8 @@ abstract class Common
 
                 $resultName .= '/';
             }
+
+            $resultName = substr($resultName, 0, strlen($resultName) - 1);
         } else {
             $resultName = date('Y')
                 . '/'
