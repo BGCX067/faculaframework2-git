@@ -31,5 +31,4 @@
             <directory suffix=".php">tests/Units/*</directory>
         </testsuite>
     </testsuites>
-
 </phpunit>

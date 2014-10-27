@@ -3,7 +3,7 @@ Facula PHP Framwork
 
 Facula is a A highly extensible experimental non-full-stack framework written in PHP.
 
-It aim to provide a stable interface for the ground floor to make your application can be fit to various environment without changing code.
+It aim to provide a stable interface for the ground floor to make your application can be fit to various environments without changing existing code.
 
 
 Status
@@ -11,7 +11,7 @@ Status
 
 * Under: Development
 * Project: Experimental (Production not recommended)
-* Build: [![Build Status](https://travis-ci.org/raincious/facula.svg)](https://travis-ci.org/raincious/facula)
+* [![Build Status](https://travis-ci.org/raincious/facula.svg)](https://travis-ci.org/raincious/facula)
 
 
 How to get it
@@ -61,7 +61,7 @@ To power on the framework, you need to initialize by the run method.
 	...
 
 	use Facula\Framework;
-	
+
 	Framework::run();
 
 And then, you will be able to use all the function that provided by the framework:

@@ -23,7 +23,7 @@ notifications:
 before_script:
   # Perform a apt repo update, get ready for a php pear installing
   - sudo apt-get -qq update > /dev/null
-  - sudo apt-get -qq install php-pear php5-cli > /dev/null
+  - sudo apt-get -qq install php-pear > /dev/null
 
   # After Pear is downloaded, upgrade it and install PHP_CodeSniffer
   - sudo pear -q install pear/PHP_CodeSniffer > /dev/null
