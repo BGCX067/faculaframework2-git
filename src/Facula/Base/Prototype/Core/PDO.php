@@ -58,6 +58,9 @@ abstract class PDO extends Factory implements Implement
     /** Connections map */
     protected $connMap = array();
 
+    /** A tag to not allow re-warming */
+    protected $rewarmingMutex = false;
+
     /**
      * Constructor
      *
@@ -243,6 +246,12 @@ abstract class PDO extends Factory implements Implement
      */
     public function inited()
     {
+        if ($this->rewarmingMutex) {
+            new Error('REWARMING_NOTALLOWED');
+        }
+
+        $this->rewarmingMutex = true;
+
         switch ($this->configs['PriorMethod']) {
             case 'Balance':
                 $keys = array_keys($this->map['DBP']);

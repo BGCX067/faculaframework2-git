@@ -1,0 +1,50 @@
+language: php
+
+php:
+  - 5.4
+  - 5.5
+  - 5.6
+  - hhvm
+  - hhvm-nightly
+
+matrix:
+  allow_failures:
+    - php: hhvm
+    - php: hhvm-nightly
+  fast_finish: true
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
+  webhooks:
+    - https://interface.3ax.org/ping/facula_build
+
+before_script:
+  # Perform a apt repo update, get ready for a php pear installing
+  - sudo apt-get -qq update > /dev/null
+  - sudo apt-get -qq install php-pear php5-cli > /dev/null
+  - sudo apt-get -qq upgrade > /dev/null
+
+  # After Pear is downloaded, upgrade it and install PHP_CodeSniffer
+  - sudo pear -q install pear/PHP_CodeSniffer > /dev/null
+  - sudo pear -q upgrade-all > /dev/null
+
+  # Now for the Composer
+  - composer self-update --quiet > /dev/null
+  - composer install --prefer-source --no-interaction --dev > /dev/null
+
+script:
+  # Check code style, Should return 0 for success
+  - phpcs .\src --extensions=php --standard=PSR2
+  - phpcs .\tests --extensions=php --standard=PSR2
+  - phpcs .\examples --extensions=php --standard=PSR2
+
+  # Run all existing test case, Should return 0 for success
+  - .\vendor\bin\phpunit -c .\phpunit.xml.dist
+
+after_success:
+  - echo "Succeed!"
+
+after_failure:
+  - echo "Build failed! this commit should be checked before put to use."

@@ -27,10 +27,12 @@
 
 namespace Facula\Base\Entity\Core;
 
+use Facula\Base\Prototype\Core\Debug as Base;
+
 /**
  * Default Debug function core
  */
-class Debug extends \Facula\Base\Prototype\Core\Debug
+class Debug extends Base
 {
     /** Declare maintainer information */
     public static $plate = array(

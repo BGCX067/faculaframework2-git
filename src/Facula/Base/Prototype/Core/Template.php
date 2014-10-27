@@ -71,6 +71,9 @@ abstract class Template extends Factory implements Implement
     /** Assigned template data */
     protected $assigned = array();
 
+    /** A tag to not allow re-warming */
+    protected $rewarmingMutex = false;
+
     /** File map that contains all template and language files */
     protected static $fileMap = array();
 
@@ -113,6 +116,14 @@ abstract class Template extends Factory implements Implement
             'CacheTTL' =>
                 isset($cfg['CacheMaxLifeTime']) ?
                     (int)($cfg['CacheMaxLifeTime']) : null,
+
+            'Charset' => strtoupper(
+                isset($cfg['Charset'])
+                ?
+                $cfg['Charset']
+                :
+                isset($common['Charset']) ? $common['Charset'] : 'UTF-8'
+            ),
 
             'CacheVer' => $common['BootVersion'],
         );
@@ -258,6 +269,12 @@ abstract class Template extends Factory implements Implement
         $error = '';
         $selectedLanguage = $clientLanguage = $errors = array();
 
+        if ($this->rewarmingMutex) {
+            new Error('REWARMING_NOTALLOWED');
+        }
+
+        $this->rewarmingMutex = true;
+
         // Determine what language can be used for this client
         if ($clientLanguage = Framework::core('request')->getClientInfo('languages')) {
             // Use $siteLanguage as the first param so we can follow clients priority
@@ -277,6 +294,7 @@ abstract class Template extends Factory implements Implement
 
         // Set Essential assign value
         $this->assigned['Time'] = FACULA_TIME;
+        $this->assigned['_BOOTVER'] = $this->configs['CacheVer'];
         $this->assigned['_MESSAGE'] = array();
 
         Framework::summonHook(
@@ -1174,7 +1192,8 @@ abstract class Template extends Factory implements Implement
         }
 
         $poolCompexted = $this->pool + array(
-            'File' => static::$fileMap
+            'File' => static::$fileMap,
+            'Charset' => $this->configs['Charset'],
         );
 
         if (isset($this->configs['Compiler'])) {

@@ -36,6 +36,11 @@ class Object extends Base
 {
     /** Error code to error message */
     protected static $errorStrings = array(
+        'REWARMING_NOTALLOWED' => '
+            You are attempt to re-warming Object function core.
+            Which is not allowed due to data integrity reason.
+        ',
+
         'OBJECT_CREATE_FAILED' => '
             Failed on creating new instance of "%s".
         ',

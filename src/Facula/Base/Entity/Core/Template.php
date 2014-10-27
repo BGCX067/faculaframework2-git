@@ -27,10 +27,12 @@
 
 namespace Facula\Base\Entity\Core;
 
+use Facula\Base\Prototype\Core\Template as Base;
+
 /**
  * Default Template function core
  */
-class Template extends \Facula\Base\Prototype\Core\Template
+class Template extends Base
 {
     /** Declare maintainer information */
     public static $plate = array(

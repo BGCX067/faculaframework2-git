@@ -36,6 +36,11 @@ class PDO extends Base
 {
     /** Error code to error message */
     protected static $errorStrings = array(
+        'REWARMING_NOTALLOWED' => '
+            You are attempt to re-warming PDO function core.
+            Which is not allowed due to data integrity reason.
+        ',
+
         'TABLE_DECLARATION_NEEDED' => '
             Specified database select method require "Table" declaration,
             which is missing for database No. %d.

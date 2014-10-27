@@ -45,6 +45,10 @@ class Defaults implements Implement
      */
     public static function convert($varName, array $parameter, array $pool)
     {
-        return '<?php echo(htmlspecialchars(' . $varName . ', ENT_QUOTES)); ?>';
+        return '<?php echo(htmlspecialchars('
+            . $varName
+            . ', ENT_QUOTES | ENT_SUBSTITUTE, \''
+            . $pool['Charset']
+            . '\')); ?>';
     }
 }

@@ -358,6 +358,9 @@ abstract class Debug extends Factory implements Implement
     /** Instance setting for caching */
     protected $configs = array();
 
+    /** A tag to not allow re-warming */
+    protected $rewarmingMutex = false;
+
     /** Error code to string converting table */
     protected static $phpErrorCodeToStr = array(
         E_ERROR => 'E_ERROR',
@@ -426,6 +429,12 @@ abstract class Debug extends Factory implements Implement
      */
     public function inited()
     {
+        if ($this->rewarmingMutex) {
+            new Error('REWARMING_NOTALLOWED');
+        }
+
+        $this->rewarmingMutex = true;
+
         register_shutdown_function(function () {
             $this->shutdownTask();
         }); // Experimentally use our own fatal reporter
@@ -1064,6 +1073,7 @@ abstract class Debug extends Factory implements Implement
                 if (!headers_sent()) {
                     header('HTTP/1.0 500 Internal Server Error');
                     header('Server: Facula');
+                    header('Content-Type: text/html; charset=UTF-8');
                     header('X-Powered-By: Facula ' . __FACULAVERSION__);
 
                     $templateString = static::$errorMessageTemplate['page']['Code'];
@@ -1131,29 +1141,29 @@ abstract class Debug extends Factory implements Implement
 
 
             '%Error:AppName:Html%' =>
-                htmlspecialchars($this->configs['AppName'], ENT_QUOTES | ENT_SUBSTITUTE),
+                htmlspecialchars($this->configs['AppName'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
             '%Error:AppVersion:Html%' =>
-                htmlspecialchars($this->configs['AppVersion'], ENT_QUOTES | ENT_SUBSTITUTE),
+                htmlspecialchars($this->configs['AppVersion'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
             '%Error:ServerName:Html%' =>
-                htmlspecialchars($this->configs['ServerName'], ENT_QUOTES | ENT_SUBSTITUTE),
+                htmlspecialchars($this->configs['ServerName'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
 
             '%Error:Message:Html%' =>
-                htmlspecialchars($errorMessage, ENT_QUOTES | ENT_SUBSTITUTE),
+                htmlspecialchars($errorMessage, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
             '%Error:Message:Code:Html%' =>
-                htmlspecialchars($errorDetail['Code'], ENT_QUOTES | ENT_SUBSTITUTE),
+                htmlspecialchars($errorDetail['Code'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
             '%Error:Message:File:Html%' =>
-                htmlspecialchars($errorFile, ENT_QUOTES | ENT_SUBSTITUTE),
+                htmlspecialchars($errorFile, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
             '%Error:Message:Line:Html%' =>
-                htmlspecialchars($errorDetail['Line'], ENT_QUOTES | ENT_SUBSTITUTE),
+                htmlspecialchars($errorDetail['Line'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
             '%Error:Message:No:Html%' =>
-                htmlspecialchars($errorDetail['No'], ENT_QUOTES | ENT_SUBSTITUTE),
+                htmlspecialchars($errorDetail['No'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
         );
 
         $displayContent = str_replace(
@@ -1223,29 +1233,29 @@ abstract class Debug extends Factory implements Implement
 
 
                 '%Error:Banner:Caller:Html%' =>
-                    htmlspecialchars($val['caller'], ENT_QUOTES | ENT_SUBSTITUTE),
+                    htmlspecialchars($val['caller'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
                 '%Error:Banner:File:Html%' =>
-                    htmlspecialchars($tempFilePath, ENT_QUOTES | ENT_SUBSTITUTE),
+                    htmlspecialchars($tempFilePath, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
                 '%Error:Banner:Line:Html%' =>
-                    htmlspecialchars($val['line'], ENT_QUOTES | ENT_SUBSTITUTE),
+                    htmlspecialchars($val['line'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
 
                 '%Error:Banner:Plate:Author:Html%' =>
-                    htmlspecialchars($val['nameplate']['author'], ENT_QUOTES | ENT_SUBSTITUTE),
+                    htmlspecialchars($val['nameplate']['author'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
                 '%Error:Banner:Plate:Reviser:Html%' =>
-                    htmlspecialchars($val['nameplate']['reviser'], ENT_QUOTES | ENT_SUBSTITUTE),
+                    htmlspecialchars($val['nameplate']['reviser'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
                 '%Error:Banner:Plate:Contact:Html%' =>
-                    htmlspecialchars($val['nameplate']['contact'], ENT_QUOTES | ENT_SUBSTITUTE),
+                    htmlspecialchars($val['nameplate']['contact'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
                 '%Error:Banner:Plate:Updated:Html%' =>
-                    htmlspecialchars($val['nameplate']['updated'], ENT_QUOTES | ENT_SUBSTITUTE),
+                    htmlspecialchars($val['nameplate']['updated'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
 
                 '%Error:Banner:Plate:Version:Html%' =>
-                    htmlspecialchars($val['nameplate']['version'], ENT_QUOTES | ENT_SUBSTITUTE),
+                    htmlspecialchars($val['nameplate']['version'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
             );
 
             $detail .= str_replace(

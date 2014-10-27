@@ -46,17 +46,17 @@ abstract class Request extends Factory implements Implement
         'Version' => __FACULAVERSION__,
     );
 
-    /** Default configuration */
+    /** Valid methods used by framework */
     protected static $requestMethods = array(
-        'GET' => 'get',
-        'POST' => 'post',
-        'PUT' => 'put',
-        'HEAD' => 'head',
-        'DELETE' => 'delete',
-        'TRACE' => 'trace',
-        'OPTIONS' => 'options',
-        'CONNECT' => 'connect',
-        'PATCH' => 'patch'
+        'GET' => 'GET',
+        'POST' => 'POST',
+        'PUT' => 'PUT',
+        'HEAD' => 'HEAD',
+        'DELETE' => 'DELETE',
+        'TRACE' => 'TRACE',
+        'OPTIONS' => 'OPTIONS',
+        'CONNECT' => 'CONNECT',
+        'PATCH' => 'PATCH',
     );
 
     /** Priority of forward header */
@@ -67,6 +67,9 @@ abstract class Request extends Factory implements Implement
         'HTTP_FORWARDED' => 0,
     );
 
+    /** A tag to not allow re-warming */
+    protected $rewarmingMutex = false;
+
     /** Instance configuration for caching */
     protected $configs = array();
 
@@ -75,7 +78,7 @@ abstract class Request extends Factory implements Implement
 
     /** Request info */
     protected $requestInfo = array(
-        'method' => 'get',
+        'method' => 'GET',
         'rootURL' => '',
         'absRootURL' => '',
         'gzip' => false,
@@ -84,6 +87,18 @@ abstract class Request extends Factory implements Implement
         ),
         'language' => 'en',
         'https' => false,
+        'acceptedCharsets' => array(
+            '*' => 1.0,
+        ),
+        'acceptedEncodings' => array(
+            'identity' => 1.0
+        ),
+        'acceptedLanguages' => array(
+            '*' => 1.0
+        ),
+        'acceptedTypes' => array(
+            '*/*' => 1.0
+        ),
         'auth' => array(
             'Username' => '',
             'Password' => '',
@@ -199,42 +214,44 @@ abstract class Request extends Factory implements Implement
         // Get environment variables
 
         // Get current root
-        if (isset($common['SiteRootURL'][0])) {
-            $this->requestInfo['rootURL'] = $common['SiteRootURL'];
-        } else {
-            $this->requestInfo['rootURL'] = substr(
-                $_SERVER['SCRIPT_NAME'],
-                0,
-                strrpos($_SERVER['SCRIPT_NAME'], '/')
-            );
-        }
+        if (isset($_SERVER['SCRIPT_NAME'])) {
+            if (isset($common['SiteRootURL'][0])) {
+                $this->requestInfo['rootURL'] = $common['SiteRootURL'];
+            } else {
+                $this->requestInfo['rootURL'] = substr(
+                    $_SERVER['SCRIPT_NAME'],
+                    0,
+                    strrpos($_SERVER['SCRIPT_NAME'], '/')
+                );
+            }
 
-        // Get current absolute root
-        if (isset($_SERVER['SERVER_NAME']) && isset($_SERVER['SERVER_PORT'])) {
-            $this->requestInfo['hostURIFormated'] =
-                '%s//'
-                . $_SERVER['SERVER_NAME']
-                . '%s';
+            // Get current absolute root
+            if (isset($_SERVER['SERVER_NAME']) && isset($_SERVER['SERVER_PORT'])) {
+                $this->requestInfo['hostURIFormated'] =
+                    '%s//'
+                    . $_SERVER['SERVER_NAME']
+                    . '%s';
 
-            $this->requestInfo['absRootFormated'] =
-                $this->requestInfo['hostURIFormated']
-                . $this->requestInfo['rootURL'];
+                $this->requestInfo['absRootFormated'] =
+                    $this->requestInfo['hostURIFormated']
+                    . $this->requestInfo['rootURL'];
 
-            $this->requestInfo['absRootURL'] = sprintf(
-                $this->requestInfo['absRootFormated'],
-                (
-                    $this->isHTTPS() ?
-                        'https:'
-                    :
-                        'http:'
-                ),
-                (
-                    $this->isHTTPS() ?
-                        ($_SERVER['SERVER_PORT'] == '443' ? '' : ':' . $_SERVER['SERVER_PORT'])
-                    :
-                        ($_SERVER['SERVER_PORT'] == '80' ? '' : ':' . $_SERVER['SERVER_PORT'])
-                )
-            );
+                $this->requestInfo['absRootURL'] = sprintf(
+                    $this->requestInfo['absRootFormated'],
+                    (
+                        $this->isHTTPS() ?
+                            'https:'
+                        :
+                            'http:'
+                    ),
+                    (
+                        $this->isHTTPS() ?
+                            ($_SERVER['SERVER_PORT'] == '443' ? '' : ':' . $_SERVER['SERVER_PORT'])
+                        :
+                            ($_SERVER['SERVER_PORT'] == '80' ? '' : ':' . $_SERVER['SERVER_PORT'])
+                    )
+                );
+            }
         }
     }
 
@@ -247,6 +264,12 @@ abstract class Request extends Factory implements Implement
     {
         global $_GET, $_POST, $_COOKIE, $_SERVER;
         $curXForwdPri = $requestBlocks = 0;
+
+        if ($this->rewarmingMutex) {
+            new Error('REWARMING_NOTALLOWED');
+        }
+
+        $this->rewarmingMutex = true;
 
         // Init all needed array if not set.
         if (!isset($_GET, $_POST, $_COOKIE, $_SERVER)) {
@@ -307,29 +330,56 @@ abstract class Request extends Factory implements Implement
             if (!isset($val[$this->configs['MaxHeaderSize']])) {
                 switch (strtoupper($key)) {
                     case 'REQUEST_METHOD':
-                        $val = strtoupper($val);
-
                         // Determine the type of request method.
-                        $this->requestInfo['method'] = isset(static::$requestMethods[$val])
-                            ? static::$requestMethods[$val] : 'get';
+                        if (isset(static::$requestMethods[$val])) { // Normal match, standard client
+                            $this->requestInfo['method'] = static::$requestMethods[$val];
+                        } else {
+                            // The client not following rules
+
+                            // Try convert $val to upper case to match it again
+                            $val = strtoupper($val);
+
+                            if (isset(static::$requestMethods[$val])) {
+                                $this->requestInfo['method'] = static::$requestMethods[$val];
+                            }
+
+                            // We don't support this method. It's may a extension-method
+                            // Application creator must implement their own by use old PHP way
+                            // (get data from $_SERVER['REQUEST_METHOD'], and deal with it themself)
+                        }
+                        break;
+
+                    case 'HTTP_ACCEPT':
+                        if ($acceptedTypes = $this->parseAcceptValue(strtolower($val), 10, 10)) {
+                            $this->requestInfo['acceptedTypes'] = $acceptedTypes;
+                        }
                         break;
 
                     case 'HTTP_ACCEPT_ENCODING':
                         // Try to found out if our dear client support gzip
-                        if (strpos($val, 'gzip') !== false) {
-                            $this->requestInfo['gzip'] = true;
+                        // gzip go first as seems no body use * those days
+                        if ($acceptedEncodings = $this->parseAcceptValue(strtolower($val), 10, 10)) {
+                            $this->requestInfo['acceptedEncodings'] = $acceptedEncodings;
+                        }
+                        break;
+
+                    case 'HTTP_ACCEPT_CHARSET':
+                        // utf-8, gbk and more
+                        if ($acceptedCharsets = $this->parseAcceptValue(strtoupper($val), 10, 10)) {
+                            $this->requestInfo['acceptedCharsets'] = $acceptedCharsets;
                         }
                         break;
 
                     case 'HTTP_ACCEPT_LANGUAGE':
-                        // No need to read all languages that client has
-                        $lang = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE'], 3);
-
-                        foreach ($lang as $languageOrder => $language) {
-                            $this->requestInfo['languages'][$languageOrder] = trim(
-                                strtolower(explode(';', $language, 2)[0])
-                            );
+                        // zh-cn, en and more
+                        if ($acceptedLanguages = $this->parseAcceptValue(strtolower($val), 10, 10)) {
+                            $this->requestInfo['acceptedLanguages'] = $acceptedLanguages;
                         }
+
+                        // The Order of language should be ordered with Q value as this is PHP
+                        $this->requestInfo['languages'] = array_keys(
+                            $this->requestInfo['acceptedLanguages']
+                        );
 
                         if (isset($this->requestInfo['languages'][0])) {
                             $this->requestInfo['language'] = $this->requestInfo['languages'][0];
@@ -417,6 +467,86 @@ abstract class Request extends Factory implements Implement
         );
 
         return true;
+    }
+
+    /**
+     * Parse value for Accept-* into property => weight paired array
+     *
+     * Notice that this method will not take out data as standard way
+     * for speeding purpose.
+     *
+     * @param string $value The value of a Accept-* header
+     * @param integer $maxSections Max result sections
+     * @param integer $maxFramesPerSection Max frame per each sections
+     *
+     * @return array Return a array in pair
+     */
+    protected function parseAcceptValue(
+        $value,
+        $maxSections = 16,
+        $maxFramesPerSection = 16
+    ) {
+        $sequences = $frames = $tempFrame = array();
+        $frameValueAssignPos = $lastSectionIdx = 0;
+        $qValue = '';
+
+        $sections = explode(';', $value, $maxSections + 1);
+
+        if (isset($sections[$maxSections])) {
+            array_pop($sections);
+        }
+
+        foreach ($sections as $sectionIdx => $section) {
+            $tempFrame = explode(
+                ',',
+                $section,
+                $maxFramesPerSection
+            );
+
+            if (0 != $sectionIdx
+            && ($frameValueAssignPos = strpos($tempFrame[0], '=')) !== false) {
+                $qValue = trim(substr(
+                    $tempFrame[0],
+                    $frameValueAssignPos + 1,
+                    strlen($tempFrame[0])
+                ));
+
+                if ('' === $qValue) { // Default q should be 1.0
+                    $frames[$lastSectionIdx][1] = 1.0;
+                } elseif ('0' === $qValue) { // 0 means not do not use, so unset it
+                    unset($frames[$lastSectionIdx]);
+                } else {
+                    $frames[$lastSectionIdx][1] = (float)$qValue;
+                }
+
+                unset($tempFrame[0]);
+
+                if (empty($tempFrame)) {
+                    continue;
+                }
+            }
+
+            $frames[$sectionIdx] = array(
+                $tempFrame,
+                1.0,
+            );
+
+            $lastSectionIdx = $sectionIdx;
+        }
+
+        foreach ($frames as $frame) {
+            foreach ($frame[0] as $key) {
+                $sequences[trim($key)] = $frame[1];
+            }
+        }
+
+        if (isset($sequences[''])) {
+            unset($sequences['']);
+        }
+
+        arsort($sequences);
+
+        return $sequences;
     }
 
     /**

@@ -2,10 +2,13 @@
 
 namespace Facula\Tests\Framework\Core;
 
+use Facula\Framework;
+use PHPUnit_Framework_TestCase;
+
 /*
  * Testing the namespace functions
  */
-class NamespaceLoadTest extends \PHPUnit_Framework_TestCase
+class NamespaceLoadTest extends PHPUnit_Framework_TestCase
 {
     private static $testingDir = '';
     private static $testClassFileContent = array(
@@ -111,31 +114,31 @@ class NamespaceLoadTest extends \PHPUnit_Framework_TestCase
     {
         // Register the namespace before facula init
         $this->assertTrue(
-            \Facula\Framework::registerNamespace(
-                '\Facula\Temp',
+            Framework::registerNamespace(
+                'Facula\Temp',
                 static::$testingDir
             )
         );
 
         // Init facula
-        \Facula\Framework::run();
+        Framework::run();
 
         // Check if class is there, it should be
         $this->assertTrue(
-            class_exists('\Facula\Temp\Demo', true)
+            class_exists('Facula\Temp\Demo', true)
         );
 
         // Unregister the class
         $this->assertTrue(
-            \Facula\Framework::unregisterNamespace(
-                '\Facula\Temp',
+            Framework::unregisterNamespace(
+                'Facula\Temp',
                 static::$testingDir
             )
         );
 
         // Check if the namespace still there, it shouldn't
         $this->assertFalse(
-            class_exists('\Facula\Temp\Demo2', true)
+            class_exists('Facula\Temp\Demo2', true)
         );
 
         return true;
@@ -148,57 +151,57 @@ class NamespaceLoadTest extends \PHPUnit_Framework_TestCase
     public function testRegisterNamespace()
     {
         // Init the framework if it not yet inited
-        \Facula\Framework::run();
+        Framework::run();
 
         // Register a wrong namespace
         $this->assertTrue(
-            \Facula\Framework::registerNamespace(
-                '\Facula\Temp\SubNamespace',
+            Framework::registerNamespace(
+                'Facula\Temp\SubNamespace',
                 static::$testingDir
             )
         );
 
         // Check if the class exist, it should not
         $this->assertFalse(
-            class_exists('\Facula\Temp\SubNamespace\Demo2', true)
+            class_exists('Facula\Temp\SubNamespace\Demo2', true)
         );
 
         // Check if the file has been loaded,
         // Auto loader will load it, so it should be
         // If the file loaded, the class should be registered
         $this->assertTrue(
-            class_exists('\Facula\Temp\Demo2', true)
+            class_exists('Facula\Temp\Demo2', true)
         );
 
         // Unregister this namespace
         $this->assertTrue(
             \Facula\Framework::unregisterNamespace(
-                '\Facula\Temp\SubNamespace',
+                'Facula\Temp\SubNamespace',
                 static::$testingDir
             )
         );
 
         // Check if the third class exists, it should not.
         $this->assertFalse(
-            class_exists('\Facula\Temp\SubNamespace\Demo3', true)
+            class_exists('Facula\Temp\SubNamespace\Demo3', true)
         );
 
         // Check if the Demo3 class file has loaded, it should not.
         $this->assertFalse(
-            class_exists('\Facula\Temp\Demo3', true)
+            class_exists('Facula\Temp\Demo3', true)
         );
 
         // Register the correct namespace
         $this->assertTrue(
-            \Facula\Framework::registerNamespace(
-                '\Facula\Temp',
+            Framework::registerNamespace(
+                'Facula\Temp',
                 static::$testingDir
             )
         );
 
         // Check if the class exist, it should be
         $this->assertTrue(
-            class_exists('\Facula\Temp\Demo3', true)
+            class_exists('Facula\Temp\Demo3', true)
         );
     }
 }

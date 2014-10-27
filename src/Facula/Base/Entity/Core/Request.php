@@ -27,10 +27,12 @@
 
 namespace Facula\Base\Entity\Core;
 
+use Facula\Base\Prototype\Core\Request as Base;
+
 /**
  * Default Request function core
  */
-class Request extends \Facula\Base\Prototype\Core\Request
+class Request extends Base
 {
     /** Declare maintainer information */
     public static $plate = array(

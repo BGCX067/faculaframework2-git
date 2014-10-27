@@ -35,7 +35,7 @@ interface Response
     public function inited();
     public function setHeader($header);
     public function setContent($content, $forceRaw = false);
-    public function send($type = 'htm', $persistConn = false);
+    public function send($type = 'htm', $persistConn = false, &$error = '');
     public function setCookie(
         $key,
         $val = '',

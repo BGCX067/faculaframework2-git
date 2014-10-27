@@ -7,7 +7,7 @@ use Facula\Unit\Input;
 /*
  * Testing the Input limit unit Oneof
  */
-class OneofTest extends \PHPUnit_Framework_TestCase
+class OneOfTest extends \PHPUnit_Framework_TestCase
 {
     /*
      * Manually set up some value for test environment

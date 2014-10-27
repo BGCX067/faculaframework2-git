@@ -45,6 +45,10 @@ class JsonData implements Implement
      */
     public static function convert($varName, array $parameter, array $pool)
     {
-        return '<?php echo(htmlspecialchars(json_encode(' . $varName . '))); ?>';
+        return '<?php echo(htmlspecialchars(json_encode('
+            . $varName
+            . '), ENT_QUOTES, \''
+            . $pool['Charset']
+            . '\')); ?>';
     }
 }

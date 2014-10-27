@@ -27,10 +27,12 @@
 
 namespace Facula\Base\Entity\Core;
 
+use Facula\Base\Prototype\Core\Object as Base;
+
 /**
  * Default Object function core
  */
-class Object extends \Facula\Base\Prototype\Core\Object
+class Object extends Base
 {
     /** Declare maintainer information */
     public static $plate = array(

@@ -88,10 +88,12 @@ abstract class Route
      * Set up the route
      *
      * @param array $paths Paths with Path => Operator pair
+     * @param bool $checkClass Validate if defined class and
+     *                         method in path item is existed
      *
      * @return bool Always return true
      */
-    public static function setup(array $paths)
+    public static function setup(array $paths, $checkClass = false)
     {
         $tempLastRef = $tempLastUsedRef = null;
 
@@ -121,7 +123,10 @@ abstract class Route
             }
 
             $tempLastUsedRef['Operator'] = array(
-                static::ITEM_CALL_STRING => static::parseCallString($operator[static::ITEM_CALL_STRING]),
+                static::ITEM_CALL_STRING => static::parseCallString(
+                    $operator[static::ITEM_CALL_STRING],
+                    $checkClass
+                ),
                 static::ITEM_CALL_PARAMETER => $operator[static::ITEM_CALL_PARAMETER],
                 static::ITEM_CALL_CACHE => $operator[static::ITEM_CALL_CACHE],
             );
@@ -134,10 +139,11 @@ abstract class Route
      * Parse the call string
      *
      * @param string $callString Calling string
+     * @param bool $checkClass Validate if defined class and method is existed
      *
      * @return array Parsed result
      */
-    public static function parseCallString($callString)
+    protected static function parseCallString($callString, $checkClass)
     {
         $callType = 0;
         $class = '';
@@ -157,30 +163,32 @@ abstract class Route
                 return false;
             }
 
-            if (!class_exists($splitedCallStr[0])) {
-                trigger_error(
-                    'The static route handler class "'
-                    . $splitedCallStr[0] .'" in calling string "'
-                    . $callString
-                    . '" can\'t be found.',
-                    E_USER_ERROR
-                );
+            if ($checkClass) {
+                if (!class_exists($splitedCallStr[0])) {
+                    trigger_error(
+                        'The static route handler class "'
+                        . $splitedCallStr[0] .'" in calling string "'
+                        . $callString
+                        . '" can\'t be found.',
+                        E_USER_ERROR
+                    );
 
-                return false;
-            }
+                    return false;
+                }
 
-            if (!method_exists($splitedCallStr[0], $splitedCallStr[1])) {
-                trigger_error(
-                    'The static method "'
-                    . $splitedCallStr[1]
-                    . '" for handler class "'
-                    . $splitedCallStr[0] .'" in calling string "'
-                    . $callString
-                    . '" can\'t be found.',
-                    E_USER_ERROR
-                );
+                if (!method_exists($splitedCallStr[0], $splitedCallStr[1])) {
+                    trigger_error(
+                        'The static method "'
+                        . $splitedCallStr[1]
+                        . '" for handler class "'
+                        . $splitedCallStr[0] .'" in calling string "'
+                        . $callString
+                        . '" can\'t be found.',
+                        E_USER_ERROR
+                    );
 
-                return false;
+                    return false;
+                }
             }
 
             $class = $splitedCallStr[0];
@@ -200,30 +208,32 @@ abstract class Route
                 return false;
             }
 
-            if (!class_exists($splitedCallStr[0])) {
-                trigger_error(
-                    'The route handler class "'
-                    . $splitedCallStr[0] .'" in calling string "'
-                    . $callString
-                    . '" can\'t be found.',
-                    E_USER_ERROR
-                );
+            if ($checkClass) {
+                if (!class_exists($splitedCallStr[0])) {
+                    trigger_error(
+                        'The route handler class "'
+                        . $splitedCallStr[0] .'" in calling string "'
+                        . $callString
+                        . '" can\'t be found.',
+                        E_USER_ERROR
+                    );
 
-                return false;
-            }
+                    return false;
+                }
 
-            if (!method_exists($splitedCallStr[0], $splitedCallStr[1])) {
-                trigger_error(
-                    'The method "'
-                    . $splitedCallStr[1]
-                    . '" for handler class "'
-                    . $splitedCallStr[0] .'" in calling string "'
-                    . $callString
-                    . '" can\'t be found.',
-                    E_USER_ERROR
-                );
+                if (!method_exists($splitedCallStr[0], $splitedCallStr[1])) {
+                    trigger_error(
+                        'The method "'
+                        . $splitedCallStr[1]
+                        . '" for handler class "'
+                        . $splitedCallStr[0] .'" in calling string "'
+                        . $callString
+                        . '" can\'t be found.',
+                        E_USER_ERROR
+                    );
 
-                return false;
+                    return false;
+                }
             }
 
             $class = $splitedCallStr[0];

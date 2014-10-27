@@ -27,10 +27,12 @@
 
 namespace Facula\Base\Entity\Core;
 
+use Facula\Base\Prototype\Core\Response as Base;
+
 /**
  * Default Response function core
  */
-class Response extends \Facula\Base\Prototype\Core\Response
+class Response extends Base
 {
     /** Declare maintainer information */
     public static $plate = array(

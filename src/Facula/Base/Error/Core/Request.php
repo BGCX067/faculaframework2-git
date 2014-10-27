@@ -36,6 +36,11 @@ class Request extends Base
 {
     /** Error code to error message */
     protected static $errorStrings = array(
+        'REWARMING_NOTALLOWED' => '
+            You are attempt to re-warming Request function core.
+            Which is not allowed due to data integrity reason.
+        ',
+
         'BLOCKS_OVERLIMIT' => '
             Request block has exceeded the limit.
             You can only send less than %d blocks in your total request,

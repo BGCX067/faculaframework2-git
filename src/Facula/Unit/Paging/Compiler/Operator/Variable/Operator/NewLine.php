@@ -47,6 +47,6 @@ class NewLine implements Implement
     {
         return '<?php echo(nl2br(htmlspecialchars('
             . $varName
-            . ', ENT_QUOTES))); ?>';
+            . ', ENT_QUOTES, \'' . $pool['Charset'] . '\'))); ?>';
     }
 }

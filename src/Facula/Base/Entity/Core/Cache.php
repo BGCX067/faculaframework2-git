@@ -27,10 +27,12 @@
 
 namespace Facula\Base\Entity\Core;
 
+use Facula\Base\Prototype\Core\Cache as Base;
+
 /**
  * Default Cache function core
  */
-class Cache extends \Facula\Base\Prototype\Core\Cache
+class Cache extends Base
 {
     /** Declare maintainer information */
     public static $plate = array(

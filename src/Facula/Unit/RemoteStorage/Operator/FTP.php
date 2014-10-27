@@ -85,7 +85,8 @@ class FTP extends Common implements OperatorImplement
                 && function_exists('ftp_ssl_connect')
                 ? true : false,
 
-            'Path' => isset($setting['Path'][0]) && $setting['Path'] !== '/' // We already / by default, and // will cause problem
+            // We already / by default, and // will cause problem
+            'Path' => isset($setting['Path'][0]) && $setting['Path'] !== '/'
                 ? $setting['Path'] . '/' : '/',
 
             'Access' => isset($setting['Access'][0])

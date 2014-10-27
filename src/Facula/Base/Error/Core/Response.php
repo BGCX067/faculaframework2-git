@@ -36,6 +36,11 @@ class Response extends Base
 {
     /** Error code to error message */
     protected static $errorStrings = array(
+        'REWARMING_NOTALLOWED' => '
+            You are attempt to re-warming Response function core.
+            Which is not allowed due to data integrity reason.
+        ',
+
         'RESPONSE_OVERSEND' => '
             The application already responded to the request in file %s (line %d).
             Client connection status can be change due to the response,

@@ -221,8 +221,8 @@ class Pager extends Base implements Implement
         $phpCode .= 'if (!isset(' . $totalPage . ')) { ' . $totalPage . ' = null; } ';
         $phpCode .= '?>';
 
-        $name = htmlspecialchars($name, ENT_QUOTES);
-        $className = htmlspecialchars($className, ENT_QUOTES);
+        $name = htmlspecialchars($name, ENT_QUOTES, $this->pool['Charset']);
+        $className = htmlspecialchars($className, ENT_QUOTES, $this->pool['Charset']);
 
         // Find all variables in the format string
         if (preg_match_all('/\{(\$[A-Za-z0-9\_\'\"\[\]]+)\}/sU', $linkFormat, $formatMatched)) {

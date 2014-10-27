@@ -27,10 +27,12 @@
 
 namespace Facula\Base\Entity\Core;
 
+use Facula\Base\Prototype\Core\PDO as Base;
+
 /**
  * Default PDO function core
  */
-class PDO extends \Facula\Base\Prototype\Core\PDO
+class PDO extends Base
 {
     /** Declare maintainer information */
     public static $plate = array(

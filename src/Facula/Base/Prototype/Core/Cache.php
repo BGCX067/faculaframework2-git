@@ -58,6 +58,9 @@ abstract class Cache extends Factory implements Implement
     /** Instance setting for caching */
     protected $configs = array();
 
+    /** A tag to not allow re-warming */
+    protected $rewarmingMutex = false;
+
     /**
      * Constructor
      *
@@ -91,6 +94,12 @@ abstract class Cache extends Factory implements Implement
      */
     public function inited()
     {
+        if ($this->rewarmingMutex) {
+            new Error('REWARMING_NOTALLOWED');
+        }
+
+        $this->rewarmingMutex = true;
+
         return true;
     }
 

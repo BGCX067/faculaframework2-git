@@ -254,12 +254,21 @@ abstract class Response extends Factory implements Implement
     /** Instance configuration for caching */
     public $configs = array();
 
+    /** Instance running data */
+    public $data = array(
+        'UseGZIP' => false,
+        'CharsetFitClient' => false,
+    );
+
+    /** A tag to not allow re-warming */
+    protected $rewarmingMutex = false;
+
     /**
      * Constructor
      *
      * @param array $cfg Array of core configuration
      * @param array $common Array of common configuration
-     * @param \Facula\Framework $facula The framework itself
+     * @param Facula\Framework $facula The framework itself
      *
      * @return void
      */
@@ -280,8 +289,20 @@ abstract class Response extends Factory implements Implement
             'NoExposure' => isset($cfg['HideServerInfo']) && !$cfg['HideServerInfo']
                                 ? false : true,
 
-            'Encoding' => isset($cfg['Encoding'])
-                                ? $cfg['Encoding'] : 'utf-8',
+            'Charset' => strtoupper(
+                isset($cfg['Charset'])
+                ?
+                $cfg['Charset']
+                :
+                isset($common['Charset']) ? $common['Charset'] : 'UTF-8'
+            ),
+
+            'Strict' => // Only response when appropriate (according to Accept-*)
+                isset($cfg['Strict']) && $cfg['Strict']
+                ?
+                true
+                :
+                false,
 
             'UseFFR' => function_exists('fastcgi_finish_request')
                                 ? true : false,
@@ -297,11 +318,40 @@ abstract class Response extends Factory implements Implement
      */
     public function inited()
     {
-        if (Framework::core('request')->getClientInfo('gzip') && $this->configs['GZIPEnabled']) {
-            $this->configs['UseGZIP'] = true;
-        } else {
-            $this->configs['UseGZIP'] = false;
+        if ($this->rewarmingMutex) {
+            new Error('REWARMING_NOTALLOWED');
         }
+
+        $this->rewarmingMutex = true;
+
+        // The request function is already warmed as warming order
+        $request = Framework::core('request');
+
+        // Check if client happy with current acceptedEncodings
+        $this->data['AcceptedEncodings'] =
+            $request->getClientInfo('acceptedEncodings');
+
+        if ((isset($this->data['AcceptedCharsets']['*'])
+            ||
+            isset($this->data['AcceptedCharsets']['identity'])
+            ||
+            isset($this->data['AcceptedEncodings']['gzip'])
+        ) && $this->configs['GZIPEnabled']) {
+            $this->data['UseGZIP'] = true;
+        }
+
+        // Check if client happy with current charset
+        $this->data['AcceptedCharsets'] =
+            $request->getClientInfo('acceptedCharsets');
+
+        if (isset($this->data['AcceptedCharsets']['*'])
+        || isset($this->data['AcceptedCharsets'][$this->configs['Charset']])) {
+            $this->data['CharsetFitClient'] = true;
+        }
+
+        // Get Accepted Types
+        $this->data['AcceptedTypes'] =
+            $request->getClientInfo('acceptedTypes');
 
         return true;
     }
@@ -311,19 +361,22 @@ abstract class Response extends Factory implements Implement
      *
      * @param string $type Content type
      * @param bool $persistConn Set if let keep connection alive after sent
+     * @param string $error Reference used to returning error detail code
      *
      * @return bool Return true when content sent, false otherwise
      */
-    public function send($type = 'htm', $persistConn = false)
+    public function send($type = 'htm', $persistConn = false, &$error = '')
     {
-        $file = $line = $finalContent = '';
+        $file = $line = $finalContent = $contentType = '';
         $hookResult = null;
-        $finalContentLen = 0;
+        $finalContentLen = $wildMatchTypePos = 0;
         $thereIndiscernible = false;
         $errors = $lastBufferContents = array();
 
         // If $type is empty, set it to htm as default
-        $type = $type ? $type : 'htm';
+        if (!$type) {
+            $type = 'htm';
+        }
 
         // Assume we will finish this application after output, calc belowing profile data
         Framework::$profile['MemoryUsage'] = memory_get_usage(true);
@@ -341,6 +394,41 @@ abstract class Response extends Factory implements Implement
         }
 
         if (!headers_sent($file, $line)) {
+            // Get Content-Type first
+            if (isset(static::$httpContentTypes[$type])) {
+                $contentType = static::$httpContentTypes[$type];
+            } else {
+                $contentType = $type;
+            }
+
+            // If strict mode is on
+            if ($this->configs['Strict']) {
+
+                // Don't send anything when client not read this charset
+                if (!$this->data['CharsetFitClient']) {
+                    $error = 'ERROR_RESPONSE_STRICT_REPLYING_CHARSET_CLIENT_NOT_SUPPORTED';
+
+                    return false;
+                }
+
+                // Check if current type we sending matched require
+                if (!isset($this->data['AcceptedTypes']['*/*'])) {
+                    // Well, seems we have to check it
+
+                    if (!isset($this->data['AcceptedTypes'][$contentType])) {
+
+                        // Try search with wild card
+                        $wildMatchType = substr($contentType, 0, strpos($contentType, '/'));
+
+                        if (!isset($this->data['AcceptedTypes'][$wildMatchType . '/*'])) {
+                            $error = 'ERROR_RESPONSE_STRICT_REPLYING_TYPE_CLIENT_NOTSUPPORTED';
+
+                            return false;
+                        }
+                    }
+                }
+            }
+
             // Safely shutdown early output, save the old content into a stack
             while (ob_get_level()) {
                 $lastBufferContents[] = ob_get_clean();
@@ -357,16 +445,12 @@ abstract class Response extends Factory implements Implement
                 $errors
             );
 
-            if (isset(static::$httpContentTypes[$type])) {
-                header(
-                    'Content-Type: '
-                    . static::$httpContentTypes[$type]
-                    . '; charset='
-                    . $this->configs['Encoding']
-                );
-            } else {
-                header('Content-Type: ' . $type);
-            }
+            header(
+                'Content-Type: '
+                . $contentType
+                . '; charset='
+                . $this->configs['Charset']
+            );
 
             // Hide server software information by replace it.
             if ($this->configs['NoExposure']) {
@@ -471,6 +555,11 @@ abstract class Response extends Factory implements Implement
      */
     public function setHeader($header)
     {
+        // Notice that:
+        // We not do sensitivity test here as RFC 2616 says we don't have to
+        // But All header names should be set sensitively according to the
+        // way it be mentioned in RFC 2616 for consistency. You may also reference:
+        // http://en.wikipedia.org/wiki/List_of_HTTP_header_fields#Request_fields
         static::$headers[] = $header;
 
         return true;
@@ -491,7 +580,7 @@ abstract class Response extends Factory implements Implement
 
         $orgSize = strlen($content);
 
-        if (!$forceRaw && $this->configs['UseGZIP'] && $orgSize >= 2048) {
+        if (!$forceRaw && $this->data['UseGZIP'] && $orgSize >= 2048) {
             $gzContent = gzcompress($content, 2);
             $gzSize = strlen($gzContent);
 

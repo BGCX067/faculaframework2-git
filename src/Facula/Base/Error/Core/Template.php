@@ -36,6 +36,11 @@ class Template extends Base
 {
     /** Error code to error message */
     protected static $errorStrings = array(
+        'REWARMING_NOTALLOWED' => '
+            You are attempt to re-warming Template function core.
+            Which is not allowed due to data integrity reason.
+        ',
+
         'PATH_TEMPLATEPOOL_NOTFOUND' => '
             The path declared in "TemplatePool" setting must be defined and existed.
         ',
