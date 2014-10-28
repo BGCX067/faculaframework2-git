@@ -63,6 +63,7 @@ abstract class Route
     /** Consts for handler errors */
     const HANDLER_FAIL_RESULT_FALSE = 1;
     const HANDLER_FAIL_NO_HANDLER = 2;
+    const HANDLER_FAIL_NOT_ALLOWED = 3;
 
     /** Character will be use to split the route */
     public static $routeSplit = '/';
@@ -70,6 +71,19 @@ abstract class Route
     /** Route Map */
     private static $routeMap = array(
         'Subs' => array()
+    );
+
+    /** Allowed Access method */
+    protected static $allowedMethods = array(
+        'GET' => 'get',
+        'POST' => 'post',
+        'PUT' => 'put',
+        'HEAD' => 'head',
+        'DELETE' => 'delete',
+        'TRACE' => 'trace',
+        'OPTIONS' => 'options',
+        'CONNECT' => 'connect',
+        'PATCH' => 'patch',
     );
 
     /** Handler that will be use when no route specified */
@@ -83,6 +97,25 @@ abstract class Route
 
     /** Handlers that will be executed when path is matched */
     private static $operatorParams = array();
+
+    /**
+     * Allow a new HTTP request method
+     *
+     * @param string $requestMethod The name of the HTTP Method
+     * @param string $handlerMethod Name of the method in handler class
+     *
+     * @return bool Return true when added, false otherwise
+     */
+    public static function addMethod($requestMethod, $handlerMethod)
+    {
+        if (isset(self::$allowedMethods[$requestMethod])) {
+            return false;
+        }
+
+        self::$allowedMethods[$requestMethod] = $handlerMethod;
+
+        return true;
+    }
 
     /**
      * Set up the route
@@ -408,6 +441,10 @@ abstract class Route
                 self::execErrorHandler('HANDLE_NO_HANDLER');
                 break;
 
+            case static::HANDLER_FAIL_NOT_ALLOWED:
+                self::execErrorHandler('HANDLE_NOT_ALLOWED');
+                break;
+
             default:
                 break;
         }
@@ -461,6 +498,12 @@ abstract class Route
                 );
 
                 $accessMethod = Framework::core('request')->getClientInfo('method');
+
+                if (!isset(static::$allowedMethods[$accessMethod])) {
+                    $failType = static::HANDLER_FAIL_NOT_ALLOWED;
+
+                    return false;
+                }
 
                 if (!method_exists($instance, $accessMethod)) {
                     $failType = static::HANDLER_FAIL_NO_HANDLER;
