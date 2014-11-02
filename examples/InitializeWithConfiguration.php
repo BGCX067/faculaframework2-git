@@ -7,7 +7,7 @@ if (file_exists('Lock')) {
 require('..' . DIRECTORY_SEPARATOR . 'Bootstrap.php');
 
 // date_default_timezone_set('UTC');
-// mb_internal_encoding('utf-8');
+// mb_internal_encoding('UTF-8');
 
 $configuration = array(
     'AppName' => 'Facula Demo',
@@ -50,7 +50,7 @@ $configuration = array(
     ),
 );
 
-Facula\Framework::run();
+Facula\Framework::run($configuration);
 
 Facula\Framework::core('response')->setContent('Hello Word!');
 Facula\Framework::core('response')->send(); // See http response header for changes

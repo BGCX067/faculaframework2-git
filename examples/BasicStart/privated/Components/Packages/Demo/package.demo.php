@@ -36,7 +36,7 @@ $package = array(
     'Requires' => array(),
 
     // Components that will be only load when this package in use
-    'Components' => array(
+    'Loads' => array(
         'Routines' => 'Components/Routines',
     ),
 
