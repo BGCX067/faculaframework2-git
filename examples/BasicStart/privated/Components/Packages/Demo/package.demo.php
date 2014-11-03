@@ -37,7 +37,7 @@ $package = array(
 
     // Components that will be only load when this package in use
     'Loads' => array(
-        'Routines' => 'Components/Routines',
+        'Routines' => 'Loads/Routines',
     ),
 
     // Paths that will be add to framework and load every time when framework boots
