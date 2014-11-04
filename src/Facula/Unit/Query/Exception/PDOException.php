@@ -35,6 +35,6 @@ use Facula\Base\Prototype\Exception as Base;
 class PDOException extends Base
 {
     protected static $exceptionMessage = '
-        PDO has throwed an exception: %s.
+        PDO has throwed an exception: %s when handling queue: %s.
     ';
 }

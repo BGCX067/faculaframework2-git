@@ -29,6 +29,10 @@ namespace Facula\Unit\Query;
 
 use Facula\Unit\Query\Exception as Exception;
 use Facula\Base\Factory\Operator as Base;
+use Facula\Framework;
+use PDO;
+use PDOStatement;
+use PDOException;
 
 /**
  * Query Operator
@@ -46,11 +50,11 @@ class Factory extends Base implements Implement
 
     /** Shortcut for PDO data types */
     private static $pdoDataTypes = array(
-        'BOOL' => \PDO::PARAM_BOOL,
-        'NULL' => \PDO::PARAM_NULL,
-        'INT' => \PDO::PARAM_INT,
-        'STR' => \PDO::PARAM_STR,
-        'LOB' => \PDO::PARAM_LOB,
+        'BOOL' => PDO::PARAM_BOOL,
+        'NULL' => PDO::PARAM_NULL,
+        'INT' => PDO::PARAM_INT,
+        'STR' => PDO::PARAM_STR,
+        'LOB' => PDO::PARAM_LOB,
     );
 
     /** Allowed query operators */
@@ -487,7 +491,7 @@ class Factory extends Base implements Implement
     {
         $saveParser = null;
 
-        $dataKey = ':' . $this->dataIndex++;
+        $dataKey = ':' . $this->dataIndex++ . 'Q';
 
         if (isset($this->query['Fields'][$forField])) {
             if (isset(static::$pdoDataTypes[$this->query['Fields'][$forField]])) {
@@ -1105,7 +1109,7 @@ class Factory extends Base implements Implement
      */
     private function getPDOConnection()
     {
-        if ($this->connection = \Facula\Framework::core('pdo')->getConnection(
+        if ($this->connection = Framework::core('pdo')->getConnection(
             array(
                 'Table' => $this->query['From'],
                 'Operation' => $this->query['Type']
@@ -1173,9 +1177,10 @@ class Factory extends Base implements Implement
     protected function exec(
         array $requiredQueryParams = array()
     ) {
-        $sql = $sqlID = '';
+        $sql = '';
+        $sqlID = 0;
         $statement = $tempDataVal = null;
-        $matchedParams = array();
+        $matchedParams = $debugBindedParamsKV = $pdoToFriendlyTypes = array();
 
         if (isset($this->query['Action'])) {
             // A little check before we actually do query. We need to know if
@@ -1226,7 +1231,7 @@ class Factory extends Base implements Implement
 
                         if ($statement) {
                             // Search string and set key
-                            if (preg_match_all('/(:[0-9]+)/', $sql, $matchedParams)) {
+                            if (preg_match_all('/(:[0-9]+Q)/', $sql, $matchedParams)) {
 
                                 // Use key to search in datamap, and bind the value and types
                                 foreach ($matchedParams[0] as $paramKey) {
@@ -1269,8 +1274,24 @@ class Factory extends Base implements Implement
                             }
                         }
                     } catch (PDOException $e) {
-                        throw new Exception\ExceptionOnQuerying(
-                            $e->getMessage()
+                        $pdoToFriendlyTypes = array_flip(static::$pdoDataTypes);
+
+                        // Re get the parameter to render the SQL
+                        if (preg_match_all('/(:[0-9]+Q)/', $sql, $matchedParams)) {
+
+                            foreach ($matchedParams[0] as $paramKey) {
+                                $debugBindedParamsKV[$paramKey] =
+                                    gettype($this->dataMap[$paramKey]['Value'])
+                                    . '('
+                                    . $pdoToFriendlyTypes[$this->dataMap[$paramKey]['Type']]
+                                    . ') '
+                                    . var_export($this->dataMap[$paramKey]['Value'], true);
+                            }
+                        }
+
+                        throw new Exception\PDOException(
+                            $e->getMessage(),
+                            str_replace(array_keys($debugBindedParamsKV), $debugBindedParamsKV, $sql)
                         );
                     }
                 }
@@ -1316,7 +1337,7 @@ class Factory extends Base implements Implement
             if ($statement = $this->exec($this->query['Required'])) {
                 try {
                     // Yeah, Always returns assoc array
-                    $statement->setFetchMode(\PDO::FETCH_ASSOC);
+                    $statement->setFetchMode(PDO::FETCH_ASSOC);
 
                     if ($this->query['Parser']
                     && isset($this->query['FieldParsers'])) {
@@ -1356,7 +1377,7 @@ class Factory extends Base implements Implement
                             return false;
                             break;
                     }
-                } catch (PDOException $e) {
+                } catch (Exception\PDOException $e) {
                     throw new Exception\ExceptionOnFetching(
                         $e->getMessage()
                     );
@@ -1376,7 +1397,7 @@ class Factory extends Base implements Implement
      *
      * @return array Return array of results when succeed, or empty array when fail
      */
-    private function fetchWithParsers(\PDOStatement $statement)
+    private function fetchWithParsers(PDOStatement $statement)
     {
         $result = array();
 
@@ -1410,7 +1431,7 @@ class Factory extends Base implements Implement
      *
      * @return array Return array of results when succeed, or empty array when fail
      */
-    private function fetchPure(\PDOStatement $statement)
+    private function fetchPure(PDOStatement $statement)
     {
         $result = array();
 
@@ -1456,7 +1477,7 @@ class Factory extends Base implements Implement
                             break;
                     }
 
-                } catch (PDOException $e) {
+                } catch (Exception\PDOException $e) {
                     throw new Exception\ExceptionOnSaving(
                         $e->getMessage()
                     );

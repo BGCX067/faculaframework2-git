@@ -1,7 +1,7 @@
 Facula PHP Framwork
 ==================================
 
-Facula is a A highly extensible experimental non-full-stack framework written in PHP.
+Facula is a highly extensible experimental non-full-stack framework written in PHP.
 
 It aim to provide a stable interface for the ground floor to make your application can be fit to various environments without changing existing code.
 
