@@ -414,7 +414,6 @@ class Framework
                         . '.' . static::$cfg['PHPExt'];
 
             if (file_exists($fullPath)) {
-
                 // Load initializers and components when needed
                 if ($map['Ref']['I'] && !isset(static::$pool['NSLoaded'][$map['Ref']['I']])) {
                     if (!static::$instance) {
@@ -659,7 +658,6 @@ class Framework
                     $currentPath = $mapSelectedRef[$namespace]['P'];
 
                     if (isset($remainPreRemoveNS[0])) {
-
                         foreach ($remainPreRemoveNS as $removeIndex) {
                             unset($splitedRemainNS[$removeIndex]);
                         }
@@ -1268,7 +1266,6 @@ class Framework
 
         if (isset($this->setting['UsingCore'])
             && is_array($this->setting['UsingCore'])) {
-
             foreach ($this->setting['UsingCore'] as $coreName => $coreClass) {
                 if (!isset($cores[$coreName])) {
                     $cores[$coreName] = $coreClass;

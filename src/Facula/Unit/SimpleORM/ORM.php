@@ -149,9 +149,11 @@ abstract class ORM implements Implement, \ArrayAccess
     public function __unset($key)
     {
         if (isset($this->data[$key])) {
-            if (isset(static::$aliases[$key], $this->data[static::$aliases[$key]])) { // Unsetting a alias
+            // Unsetting a alias
+            if (isset(static::$aliases[$key], $this->data[static::$aliases[$key]])) {
                 unset($this->data[$key], $this->data[static::$aliases[$key]]);
-            } else { // Unsetting a actual key
+            } else {
+                // Unsetting a actual key
                 $this->data[$key] = null;
 
                 unset($this->data[$key]);
@@ -968,7 +970,9 @@ abstract class ORM implements Implement, \ArrayAccess
             foreach ($this->data as $key => $val) {
                 if (isset($fields[$key])) {
 
-                    if (isset(static::$creases[$key])) { // Check if we need to Xcrease it
+                    if (isset(static::$creases[$key])) {
+                        // Check if we need to Xcrease it
+
                         /*
                             Notice that: Xcrease use to reduce the problem caused in high concurrence condition
                             But it will not solve it.
@@ -999,7 +1003,8 @@ abstract class ORM implements Implement, \ArrayAccess
                             'Operator' => $changeOperator,
                             'Value' => abs($changesTo)
                         );
-                    } else { // Or fine with replace
+                    } else {
+                        // Or fine with replace
                         $sets[$key] = $val;
                     }
                 }
@@ -1069,7 +1074,6 @@ abstract class ORM implements Implement, \ArrayAccess
         )->save(
             static::$primary
         )) {
-
             $this->dataOriginal = $this->data;
 
             if (!isset($this->data[static::$primary])) {

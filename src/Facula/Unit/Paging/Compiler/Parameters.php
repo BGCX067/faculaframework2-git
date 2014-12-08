@@ -374,7 +374,6 @@ class Parameters extends Base
 
         // Scan all start point of tags
         foreach ($this->paramTpl as $paramName => $properties) {
-
             // Loop to get all params out
             while (($lastStartFoundPos = strpos(
                 $this->paramStr,

@@ -308,7 +308,8 @@ abstract class Request extends Factory implements Implement
             return false;
         }
 
-        if ($this->configs['AutoMagicQuotes']) { // Impossible by now, remove all slash code back
+        if ($this->configs['AutoMagicQuotes']) {
+            // Impossible by now, remove all slash code back
             foreach ($_GET as $key => $val) {
                 $_GET[$key] = is_array($val)
                                 ? array_map('stripslashes', $val) : stripslashes($val);
@@ -331,7 +332,8 @@ abstract class Request extends Factory implements Implement
                 switch (strtoupper($key)) {
                     case 'REQUEST_METHOD':
                         // Determine the type of request method.
-                        if (isset(static::$requestMethods[$val])) { // Normal match, standard client
+                        if (isset(static::$requestMethods[$val])) {
+                            // Normal match, standard client
                             $this->requestInfo['method'] = static::$requestMethods[$val];
                         } else {
                             // The client not following rules
@@ -511,9 +513,11 @@ abstract class Request extends Factory implements Implement
                     strlen($tempFrame[0])
                 ));
 
-                if ('' === $qValue) { // Default q should be 1.0
+                if ('' === $qValue) {
+                    // Default q should be 1.0
                     $frames[$lastSectionIdx][1] = 1.0;
-                } elseif ('0' === $qValue) { // 0 means not do not use, so unset it
+                } elseif ('0' === $qValue) {
+                    // 0 means not do not use, so unset it
                     unset($frames[$lastSectionIdx]);
                 } else {
                     $frames[$lastSectionIdx][1] = (float)$qValue;

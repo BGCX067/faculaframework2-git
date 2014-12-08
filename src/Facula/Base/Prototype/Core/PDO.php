@@ -464,11 +464,9 @@ abstract class PDO extends Factory implements Implement
                                     $database['ID'],
                                     $error
                                 )) {
-
                                 // Mapping all tables to this database link
                                 foreach ($database['Operations'] as $operation) {
                                     foreach ($database['Tables'] as $table) {
-
                                         if (!isset(
                                             $this->connMap[$this->configs['SelectMethod']]
                                             [$table . '#' . $operation]

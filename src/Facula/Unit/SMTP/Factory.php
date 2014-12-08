@@ -238,7 +238,6 @@ class Factory extends Base
 
                         if ($operater instanceof Base) {
                             if ($operater->connect($error)) {
-
                                 foreach (static::$emails as $mailkey => $email) {
                                     if ($operater->send($email)) {
                                         unset(static::$emails[$mailkey]);

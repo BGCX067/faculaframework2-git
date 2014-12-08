@@ -403,7 +403,6 @@ abstract class Response extends Factory implements Implement
 
             // If strict mode is on
             if ($this->configs['Strict']) {
-
                 // Don't send anything when client not read this charset
                 if (!$this->data['CharsetFitClient']) {
                     $error = 'ERROR_RESPONSE_STRICT_REPLYING_CHARSET_CLIENT_NOT_SUPPORTED';
@@ -416,7 +415,6 @@ abstract class Response extends Factory implements Implement
                     // Well, seems we have to check it
 
                     if (!isset($this->data['AcceptedTypes'][$contentType])) {
-
                         // Try search with wild card
                         $wildMatchType = substr($contentType, 0, strpos($contentType, '/'));
 

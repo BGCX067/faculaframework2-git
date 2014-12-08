@@ -57,7 +57,6 @@ class FriendlyTime implements Implement
             isset($pool['LanguageMap']['FORMAT_TIME_AFTER_MIN']) &&
             isset($pool['LanguageMap']['FORMAT_TIME_AFTER_HR']) &&
             isset($pool['LanguageMap']['FORMAT_TIME_AFTER_DAY'])) {
-
             $phpCode .= '<?php '
                     . '$tempTime = $Time - (int)(' . $varName . ');'
                     // If small than 0, means after time
