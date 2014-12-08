@@ -441,7 +441,8 @@ abstract class Template extends Factory implements Implement
             )) {
                 return false;
             }
-        } else { // Or it just a normal call
+        } else {
+            // Or it just a normal call
             if (!$templatePath = $this->getCompiledTemplate(
                 $templateName,
                 $templateSet
@@ -538,7 +539,8 @@ abstract class Template extends Factory implements Implement
                         break;
 
                     case 'template':
-                        if (isset($fileNameSplit[1])) { // If this is a ab testing file
+                        if (isset($fileNameSplit[1])) {
+                            // If this is a ab testing file
                             if (!isset($fileMap['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]])) {
                                 $fileMap['Tpl'][$fileNameSplit[0]][$fileNameSplit[1]] =
                                     $importedFile['Path'];
@@ -1280,7 +1282,6 @@ abstract class Template extends Factory implements Implement
             $compiledLangFile,
             $this->configs['CacheVer']
         ))) {
-
             Framework::summonHook(
                 'template_load_language',
                 array(),

@@ -1035,7 +1035,8 @@ class Parser
                 $tempResult['Parameter']['Main'][1] - $tempResult['Parameter']['Main'][0];
 
             // Parameter: End
-            if ($paired['Position']['Closer']['StarterLen']) { // If it don't have the ending starter
+            if ($paired['Position']['Closer']['StarterLen']) {
+                // If it don't have the ending starter
                 $tempResult['Parameter']['End'][0] =
                     $paired['Position']['Closer']['Start'] + $paired['Position']['Closer']['StarterLen'];
 

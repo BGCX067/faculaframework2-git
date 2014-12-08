@@ -574,7 +574,8 @@ abstract class Debug extends Factory implements Implement
         if ($enter) {
             $this->tempDisabled = true;
 
-            if ($fullEnter) { // Disable all error message and logging
+            if ($fullEnter) {
+                // Disable all error message and logging
                 $this->tempFullDisabled = true;
             }
         } else {
@@ -796,10 +797,12 @@ abstract class Debug extends Factory implements Implement
         }
 
         // Avoid some declaration according to criticalSection
-        if ($this->tempFullDisabled) { // No log, no display
+        if ($this->tempFullDisabled) {
+            // No log, no display
             $errorInfo['Log'] = false;
             $errorInfo['Display'] = false;
-        } elseif ($this->tempDisabled) { // No display
+        } elseif ($this->tempDisabled) {
+            // No display
             $errorInfo['Display'] = false;
         }
 

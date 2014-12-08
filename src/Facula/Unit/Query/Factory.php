@@ -506,7 +506,6 @@ class Factory extends Base implements Implement
                     foreach (array_reverse(
                         $this->query['FieldParsers'][$forField]
                     ) as $parserType) {
-
                         if (isset(static::$parsers[$parserType]['Writer'])) {
                             $saveParser = static::$parsers[$parserType]['Writer'];
 
@@ -519,7 +518,6 @@ class Factory extends Base implements Implement
                                 $forField
                             );
                         }
-
                     }
                 }
 
@@ -992,7 +990,6 @@ class Factory extends Base implements Implement
     public function set(array $values)
     {
         if (isset($this->query['Sets'])) {
-
             foreach ($values as $field => $value) {
                 $this->query['Sets'][] = array(
                     'Field' => $field,
@@ -1018,7 +1015,6 @@ class Factory extends Base implements Implement
     public function changes(array $values)
     {
         if (isset($this->query['Changes'])) {
-
             foreach ($values as $value) {
                 if (!is_array($value)) {
                     throw new Exception\ChangeOperatorParameterInvaild();
@@ -1085,7 +1081,6 @@ class Factory extends Base implements Implement
     {
         if (isset($this->query['Limit'])) {
             if (empty($this->query['Limit'])) {
-
                 $this->query['Limit'] = array(
                     'Offset' => (int)($offset),
                     'Distance' => (int)($distance),
@@ -1278,7 +1273,6 @@ class Factory extends Base implements Implement
 
                         // Re get the parameter to render the SQL
                         if (preg_match_all('/(:[0-9]+Q)/', $sql, $matchedParams)) {
-
                             foreach ($matchedParams[0] as $paramKey) {
                                 $debugBindedParamsKV[$paramKey] =
                                     gettype($this->dataMap[$paramKey]['Value'])
@@ -1457,7 +1451,6 @@ class Factory extends Base implements Implement
         if (isset($this->query['Action']) && $this->query['Type'] == 'Write') {
             if ($statement = $this->exec($this->query['Required'])) {
                 try {
-
                     switch ($this->query['Action']) {
                         case 'insert':
                             return $this->operator->insert($statement, $param);

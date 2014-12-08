@@ -57,7 +57,8 @@ class Maxmin extends Base
         $inputedVal = 0;
 
         if (is_string($value) && is_numeric($value)) {
-            if (strpos($value, '.')) { // Check if is float
+            if (strpos($value, '.')) {
+                // Check if is float
                 $inputedVal = (float)$value;
             } else {
                 $inputedVal = (int)$value;

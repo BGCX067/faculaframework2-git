@@ -139,7 +139,6 @@ abstract class Setting
                         && isset(self::$registered[$settingName]['Accesser'][$accesser])
                     )
                 ) {
-
                 switch (self::$registered[$settingName]['Type']) {
                     case 'Operator':
                         if (!isset(self::$registered[$settingName]['Result'])) {
