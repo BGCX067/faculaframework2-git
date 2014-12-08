@@ -7,6 +7,10 @@ php:
   - hhvm
   - hhvm-nightly
 
+env:
+  global:
+    - THREEAX_NOTIFY_KEY=BUILD_NOTIFY_KEY_THREEAX
+
 matrix:
   allow_failures:
     - php: hhvm
@@ -18,7 +22,7 @@ notifications:
     on_success: never
     on_failure: always
   webhooks:
-    - https://interface.3ax.org/ping/facula_build
+    - https://www.3ax.org/api/work/facula/ping/build_travisci/${THREEAX_NOTIFY_KEY}
 
 before_script:
   # Perform a apt repo update, get ready for a php pear installing
