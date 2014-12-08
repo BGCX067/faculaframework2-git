@@ -969,7 +969,6 @@ abstract class ORM implements Implement, \ArrayAccess
 
             foreach ($this->data as $key => $val) {
                 if (isset($fields[$key])) {
-
                     if (isset(static::$creases[$key])) {
                         // Check if we need to Xcrease it
 

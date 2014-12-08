@@ -111,7 +111,6 @@ class ValueVariable implements Implement
                 case static::$spliter:
                     if (($seeker < 1 || $targetString[$seeker - 1] != static::$escape)
                     && !$skipSpliters) {
-
                         if ($newRangeEntered) {
                             $newRangeEntered = false;
 

@@ -1182,7 +1182,8 @@ class Factory extends Base implements Implement
             // our required data in $this->query has been filled or we may make
             // mistake. And the mistake may cause query poisoning or inject
             foreach ($requiredQueryParams as $param) {
-                if (is_array($param)) { // At least One of the param must be filled
+                if (is_array($param)) {
+                    // At least One of the param must be filled
                     $paramFilled = false;
 
                     foreach ($param as $paramName) {
@@ -1227,7 +1228,6 @@ class Factory extends Base implements Implement
                         if ($statement) {
                             // Search string and set key
                             if (preg_match_all('/(:[0-9]+Q)/', $sql, $matchedParams)) {
-
                                 // Use key to search in datamap, and bind the value and types
                                 foreach ($matchedParams[0] as $paramKey) {
                                     if (isset($this->dataMap[$paramKey])) {
