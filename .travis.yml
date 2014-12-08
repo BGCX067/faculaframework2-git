@@ -18,7 +18,7 @@ notifications:
     on_success: never
     on_failure: always
   webhooks:
-    - https://www.3ax.org/api/work/facula/ping/build_travisci/${BUILD_NOTIFY_KEY_THREEAX}
+    - http://www.3ax.org/api/work/facula/ping/build_travisci/${BUILD_NOTIFY_KEY_THREEAX}
 
 before_script:
   # Perform a apt repo update, get ready for a php pear installing
