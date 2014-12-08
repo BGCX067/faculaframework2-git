@@ -1396,7 +1396,6 @@ class Factory extends Base implements Implement
         $result = array();
 
         while ($row = $statement->fetch()) {
-
             foreach ($this->query['FieldParsers'] as $field => $parsers) {
                 if (isset($row[$field])) {
                     foreach ($parsers as $parser) {
