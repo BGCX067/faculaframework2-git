@@ -132,12 +132,12 @@ class Template extends Base
         ',
 
         'ASSIGN_CONFLICT' => '
-            The key "%s" already be assigned. Can\'t reassign it.
+            The key "%s" already be assigned. It can\'t be re-assigned.
         ',
 
         'ASSIGN_MERGE_CONFLICT' => '
-            There are conflict key existing in both global and partial assignment data: %s.
-            Please resolve in order to render the template.
+            Key(s): %s is existing in both Global and Partial assignment data.
+            Those conflicts must be resolved in order to render the template.
         ',
     );
 }
