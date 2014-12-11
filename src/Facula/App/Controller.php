@@ -40,6 +40,8 @@ abstract class Controller extends Setting
 
     private $cores = array();
 
+    private $templateAssigns = array();
+
     /**
      * Magic method set to replace core instance in controller
      *
@@ -293,11 +295,13 @@ abstract class Controller extends Setting
      */
     final protected function assign($key, $val)
     {
-        if ($this->template->assign($key, $val)) {
-            return true;
+        if (isset($this->templateAssigns[$key])) {
+            return false;
         }
 
-        return false;
+        $this->templateAssigns[$key] = $val;
+
+        return true;
     }
 
     /**
@@ -349,7 +353,8 @@ abstract class Controller extends Setting
             $tplSet,
             $cacheExpired,
             $cacheExpiredCallback,
-            $factor
+            $factor,
+            $this->templateAssigns
         )) {
             if ($this->response->setContent($content)) {
                 return $this->response->send();

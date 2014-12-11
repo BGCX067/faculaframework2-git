@@ -40,7 +40,8 @@ interface Template
         $templateSet = '',
         $expire = null,
         $expiredCallback = null,
-        $cacheFactor = ''
+        $cacheFactor = '',
+        array &$partialAssign = array()
     );
     public function insertMessage(array $message);
     public function importTemplateFile($name, $path);

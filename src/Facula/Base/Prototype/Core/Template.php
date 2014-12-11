@@ -125,7 +125,7 @@ abstract class Template extends Factory implements Implement
                 isset($common['Charset']) ? $common['Charset'] : 'UTF-8'
             ),
 
-            'CacheVer' => $common['BootVersion'],
+            'CacheVer' => isset($common['BootVersion']) ? $common['BootVersion'] : 0,
         );
 
         // Use custom render
@@ -320,6 +320,14 @@ abstract class Template extends Factory implements Implement
             $this->assigned[$key] = $val;
 
             return true;
+        } else {
+            new Error(
+                'ASSIGN_CONFLICT',
+                array(
+                    $key
+                ),
+                'ERROR'
+            );
         }
 
         return false;
@@ -419,6 +427,7 @@ abstract class Template extends Factory implements Implement
      * @param integer $expire Time to expire relative to current second
      * @param mixed $expiredCallback Callback that will be executed when template needs to re-render
      * @param string $cacheFactor Factor to make cache unique
+     * @param array $partialAssign Partial assign data which only available for this rendering progress
      *
      * @return bool Return the rendered content when success, false otherwise
      */
@@ -427,9 +436,11 @@ abstract class Template extends Factory implements Implement
         $templateSet = '',
         $expire = 0,
         $expiredCallback = null,
-        $cacheFactor = ''
+        $cacheFactor = '',
+        array &$partialAssign = array()
     ) {
         $templatePath = '';
+        $mergedAssign = array();
 
         if (!is_null($expire)) {
             if (!$templatePath = $this->getCacheTemplate(
@@ -451,9 +462,27 @@ abstract class Template extends Factory implements Implement
             }
         }
 
+        // Merge the global assign (which assigned by `assign` method)
+        // to privateAssign (which assigned by `render` method)
+        // First step will be conflict check of course
+        $conflictedAssign = array_intersect_key($partialAssign, $this->assigned);
+
+        if (!empty($conflictedAssign)) {
+            new Error(
+                'ASSIGN_MERGE_CONFLICT',
+                array(
+                    implode(', ', $conflictedAssign)
+                ),
+                'ERROR'
+            );
+        } else {
+            $mergedAssign = $partialAssign + $this->assigned;
+        }
+
         return $this->doRender(
             $templateName,
-            $templatePath
+            $templatePath,
+            $mergedAssign
         );
     }
 
@@ -733,7 +762,8 @@ abstract class Template extends Factory implements Implement
                                 // Render nocached compiled content
                                 if (($renderCachedContent = $this->doRender(
                                     $templateName,
-                                    $cachedTmpPage
+                                    $cachedTmpPage,
+                                    $this->assigned
                                 )) !== false) {
                                     // Clear old template
                                     $this->saveCachedTemplate($cachedTmpPage, null);
@@ -1048,10 +1078,11 @@ abstract class Template extends Factory implements Implement
      *
      * @param string $templateName Name of the template that will be rendered for hook calling
      * @param string $compiledTpl Path to the compiled template file
+     * @param array $assigned Reference to assigned data for rendering content
      *
      * @return mixed Return the rendered content of the template when success, or false when failed
      */
-    protected function doRender($templateName, $compiledTpl)
+    protected function doRender($templateName, $compiledTpl, array &$assigned)
     {
         $renderedResult = '';
         $errors = array();
@@ -1081,12 +1112,12 @@ abstract class Template extends Factory implements Implement
 
             $renderedResult = $render::render(
                 $compiledTpl,
-                $this->assigned
+                $assigned
             )->result();
         } else {
             $renderedResult = static::renderPage(
                 $compiledTpl,
-                $this->assigned
+                $assigned
             );
         }
 

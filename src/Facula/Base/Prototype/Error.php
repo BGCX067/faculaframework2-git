@@ -27,6 +27,8 @@
 
 namespace Facula\Base\Prototype;
 
+use Facula\Framework;
+
 /**
  * Base class of error
  *
@@ -119,7 +121,7 @@ abstract class Error implements \Facula\Base\Implement\Error
         array $errorAssign = array(),
         $errorType = 'NOTICE'
     ) {
-        $cores = \Facula\Framework::getAllCores();
+        $cores = Framework::getAllCores();
         $backTrace = array();
 
         if (!isset(static::$errorTypes[$errorType])) {

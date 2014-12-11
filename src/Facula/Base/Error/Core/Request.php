@@ -54,8 +54,8 @@ class Request extends Base
         ',
 
         'HEADERITEM_OVERLIMIT' => '
-            Header data "%s" has exceeded the header length limit.
-            A header item must shorter than %d character.
+            Header data "%s" has exceeded the length limit.
+            A header item must shorter than %d characters.
         ',
 
         'PROXYADDR_INVALID' => '

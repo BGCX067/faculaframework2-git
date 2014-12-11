@@ -206,7 +206,7 @@ abstract class Request extends Factory implements Implement
 
         // How long of the data we can handle.
         $this->configs['MaxHeaderSize'] = isset($cfg['MaxHeaderSize'])
-                                                ? (int)($cfg['MaxHeaderSize']) : 1024;
+                                                ? (int)($cfg['MaxHeaderSize']) : 5120;
 
         $this->configs['CookiePrefix'] = isset($common['CookiePrefix'][0])
                                                 ? $common['CookiePrefix'] : '';

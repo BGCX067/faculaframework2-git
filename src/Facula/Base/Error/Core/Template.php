@@ -130,5 +130,13 @@ class Template extends Base
         'CACHE_EXCLUDE_AREA_UNEXECPTED_SEQUENCE' => '
             Invalid sequence of cache exclude tag. Expecting "%s" but picked "%s" in code "%s".
         ',
+
+        'ASSIGN_CONFLICT' => '
+            The key "%s" already be assigned. Can\'t reassign it.
+        ',
+
+        'ASSIGN_MERGE_CONFLICT' => '
+            There are conflict key existing in both global and partial assignment data: %s. Please resolve in order to render the template.
+        ',
     );
 }

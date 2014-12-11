@@ -394,7 +394,7 @@ abstract class Debug extends Factory implements Implement
     {
         $this->configs = array(
             'Strict' => isset($cfg['Strict']) && $cfg['Strict'] ?
-                                true : false,
+                            true : false,
 
             'LogRoot' => isset($cfg['LogRoot']) && is_dir($cfg['LogRoot']) ?
                         PathParser::get($cfg['LogRoot']) : '',
@@ -672,6 +672,7 @@ abstract class Debug extends Factory implements Implement
      * @param integer $errLine Line of that code trigger the error
      * @param mixed $errContext Dump information
      * @param array $errTrace Back trace information
+     * @param bool $isException Is this error just an uncatchable Exception?
      *
      * @return mixed Return the result of static::exception
      */
@@ -681,142 +682,141 @@ abstract class Debug extends Factory implements Implement
         $errFile,
         $errLine,
         $errContext = array(),
-        array $errTrace = array()
+        array $errTrace = array(),
+        $isException = false
     ) {
         $errorInfo = array(
-            'Suspend' => true,
+            // Exceptions no need to be Suspend as default
+            // But Errors needs to.
+            'Suspend' => $isException ? false : true,
             'Display' => true,
             'Log' => true,
             'Error' => array(
                 'Code' => isset(static::$phpErrorCodeToStr[$errNo]) ?
                     static::$phpErrorCodeToStr[$errNo] : 'E_UNKNOWN',
-
                 'No' => $errNo,
-
                 'Message' => $errStr,
-
                 'File' => $errFile,
-
                 'Line' => $errLine,
-
                 'Trace' => $errTrace,
-
                 'Context' => $errContext
             )
         );
 
-        switch ($errNo) {
-            // Core errors, we cannot deal with it
-            case E_PARSE:
-                break;
+        if (!$isException) {
+            switch ($errNo) {
+                // Core errors, we cannot deal with it
+                case E_PARSE:
+                    break;
 
-            case E_COMPILE_ERROR:
-                break;
+                case E_COMPILE_ERROR:
+                    break;
 
-            case E_COMPILE_WARNING:
-                break;
+                case E_COMPILE_WARNING:
+                    break;
 
-            case E_RECOVERABLE_ERROR:
-                break;
-
-
-            // Errors: All Need to be Suspend, Display, Log
-            case E_ERROR:
-                break;
-
-            case E_CORE_ERROR:
-                break;
-
-            case E_USER_ERROR:
-                break;
+                case E_RECOVERABLE_ERROR:
+                    break;
 
 
-            // Warning: All Need to be Log, Only Display when Debug is on, No Suspend
-            case E_WARNING:
-                $errorInfo['Suspend'] = false;
+                // Errors: All Need to be Suspend, Display, Log
+                case E_ERROR:
+                    break;
 
-                if (!$this->configs['Debug']) {
-                    $errorInfo['Display'] = false;
-                }
-                break;
+                case E_CORE_ERROR:
+                    break;
 
-            case E_CORE_WARNING:
-                $errorInfo['Suspend'] = false;
-
-                if (!$this->configs['Debug']) {
-                    $errorInfo['Display'] = false;
-                }
-                break;
-
-            case E_USER_WARNING:
-                $errorInfo['Suspend'] = false;
-
-                if (!$this->configs['Debug']) {
-                    $errorInfo['Display'] = false;
-                }
-                break;
+                case E_USER_ERROR:
+                    break;
 
 
-            // Notice: All Need to be Log, Only Display when Debug is on, No Suspend
-            case E_NOTICE:
-                $errorInfo['Suspend'] = false;
+                // Warning: All Need to be Log, Only Display when Debug is on, No Suspend
+                case E_WARNING:
+                    $errorInfo['Suspend'] = false;
 
-                if (!$this->configs['Debug']) {
-                    $errorInfo['Display'] = false;
-                }
-                break;
+                    if (!$this->configs['Debug']) {
+                        $errorInfo['Display'] = false;
+                    }
+                    break;
 
-            case E_USER_NOTICE:
-                $errorInfo['Suspend'] = false;
+                case E_CORE_WARNING:
+                    $errorInfo['Suspend'] = false;
 
-                if (!$this->configs['Debug']) {
-                    $errorInfo['Display'] = false;
-                }
-                break;
+                    if (!$this->configs['Debug']) {
+                        $errorInfo['Display'] = false;
+                    }
+                    break;
+
+                case E_USER_WARNING:
+                    $errorInfo['Suspend'] = false;
+
+                    if (!$this->configs['Debug']) {
+                        $errorInfo['Display'] = false;
+                    }
+                    break;
 
 
-            // Deprecated: So as notice
-            case E_DEPRECATED:
-                $errorInfo['Suspend'] = false;
+                // Notice: All Need to be Log, Only Display when Debug is on, No Suspend
+                case E_NOTICE:
+                    $errorInfo['Suspend'] = false;
 
-                if (!$this->configs['Debug']) {
-                    $errorInfo['Display'] = false;
-                }
-                break;
+                    if (!$this->configs['Debug']) {
+                        $errorInfo['Display'] = false;
+                    }
+                    break;
 
-            case E_USER_DEPRECATED:
-                $errorInfo['Suspend'] = false;
+                case E_USER_NOTICE:
+                    $errorInfo['Suspend'] = false;
 
-                if (!$this->configs['Debug']) {
-                    $errorInfo['Display'] = false;
-                }
-                break;
+                    if (!$this->configs['Debug']) {
+                        $errorInfo['Display'] = false;
+                    }
+                    break;
 
-            default:
-                break;
+
+                // Deprecated: So as notice
+                case E_DEPRECATED:
+                    $errorInfo['Suspend'] = false;
+
+                    if (!$this->configs['Debug']) {
+                        $errorInfo['Display'] = false;
+                    }
+                    break;
+
+                case E_USER_DEPRECATED:
+                    $errorInfo['Suspend'] = false;
+
+                    if (!$this->configs['Debug']) {
+                        $errorInfo['Display'] = false;
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+
+            // Avoid some declaration according to criticalSection
+            if ($this->tempFullDisabled) {
+                // No log, no display
+                $errorInfo['Log'] = false;
+                $errorInfo['Display'] = false;
+            } elseif ($this->tempDisabled) {
+                // No display
+                $errorInfo['Display'] = false;
+            }
+
+            // However, if Strict Mode is on, display all error, log it and suspend the application.
+            if ($this->configs['Strict']) {
+                $errorInfo['Log'] = true;
+                $errorInfo['Suspend'] = true;
+                $errorInfo['Display'] = true;
+
+                $errorInfo['Error']['Message'] =
+                    '! ' . $errorInfo['Error']['Message'];
+            }
         }
 
-        // Avoid some declaration according to criticalSection
-        if ($this->tempFullDisabled) {
-            // No log, no display
-            $errorInfo['Log'] = false;
-            $errorInfo['Display'] = false;
-        } elseif ($this->tempDisabled) {
-            // No display
-            $errorInfo['Display'] = false;
-        }
-
-        // However, if Strict Mode is on, display all error, log it and suspend the application.
-        if ($this->configs['Strict']) {
-            $errorInfo['Log'] = true;
-            $errorInfo['Suspend'] = true;
-            $errorInfo['Display'] = true;
-
-            $errorInfo['Error']['Message'] =
-                '! ' . $errorInfo['Error']['Message'];
-        }
-
-        return $this->exception(
+        return $this->failure(
             $errorInfo
         );
     }
@@ -888,13 +888,13 @@ abstract class Debug extends Factory implements Implement
     }
 
     /**
-     * Processor of every exception
+     * Processor of every failure
      *
      * @param string $errorInfo Error Info
      *
      * @return void
      */
-    protected function exception(array $errorInfo)
+    protected function failure(array $errorInfo)
     {
         $backTraces = array_reverse($errorInfo['Error']['Trace']);
 
