@@ -136,7 +136,8 @@ class Template extends Base
         ',
 
         'ASSIGN_MERGE_CONFLICT' => '
-            There are conflict key existing in both global and partial assignment data: %s. Please resolve in order to render the template.
+            There are conflict key existing in both global and partial assignment data: %s.
+            Please resolve in order to render the template.
         ',
     );
 }
