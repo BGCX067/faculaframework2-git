@@ -427,7 +427,7 @@ abstract class Template extends Factory implements Implement
      * @param integer $expire Time to expire relative to current second
      * @param mixed $expiredCallback Callback that will be executed when template needs to re-render
      * @param string $cacheFactor Factor to make cache unique
-     * @param array $partialAssign Partial assign data which only available for this rendering progress
+     * @param array $specificalAssign Assign data which only available for this specific rendering progress
      *
      * @return bool Return the rendered content when success, false otherwise
      */
@@ -437,27 +437,9 @@ abstract class Template extends Factory implements Implement
         $expire = 0,
         $expiredCallback = null,
         $cacheFactor = '',
-        array &$partialAssign = array()
+        array &$specificalAssign = array()
     ) {
         $templatePath = '';
-        $mergedAssign = array();
-
-        // Merge the global assign (which assigned by `assign` method)
-        // to privateAssign (which assigned by `render` method)
-        // First step will be conflict check of course
-        $conflictedAssign = array_intersect_key($partialAssign, $this->assigned);
-
-        if (!empty($conflictedAssign)) {
-            new Error(
-                'ASSIGN_MERGE_CONFLICT',
-                array(
-                    implode(', ', array_keys($conflictedAssign))
-                ),
-                'ERROR'
-            );
-        } else {
-            $mergedAssign = $partialAssign + $this->assigned;
-        }
 
         if (!is_null($expire)) {
             if (!$templatePath = $this->getCacheTemplate(
@@ -466,7 +448,7 @@ abstract class Template extends Factory implements Implement
                 $expire,
                 $expiredCallback,
                 $cacheFactor,
-                $mergedAssign
+                $specificalAssign
             )) {
                 return false;
             }
@@ -483,7 +465,7 @@ abstract class Template extends Factory implements Implement
         return $this->doRender(
             $templateName,
             $templatePath,
-            $mergedAssign
+            $specificalAssign
         );
     }
 
@@ -672,7 +654,7 @@ abstract class Template extends Factory implements Implement
      * @param integer $expire Time to expire relative to current second
      * @param mixed $expiredCallback Callback that will be executed when template needs to re-render
      * @param string $cacheFactor Factor to make cache unique
-     * @param array $assigned Assigned template data
+     * @param array &$specificalAssign Assigned partial template data
      *
      * @return bool Return the rendered content when success, false otherwise
      */
@@ -682,7 +664,7 @@ abstract class Template extends Factory implements Implement
         $expire = 0,
         $expiredCallback = null,
         $cacheFactor = '',
-        array $assigned = array()
+        array &$specificalAssign = array()
     ) {
         $templatePath = $templateContent = $cachedPagePath = $cachedPageRoot =
         $cachedPageFactor = $cachedPageFile = $cachedPageFactorDir = $cachedTmpPage =
@@ -766,7 +748,7 @@ abstract class Template extends Factory implements Implement
                                 if (($renderCachedContent = $this->doRender(
                                     $templateName,
                                     $cachedTmpPage,
-                                    $assigned
+                                    $specificalAssign
                                 )) !== false) {
                                     // Clear old template
                                     $this->saveCachedTemplate($cachedTmpPage, null);
@@ -1081,14 +1063,14 @@ abstract class Template extends Factory implements Implement
      *
      * @param string $templateName Name of the template that will be rendered for hook calling
      * @param string $compiledTpl Path to the compiled template file
-     * @param array $assigned Reference to assigned data for rendering content
+     * @param array $specificalAssign Reference to assigned data for rendering content
      *
      * @return mixed Return the rendered content of the template when success, or false when failed
      */
-    protected function doRender($templateName, $compiledTpl, array &$assigned)
+    protected function doRender($templateName, $compiledTpl, array &$specificalAssign)
     {
         $renderedResult = '';
-        $errors = array();
+        $mergedAssign = $conflictedAssign = $errors = array();
 
         if (!isset(static::$performMark['template_render'])) {
             Framework::summonHook(
@@ -1110,17 +1092,45 @@ abstract class Template extends Factory implements Implement
             $errors
         );
 
+        // This is a dangerous game. Don't change when you not fully understand.
+        // I tell you why:
+        // The $specificalAssign which be passed all the way to here is actually
+        // a very important reference (not value) assigned by procedures outside
+        // the Template function core (so it's not controllable) for rending current
+        // template out.
+        // As it's a reference, the data pointed by the $specificalAssign may change
+        // during rendering progress. e.g: a rendering callback assigned a new value
+        // etc.
+        // Through this dangerous call chain you staring here, we be able to implement
+        // the "Template specific data assign scope" and at same time keep the
+        // compatibility of existing code.
+        // Do NOT break this reference chain until the template fully rendered. Or
+        // you will get incompleted render result.
+        $conflictedAssign = array_intersect_key($specificalAssign, $this->assigned);
+
+        if (!empty($conflictedAssign)) {
+            new Error(
+                'ASSIGN_MERGE_CONFLICT',
+                array(
+                    implode(', ', array_keys($conflictedAssign))
+                ),
+                'ERROR'
+            );
+        } else {
+            $mergedAssign = $specificalAssign + $this->assigned;
+        }
+
         if (isset($this->configs['Render'])) {
             $render = $this->configs['Render'];
 
             $renderedResult = $render::render(
                 $compiledTpl,
-                $assigned
+                $mergedAssign
             )->result();
         } else {
             $renderedResult = static::renderPage(
                 $compiledTpl,
-                $assigned
+                $mergedAssign
             );
         }
 
