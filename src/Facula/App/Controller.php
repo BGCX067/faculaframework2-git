@@ -205,10 +205,11 @@ abstract class Controller extends Setting
      * @param string $addr Address to redirect to
      * @param integer $httpcode HTTP status code for this redirection
      * @param bool $interior This is root based URL(or a full qualified address when set to false)
+     * @param bool $cache Allowing client to cache the redirect or not
      *
      * @return mixed Return the result of Response core::setHeader
      */
-    final protected function redirect($addr, $httpcode = 302, $interior = true)
+    final protected function redirect($addr, $httpcode = 302, $interior = true, $cache = false)
     {
         $rootUrl = $interior ? $this->request->getClientInfo('rootURL') . '/' : '';
 
@@ -225,6 +226,10 @@ abstract class Controller extends Setting
                 break;
         }
 
+        if (!$cache) {
+            $this->response->setHeader('Cache-Control: no-cache, no-store');
+        }
+
         return $this->response->setHeader('Location: ' . $rootUrl . $addr) && $this->response->send() ?
             true : false;
     }
@@ -236,10 +241,11 @@ abstract class Controller extends Setting
      * @param integer $port Post of that protocol
      * @param string $url The url to redirect to
      * @param integer $code Redirect code
+     * @param bool $cache Allow or disallow client to cache the https redirect
      *
      * @return mixed Return the result of redirect
      */
-    final protected function redirectScheme($protocol, $port, $url = '', $code = 301)
+    final protected function redirectScheme($protocol, $port, $url = '', $code = 301, $cache = false)
     {
         if (isset($url[0]) && $url[0] != '/') {
             $url = '/' . $url;
@@ -252,7 +258,8 @@ abstract class Controller extends Setting
                 (':' . $port)
             ) . $url,
             $code,
-            false
+            false,
+            $cache
         );
     }
 
