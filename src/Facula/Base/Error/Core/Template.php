@@ -136,8 +136,9 @@ class Template extends Base
         ',
 
         'ASSIGN_MERGE_CONFLICT' => '
-            Key(s): %s is existing in both Global and Partial assignment data.
-            Those conflicts must be resolved in order to render the template.
+            Conflicted key(s): %s.
+            Seems those key(s) existing in both Global and Specifical template data scope.
+            This problem must be resolved in order to render the template.
         ',
     );
 }
