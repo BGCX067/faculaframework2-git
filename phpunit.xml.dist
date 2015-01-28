@@ -19,7 +19,9 @@
          timeoutForSmallTests="1"
          timeoutForMediumTests="10"
          timeoutForLargeTests="60"
-         strict="true"
+         beStrictAboutTestsThatDoNotTestAnything="true"
+         beStrictAboutOutputDuringTests="false"
+         beStrictAboutTestSize="false"
          verbose="true">
 
     <testsuites>
