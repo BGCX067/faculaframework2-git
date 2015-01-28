@@ -696,10 +696,9 @@ abstract class Request extends Factory implements Implement
         if ($this->requestInfo['xForwardedName']) {
             if (isset($_SERVER['REMOTE_ADDR'])) {
                 if (!$this->checkProxyTrusted($_SERVER['REMOTE_ADDR'])
-                    ||
-                    (($ip = $this->getRealIPAddrFromXForward(
-                        $_SERVER[$this->requestInfo['xForwardedName']]
-                    )) == '0.0.0.0')) {
+                || (($ip = $this->getRealIPAddrFromXForward(
+                    $_SERVER[$this->requestInfo['xForwardedName']]
+                )) == '0.0.0.0')) {
                     // If REMOTE_ADDR (Must be proxy's addr here) not in our trusted
                     // list OR No any server we can trust in X Forward, set the address to REMOTE_ADDR
                     $ip = $_SERVER['REMOTE_ADDR'];
