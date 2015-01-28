@@ -39,8 +39,8 @@ use PDOException;
  */
 class Factory extends Base implements Implement
 {
-    /** Tag to anti reinitializing */
-    private static $inited = false;
+    /** Init tags */
+    private static $autoParserInited = false;
 
     /** Default operators */
     protected static $operators = array(
@@ -222,11 +222,11 @@ class Factory extends Base implements Implement
     }
 
     /**
-     * Do self initialize
+     * Do auto parser self initialize, add all default auto parser in
      *
      * @return bool Always return true
      */
-    private static function selfInit()
+    private static function autoParserSelfInit()
     {
         static::addAutoParser('Serialized', 'Reader', function ($data) {
             return $data ? unserialize($data) : '';
@@ -292,10 +292,10 @@ class Factory extends Base implements Implement
         $this->query['From'] = $tableName;
         $this->query['Parser'] = $autoParse ? true : false;
 
-        if (!self::$inited && $this->query['Parser']) {
-            self::$inited = true;
+        if (!self::$autoParserInited && $this->query['Parser']) {
+            self::$autoParserInited = true;
 
-            self::selfInit();
+            self::autoParserSelfInit();
         }
     }
 
