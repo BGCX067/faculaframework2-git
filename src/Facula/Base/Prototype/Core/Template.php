@@ -32,6 +32,7 @@ use Facula\Base\Prototype\Core as Factory;
 use Facula\Base\Implement\Core\Template as Implement;
 use Facula\Base\Tool\File\PathParser as PathParser;
 use Facula\Base\Tool\File\ModuleScanner as ModuleScanner;
+use Facula\Base\Tool\PHP\Ini as Ini;
 use Facula\Framework;
 
 /**
@@ -794,7 +795,7 @@ abstract class Template extends Factory implements Implement
     protected function handleCacheExcludeArea(&$compliedTemplate, $task, $removeTag)
     {
         $tempSelectedStr = '';
-        $positions = $tempPop = $tempPair = $splitedArea = array();
+        $positions = $tempPop = $tempPair = $splitedArea = $safelizeTags = array();
         $lastPos = $nextPos = $tagStrLen = $splitedNextStarted = 0;
 
         foreach (static::$setting['NoCacheTag'] as $tagStr) {
@@ -886,11 +887,25 @@ abstract class Template extends Factory implements Implement
                 break;
 
             case 'Secure':
+                $safelizeTags = array(
+                    array('<?', '?>'),
+                    array('&lt;?', '?&gt;'),
+                );
+
+                // Who the hell still using this now days? Want some trouble huh?
+                if (Ini::getBool('asp_tags')) {
+                    $safelizeTags[0][] = '<%';
+                    $safelizeTags[0][] = '%>';
+
+                    $safelizeTags[1][] = '&lt;%';
+                    $safelizeTags[1][] = '%&gt;';
+                }
+
                 foreach ($splitedArea as $aKey => $aVal) {
                     if (!($aKey % 2)) {
                         $splitedArea[$aKey] = str_replace(
-                            array('<?', '?>'),
-                            array('&lt;?', '?&gt;'),
+                            $safelizeTags[0],
+                            $safelizeTags[1],
                             $aVal
                         );
                     }

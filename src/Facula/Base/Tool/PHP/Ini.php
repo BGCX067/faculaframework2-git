@@ -121,11 +121,53 @@ abstract class Ini
         return (float)static::getIniData($key, $default);
     }
 
+    /**
+     * Get Bytes from Integer
+     *
+     * @param string $key The setting key name
+     * @param mixed $default Default value in string or integer.
+     *
+     * @return integer Return a integer in bytes
+     */
     public static function getBytes($key, $default = 0)
     {
         return (integer)static::bytesStrToInteger(
             static::getIniData($key, $default)
         );
+    }
+
+    /**
+     * Get bool data from PHP ini
+     *
+     * @param string $key The setting key name
+     *
+     * @return bool Return the boolean value
+     */
+    public static function getBool($key)
+    {
+        $setting = strtolower(static::getStr($key, ''));
+
+        switch ($setting) {
+            case 'yes':
+            case 'off':
+            case 'true':
+                return true;
+                break;
+
+            case 'no':
+            case 'on':
+            case 'false':
+                return false;
+                break;
+
+            default:
+                if (is_numeric($setting) && (int)$setting > 0) {
+                    return true;
+                }
+                break;
+        }
+
+        return false;
     }
 
     /**
