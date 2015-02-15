@@ -65,17 +65,16 @@ abstract class Ini
     {
         static::initPHPIniData();
 
-        if (ini_set($key, $val) !== false) {
-            // Make sure it has succeed
+        if (ini_set($key, $val) === false) {
+            throw new Exception\SetFailed($key, $val);
 
-            static::$phpIniData[$key]['local_value'] = $val;
-
-            return true;
+            return false;
         }
 
-        throw new Exception\SetFailed($key, $val);
+        // Make sure it has succeed
+        static::$phpIniData[$key]['local_value'] = $val;
 
-        return false;
+        return true;
     }
 
     /**
@@ -140,12 +139,18 @@ abstract class Ini
      * Get bool data from PHP ini
      *
      * @param string $key The setting key name
+     * @param bool $default Default value in boolean
      *
      * @return bool Return the boolean value
      */
-    public static function getBool($key)
+    public static function getBool($key, $default = false)
     {
-        $setting = strtolower(static::getStr($key, ''));
+        $setting = strtolower(
+            static::getStr(
+                $key,
+                $default === null ? null : ($default ? 'On' : 'Off')
+            )
+        );
 
         switch ($setting) {
             case 'yes':
@@ -202,9 +207,13 @@ abstract class Ini
             return static::$phpIniData[$key]['local_value'];
         }
 
-        // Set the value if the setting not exist
-        // So you will get conforming result.
-        static::set($key, $default);
+        // If default value not null, meaning we need to set the value
+        if ($default !== null)
+        {
+            // Set the value if the setting not exist
+            // So you will get conforming result.
+            static::set($key, $default);
+        }
 
         return $default;
     }

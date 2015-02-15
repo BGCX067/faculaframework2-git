@@ -909,7 +909,7 @@ abstract class Template extends Factory implements Implement
                 );
 
                 // Test it with real-time setting for security reason
-                if (Ini::getBool('asp_tags')) {
+                if (Ini::getBool('asp_tags', null)) {
                     $safelizeTags[0][] = '<%';
                     $safelizeTags[0][] = '%>';
 
