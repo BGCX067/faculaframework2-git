@@ -67,8 +67,7 @@ class CacheExcludeAreaParseTest extends PHPUnit_Framework_TestCase
      */
     public function testAllCasese()
     {
-        foreach (static::$testParameters as $parameter)
-        {
+        foreach (static::$testParameters as $parameter) {
             $this->assertEquals(
                 $parameter[2],
                 static::getDummy()->handleCacheExcludeAreaDelegate(

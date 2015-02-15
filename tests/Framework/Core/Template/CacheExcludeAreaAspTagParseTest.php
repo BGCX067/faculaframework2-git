@@ -69,15 +69,13 @@ class CacheExcludeAreaAspTagParseTest extends PHPUnit_Framework_TestCase
     public function testAllCasese()
     {
         // Skip this test of asp_tags is disabled.
-        if (!Ini::getBool('asp_tags'))
-        {
+        if (!Ini::getBool('asp_tags')) {
             $this->assertTrue(true);
 
             return;
         }
 
-        foreach (static::$testParameters as $parameter)
-        {
+        foreach (static::$testParameters as $parameter) {
             $this->assertEquals(
                 $parameter[2],
                 static::getDummy()->handleCacheExcludeAreaDelegate(
