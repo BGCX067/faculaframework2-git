@@ -929,7 +929,8 @@ abstract class Template extends Factory implements Implement
                 break;
 
             default:
-                new Error('UNDEFINED_CACHE_EXCLUDE_HANDLE_TYPE',
+                new Error(
+                    'UNDEFINED_CACHE_EXCLUDE_HANDLE_TYPE',
                     array(
                         $task
                     ),
