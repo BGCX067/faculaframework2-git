@@ -208,8 +208,7 @@ abstract class Ini
         }
 
         // If default value not null, meaning we need to set the value
-        if ($default !== null)
-        {
+        if ($default !== null) {
             // Set the value if the setting not exist
             // So you will get conforming result.
             static::set($key, $default);
