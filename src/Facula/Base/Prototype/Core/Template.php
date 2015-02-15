@@ -40,6 +40,22 @@ use Facula\Framework;
  */
 abstract class Template extends Factory implements Implement
 {
+    /**
+     * Handle types for handleCacheExcludeArea method
+     *
+     * MAKE used for making initial template cache file, which can be use to
+     * re-render for area caching.
+     */
+    const CACHE_EXCLUDE_HANDLE_TYPE_MAKE = 1;
+
+    /**
+     * Handle types for handleCacheExcludeArea method
+     *
+     * SECURE used to safelize initial template cache to make it proof from
+     * cache injection ie. Saving executable '<?php hackwebsite(); ?>' to the cache.
+     */
+    const CACHE_EXCLUDE_HANDLE_TYPE_SECURE = 2;
+
     /** Declare maintainer information */
     public static $plate = array(
         'Author' => 'Rain Lee',
@@ -717,7 +733,7 @@ abstract class Template extends Factory implements Implement
                     if ($templateContent = $this->getCachedTemplate($templatePath)) {
                         $compiledContentForCached = $this->handleCacheExcludeArea(
                             $templateContent,
-                            'Make',
+                            CACHE_EXCLUDE_HANDLE_TYPE_MAKE,
                             false
                         );
 
@@ -758,7 +774,7 @@ abstract class Template extends Factory implements Implement
                                         $cachedPagePath,
                                         $this->handleCacheExcludeArea(
                                             $renderCachedContent,
-                                            'Secure',
+                                            CACHE_EXCLUDE_HANDLE_TYPE_SECURE,
                                             true
                                         )
                                     )) {
@@ -875,7 +891,7 @@ abstract class Template extends Factory implements Implement
         );
 
         switch ($task) {
-            case 'Make':
+            case static::CACHE_EXCLUDE_HANDLE_TYPE_MAKE:
                 foreach ($splitedArea as $aKey => $aVal) {
                     if ($aKey % 2) {
                         $splitedArea[$aKey] =
@@ -886,13 +902,13 @@ abstract class Template extends Factory implements Implement
                 }
                 break;
 
-            case 'Secure':
+            case static::CACHE_EXCLUDE_HANDLE_TYPE_SECURE:
                 $safelizeTags = array(
                     array('<?', '?>'),
                     array('&lt;?', '?&gt;'),
                 );
 
-                // Who the hell still using this now days? Want some trouble huh?
+                // Test it with real-time setting for security reason
                 if (Ini::getBool('asp_tags')) {
                     $safelizeTags[0][] = '<%';
                     $safelizeTags[0][] = '%>';
@@ -910,6 +926,15 @@ abstract class Template extends Factory implements Implement
                         );
                     }
                 }
+                break;
+
+            default:
+                new Error('UNDEFINED_CACHE_EXCLUDE_HANDLE_TYPE',
+                    array(
+                        $task
+                    ),
+                    'ERROR'
+                );
                 break;
         }
 

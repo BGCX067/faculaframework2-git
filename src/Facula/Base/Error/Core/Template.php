@@ -140,5 +140,11 @@ class Template extends Base
             Seems those key(s) existing in both Global and Specifical template data scope.
             This problem must be resolved in order to render the template.
         ',
+
+        'UNDEFINED_CACHE_EXCLUDE_HANDLE_TYPE' => '
+            Undefined cache exclude area handle type "%s".
+            This is an internal error,
+            please make sure you are fully understood what you doing before using this method.
+        ',
     );
 }
