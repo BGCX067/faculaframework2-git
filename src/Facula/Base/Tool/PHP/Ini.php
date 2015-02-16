@@ -65,8 +65,7 @@ abstract class Ini
     {
         static::initPHPIniData();
 
-        if (!isset(static::$phpIniData[$key]))
-        {
+        if (!isset(static::$phpIniData[$key])) {
             throw new Exception\SettingKeyNotFound(
                 $key
             );
