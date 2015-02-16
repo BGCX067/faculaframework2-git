@@ -65,8 +65,21 @@ abstract class Ini
     {
         static::initPHPIniData();
 
+        if (!isset(static::$phpIniData[$key]))
+        {
+            throw new Exception\SettingKeyNotFound(
+                $key
+            );
+
+            return false;
+        }
+
         if (ini_set($key, $val) === false) {
-            throw new Exception\SetFailed($key, $val);
+            throw new Exception\SetFailed(
+                $key,
+                $val,
+                static::$phpIniData[$key]['access']
+            );
 
             return false;
         }
@@ -166,17 +179,20 @@ abstract class Ini
                 break;
 
             default:
-                if (is_numeric($setting) && (int)$setting > 0) {
-                    return true;
-                }
-
+                // For 0, null, false, ''
                 if (!$setting) {
                     return false;
                 }
+
+                if (!is_numeric($setting)) {
+                    return false;
+                }
+
+                if ((int)$setting > 0) {
+                    return true;
+                }
                 break;
         }
-
-        throw new Exception\InvalidBoolValue($key, $setting);
 
         return false;
     }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * InvalidBoolValue Exception
+ * SettingKeyNotFound Exception
  *
  * Facula Framework 2015 (C) Rain Lee
  *
@@ -30,11 +30,11 @@ namespace Facula\Base\Exception\Tool\PHP\Ini;
 use Facula\Base\Prototype\Exception as Base;
 
 /**
- * InvalidBoolValue Exception
+ * SettingKeyNotFound Exception
  */
-class InvalidBoolValue extends Base
+class SettingKeyNotFound extends Base
 {
     protected static $exceptionMessage = '
-        "%s" should be set to a boolean value, but we got "%s" which is totally invalid.
+        Can\'t found PHP Ini setting key "%s".
     ';
 }

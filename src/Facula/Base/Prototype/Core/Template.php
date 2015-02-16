@@ -735,7 +735,7 @@ abstract class Template extends Factory implements Implement
                     if ($templateContent = $this->getCachedTemplate($templatePath)) {
                         $compiledContentForCached = $this->handleCacheExcludeArea(
                             $templateContent,
-                            CACHE_EXCLUDE_HANDLE_TYPE_MAKE,
+                            static::CACHE_EXCLUDE_HANDLE_TYPE_MAKE,
                             false
                         );
 
@@ -776,7 +776,7 @@ abstract class Template extends Factory implements Implement
                                         $cachedPagePath,
                                         $this->handleCacheExcludeArea(
                                             $renderCachedContent,
-                                            CACHE_EXCLUDE_HANDLE_TYPE_SECURE,
+                                            static::CACHE_EXCLUDE_HANDLE_TYPE_SECURE,
                                             true
                                         )
                                     )) {

@@ -35,6 +35,6 @@ use Facula\Base\Prototype\Exception as Base;
 class SetFailed extends Base
 {
     protected static $exceptionMessage = '
-        A error occurred when try set PHP setting "%s" to "%s".
+        A error occurred when try set PHP setting "%s" to "%s" with access %d.
     ';
 }
