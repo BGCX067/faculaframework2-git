@@ -3,7 +3,7 @@
 /**
  * Parameter Parser for Page Compiler
  *
- * Facula Framework 2014 (C) Rain Lee
+ * Facula Framework 2015 (C) Rain Lee
  *
  * Facula Framework is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -18,7 +18,7 @@
  * along with Facula Framework. If not, see <http://www.gnu.org/licenses/>.
  *
  * @author     Rain Lee <raincious@gmail.com>
- * @copyright  2014 Rain Lee
+ * @copyright  2015 Rain Lee
  * @package    Facula
  * @version    0.1.0 alpha
  * @see        https://github.com/raincious/facula FYI
