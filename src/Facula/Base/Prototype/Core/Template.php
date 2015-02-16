@@ -142,6 +142,8 @@ abstract class Template extends Factory implements Implement
                 isset($common['Charset']) ? $common['Charset'] : 'UTF-8'
             ),
 
+            'AspTags' => Ini::getBool('asp_tags', null),
+
             'CacheVer' => isset($common['BootVersion']) ? $common['BootVersion'] : 0,
         );
 
@@ -441,7 +443,7 @@ abstract class Template extends Factory implements Implement
      *
      * @param string $templateName Name of template
      * @param string $templateSet Name of the set in particular template series
-     * @param integer $expire Time to expire relative to current second
+     * @param integer $expire Time to expire relative to current second, set to null to disable caching
      * @param mixed $expiredCallback Callback that will be executed when template needs to re-render
      * @param string $cacheFactor Factor to make cache unique
      * @param array $specificalAssign Assign data which only available for this specific rendering progress
@@ -903,13 +905,28 @@ abstract class Template extends Factory implements Implement
                 break;
 
             case static::CACHE_EXCLUDE_HANDLE_TYPE_SECURE:
+                // Notice that the programmer may forgot to filter and convert user's input,
+                // which may a security breach leak that allow user to submit PHP code without
+                // safeize. Normally it's not a huge problem, but when those code been re-rendered
+                // among compiled template (During page cacheize process), it will turn to
+                // executable. Following code is used to resisting this problem by replacing PHP
+                // mark tag to neutral HTML escape code.
                 $safelizeTags = array(
                     array('<?', '?>'),
                     array('&lt;?', '?&gt;'),
                 );
 
-                // Test it with real-time setting for security reason
-                if (Ini::getBool('asp_tags', null)) {
+                // Notice we now use cached setting to check this. Reason is:
+                // Even we do the check with real-time setting, we still can't change the fact
+                // that the vulnerable page already been cached and still able to exec because
+                // it's ALREADY there.
+                // The only way to avoid this problem is perform a fully cache clean which will
+                // cause cache rebuild on every each page we currently had.
+                // But the best shot is actually DO NOT ENABLE 'asp_tags' function at all OR
+                // ALWAYS ENABLE IT.
+                // In my opinion, you should always use my paging engine or something like Smarty
+                // disable 'asp_tags', then we should be safe.
+                if ($this->configs['AspTags']) {
                     $safelizeTags[0][] = '<%';
                     $safelizeTags[0][] = '%>';
 
@@ -1555,9 +1572,9 @@ abstract class Template extends Factory implements Implement
      * Load cache data
      *
      * @param string $path Path to the cache
-     * @param string $content Content to save
+     * @param integer $expire Expire timestamp, greater than cache save time means expired
      *
-     * @return bool Return true when succeed, false otherwise
+     * @return mixed Return cached data when succeed, false otherwise
      */
     protected function loadDataCache($path, $expire = 0)
     {

@@ -14,6 +14,11 @@ class Dummy extends Target
         // Do nothing
     }
 
+    public function setConfig($key, $val)
+    {
+        $this->configs[$key] = $val;
+    }
+
     public function handleCacheExcludeAreaDelegate(&$compliedTemplate, $task, $removeTag)
     {
         return $this->handleCacheExcludeArea($compliedTemplate, $task, $removeTag);

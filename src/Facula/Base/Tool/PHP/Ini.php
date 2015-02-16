@@ -172,6 +172,8 @@ abstract class Ini
                 break;
         }
 
+        throw new Exception\InvalidBoolValue($key, $setting);
+
         return false;
     }
 

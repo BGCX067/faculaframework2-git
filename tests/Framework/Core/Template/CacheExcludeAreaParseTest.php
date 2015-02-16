@@ -59,7 +59,11 @@ class CacheExcludeAreaParseTest extends PHPUnit_Framework_TestCase
 
     protected static function getDummy()
     {
-        return new Dummy();
+        $dummy = new Dummy();
+
+        $dummy->setConfig('AspTags', false);
+
+        return $dummy;
     }
 
     /**

@@ -3,7 +3,6 @@
 namespace Facula\Tests\Framework\Core\Template;
 
 use Facula\Tests\Framework\Core\Template\Dummy;
-use Facula\Base\Tool\PHP\Ini;
 use PHPUnit_Framework_TestCase;
 
 /**
@@ -60,7 +59,11 @@ class CacheExcludeAreaAspTagParseTest extends PHPUnit_Framework_TestCase
 
     protected static function getDummy()
     {
-        return new Dummy();
+        $dummy = new Dummy();
+
+        $dummy->setConfig('AspTags', true);
+
+        return $dummy;
     }
 
     /**
@@ -68,13 +71,6 @@ class CacheExcludeAreaAspTagParseTest extends PHPUnit_Framework_TestCase
      */
     public function testAllCasese()
     {
-        // Skip this test of asp_tags is disabled.
-        if (!Ini::getBool('asp_tags', null)) {
-            $this->assertTrue(true);
-
-            return;
-        }
-
         foreach (static::$testParameters as $parameter) {
             $this->assertEquals(
                 $parameter[2],
