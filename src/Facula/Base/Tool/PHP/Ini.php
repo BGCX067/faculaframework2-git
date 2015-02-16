@@ -170,8 +170,7 @@ abstract class Ini
                     return true;
                 }
 
-                if (!$setting)
-                {
+                if (!$setting) {
                     return false;
                 }
                 break;
