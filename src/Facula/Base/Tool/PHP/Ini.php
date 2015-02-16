@@ -154,13 +154,13 @@ abstract class Ini
 
         switch ($setting) {
             case 'yes':
-            case 'off':
+            case 'on':
             case 'true':
                 return true;
                 break;
 
             case 'no':
-            case 'on':
+            case 'off':
             case 'false':
                 return false;
                 break;
@@ -168,6 +168,11 @@ abstract class Ini
             default:
                 if (is_numeric($setting) && (int)$setting > 0) {
                     return true;
+                }
+
+                if (!$setting)
+                {
+                    return false;
                 }
                 break;
         }
