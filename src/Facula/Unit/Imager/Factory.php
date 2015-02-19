@@ -84,7 +84,7 @@ class Factory extends BaseFactory
 
             static::$setting = array(
                 'MemoryLimit' =>
-                    (Ini::getBytes('memory_limit', '3M') - memory_get_peak_usage()) * 0.9,
+                    (Ini::getBytes('memory_limit') - memory_get_peak_usage()) * 0.9,
 
                 'Font' =>
                     isset($setting['Font']) && is_readable($setting['Font']) ?

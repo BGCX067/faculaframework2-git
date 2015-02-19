@@ -138,13 +138,13 @@ abstract class Request extends Factory implements Implement
             // cannot be 100%ly use for handle request data;
             $this->configs['MaxDataSize'] = min(
                 (int)($cfg['MaxDataSize']),
-                Ini::getBytes('post_max_size', '1M'),
-                Ini::getBytes('memory_limit', '3M') * 0.6
+                Ini::getBytes('post_max_size'),
+                Ini::getBytes('memory_limit') * 0.6
             );
         } else {
             $this->configs['MaxDataSize'] = min(
-                Ini::getBytes('post_max_size', '1M'),
-                Ini::getBytes('memory_limit', '3M') * 0.6
+                Ini::getBytes('post_max_size'),
+                Ini::getBytes('memory_limit') * 0.6
             );
         }
 

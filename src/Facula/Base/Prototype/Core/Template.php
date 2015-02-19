@@ -142,7 +142,7 @@ abstract class Template extends Factory implements Implement
                 isset($common['Charset']) ? $common['Charset'] : 'UTF-8'
             ),
 
-            'AspTags' => Ini::getBool('asp_tags', null),
+            'AspTags' => Ini::getBool('asp_tags'),
 
             'CacheVer' => isset($common['BootVersion']) ? $common['BootVersion'] : 0,
         );

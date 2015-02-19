@@ -90,46 +90,84 @@ abstract class Ini
     }
 
     /**
+     * Load all PHP ini Data
+     *
+     * @param bool Always true as it can't be fail.
+     */
+    protected static function initPHPIniData()
+    {
+        if (!empty(static::$phpIniData)) {
+            return true;
+        }
+
+        static::$phpIniData = ini_get_all();
+
+        return true;
+    }
+
+    /**
+     * Load specified ini data with key
+     *
+     * @param string $key The setting value
+     *
+     * @return string Return the setting value
+     */
+    protected static function getIniData($key)
+    {
+        static::initPHPIniData();
+
+        // Why the static::set has been dismissed?
+        // Because you can't set a random setting using ini_set anyway.
+        // No way to make it work like this.
+        if (!isset(static::$phpIniData[$key])) {
+            throw new Exception\SettingKeyNotFound(
+                $key
+            );
+
+            return false;
+        }
+
+        return static::$phpIniData[$key]['local_value'];
+    }
+
+    /**
      * Get string data from PHP ini
      *
      * @param string $key The setting key name
-     * @param string $default Default value will be returned we can't found the key
      *
      * @return mixed Return a string of the setting
      */
-    public static function getStr($key, $default = '')
+    public static function getStr($key)
     {
         // Notice that, the convert may failed on array type.
         // But never mind, 'cause you will handle that.
         // AND, who will build a array in the INI file? That will be insane LOL.
         // Tell me how to do it BTW.
-        return (string)static::getIniData($key, $default);
+        return (string)static::getIniData($key);
     }
 
     /**
      * Get integer data from PHP ini
      *
      * @param string $key The setting key name
-     * @param integer $default Default value will be returned we can't found the key
      *
      * @return mixed Return a integer of the setting
      */
-    public static function getInt($key, $default = 0)
+    public static function getInt($key)
     {
-        return (integer)static::getIniData($key, $default);
+        return (integer)static::getIniData($key);
     }
 
     /**
      * Get float data from PHP ini
      *
      * @param string $key The setting key name
-     * @param mixed $default Default value in string or integer.
      *
      * @return mixed Return a integer of the setting
      */
-    public static function getFloat($key, $default = 0.0)
+    public static function getFloat($key)
     {
-        return (float)static::getIniData($key, $default);
+        return (float)static::getIniData($key);
     }
 
     /**
@@ -138,12 +176,12 @@ abstract class Ini
      * @param string $key The setting key name
      * @param mixed $default Default value in string or integer.
      *
-     * @return integer Return a integer in bytes
+     * @return float Return a float in bytes
      */
-    public static function getBytes($key, $default = 0)
+    public static function getBytes($key)
     {
-        return (integer)static::bytesStrToInteger(
-            static::getIniData($key, $default)
+        return (float)static::bytesStrToBytes(
+            static::getIniData($key)
         );
     }
 
@@ -155,13 +193,10 @@ abstract class Ini
      *
      * @return bool Return the boolean value
      */
-    public static function getBool($key, $default = false)
+    public static function getBool($key)
     {
         $setting = strtolower(
-            static::getStr(
-                $key,
-                $default === null ? null : ($default ? 'On' : 'Off')
-            )
+            static::getStr($key)
         );
 
         switch ($setting) {
@@ -197,83 +232,51 @@ abstract class Ini
     }
 
     /**
-     * Load all PHP ini Data
-     *
-     * @param bool Always true as it can't be fail.
-     */
-    protected static function initPHPIniData()
-    {
-        if (!empty(static::$phpIniData)) {
-            return true;
-        }
-
-        static::$phpIniData = ini_get_all();
-
-        return true;
-    }
-
-    /**
-     * Load specified ini data with key
-     *
-     * @param string $key The setting value
-     * @param mixed $default Default value will be returned we can't found the key
-     *
-     * @return mixed Return The data in INI (mostly in string) or the default value
-     */
-    protected static function getIniData($key, $default)
-    {
-        static::initPHPIniData();
-
-        if (isset(static::$phpIniData[$key]['local_value'])) {
-            return static::$phpIniData[$key]['local_value'];
-        }
-
-        // If default value not null, meaning we need to set the value
-        if ($default !== null) {
-            // Set the value if the setting not exist
-            // So you will get conforming result.
-            static::set($key, $default);
-        }
-
-        return $default;
-    }
-
-    /**
      * Convert ini data size in to bytes that PHP uses
      *
      * @param string $str The setting value
      *
-     * @return integer The converted bytes in integer.
+     * @return float The converted bytes in float.
      */
-    protected static function bytesStrToInteger($str)
+    protected static function bytesStrToBytes($str)
     {
         $strLen = 0;
         $lastChar = '';
 
         if (is_numeric($str)) {
-            return (int)$str;
+            return (float)$str;
         } else {
             $strLen = strlen($str);
 
             if ($lastChar = $str[$strLen - 1]) {
                 $strSelected = substr($str, 0, $strLen - 1);
 
+                if (!is_numeric($strSelected)) {
+                    throw new Exception\InvalidBytesString($strSelected);
+
+                    return false;
+                }
+
                 switch (strtolower($lastChar)) {
                     case 'k':
-                        return (int)($strSelected) * 1024;
+                        return (float)($strSelected) * 1024;
                         break;
 
                     case 'm':
-                        return (int)($strSelected) * 1048576;
+                        return (float)($strSelected) * 1048576;
                         break;
 
                     case 'g':
-                        return (int)($strSelected) * 1073741824;
+                        return (float)($strSelected) * 1073741824;
+                        break;
+
+                    default:
+                        throw new Exception\InvalidBytesUnit($str, $lastChar);
                         break;
                 }
             }
         }
 
-        return 0;
+        return 0.0;
     }
 }

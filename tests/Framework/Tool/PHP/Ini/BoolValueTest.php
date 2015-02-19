@@ -2,7 +2,6 @@
 
 namespace Facula\Tests\Framework\Tool\PHP\Ini;
 
-use Facula\Base\Exception\Tool\PHP\Ini\InvalidBoolValue as InvalidBoolValueException;
 use PHPUnit_Framework_TestCase;
 
 class BoolValueTest extends PHPUnit_Framework_TestCase
@@ -20,14 +19,14 @@ class BoolValueTest extends PHPUnit_Framework_TestCase
             'Setting-Value-6' => 'oFF',
         ));
 
-        $this->assertSame(true, Dummy::getBool('Setting-Value-1', null));
-        $this->assertSame(false, Dummy::getBool('Setting-Value-2', null));
+        $this->assertSame(true, Dummy::getBool('Setting-Value-1'));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-2'));
 
-        $this->assertSame(true, Dummy::getBool('Setting-Value-3', null));
-        $this->assertSame(false, Dummy::getBool('Setting-Value-4', null));
+        $this->assertSame(true, Dummy::getBool('Setting-Value-3'));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-4'));
 
-        $this->assertSame(true, Dummy::getBool('Setting-Value-5', null));
-        $this->assertSame(false, Dummy::getBool('Setting-Value-6', null));
+        $this->assertSame(true, Dummy::getBool('Setting-Value-5'));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-6'));
     }
 
     public function testYesNo()
@@ -43,14 +42,14 @@ class BoolValueTest extends PHPUnit_Framework_TestCase
             'Setting-Value-6' => 'nO',
         ));
 
-        $this->assertSame(true, Dummy::getBool('Setting-Value-1', null));
-        $this->assertSame(false, Dummy::getBool('Setting-Value-2', null));
+        $this->assertSame(true, Dummy::getBool('Setting-Value-1'));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-2'));
 
-        $this->assertSame(true, Dummy::getBool('Setting-Value-3', null));
-        $this->assertSame(false, Dummy::getBool('Setting-Value-4', null));
+        $this->assertSame(true, Dummy::getBool('Setting-Value-3'));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-4'));
 
-        $this->assertSame(true, Dummy::getBool('Setting-Value-5', null));
-        $this->assertSame(false, Dummy::getBool('Setting-Value-6', null));
+        $this->assertSame(true, Dummy::getBool('Setting-Value-5'));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-6'));
     }
 
     public function testTrueFalse()
@@ -66,14 +65,14 @@ class BoolValueTest extends PHPUnit_Framework_TestCase
             'Setting-Value-6' => 'faLse',
         ));
 
-        $this->assertSame(true, Dummy::getBool('Setting-Value-1', null));
-        $this->assertSame(false, Dummy::getBool('Setting-Value-2', null));
+        $this->assertSame(true, Dummy::getBool('Setting-Value-1'));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-2'));
 
-        $this->assertSame(true, Dummy::getBool('Setting-Value-3', null));
-        $this->assertSame(false, Dummy::getBool('Setting-Value-4', null));
+        $this->assertSame(true, Dummy::getBool('Setting-Value-3'));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-4'));
 
-        $this->assertSame(true, Dummy::getBool('Setting-Value-5', null));
-        $this->assertSame(false, Dummy::getBool('Setting-Value-6', null));
+        $this->assertSame(true, Dummy::getBool('Setting-Value-5'));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-6'));
     }
 
     public function testEmptyValue()
@@ -82,7 +81,7 @@ class BoolValueTest extends PHPUnit_Framework_TestCase
             'Setting-Value-1' => '',
         ));
 
-        $this->assertSame(false, Dummy::getBool('Setting-Value-1', null));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-1'));
     }
 
     public function testMiscValue()
@@ -95,19 +94,19 @@ class BoolValueTest extends PHPUnit_Framework_TestCase
             'Setting-Value-5' => -1,
         ));
 
-        $this->assertSame(false, Dummy::getBool('Setting-Value-1', null));
-        $this->assertSame(true, Dummy::getBool('Setting-Value-2', null));
-        $this->assertSame(true, Dummy::getBool('Setting-Value-3', null));
-        $this->assertSame(false, Dummy::getBool('Setting-Value-4', null));
-        $this->assertSame(false, Dummy::getBool('Setting-Value-5', null));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-1'));
+        $this->assertSame(true, Dummy::getBool('Setting-Value-2'));
+        $this->assertSame(true, Dummy::getBool('Setting-Value-3'));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-4'));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-5'));
     }
 
     public function testInvalidValue()
     {
         Dummy::setTestData(array(
-            'Setting-Value-1' => 'PHP actually treat this as false, but we\'ll throw exception.',
+            'Setting-Value-1' => 'PHP actually treat this as false.',
         ));
 
-        $this->assertSame(false, Dummy::getBool('Setting-Value-1', null));
+        $this->assertSame(false, Dummy::getBool('Setting-Value-1'));
     }
 }
