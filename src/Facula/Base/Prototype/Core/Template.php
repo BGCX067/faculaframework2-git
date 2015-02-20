@@ -906,7 +906,7 @@ abstract class Template extends Factory implements Implement
 
             case static::CACHE_EXCLUDE_HANDLE_TYPE_SECURE:
                 // Notice that the programmer may forgot to filter and convert user's input,
-                // which may a security breach leak that allow user to submit PHP code without
+                // which may a security breach that allowing user to submit PHP code without
                 // safeize. Normally it's not a huge problem, but when those code been re-rendered
                 // among compiled template (During page cacheize process), it will turn to
                 // executable. Following code is used to resisting this problem by replacing PHP
