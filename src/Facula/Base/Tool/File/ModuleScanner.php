@@ -28,6 +28,9 @@
 namespace Facula\Base\Tool\File;
 
 use Facula\Base\Exception\Tool\File\ModuleScanner as Exception;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
+use FilesystemIterator;
 
 /**
  * Use to scan Facula components
@@ -44,7 +47,7 @@ class ModuleScanner
      * Scanner Constructer
      *
      * @param string $path Directory that will be scan
-     * @param string $depth Depth to search
+     * @param integer $depth Depth to search
      *
      * @return void
      */
@@ -68,10 +71,10 @@ class ModuleScanner
         $modules = array();
         $moduleFilenames = $tempModuleFilenames = array();
 
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator(
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator(
                 $this->path,
-                \FilesystemIterator::SKIP_DOTS
+                FilesystemIterator::SKIP_DOTS
             )
         );
 
