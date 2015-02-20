@@ -30,73 +30,69 @@ class ModuleScannerTest extends PHPUnit_Framework_TestCase
         $this->testDir = realpath(dirname(__FILE__));
 
         $this->expectingScanResult = array(
-            'testone' => array
-                (
-                    'Prefix' => 'class',
-                    'Name' => 'testone',
-                    'Ext' => 'php',
+            'testone' => array(
+                'Prefix' => 'class',
+                'Name' => 'testone',
+                'Ext' => 'php',
 
-                    'Path' => $this->testDir
-                            . DIRECTORY_SEPARATOR
-                            .'Assets'
-                            . DIRECTORY_SEPARATOR
-                            . 'class.testone.php',
+                'Path' => $this->testDir
+                        . DIRECTORY_SEPARATOR
+                        .'Assets'
+                        . DIRECTORY_SEPARATOR
+                        . 'class.testone.php',
 
-                    'Dir' => $this->testDir
-                            . DIRECTORY_SEPARATOR
-                            .'Assets',
-                ),
+                'Dir' => $this->testDir
+                        . DIRECTORY_SEPARATOR
+                        .'Assets',
+            ),
 
-            'testtwo' => array
-                (
-                    'Prefix' => 'plugin',
-                    'Name' => 'testtwo',
-                    'Ext' => 'php',
+            'testtwo' => array(
+                'Prefix' => 'plugin',
+                'Name' => 'testtwo',
+                'Ext' => 'php',
 
-                    'Path' => $this->testDir
-                            . DIRECTORY_SEPARATOR
-                            .'Assets'
-                            . DIRECTORY_SEPARATOR
-                            . 'plugin.testtwo.php',
+                'Path' => $this->testDir
+                        . DIRECTORY_SEPARATOR
+                        .'Assets'
+                        . DIRECTORY_SEPARATOR
+                        . 'plugin.testtwo.php',
 
-                    'Dir' => $this->testDir
-                            . DIRECTORY_SEPARATOR
-                            .'Assets',
-                ),
+                'Dir' => $this->testDir
+                        . DIRECTORY_SEPARATOR
+                        .'Assets',
+            ),
 
-            'testthree' => array
-                (
-                    'Prefix' => '',
-                    'Name' => 'testthree',
-                    'Ext' => 'php',
+            'testthree' => array(
+                'Prefix' => '',
+                'Name' => 'testthree',
+                'Ext' => 'php',
 
-                    'Path' => $this->testDir
-                            . DIRECTORY_SEPARATOR
-                            .'Assets'
-                            . DIRECTORY_SEPARATOR
-                            . 'testthree.php',
+                'Path' => $this->testDir
+                        . DIRECTORY_SEPARATOR
+                        .'Assets'
+                        . DIRECTORY_SEPARATOR
+                        . 'testthree.php',
 
-                    'Dir' => $this->testDir
-                            . DIRECTORY_SEPARATOR
-                            .'Assets',
-                ),
+                'Dir' => $this->testDir
+                        . DIRECTORY_SEPARATOR
+                        .'Assets',
+            ),
 
-            'test.four' => array
-                (
-                    'Prefix' => 'template',
-                    'Name' => 'test.four',
-                    'Ext' => 'htm',
+            'test.four' => array(
+                'Prefix' => 'template',
+                'Name' => 'test.four',
+                'Ext' => 'htm',
 
-                    'Path' => $this->testDir
-                            . DIRECTORY_SEPARATOR
-                            .'Assets'
-                            . DIRECTORY_SEPARATOR
-                            . 'template.test.four.htm',
+                'Path' => $this->testDir
+                        . DIRECTORY_SEPARATOR
+                        .'Assets'
+                        . DIRECTORY_SEPARATOR
+                        . 'template.test.four.htm',
 
-                    'Dir' => $this->testDir
-                            . DIRECTORY_SEPARATOR
-                            .'Assets',
-                ),
+                'Dir' => $this->testDir
+                        . DIRECTORY_SEPARATOR
+                        .'Assets',
+            ),
         );
     }
 
