@@ -149,7 +149,7 @@ class PathParser
     {
         $newPath = $path;
 
-        if (strpos($newPath, $prefix, 0) !== false) {
+        if (strpos($newPath, $prefix, 0) === 0) {
             return $replaceTo . substr($newPath, strlen($prefix), strlen($newPath));
         }
 
