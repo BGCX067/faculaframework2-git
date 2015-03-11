@@ -955,7 +955,7 @@ abstract class Debug extends Factory implements Implement
                 } elseif (is_resource($val)) {
                     $tmpstr .= 'resource ' . get_resource_type($val);
                 } elseif (is_string($val)) {
-                    $tmpstr .= '\'' . str_replace(
+                    $tmpstr .= '\'' . PathParser::replacePathPrefixes(
                         array(
                             PROJECT_ROOT,
                             FACULA_ROOT,
@@ -1094,17 +1094,24 @@ abstract class Debug extends Factory implements Implement
                 $templateBanner
             );
 
-            $errorMessage = str_replace(
-                array(
-                    PROJECT_ROOT,
-                    FACULA_ROOT,
-                ),
-                array(
-                    '[PROJECT]',
-                    '[FACULA]',
-                ),
-                $errorDetail['Message']
-            );
+            // Well, message should be splited by space, and also path
+            // an ideal error messaging is:
+            // error happened in file: Path\To\Path, error detail is...
+            // In this case we can easily get the whole path out and parse
+            // it. So:
+            foreach (explode(' ', $errorDetail['Message']) as $string) {
+                $errorMessage .= PathParser::replacePathPrefixes(
+                    array(
+                        PROJECT_ROOT,
+                        FACULA_ROOT,
+                    ),
+                    array(
+                        '[PROJECT]',
+                        '[FACULA]',
+                    ),
+                    $errorDetail['Message']
+                );
+            }
         } else {
             $detail = 'Debug disabled, error detail unavailable.';
 
