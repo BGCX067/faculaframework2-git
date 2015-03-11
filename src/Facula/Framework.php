@@ -406,60 +406,62 @@ class Framework
 
         $map = self::locateNamespace($splitedNamespace, false);
 
-        if (isset($map['Path']) && $map['Path']) {
-            $fullPath = $map['Path']
-                        . DIRECTORY_SEPARATOR
-                        . ($map['Remain'] ? implode(DIRECTORY_SEPARATOR, $map['Remain']) . DIRECTORY_SEPARATOR : '')
-                        . $className
-                        . '.' . static::$cfg['PHPExt'];
-
-            if (file_exists($fullPath)) {
-                // Load initializers and components when needed
-                if ($map['Ref']['I'] && !isset(static::$pool['NSLoaded'][$map['Ref']['I']])) {
-                    if (!static::$instance) {
-                        trigger_error(
-                            'Loading from namespace '
-                            . $class
-                            . ' with subcomponents, But framework not ready for that.'
-                            . ' The framework needs to fully initialized'
-                            . ' to load subcomponents from the namespace.',
-                            E_USER_ERROR
-                        );
-
-                        return false;
-                    }
-
-                    // Register classes
-                    if (isset($map['Ref']['M']['C'])) {
-                        foreach ($map['Ref']['M']['C'] as $className => $classPath) {
-                            static::registerScope($className, $classPath);
-                        }
-                    }
-
-                    // Register plugins
-                    if (isset($map['Ref']['M']['P'])) {
-                        foreach ($map['Ref']['M']['P'] as $pluginPath) {
-                            static::initPlugin($pluginPath);
-                        }
-                    }
-
-                    // Load routines at last
-                    if (isset($map['Ref']['M']['R'])) {
-                        foreach ($map['Ref']['M']['R'] as $routinePath) {
-                            static::requireFile($routinePath);
-                        }
-                    }
-
-                    static::$pool['NSLoaded'][$map['Ref']['I']] = true;
-                }
-
-                static::requireFile($fullPath);
-
-                return true;
-            }
+        if (empty($map['Path'])) {
+            return false;
         }
 
-        return false;
+        $fullPath = $map['Path']
+                    . DIRECTORY_SEPARATOR
+                    . ($map['Remain'] ? implode(DIRECTORY_SEPARATOR, $map['Remain']) . DIRECTORY_SEPARATOR : '')
+                    . $className
+                    . '.' . static::$cfg['PHPExt'];
+
+        if (!file_exists($fullPath)) {
+            return false;
+        }
+
+        // Load initializers and components when needed
+        if ($map['Ref']['I'] && !isset(static::$pool['NSLoaded'][$map['Ref']['I']])) {
+            if (!static::$instance) {
+                trigger_error(
+                    'Loading from namespace '
+                    . $class
+                    . ' with subcomponents, But framework not ready for that.'
+                    . ' The framework needs to fully initialized'
+                    . ' to load subcomponents from the namespace.',
+                    E_USER_ERROR
+                );
+
+                return false;
+            }
+
+            // Register classes
+            if (isset($map['Ref']['M']['C'])) {
+                foreach ($map['Ref']['M']['C'] as $className => $classPath) {
+                    static::registerScope($className, $classPath);
+                }
+            }
+
+            // Register plugins
+            if (isset($map['Ref']['M']['P'])) {
+                foreach ($map['Ref']['M']['P'] as $pluginPath) {
+                    static::initPlugin($pluginPath);
+                }
+            }
+
+            // Load routines at last
+            if (isset($map['Ref']['M']['R'])) {
+                foreach ($map['Ref']['M']['R'] as $routinePath) {
+                    static::requireFile($routinePath);
+                }
+            }
+
+            static::$pool['NSLoaded'][$map['Ref']['I']] = true;
+        }
+
+        static::requireFile($fullPath);
+
+        return true;
     }
 
     /**
@@ -478,87 +480,7 @@ class Framework
         $currentRoot = null;
         $subModules = array();
 
-        if (is_dir($path)) {
-            $map = self::locateNamespace(self::splitNamespace($nsPrefix), true);
-
-            if (isset($map['Ref']['R']) && !$map['Ref']['R']) {
-                $map['Ref']['P'] = rtrim(
-                    str_replace(
-                        array(
-                            '\\',
-                            '/',
-                            DIRECTORY_SEPARATOR
-                        ),
-                        DIRECTORY_SEPARATOR,
-                        $path
-                    ),
-                    DIRECTORY_SEPARATOR
-                );
-
-                $map['Ref']['R'] = true;
-
-                // Check of sub componentPaths has set, include it if so
-                if (!empty($componentPaths)) {
-                    $map['Ref']['I'] = crc32($nsPrefix); // Fine with CRC32
-
-                    // If the framework not finish init and primary namespaces not registered
-                    // (Notice that, static::$pool['NSInited'] will be not set when boot in warm up)
-                    if (!static::$instance && !isset(static::$pool['NSInited'])) {
-                        trigger_error(
-                            'Registering namespace '
-                            . $nsPrefix
-                            . ' with subcomponents, But framework not ready for that.'
-                            . ' The primary namespaces must be registered before registering'
-                            . ' any namespace which contain subcomponents.',
-                            E_USER_ERROR
-                        );
-
-                        return false;
-                    }
-
-                    foreach ($componentPaths as $componentPath) {
-                        $scanner = new Base\Tool\File\ModuleScanner(
-                            Base\Tool\File\PathParser::get($componentPath),
-                            static::$cfg['CompMaxSeekDepth']
-                        );
-
-                        foreach ($scanner->scan() as $subModule) {
-                            switch ($subModule['Prefix']) {
-                                case 'routine':
-                                    $map['Ref']['M']['R'][]
-                                        = $subModule['Path'];
-                                    break;
-
-                                case 'plugin':
-                                    $map['Ref']['M']['P'][]
-                                        = $subModule['Path'];
-                                    break;
-
-                                case 'class':
-                                    $map['Ref']['M']['C'][ucfirst($subModule['Name'])]
-                                        = $subModule['Path'];
-                                    break;
-
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                } else {
-                    $map['Ref']['I'] = 0;
-                }
-
-                return true;
-            } else {
-                trigger_error(
-                    'Trying to register a namespace "'
-                    . $nsPrefix
-                    . '" while it already registered.',
-                    E_USER_ERROR
-                );
-            }
-
-        } else {
+        if (!is_dir($path)) {
             trigger_error(
                 'Path '
                 . $path
@@ -567,9 +489,90 @@ class Framework
                 . ' not exist.',
                 E_USER_ERROR
             );
+
+            return false;
         }
 
-        return false;
+        $map = self::locateNamespace(self::splitNamespace($nsPrefix), true);
+
+        if (isset($map['Ref']['R']) && $map['Ref']['R']) {
+            trigger_error(
+                'Trying to register a namespace "'
+                . $nsPrefix
+                . '" while it already registered.',
+                E_USER_ERROR
+            );
+
+            return false;
+        }
+
+        $map['Ref']['P'] = rtrim(
+            str_replace(
+                array(
+                    '\\',
+                    '/',
+                    DIRECTORY_SEPARATOR
+                ),
+                DIRECTORY_SEPARATOR,
+                $path
+            ),
+            DIRECTORY_SEPARATOR
+        );
+
+        $map['Ref']['R'] = true;
+
+        // Check of sub componentPaths has set, include it if so
+        if (!empty($componentPaths)) {
+            $map['Ref']['I'] = crc32($nsPrefix); // Fine with CRC32
+
+            // If the framework not finish init and primary namespaces not registered
+            // (Notice that, static::$pool['NSInited'] will be not set when boot in warm up)
+            if (!static::$instance && !isset(static::$pool['NSInited'])) {
+                trigger_error(
+                    'Registering namespace '
+                    . $nsPrefix
+                    . ' with subcomponents, But framework not ready for that.'
+                    . ' The primary namespaces must be registered before registering'
+                    . ' any namespace which contain subcomponents.',
+                    E_USER_ERROR
+                );
+
+                return false;
+            }
+
+            foreach ($componentPaths as $componentPath) {
+                $scanner = new Base\Tool\File\ModuleScanner(
+                    Base\Tool\File\PathParser::get($componentPath),
+                    static::$cfg['CompMaxSeekDepth']
+                );
+
+                foreach ($scanner->scan() as $subModule) {
+                    switch ($subModule['Prefix']) {
+                        case 'routine':
+                            $map['Ref']['M']['R'][]
+                                = $subModule['Path'];
+                            break;
+
+                        case 'plugin':
+                            $map['Ref']['M']['P'][]
+                                = $subModule['Path'];
+                            break;
+
+                        case 'class':
+                            $map['Ref']['M']['C'][ucfirst($subModule['Name'])]
+                                = $subModule['Path'];
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+        } else {
+            $map['Ref']['I'] = 0;
+        }
+
+        return true;
     }
 
     /**
@@ -736,8 +739,8 @@ class Framework
         // If a closure callback registered before framework finish init, it may cause
         // no callable hook problem, because callback is not cachedable
         if (!static::$instance
-        && is_object($callback)
-        && ($callback instanceof \Closure)) {
+            && is_object($callback)
+            && ($callback instanceof \Closure)) {
             trigger_error(
                 'Registering hook '
                 . $hook
@@ -812,11 +815,11 @@ class Framework
      */
     public static function getPackagePath($pkgName)
     {
-        if (isset(static::$components['Packages'][$pkgName])) {
-            return static::$components['Packages'][$pkgName];
+        if (!isset(static::$components['Packages'][$pkgName])) {
+            return false;
         }
 
-        return false;
+        return static::$components['Packages'][$pkgName];
     }
 
     /**
@@ -1004,11 +1007,12 @@ class Framework
      */
     public static function getHookSize($hook)
     {
-        if (isset(static::$components['Hooks'][$hook])) {
-            return count(static::$components['Hooks'][$hook]);
+        if (!isset(static::$components['Hooks'][$hook])) {
+            return 0;
         }
 
-        return 0;
+        return count(static::$components['Hooks'][$hook]);
+
     }
 
     /**
@@ -1018,22 +1022,22 @@ class Framework
      */
     public static function getVersion()
     {
-        if (isset(static::$instance)) {
-            return array(
-                'Base' => 'Facula ' . __FACULAVERSION__,
-
-                'App' => isset(static::$instance->setting['AppName'])
-                        ? static::$instance->setting['AppName'] : 'Facula App',
-
-                'Ver' => isset(static::$instance->setting['AppVersion'])
-                        ? static::$instance->setting['AppVersion'] : '0.0',
-
-                'Boot' => isset(static::$instance->setting['Common']['BootVersion'])
-                        ? static::$instance->setting['Common']['BootVersion'] : '0',
-            );
+        if (!isset(static::$instance)) {
+            return array();
         }
 
-        return array();
+        return array(
+            'Base' => 'Facula ' . __FACULAVERSION__,
+
+            'App' => isset(static::$instance->setting['AppName'])
+                    ? static::$instance->setting['AppName'] : 'Facula App',
+
+            'Ver' => isset(static::$instance->setting['AppVersion'])
+                    ? static::$instance->setting['AppVersion'] : '0.0',
+
+            'Boot' => isset(static::$instance->setting['Common']['BootVersion'])
+                    ? static::$instance->setting['Common']['BootVersion'] : '0',
+        );
     }
 
     /**
@@ -1045,30 +1049,30 @@ class Framework
      */
     public static function core($coreName)
     {
-        if (static::$instance) {
-            if (isset(static::$instance->cores[$coreName])) {
-                return static::$instance->cores[$coreName];
-            } else {
-                trigger_error(
-                    'Function core "'
-                    . $coreName
-                    . '" not available. '
-                    . 'You can only acquire following cores: '
-                    . (implode(', ', array_keys(static::$instance->cores)))
-                    . '.',
-                    E_USER_ERROR
-                );
-            }
-        } else {
+        if (!isset(static::$instance)) {
             trigger_error(
                 'Facula must be initialized to get function core "'
                 . $coreName
                 . '" to work.',
                 E_USER_ERROR
             );
+
+            return false;
         }
 
-        return false;
+        if (!isset(static::$instance->cores[$coreName])) {
+            trigger_error(
+                'Function core "'
+                . $coreName
+                . '" not available. '
+                . 'You can only acquire following cores: '
+                . (implode(', ', array_keys(static::$instance->cores)))
+                . '.',
+                E_USER_ERROR
+            );
+        }
+
+        return static::$instance->cores[$coreName];
     }
 
     /**
@@ -1078,11 +1082,11 @@ class Framework
      */
     public static function getAllCores()
     {
-        if (static::$instance && !empty(static::$instance->cores)) {
-            return static::$instance->cores;
+        if (static::$instance || empty(static::$instance->cores)) {
+            return false;
         }
 
-        return false;
+        return static::$instance->cores;
     }
 
     /**
