@@ -458,7 +458,7 @@ abstract class Debug extends Factory implements Implement
             $this->exceptionHandler($exception);
         }); // Use our own exception reporter
 
-        if (isset($this->configs['LogServer']['Addr'][0])) {
+        if (!empty($this->configs['LogServer']['Addr'])) {
             $this->configs['LogServer']['Enabled'] = true;
         } else {
             $this->configs['LogServer']['Enabled'] = false;

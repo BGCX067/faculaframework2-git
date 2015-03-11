@@ -195,181 +195,7 @@ abstract class Object extends Factory implements Implement
     {
         $newInstance = null;
 
-        if (class_exists($object, true)) {
-            if ($cache && ($newInstance = $this->loadObjectFromCache($object))) {
-                // Call init after instance has been created to pre init it
-                if (method_exists($newInstance, 'init')) {
-                    if (!$newInstance->init()) {
-                        new Error(
-                            'OBJECT_CREATE_FAILED',
-                            array(
-                                $object
-                            ),
-                            'ERROR'
-                        );
-
-                        return false;
-                    }
-                }
-
-                if (method_exists($newInstance, 'inited')) {
-                    $newInstance->inited();
-                }
-
-                return $newInstance;
-            } else {
-                switch (count($args)) {
-                    case 0:
-                        $newInstance = new $object();
-                        break;
-
-                    case 1:
-                        $newInstance = new $object(
-                            $args[0]
-                        );
-                        break;
-
-                    case 2:
-                        $newInstance = new $object(
-                            $args[0],
-                            $args[1]
-                        );
-                        break;
-
-                    case 3:
-                        $newInstance = new $object(
-                            $args[0],
-                            $args[1],
-                            $args[2]
-                        );
-                        break;
-
-                    case 4:
-                        $newInstance = new $object(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3]
-                        );
-                        break;
-
-                    case 5:
-                        $newInstance = new $object(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4]
-                        );
-                        break;
-
-                    case 6:
-                        $newInstance = new $object(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4],
-                            $args[5]
-                        );
-                        break;
-
-                    case 7:
-                        $newInstance = new $object(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4],
-                            $args[5],
-                            $args[6]
-                        );
-                        break;
-
-                    case 8:
-                        $newInstance = new $object(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4],
-                            $args[5],
-                            $args[6],
-                            $args[7]
-                        );
-                        break;
-
-                    case 9:
-                        $newInstance = new $object(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4],
-                            $args[5],
-                            $args[6],
-                            $args[7],
-                            $args[8]
-                        );
-                        break;
-
-                    case 10:
-                        $newInstance = new $object(
-                            $args[0],
-                            $args[1],
-                            $args[2],
-                            $args[3],
-                            $args[4],
-                            $args[5],
-                            $args[6],
-                            $args[7],
-                            $args[8],
-                            $args[9]
-                        );
-                        break;
-
-                    default:
-                        new Error(
-                            'OBJECT_MAXPARAM_EXCEEDED',
-                            array(
-                                $object
-                            ),
-                            'ERROR'
-                        );
-                        break;
-                }
-
-                // Save first
-                if ($cache) {
-                    $this->saveObjectToCache(
-                        $object,
-                        $newInstance
-                    );
-                }
-
-                // Call init after instance has been created to pre init it
-                if (method_exists($newInstance, 'init')) {
-                    if (!$newInstance->init()) {
-                        new Error(
-                            'OBJECT_INIT_FAILED',
-                            array(
-                                $object
-                            ),
-                            'ERROR'
-                        );
-
-                        return false;
-                    }
-                }
-
-                // Then call inited to notify object we already done init
-                if (method_exists($newInstance, 'inited')) {
-                    $newInstance->inited();
-                }
-
-                return $newInstance;
-            }
-        } else {
+        if (!class_exists($object, true)) {
             new Error(
                 'OBJECT_NOTFOUND',
                 array(
@@ -377,9 +203,181 @@ abstract class Object extends Factory implements Implement
                 ),
                 'ERROR'
             );
+
+            return false;
         }
 
-        return false;
+        if ($cache && ($newInstance = $this->loadObjectFromCache($object))) {
+            // Call init after instance has been created to pre init it
+            if (method_exists($newInstance, 'init')) {
+                if (!$newInstance->init()) {
+                    new Error(
+                        'OBJECT_CREATE_FAILED',
+                        array(
+                            $object
+                        ),
+                        'ERROR'
+                    );
+
+                    return false;
+                }
+            }
+
+            if (method_exists($newInstance, 'inited')) {
+                $newInstance->inited();
+            }
+        } else {
+            switch (count($args)) {
+                case 0:
+                    $newInstance = new $object();
+                    break;
+
+                case 1:
+                    $newInstance = new $object(
+                        $args[0]
+                    );
+                    break;
+
+                case 2:
+                    $newInstance = new $object(
+                        $args[0],
+                        $args[1]
+                    );
+                    break;
+
+                case 3:
+                    $newInstance = new $object(
+                        $args[0],
+                        $args[1],
+                        $args[2]
+                    );
+                    break;
+
+                case 4:
+                    $newInstance = new $object(
+                        $args[0],
+                        $args[1],
+                        $args[2],
+                        $args[3]
+                    );
+                    break;
+
+                case 5:
+                    $newInstance = new $object(
+                        $args[0],
+                        $args[1],
+                        $args[2],
+                        $args[3],
+                        $args[4]
+                    );
+                    break;
+
+                case 6:
+                    $newInstance = new $object(
+                        $args[0],
+                        $args[1],
+                        $args[2],
+                        $args[3],
+                        $args[4],
+                        $args[5]
+                    );
+                    break;
+
+                case 7:
+                    $newInstance = new $object(
+                        $args[0],
+                        $args[1],
+                        $args[2],
+                        $args[3],
+                        $args[4],
+                        $args[5],
+                        $args[6]
+                    );
+                    break;
+
+                case 8:
+                    $newInstance = new $object(
+                        $args[0],
+                        $args[1],
+                        $args[2],
+                        $args[3],
+                        $args[4],
+                        $args[5],
+                        $args[6],
+                        $args[7]
+                    );
+                    break;
+
+                case 9:
+                    $newInstance = new $object(
+                        $args[0],
+                        $args[1],
+                        $args[2],
+                        $args[3],
+                        $args[4],
+                        $args[5],
+                        $args[6],
+                        $args[7],
+                        $args[8]
+                    );
+                    break;
+
+                case 10:
+                    $newInstance = new $object(
+                        $args[0],
+                        $args[1],
+                        $args[2],
+                        $args[3],
+                        $args[4],
+                        $args[5],
+                        $args[6],
+                        $args[7],
+                        $args[8],
+                        $args[9]
+                    );
+                    break;
+
+                default:
+                    new Error(
+                        'OBJECT_MAXPARAM_EXCEEDED',
+                        array(
+                            $object
+                        ),
+                        'ERROR'
+                    );
+                    break;
+            }
+
+            // Save first
+            if ($cache) {
+                $this->saveObjectToCache(
+                    $object,
+                    $newInstance
+                );
+            }
+
+            // Call init after instance has been created to pre init it
+            if (method_exists($newInstance, 'init')) {
+                if (!$newInstance->init()) {
+                    new Error(
+                        'OBJECT_INIT_FAILED',
+                        array(
+                            $object
+                        ),
+                        'ERROR'
+                    );
+
+                    return false;
+                }
+            }
+
+            // Then call inited to notify object we already done init
+            if (method_exists($newInstance, 'inited')) {
+                $newInstance->inited();
+            }
+        }
+
+        return $newInstance;
     }
 
     /**
