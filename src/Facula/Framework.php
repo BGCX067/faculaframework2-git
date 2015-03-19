@@ -1082,7 +1082,7 @@ class Framework
      */
     public static function getAllCores()
     {
-        if (static::$instance || empty(static::$instance->cores)) {
+        if (!isset(static::$instance) || empty(static::$instance->cores)) {
             return false;
         }
 

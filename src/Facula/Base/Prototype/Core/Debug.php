@@ -458,7 +458,7 @@ abstract class Debug extends Factory implements Implement
             $this->exceptionHandler($exception);
         }); // Use our own exception reporter
 
-        if (!empty($this->configs['LogServer']['Addr'])) {
+        if (isset($this->configs['LogServer']['Addr'][0])) {
             $this->configs['LogServer']['Enabled'] = true;
         } else {
             $this->configs['LogServer']['Enabled'] = false;
@@ -1109,8 +1109,8 @@ abstract class Debug extends Factory implements Implement
                         '[PROJECT]',
                         '[FACULA]',
                     ),
-                    $errorDetail['Message']
-                );
+                    $string
+                ) . ' ';
             }
         } else {
             $detail = 'Debug disabled, error detail unavailable.';
