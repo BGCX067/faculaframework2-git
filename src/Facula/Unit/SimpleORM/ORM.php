@@ -939,6 +939,29 @@ abstract class ORM implements Implement, \ArrayAccess
     }
 
     /**
+     * Import data from parent class instance
+     *
+     * @return bool Return true when success, false otherwise
+     */
+    public function import($instance)
+    {
+        if (!($this instanceof $instance)) {
+            throw new Exception\IncompatibleImporting(
+                get_class($instance),
+                get_class($this)
+            );
+
+            return false;
+        }
+
+        foreach (static::getUsingFields() as $name => $ppt) {
+            $this->$name = $instance->$name;
+        }
+
+        return true;
+    }
+
+    /**
      * Save current data into Database
      *
      * @return mixed Return count of affected data when success, or false otherwise
