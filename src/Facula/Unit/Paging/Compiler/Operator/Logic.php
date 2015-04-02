@@ -407,7 +407,7 @@ class Logic extends Base implements Implement
 
         return array(
             'Check' => $phpIsset,
-            'Logic' => implode(' && ', $logicStack),
+            'Logic' => trim(implode(' && ', $logicStack)),
         );
     }
 
@@ -435,6 +435,12 @@ class Logic extends Base implements Implement
 
                     $phpChecker .=
                         $middleParameters['Check'];
+
+                    if (empty($middleParameters['Logic'])) {
+                        throw new Exception\LogicConditionEmpty();
+
+                        return false; // For test
+                    }
 
                     $php .= '<?php } elseif (' . $middleParameters['Logic'] . ') { ?>';
                     $php .= $elseif['Data'];
