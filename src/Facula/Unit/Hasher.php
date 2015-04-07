@@ -60,6 +60,21 @@ class Hasher
     }
 
     /**
+     * Safely hash a string
+     *
+     * @param string $alg Key name of hash algorithm
+     * @param string $string Target string for hash calculation
+     *
+     * @return string Hash sum
+     */
+    protected function hash($alg, $string)
+    {
+        $parsedString = str_replace("\0", '0', $string);
+
+        return hash($alg, $parsedString, false);
+    }
+
+    /**
      * Obscure the hashed value
      *
      * @param string $str Hashed value
@@ -75,34 +90,34 @@ class Hasher
         $saltMaxIdx = $saltlen = $factor = 0;
         $salt = '';
 
-        if ($strlen > 1) {
-            $factor = ord($str[0]) + ord($str[$strlenHalf]) + ord($str[$strlenLast]);
-
-            if ($this->saltLen) {
-                $salt = $this->salt;
-                $saltlen = $this->saltLen;
-            } else {
-                $salt = $str;
-                $saltlen = $strlen;
-            }
-
-            $saltMaxIdx = $saltlen - 1;
-
-            for ($i = 0; $i < $strlen; $i++) {
-                if (!(($factor + $i) % $strlenHalf)) {
-                    $str[$i] = $salt[($i % $saltMaxIdx)];
-                }
-            }
-
-            // Hiding clue to prevent reverse the factor
-            $str[0]                = $salt[$saltMaxIdx];
-            $str[$strlenHalf]    = $salt[$saltMaxIdx % $strlenHalf];
-            $str[$strlenLast]    = $salt[0];
-
+        if ($strlen <= 1) {
             return $str;
         }
 
-        return false;
+        $factor = ord($str[0]) + ord($str[$strlenHalf]) + ord($str[$strlenLast]);
+
+        if ($this->saltLen) {
+            $salt = $this->salt;
+            $saltlen = $this->saltLen;
+        } else {
+            $salt = $str;
+            $saltlen = $strlen;
+        }
+
+        $saltMaxIdx = $saltlen - 1;
+
+        for ($i = 0; $i < $strlen; $i++) {
+            if (!(($factor + $i) % $strlenHalf)) {
+                $str[$i] = $salt[($i % $saltMaxIdx)];
+            }
+        }
+
+        // Hiding clue to prevent reverse the factor
+        $str[0]              = $salt[$saltMaxIdx];
+        $str[$strlenHalf]    = $salt[$saltMaxIdx % $strlenHalf];
+        $str[$strlenLast]    = $salt[0];
+
+        return $str;
     }
 
     /**
@@ -115,9 +130,9 @@ class Hasher
     public function obscuredMD5($str)
     {
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash(
+            $str = $this->hash(
                 'md5',
-                $this->obscure(hash('md5', $str))
+                $this->obscure($this->hash('md5', $str))
             );
         }
 
@@ -134,9 +149,9 @@ class Hasher
     public function obscuredSHA1($str)
     {
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash(
+            $str = $this->hash(
                 'sha1',
-                $this->obscure(hash('sha1', $str))
+                $this->obscure($this->hash('sha1', $str))
             );
         }
 
@@ -155,9 +170,9 @@ class Hasher
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash(
+            $str = $this->hash(
                 'sha256',
-                $this->obscure(hash('sha256', $str . $this->obscure(hash('sha256', $str))))
+                $this->obscure($this->hash('sha256', $str . $this->obscure($this->hash('sha256', $str))))
             );
         }
 
@@ -176,9 +191,9 @@ class Hasher
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash(
+            $str = $this->hash(
                 'sha512',
-                $this->obscure(hash('sha512', $str . $this->obscure(hash('sha512', $str))))
+                $this->obscure($this->hash('sha512', $str . $this->obscure($this->hash('sha512', $str))))
             );
         }
 
@@ -197,10 +212,10 @@ class Hasher
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash(
+            $str = $this->hash(
                 'ripemd160',
                 $this->obscure(
-                    hash('ripemd160', $str . $this->obscure(hash('ripemd160', $str)))
+                    $this->hash('ripemd160', $str . $this->obscure($this->hash('ripemd160', $str)))
                 )
             );
         }
@@ -220,10 +235,10 @@ class Hasher
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash(
+            $str = $this->hash(
                 'ripemd320',
                 $this->obscure(
-                    hash('ripemd320', $str . $this->obscure(hash('ripemd320', $str)))
+                    $this->hash('ripemd320', $str . $this->obscure($this->hash('ripemd320', $str)))
                 )
             );
         }
@@ -243,10 +258,10 @@ class Hasher
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash(
+            $str = $this->hash(
                 'whirlpool',
                 $this->obscure(
-                    hash('whirlpool', $str . $this->obscure(hash('whirlpool', $str)))
+                    $this->hash('whirlpool', $str . $this->obscure($this->hash('whirlpool', $str)))
                 )
             );
         }
@@ -266,10 +281,10 @@ class Hasher
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash(
+            $str = $this->hash(
                 'salsa10',
                 $this->obscure(
-                    hash('salsa10', $str . $this->obscure(hash('salsa10', $str)))
+                    $this->hash('salsa10', $str . $this->obscure($this->hash('salsa10', $str)))
                 )
             );
         }
@@ -289,10 +304,10 @@ class Hasher
         $str = $this->salt . $str;
 
         for ($i = 0; $i < $this->loopPeriod; $i++) {
-            $str = hash(
+            $str = $this->hash(
                 'salsa20',
                 $this->obscure(
-                    hash('salsa20', $str . $this->obscure(hash('salsa20', $str)))
+                    $this->hash('salsa20', $str . $this->obscure($this->hash('salsa20', $str)))
                 )
             );
         }
