@@ -56,7 +56,7 @@ abstract class Field implements Impl
     protected $defaults = null;
 
     /** Mark of field if required or not */
-    protected $required = false;
+    protected $required = true;
 
     /** Error */
     protected $errors = array();
@@ -269,9 +269,7 @@ abstract class Field implements Impl
                 $this->error(new FieldError('ERROR', 'REQUIRED'));
 
                 return false;
-            }
-
-            if (is_null($this->defaults)) {
+            } elseif (is_null($this->defaults)) {
                 // So there is no value and default value
                 $this->error(new FieldError('ERROR', 'NOTSET'));
 
