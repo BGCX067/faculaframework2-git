@@ -40,6 +40,7 @@ class StringTest extends \PHPUnit_Framework_TestCase
             Input\Source\HttpPost::import()
         )->fields(
             Input\Field\Strings::bind('TestString')
+                ->required(false)
                 ->defaults('Default Test')->limits(
                     Input\Limit\Validate::create()
                         ->format('standard')
@@ -47,6 +48,7 @@ class StringTest extends \PHPUnit_Framework_TestCase
                         ->minlen(1)
                 ),
             Input\Field\Strings::bind('TestStringNotExisted')
+                ->required(false)
                 ->defaults('Default test value for not existed')->limits(
                     Input\Limit\Validate::create()
                         ->format('standard')
