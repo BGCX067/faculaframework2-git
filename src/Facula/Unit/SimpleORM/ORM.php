@@ -97,13 +97,15 @@ abstract class ORM implements Implement, \ArrayAccess
         $this->data[$key] = $val;
 
         // Create alias if needed
-        if (isset(static::$aliases[$key])) {
-            if (isset(static::$fields[static::$aliases[$key]])) {
-                throw new Exception\FieldNameConflictAlias(static::$aliases[$key]);
-            }
-
-            $this->data[static::$aliases[$key]] = &$this->data[$key];
+        if (!isset(static::$aliases[$key])) {
+            return;
         }
+
+        if (isset(static::$fields[static::$aliases[$key]])) {
+            throw new Exception\FieldNameConflictAlias(static::$aliases[$key]);
+        }
+
+        $this->data[static::$aliases[$key]] = &$this->data[$key];
     }
 
     /**
@@ -151,16 +153,18 @@ abstract class ORM implements Implement, \ArrayAccess
      */
     public function __unset($key)
     {
-        if (isset($this->data[$key])) {
-            // Unsetting a alias
-            if (isset(static::$aliases[$key], $this->data[static::$aliases[$key]])) {
-                unset($this->data[$key], $this->data[static::$aliases[$key]]);
-            } else {
-                // Unsetting a actual key
-                $this->data[$key] = null;
+        if (!isset($this->data[$key])) {
+            return;
+        }
 
-                unset($this->data[$key]);
-            }
+        // Unsetting a alias
+        if (isset(static::$aliases[$key], $this->data[static::$aliases[$key]])) {
+            unset($this->data[$key], $this->data[static::$aliases[$key]]);
+        } else {
+            // Unsetting a actual key
+            $this->data[$key] = null;
+
+            unset($this->data[$key]);
         }
     }
 
@@ -180,13 +184,15 @@ abstract class ORM implements Implement, \ArrayAccess
 
         $this->data[$offset] = $value;
 
-        if (isset(static::$aliases[$offset])) {
-            if (isset(static::$fields[static::$aliases[$offset]])) {
-                throw new Exception\FieldNameConflictAlias(static::$aliases[$offset]);
-            }
-
-            $this->data[static::$aliases[$offset]] = &$this->data[$offset];
+        if (!isset(static::$aliases[$offset])) {
+            return;
         }
+
+        if (isset(static::$fields[static::$aliases[$offset]])) {
+            throw new Exception\FieldNameConflictAlias(static::$aliases[$offset]);
+        }
+
+        $this->data[static::$aliases[$offset]] = &$this->data[$offset];
     }
 
     /**
@@ -234,14 +240,16 @@ abstract class ORM implements Implement, \ArrayAccess
      */
     public function offsetUnset($offset)
     {
-        if (isset($this->data[$offset])) {
-            if (isset(static::$aliases[$offset], $this->data[static::$aliases[$offset]])) {
-                unset($this->data[$offset], $this->data[static::$aliases[$offset]]);
-            } else {
-                $this->data[$offset] = null;
+        if (!isset($this->data[$offset])) {
+            return;
+        }
 
-                unset($this->data[$offset]);
-            }
+        if (isset(static::$aliases[$offset], $this->data[static::$aliases[$offset]])) {
+            unset($this->data[$offset], $this->data[static::$aliases[$offset]]);
+        } else {
+            $this->data[$offset] = null;
+
+            unset($this->data[$offset]);
         }
     }
 
@@ -930,44 +938,46 @@ abstract class ORM implements Implement, \ArrayAccess
                     $JoinedVal['Field']
                 );
 
-                if (!empty($tempJoinedKeys)) {
-                    foreach ($JoinedVal['Model']::fetchInKeys(
-                        $JoinedVal['Key'],
-                        array_keys($tempJoinedKeys),
-                        $JoinedVal['Param'],
-                        0,
-                        0,
-                        'ASSOC'
-                    ) as $pKey => $pVal) {
-                        if (is_object($pVal)) {
-                            $JoinedVal['Data'][$pKey] = $pVal->getData();
-                        } else {
-                            $JoinedVal['Data'][$pKey] = $pVal;
+                if (empty($tempJoinedKeys)) {
+                    continue;
+                }
+
+                foreach ($JoinedVal['Model']::fetchInKeys(
+                    $JoinedVal['Key'],
+                    array_keys($tempJoinedKeys),
+                    $JoinedVal['Param'],
+                    0,
+                    0,
+                    'ASSOC'
+                ) as $pKey => $pVal) {
+                    if (is_object($pVal)) {
+                        $JoinedVal['Data'][$pKey] = $pVal->getData();
+                    } else {
+                        $JoinedVal['Data'][$pKey] = $pVal;
+                    }
+
+                    foreach ($tempJoinedKeys[$pVal[$JoinedVal['Key']]] as $tkJoinedKey => $tkJoinedVal) {
+                        if (isset(
+                            $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
+                        )
+                        &&
+                        !is_array(
+                            $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
+                        )) {
+                            $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
+                                array();
                         }
 
-                        foreach ($tempJoinedKeys[$pVal[$JoinedVal['Key']]] as $tkJoinedKey => $tkJoinedVal) {
-                            if (isset(
-                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
-                            )
-                            &&
-                            !is_array(
+                        if ($JoinedVal['Single']) {
+                            if (empty(
                                 $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
                             )) {
                                 $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
-                                    array();
-                            }
-
-                            if ($JoinedVal['Single']) {
-                                if (empty(
-                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']]
-                                )) {
-                                    $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']] =
-                                        &$JoinedVal['Data'][$pKey];
-                                }
-                            } else {
-                                $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']][] =
                                     &$JoinedVal['Data'][$pKey];
                             }
+                        } else {
+                            $tempJoinedKeys[$pVal[$JoinedVal['Key']]][$tkJoinedKey][$JoinedVal['Alias']][] =
+                                &$JoinedVal['Data'][$pKey];
                         }
                     }
                 }
@@ -1032,44 +1042,46 @@ abstract class ORM implements Implement, \ArrayAccess
             }
 
             foreach ($this->data as $key => $val) {
-                if (isset($fields[$key])) {
-                    if (isset(static::$creases[$key])) {
-                        // Check if we need to Xcrease it
+                if (!isset($fields[$key])) {
+                    continue;
+                }
 
-                        /*
-                            Notice that: Xcrease use to reduce the problem caused in high concurrence condition
-                            But it will not solve it.
+                if (isset(static::$creases[$key])) {
+                    // Check if we need to Xcrease it
 
-                            To avoid hallucinate reading problem, you need to LOCK the table or row when reading
-                            for updating which not supported by this ORM and it's base structure currently.
+                    /*
+                        Notice that: Xcrease use to reduce the problem caused in high concurrence condition
+                        But it will not solve it.
 
-                            Use with care.
-                        */
-                        if (is_int($val)) {
-                            $changesTo = (int)$this->dataOriginal[$key] - $val;
-                        } elseif (is_float($val)) {
-                            $changesTo = (float)$this->dataOriginal[$key] - $val;
-                        } else {
-                            throw new Exception\CreasingANonNumber($val, gettype($val));
+                        To avoid hallucinate reading problem, you need to LOCK the table or row when reading
+                        for updating which not supported by this ORM and it's base structure currently.
 
-                            return false;
-                        }
-
-                        if ($changesTo > 0) {
-                            $changeOperator = '-';
-                        } elseif ($changesTo < 0) {
-                            $changeOperator = '+';
-                        }
-
-                        $changes[] = array(
-                            'Field' => $key,
-                            'Operator' => $changeOperator,
-                            'Value' => abs($changesTo)
-                        );
+                        Use with care.
+                    */
+                    if (is_int($val)) {
+                        $changesTo = (int)$this->dataOriginal[$key] - $val;
+                    } elseif (is_float($val)) {
+                        $changesTo = (float)$this->dataOriginal[$key] - $val;
                     } else {
-                        // Or fine with replace
-                        $sets[$key] = $val;
+                        throw new Exception\CreasingANonNumber($val, gettype($val));
+
+                        return false;
                     }
+
+                    if ($changesTo > 0) {
+                        $changeOperator = '-';
+                    } elseif ($changesTo < 0) {
+                        $changeOperator = '+';
+                    }
+
+                    $changes[] = array(
+                        'Field' => $key,
+                        'Operator' => $changeOperator,
+                        'Value' => abs($changesTo)
+                    );
+                } else {
+                    // Or fine with replace
+                    $sets[$key] = $val;
                 }
             }
 
