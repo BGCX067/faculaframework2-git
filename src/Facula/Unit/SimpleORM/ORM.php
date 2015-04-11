@@ -62,6 +62,9 @@ abstract class ORM implements Implement, \ArrayAccess
     /** Trigger to enable or disable auto parser */
     protected static $noParser = false;
 
+    /** Loaded models */
+    private static $loadedModels = array();
+
     /** Container of data */
     private $data = array();
 
@@ -659,69 +662,107 @@ abstract class ORM implements Implement, \ArrayAccess
         array &$joinedMap,
         $parentName = 'main'
     ) {
-        if (is_array($joinModels)) {
-            foreach ($joinModels as $jMkey => $jMVal) {
-                if (!is_array($jMVal)) {
-                    throw new Exception\JoinOptionInvalid();
+        $modelName = '';
+        $fields = array();
 
-                    return false;
-                    break;
-                }
-
-                if (!isset($jMVal['Field'][0])) {
-                    throw new Exception\JoinFieldNameNotSet();
-
-                    return false;
-                    break;
-                }
-
-                if (!isset($jMVal['Model'][0])) {
-                    throw new Exception\JoinModelNameNotSet();
-
-                    return false;
-                    break;
-                }
-
-                if (!isset($jMVal['Key'][0])) {
-                    throw new Exception\JoinKeyNameNotSet();
-
-                    return false;
-                    break;
-                }
-
-                $tempJoinedModelAlias = isset($jMVal['Alias']) ?
-                    $jMVal['Alias'] : $jMVal['Field'];
-
-                $tempJoinedModelAddr = $parentName
-                                        . '.'
-                                        . $tempJoinedModelAlias;
-
-                $joinedMap[$tempJoinedModelAddr] = array(
-                    'Field' => $jMVal['Field'],
-                    'Model' => $jMVal['Model'],
-                    'Key' => $jMVal['Key'],
-                    'Alias' => $tempJoinedModelAlias,
-                    'Single' => !isset($jMVal['Single']) || $jMVal['Single'] ?
-                        true : false,
-                    'Param' => isset($jMVal['Param']) ? $jMVal['Param'] : array(),
-                    'With' => $parentName,
-                );
-
-                if (isset($jMVal['With'])) {
-                    self::fetchWithJoinParamParser(
-                        $jMVal['With'],
-                        $joinedMap,
-                        $tempJoinedModelAddr
-                    );
-                }
-            }
-
-            return true;
-        } else {
+        if (!is_array($joinModels)) {
             throw new Exception\JoinParameterInvalid();
+
+            return false;
         }
 
-        return false;
+        foreach ($joinModels as $jMkey => $jMVal) {
+            if (!is_array($jMVal)) {
+                throw new Exception\JoinOptionInvalid();
+
+                return false;
+                break;
+            }
+
+            if (empty($jMVal['Field'])) {
+                throw new Exception\JoinFieldNameNotSet();
+
+                return false;
+                break;
+            }
+
+            if (empty($jMVal['Model'])) {
+                throw new Exception\JoinModelNameNotSet();
+
+                return false;
+                break;
+            }
+
+            if (empty($jMVal['Key'])) {
+                throw new Exception\JoinKeyNameNotSet();
+
+                return false;
+                break;
+            }
+
+            if (!isset(self::$loadedModels[$jMVal['Model']]) && !class_exists($jMVal['Model'])) {
+                throw new Exception\JoinModelNotFound(
+                    $jMVal['Model']
+                );
+
+                return false;
+                break;
+            } else {
+                self::$loadedModels[$jMVal['Model']] = true;
+            }
+
+            $modelName = $jMVal['Model'];
+
+            $fields = $modelName::getUsingFields();
+
+            $tempJoinedModelAlias = !empty($jMVal['Alias']) ?
+                $jMVal['Alias'] : ('_' . $jMVal['Field']);
+
+            if (isset($fields[$tempJoinedModelAlias])) {
+                throw new Exception\JoinAliasConflicted(
+                    $tempJoinedModelAlias,
+                    $modelName
+                );
+
+                return false;
+                break;
+            }
+
+            if (!isset($fields[$jMVal['Key']])) {
+                throw new Exception\JoinKeyNameNotFound(
+                    $jMVal['Key'],
+                    $modelName
+                );
+
+                return false;
+                break;
+            }
+
+            $tempJoinedModelAddr = $parentName
+                                    . '.'
+                                    . $tempJoinedModelAlias;
+
+            $joinedMap[$tempJoinedModelAddr] = array(
+                'Field' => $jMVal['Field'],
+                'Model' => $jMVal['Model'],
+                'Key' => $jMVal['Key'],
+                'Alias' => $tempJoinedModelAlias,
+                'Single' => !isset($jMVal['Single']) || $jMVal['Single'] ?
+                    true : false,
+                'Param' => isset($jMVal['Param']) ? $jMVal['Param'] : array(),
+                'With' => $parentName,
+            );
+
+            if (isset($jMVal['With'])) {
+                self::fetchWithJoinParamParser(
+                    $jMVal['With'],
+                    $joinedMap,
+                    $tempJoinedModelAddr
+                );
+            }
+        }
+
+        return true;
     }
 
     /**
