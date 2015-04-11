@@ -474,14 +474,6 @@ abstract class ORM implements Implement, \ArrayAccess
         // If current class has withs option, force use with to perform join query
         // Notice this will ignore return type as always return CLASS instance for the result.
         if (!empty(static::$withs)) {
-            if ($returnType != 'CLASS') {
-                throw new Exception\FetchAutoFetchWithMustReturnClass(
-                    self::className()
-                );
-
-                return false;
-            }
-
             return static::fetchWith(
                 static::$withs,
                 $param,
